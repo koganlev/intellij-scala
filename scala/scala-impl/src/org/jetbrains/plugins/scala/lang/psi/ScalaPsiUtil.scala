@@ -1491,7 +1491,7 @@ object ScalaPsiUtil {
       case (reference, name) => reference.refName != name
     }.toSet
 
-    if (position != null && !position.getLanguage.isKindOf(ScalaLanguage.INSTANCE))
+    if (position == null || !position.getLanguage.isKindOf(ScalaLanguage.INSTANCE))
       return Set.empty
 
     var parent = position.getParent
@@ -1971,5 +1971,15 @@ object ScalaPsiUtil {
       val exprs = blockCopy.statements ++ blockCopy.caseClauses
       ScalaPsiElementFactory.createBlockWithGivenExpressions(exprs, block)
     }
+  }
+
+
+  @tailrec
+  def isUncheckedExpr(expr: ScExpression): Boolean = expr match {
+    case typed: ScTypedExpression =>
+      typed.annotations.exists(_.getAnnotations.exists(_.hasQualifiedName("scala.unchecked")))
+    case ScParenthesisedExpr(inner) =>
+      isUncheckedExpr(inner)
+    case _ => false
   }
 }

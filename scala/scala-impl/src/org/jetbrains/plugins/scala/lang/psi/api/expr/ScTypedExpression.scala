@@ -12,7 +12,9 @@ trait ScTypedExpression extends ScExpression {
 
   def isSequenceArg: Boolean = getLastChild.is[ScSequenceArg]
 
-  def hasAnnotation: Boolean = findChild[ScAnnotations].isDefined
+  def hasAnnotation: Boolean = annotations.isDefined
+
+  def annotations: Option[ScAnnotations] = findChild[ScAnnotations]
 
   override protected def acceptScala(visitor: ScalaElementVisitor): Unit = {
     visitor.visitTypedExpr(this)

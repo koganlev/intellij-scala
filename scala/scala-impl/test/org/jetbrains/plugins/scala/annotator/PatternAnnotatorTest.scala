@@ -4,25 +4,24 @@ import org.jetbrains.plugins.scala.annotator.element.ScPatternAnnotator
 import org.jetbrains.plugins.scala.base.ScalaLightCodeInsightFixtureTestCase
 import org.jetbrains.plugins.scala.extensions._
 import org.jetbrains.plugins.scala.lang.psi.api.base.patterns.ScPattern
-import org.jetbrains.plugins.scala.{ScalaBundle, TypecheckerTests}
+import org.jetbrains.plugins.scala.{ScalaBundle, ScalaVersion, TypecheckerTests}
 import org.junit.Assert.assertEquals
 import org.junit.experimental.categories.Category
+import Message._
 
 @Category(Array(classOf[TypecheckerTests]))
-class PatternAnnotatorTest extends ScalaLightCodeInsightFixtureTestCase {
-  import Message._
-
-  private def fruitless(exprType: String, patType: String) = ScalaBundle.message("fruitless.type.test", exprType, patType)
-  private def incompatible(exprType: String, patType: String) = ScalaBundle.message("scrutinee.incompatible.pattern.type", exprType, patType)
-  private def cannotBeUsed(typeText: String) = s"type $typeText cannot be used in a type pattern or isInstanceOf test"
-  private def patternTypeIncompatible(found: String, required: String) =
+abstract class PatternAnnotatorTestBase extends ScalaLightCodeInsightFixtureTestCase {
+  protected def fruitless(exprType: String, patType: String) = ScalaBundle.message("fruitless.type.test", exprType, patType)
+  protected def incompatible(exprType: String, patType: String) = ScalaBundle.message("scrutinee.incompatible.pattern.type", exprType, patType)
+  protected def cannotBeUsed(typeText: String) = s"type $typeText cannot be used in a type pattern or isInstanceOf test"
+  protected def patternTypeIncompatible(found: String, required: String) =
     ScalaBundle.message("pattern.type.incompatible.with.expected", found, required)
-  private def constructorCannotBeInstantiated(found: String, required: String) =
+  protected def constructorCannotBeInstantiated(found: String, required: String) =
     ScalaBundle.message("constructor.cannot.be.instantiated.to.expected.type", found, required)
 
   //////////////////////////////////////////
 
-  private def collectAnnotatorMessages(text: String): List[Message] = {
+  protected def collectAnnotatorMessages(text: String): List[Message] = {
     configureFromFileText("dummy.scala", text)
     implicit val mock: AnnotatorHolderMock = new AnnotatorHolderMock(getFile)
     val patterns = getFile.depthFirst().filterByType[ScPattern]
@@ -30,54 +29,55 @@ class PatternAnnotatorTest extends ScalaLightCodeInsightFixtureTestCase {
     mock.annotations
   }
 
-  private def collectWarnings(text: String): List[Message] = {
+  protected def collectWarnings(text: String): List[Message] = {
     val messages = collectAnnotatorMessages(text)
     messages.filterByType[Warning]
   }
 
-  private def collectErrors(text: String): List[Message] = {
+  protected def collectErrors(text: String): List[Message] = {
     val messages = collectAnnotatorMessages(text)
     messages.filterByType[Error]
   }
 
   //////////////////////////////////////////
 
-  private def assertMessages(text: String, expected: List[Message]): Unit = {
+  protected def assertMessages(text: String, expected: List[Message]): Unit = {
     val actual = collectAnnotatorMessages(text)
     assertEquals(expected, actual)
   }
 
-  private def assertWarnings(text: String, expected: List[Warning]): Unit = {
+  protected def assertWarnings(text: String, expected: List[Warning]): Unit = {
     val actual = collectWarnings(text)
     assertEquals(expected, actual)
   }
 
-  private def assertErrors(text: String, errors: List[Error]): Unit = {
+  protected def assertErrors(text: String, errors: List[Error]): Unit = {
     val actualErrors = collectErrors(text)
     assertEquals(errors, actualErrors)
   }
 
-  private def assertWarning(text: String, element: String, expectedMsg: String): Unit = {
+  protected def assertWarning(text: String, element: String, expectedMsg: String): Unit = {
     assertWarnings(text, List(Warning(element, expectedMsg)))
   }
 
-  private def assertError(text: String, element: String, expectedMsg: String): Unit = {
+  protected def assertError(text: String, element: String, expectedMsg: String): Unit = {
     assertErrors(text, List(Error(element, expectedMsg)))
   }
 
-  private def assertNoMessages(text: String): Unit = {
+  protected def assertNoMessages(text: String): Unit = {
     assertMessages(text, Nil)
   }
 
-  private def assertNoErrors(text: String): Unit = {
+  protected def assertNoErrors(text: String): Unit = {
     assertErrors(text, Nil)
   }
 
-  private def assertNoWarnings(text: String): Unit = {
+  protected def assertNoWarnings(text: String): Unit = {
     assertWarnings(text, Nil)
   }
+}
 
-  //////////////////////////////////////////
+class PatternAnnotatorTest extends PatternAnnotatorTestBase {
 
   def testSomeConstructor(): Unit = {
     val code: String = "val Some(x) = None"
@@ -771,5 +771,46 @@ class PatternAnnotatorTest extends ScalaLightCodeInsightFixtureTestCase {
       |val y@_: Int <> Byte = "test"
       |val _: Int <> Byte = "test"
       |""".stripMargin
+  )
+}
+
+
+class PatternAnnotatorTest_Scala3_4 extends PatternAnnotatorTestBase {
+  override protected def supportedIn(version: ScalaVersion): Boolean = version >= ScalaVersion.Latest.Scala_3_4
+
+  def testPatternMatchAny(): Unit = assertMessages(
+    """
+      |class Types {
+      |  val (a, b) = (1: Any)
+      |  val (c, d) = (2: Any): @unchecked
+      |
+      |  for (e, f) <- Seq[Any]() yield 3
+      |  for case (g, h) <- Seq[Any]() yield 4
+      |}
+      |""".stripMargin,
+    List(
+      Error("(a, b)", "Pattern's type (Any, Any) is more specialized than the right hand side expression's type Any"),
+      Error("(e, f)", "Pattern's type (Any, Any) is more specialized than the right hand side expression's type Any"),
+    )
+  )
+}
+
+class PatternAnnotatorTest_Scala3_2 extends PatternAnnotatorTestBase {
+  override protected def supportedIn(version: ScalaVersion): Boolean = version == ScalaVersion.Latest.Scala_3_2
+
+  def testPatternMatchAny(): Unit = assertMessages(
+    """
+      |class Types {
+      |  val (a, b) = (1: Any)
+      |  val (c, d) = (2: Any): @unchecked
+      |
+      |  for (e, f) <- Seq[Any]() yield 3
+      |  for case (g, h) <- Seq[Any]() yield 4
+      |}
+      |""".stripMargin,
+    List(
+      Warning("(a, b)", "Pattern's type (Any, Any) is more specialized than the right hand side expression's type Any"),
+      Warning("(e, f)", "Pattern's type (Any, Any) is more specialized than the right hand side expression's type Any"),
+    )
   )
 }

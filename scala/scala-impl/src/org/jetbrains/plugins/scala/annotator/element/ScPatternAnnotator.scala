@@ -1,15 +1,17 @@
 package org.jetbrains.plugins.scala.annotator.element
 
-import org.jetbrains.plugins.scala.ScalaBundle
 import org.jetbrains.plugins.scala.annotator.ScalaAnnotationHolder
+import org.jetbrains.plugins.scala.annotator.quickfix.AddCaseToGeneratorQuickfix
 import org.jetbrains.plugins.scala.extensions._
 import org.jetbrains.plugins.scala.externalLibraries.bm4.Implicit0Pattern
+import org.jetbrains.plugins.scala.lang.psi.ScalaPsiUtil
 import org.jetbrains.plugins.scala.lang.psi.ScalaPsiUtil.inNameContext
 import org.jetbrains.plugins.scala.lang.psi.api.base.ScStableCodeReference
 import org.jetbrains.plugins.scala.lang.psi.api.base.patterns._
 import org.jetbrains.plugins.scala.lang.psi.api.base.types.{ScCompoundTypeElement, ScInfixTypeElement}
+import org.jetbrains.plugins.scala.lang.psi.api.expr.ScGenerator
 import org.jetbrains.plugins.scala.lang.psi.api.statements.params.ScClassParameter
-import org.jetbrains.plugins.scala.lang.psi.api.statements.{ScFunction, ScMacroDefinition, ScVariable}
+import org.jetbrains.plugins.scala.lang.psi.api.statements.{ScFunction, ScMacroDefinition, ScValueOrVariableDefinition, ScVariable}
 import org.jetbrains.plugins.scala.lang.psi.impl.expr.PatternTypeInference
 import org.jetbrains.plugins.scala.lang.psi.types.ComparingUtil.{isNeverSubClass, isNeverSubType}
 import org.jetbrains.plugins.scala.lang.psi.types.api.designator.DesignatorOwner
@@ -18,6 +20,7 @@ import org.jetbrains.plugins.scala.lang.psi.types.api.{Any, AnyVal, Nothing, Nul
 import org.jetbrains.plugins.scala.lang.psi.types.{ScAbstractType, ScParameterizedType, ScType, ScalaType, TypePresentationContext}
 import org.jetbrains.plugins.scala.lang.resolve.ScalaResolveResult
 import org.jetbrains.plugins.scala.project.ProjectContext
+import org.jetbrains.plugins.scala.{NlsString, ScalaBundle}
 
 import scala.annotation.tailrec
 import scala.collection.immutable.ArraySeq
@@ -68,16 +71,18 @@ object ScPatternAnnotator extends ElementAnnotator[ScPattern] {
     def hasNoFreeTypeVariables(pattern: ScPattern): Boolean =
       pattern.typeVariables.isEmpty && freeTypeParams.isEmpty
 
-    val patternTypeAsTuple =
+    lazy val patternTypeAsTuple =
       ScPattern.ByNameExtractor(pattern).unapply(patType).map {
         productElements =>
           TupleType(productElements)(pattern.elementScope)
       }
 
-    val neverMatches =
+    lazy val neverMatches =
       !matchesPattern(exTp, patternTypeAsTuple.getOrElse(patType)) &&
         isNeverSubType(abstraction(patType), exTp) &&
         hasNoFreeTypeVariables(pattern)
+
+    lazy val isIrrefutable = pattern.isIrrefutableFor(Some(exprType))
 
     def isEliminatedByErasure = (exprType.extractClass, patType.extractClass) match {
       case (Some(cl1), Some(cl2)) if pattern.is[ScTypedPattern] => !isNeverSubClass(cl1, cl2)
@@ -123,8 +128,8 @@ object ScPatternAnnotator extends ElementAnnotator[ScPattern] {
           if (isEliminatedByErasure) ScalaBundle.message("erasure.warning")
           else ""
         val (exprTypeText, patTypeText) = TypePresentation.different(exprType, patType)
-        val message = ScalaBundle.message("fruitless.type.test", exprTypeText, patTypeText) + erasureWarn
-        holder.createWarningAnnotation(pattern, message)
+        val baseMessage = ScalaBundle.message("fruitless.type.test", exprTypeText, patTypeText)
+        holder.createWarningAnnotation(pattern, NlsString.force(baseMessage + erasureWarn))
       case StableIdResolvesToVar() =>
         val message = ScalaBundle.message("stable.identifier.required", pattern.getText)
         holder.createErrorAnnotation(pattern, message)
@@ -187,6 +192,26 @@ object ScPatternAnnotator extends ElementAnnotator[ScPattern] {
             }
           case _ =>
         }
+      case Parent(gen: ScGenerator) if
+        gen.caseKeyword.isEmpty &&
+          pattern.isInScala3Module &&
+          !isIrrefutable =>
+        val (exprTypeText, patTypeText) = TypePresentation.different(exprType, patType)
+        val message = ScalaBundle.message("pattern.type.is.more.specialized.than.the.expr", patTypeText, exprTypeText)
+        val quickfix = new AddCaseToGeneratorQuickfix(gen)
+        if (pattern.features.`Scala 3 Irrefutable Patterns`)
+          holder.createErrorAnnotation(pattern, message, quickfix)
+        else
+          holder.createWarningAnnotation(pattern, message, quickfix)
+
+      case Parent(Parent(v: ScValueOrVariableDefinition)) if !v.expr.exists(ScalaPsiUtil.isUncheckedExpr) && pattern.isInScala3Module && !isIrrefutable =>
+        val (exprTypeText, patTypeText) = TypePresentation.different(exprType, patType)
+        val message = ScalaBundle.message("pattern.type.is.more.specialized.than.the.expr", patTypeText, exprTypeText)
+        if (pattern.features.`Scala 3 Irrefutable Patterns`)
+          holder.createErrorAnnotation(pattern, message)
+        else
+          holder.createWarningAnnotation(pattern, message)
+
       case _ =>
     }
   }

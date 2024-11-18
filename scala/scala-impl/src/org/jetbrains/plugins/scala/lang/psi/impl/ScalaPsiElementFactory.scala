@@ -1339,7 +1339,7 @@ object ScalaPsiElementFactory {
   def createTypeDefinitionWithContext(@NonNls text: String, @Nullable context: PsiElement, @Nullable child: PsiElement): ScTypeDefinition =
     createElementWithContext[ScTypeDefinition](text, context, child)(TmplDef.parse(_))
 
-  def createReferenceFromText(@NonNls text: String, context: PsiElement, child: PsiElement): ScStableCodeReference =
+  def createReferenceFromText(@NonNls text: String, @Nullable context: PsiElement, child: PsiElement): ScStableCodeReference =
     createElementWithContext[ScStableCodeReference](text, context, child) {
       types.StableId(ScalaElementType.REFERENCE)(_)
     }

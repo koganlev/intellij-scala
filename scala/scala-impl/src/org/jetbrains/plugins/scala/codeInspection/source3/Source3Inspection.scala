@@ -6,6 +6,7 @@ import com.intellij.codeInspection.{LocalInspectionTool, LocalQuickFix, Problems
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 import org.jetbrains.annotations.Nls
+import org.jetbrains.plugins.scala.annotator.quickfix.AddCaseToGeneratorQuickfix
 import org.jetbrains.plugins.scala.codeInspection.source3.Source3Inspection._
 import org.jetbrains.plugins.scala.codeInspection.{AbstractFixOnPsiElement, PsiElementVisitorSimple, ScalaInspectionBundle}
 import org.jetbrains.plugins.scala.extensions._
@@ -53,10 +54,7 @@ class Source3Inspection extends LocalInspectionTool {
           holder.registerProblem(
             pattern,
             getDisplayName,
-            createReplacingQuickFix(gen, ScalaInspectionBundle.message("add.case")) { gen =>
-              ScalaPsiElementFactory.createExpressionFromText(s"for { case ${gen.getText} } ()", gen)(gen)
-                .asInstanceOf[ScFor].enumerators.head.generators.head
-            }
+            LocalQuickFix.from(new AddCaseToGeneratorQuickfix(gen)),
           )
         case ElementType(ScalaTokenTypes.tUNDER) if scala3ImportsAllowed && convertWildcardImport && isUpgradableImportWildcard(element) =>
           holder.registerProblem(
