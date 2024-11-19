@@ -1,0 +1,48 @@
+Document tests/pos/i15274.orig.scala
+(2:24..2:30) _empty_/Format# -> 1:6
+(2:31..2:35) _empty_/Format.Str#[Next] -> 2:12
+(2:46..2:52) _empty_/Format# -> 1:6
+(2:54..2:60) scala/Predef.String#
+(2:62..2:66) _empty_/Format.Str#[Next] -> 2:12
+(3:24..3:30) _empty_/Format# -> 1:6
+(3:31..3:35) _empty_/Format.Num#[Next] -> 3:12
+(3:46..3:52) _empty_/Format# -> 1:6
+(3:54..3:57) scala/Int#
+(3:59..3:63) _empty_/Format.Num#[Next] -> 3:12
+(4:30..4:36) scala/Predef.String#
+(4:44..4:50) _empty_/Format# -> 1:6
+(4:51..4:55) _empty_/Format.Constant#[Next] -> 4:17
+(4:66..4:72) _empty_/Format# -> 1:6
+(4:73..4:77) _empty_/Format.Constant#[Next] -> 4:17
+(5:21..5:27) _empty_/Format# -> 1:6
+(5:28..5:32) scala/Unit#
+(7:23..7:29) _empty_/Format# -> 1:6
+(7:30..7:31) _empty_/`i15274.orig$package`.printf().[A] -> 7:12
+(7:42..7:43) _empty_/`i15274.orig$package`.printf().[A] -> 7:12
+(7:46..7:50) scala/Unit#
+(7:54..7:60) _empty_/`i15274.orig$package`.printf().(format) -> 7:15
+(7:62..7:68) _empty_/`i15274.orig$package`.printf().(params) -> 7:34
+(8:9..8:15) _empty_/Format.
+(8:16..8:20) _empty_/Format.Done. -> 5:8
+(11:9..11:15) _empty_/Format.
+(11:16..11:24) _empty_/Format.Constant.
+(12:5..12:12) scala/Predef.println(+1).
+(12:13..12:18) local0 -> 11:25
+(13:5..13:11) _empty_/`i15274.orig$package`.printf(). -> 7:5
+(13:12..13:16) local1 -> 11:32
+(13:18..13:24) local2 -> 11:39
+(15:9..15:15) _empty_/Format.
+(15:16..15:19) _empty_/Format.Str.
+(16:5..16:12) scala/Predef.println(+1).
+(16:13..16:16) local5 -> 15:28
+(17:5..17:11) _empty_/`i15274.orig$package`.printf(). -> 7:5
+(17:12..17:16) local4 -> 15:20
+(17:18..17:22) local6 -> 15:33
+(19:9..19:15) _empty_/Format.
+(19:16..19:19) _empty_/Format.Num.
+(20:5..20:12) scala/Predef.println(+1).
+(20:13..20:14) local9 -> 19:28
+(21:5..21:11) _empty_/`i15274.orig$package`.printf(). -> 7:5
+(21:12..21:16) local8 -> 19:20
+(21:18..21:22) local10 -> 19:31
+

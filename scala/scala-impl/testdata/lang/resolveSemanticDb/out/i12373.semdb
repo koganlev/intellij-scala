@@ -77,13 +77,11 @@ Document tests/pos/i12373.scala
 (39:57..39:63) _empty_/ColumnSet.string(). -> 23:7
 (39:79..39:88) _empty_/ColumnSet.Singleton# -> 10:8
 (39:89..39:93) scala/Long#
-(39:95..39:101) _empty_/ColumnSet.Cons#Append# -> 18:10
 (39:102..39:111) _empty_/ColumnSet. -> 8:8
 (39:112..39:116) _empty_/ColumnSet.Cons# -> 17:21
 (39:117..39:123) scala/Predef.String#
 (39:125..39:134) _empty_/ColumnSet. -> 8:8
 (39:135..39:140) _empty_/ColumnSet.Empty# -> 9:8
-(39:143..39:149) _empty_/ColumnSet.Cons#Append# -> 18:10
 (39:150..39:159) _empty_/ColumnSet. -> 8:8
 (39:160..39:169) _empty_/ColumnSet.Singleton# -> 10:8
 (39:170..39:176) scala/Predef.String#

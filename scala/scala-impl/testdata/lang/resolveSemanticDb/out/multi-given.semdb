@@ -9,4 +9,6 @@ Document tests/pos/multi-given.scala
 (8:16..8:17) _empty_/B# -> 2:7
 (10:12..10:13) _empty_/A# -> 1:7
 (10:21..10:22) _empty_/B# -> 2:7
+(12:13..12:14) _empty_/A# -> 1:7
+(12:18..12:19) _empty_/B# -> 2:7
 

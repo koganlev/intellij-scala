@@ -8,6 +8,7 @@ Document tests/pos/i9568.scala
 (10:20..10:24) scala/Unit#
 (10:28..10:31) scala/Predef.`???`().
 (11:31..11:36) _empty_/Monad# -> 1:7
+(11:31..11:36) _empty_/Test1.blaMonad().[F] -> 11:25
 (11:42..11:47) _empty_/Monad# -> 1:7
 (11:62..11:65) _empty_/Bla# -> 5:7
 (11:66..11:67) _empty_/Test1.blaMonad().[F] -> 11:25

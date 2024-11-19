@@ -1,0 +1,31 @@
+Document tests/pos/i18253.orig.scala
+(1:8..1:19) scala/compiletime/
+(1:20..1:23) scala/compiletime/ops/
+(1:24..1:27) scala/compiletime/ops/int.
+(3:19..3:22) scala/Int#
+(5:16..5:19) scala/Int#
+(7:15..7:18) scala/Int#
+(7:25..7:31) _empty_/DFSInt# -> 3:7
+(7:32..7:33) _empty_/Candidate.given_Candidate_R#[W] -> 7:10
+(7:32..7:33) _empty_/Candidate.given_Candidate_R().[W] -> 7:10
+(7:39..7:48) _empty_/Candidate# -> 4:7
+(7:49..7:50) _empty_/Candidate.given_Candidate_R#[R] -> 7:20
+(8:17..8:18) _empty_/Candidate.given_Candidate_R#[W] -> 7:10
+(10:17..10:18) _empty_/`i18253.orig$package`.foo().[R] -> 10:9
+(10:31..10:40) _empty_/Candidate# -> 4:7
+(10:41..10:42) _empty_/`i18253.orig$package`.foo().[R] -> 10:9
+(10:46..10:52) _empty_/DFSInt# -> 3:7
+(10:53..10:56) scala/compiletime/ops/int.Max#
+(10:60..10:63) _empty_/`i18253.orig$package`.foo().(icR) -> 10:26
+(10:64..10:68) _empty_/Candidate#OutW# -> 5:8
+(10:73..10:76) scala/Predef.`???`().
+(13:19..13:20) _empty_/Test.check().[A] -> 13:13
+(13:28..13:31) scala/Int#
+(13:38..13:42) scala/Unit#
+(13:45..13:48) scala/Predef.`???`().
+(14:10..14:16) _empty_/DFSInt# -> 3:7
+(14:22..14:25) scala/Predef.`???`().
+(15:3..15:8) _empty_/Test.check(). -> 13:7
+(15:9..15:12) _empty_/`i18253.orig$package`.foo(). -> 10:5
+(15:13..15:14) _empty_/Test.x. -> 14:7
+

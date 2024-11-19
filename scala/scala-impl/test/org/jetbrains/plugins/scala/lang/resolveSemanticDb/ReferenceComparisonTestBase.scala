@@ -28,6 +28,10 @@ abstract class ReferenceComparisonTestBase_Scala3 extends ReferenceComparisonTes
   override protected def supportedIn(version: ScalaVersion): Boolean = version >= LatestScalaVersions.Scala_3_0
   // do not spam on in output in failed tests, we have too much of them currently
   override protected def reportFailedTestContextDetails: Boolean = false
+
+
+  // Mute "Tree access disabled" exceptions as workaround for #SCL-22994
+  override protected def includeScalaLibrarySources: Boolean = false
 }
 
 abstract class ReferenceComparisonTestBase extends ComparisonTestBase {

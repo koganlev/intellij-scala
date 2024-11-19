@@ -22,6 +22,7 @@ Document tests/pos/i3965a.scala
 (10:66..10:68) _empty_/Test#optionSequence1().[CC] -> 10:23
 (10:70..10:72) _empty_/Test#optionSequence1().[CC] -> 10:23
 (10:73..10:74) _empty_/Test#optionSequence1().[CC][X] -> 10:26
+(10:82..10:90) _empty_/Test#optionSequence1().[A] -> 10:78
 (10:82..10:90) scala/package.Ordering#
 (10:96..10:98) _empty_/Test#optionSequence1().[CC] -> 10:23
 (10:99..10:100) _empty_/Test#optionSequence1().[A] -> 10:78

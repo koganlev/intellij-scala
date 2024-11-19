@@ -32,11 +32,10 @@
 [101,102]: Ident
 [105,160]: DefDef
 [114,120]: TypeDef
-[115,120]: ContextBounds
-[115,115]: TypeBoundsTree
-[115,120]: AppliedTypeTree
+[117,120]: ContextBounds
+[117,117]: TypeBoundsTree
+[117,120]: ContextBoundTypeTree
 [117,120]: Ident
-[120,120]: Ident
 [131,150]: ValDef
 [134,137]: Ident
 [140,150]: New

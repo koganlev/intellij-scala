@@ -4,6 +4,7 @@ Document tests/pos/Monoid.scala
 (4:23..4:24) strawman/typeclasses/SemiGroup#[T] -> 3:17
 (4:27..4:28) strawman/typeclasses/SemiGroup#[T] -> 3:17
 (8:35..8:44) strawman/typeclasses/SemiGroup# -> 3:7
+(8:35..8:44) strawman/typeclasses/SemiGroup.Ops#InfixAppend#[T] -> 8:32
 (8:52..8:53) strawman/typeclasses/SemiGroup.Ops#InfixAppend#[T] -> 8:32
 (9:23..9:24) strawman/typeclasses/SemiGroup.Ops#InfixAppend#[T] -> 8:32
 (9:27..9:28) strawman/typeclasses/SemiGroup.Ops#InfixAppend#[T] -> 8:32
@@ -29,6 +30,7 @@ Document tests/pos/Monoid.scala
 (28:21..28:30) strawman/typeclasses/SemiGroup. -> 6:8
 (28:31..28:34) strawman/typeclasses/SemiGroup.Ops# -> 7:9
 (29:36..29:40) strawman/typeclasses/Ring# -> 22:7
+(29:36..29:40) strawman/typeclasses/Ring.Ops#InfixProduct#[T] -> 29:33
 (29:48..29:49) strawman/typeclasses/Ring.Ops#InfixProduct#[T] -> 29:33
 (30:23..30:24) strawman/typeclasses/Ring.Ops#InfixProduct#[T] -> 29:33
 (30:27..30:28) strawman/typeclasses/Ring.Ops#InfixProduct#[T] -> 29:33

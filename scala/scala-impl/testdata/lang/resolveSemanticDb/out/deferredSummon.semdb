@@ -1,0 +1,50 @@
+Document tests/pos/deferredSummon.scala
+(2:8..2:19) scala/compiletime/
+(2:20..2:28) scala/compiletime/package$package.deferred().
+(6:15..6:19) _empty_/Ord#Self# -> 5:8
+(6:24..6:28) _empty_/Ord#Self# -> 5:8
+(6:31..6:38) scala/Boolean#
+(10:9..10:13) _empty_/A#Elem# -> 9:8
+(10:14..10:16) scala/Predef.is#
+(10:17..10:20) _empty_/Ord# -> 4:7
+(11:13..11:19) scala/Predef.summon().
+(11:20..11:24) _empty_/A#Elem# -> 9:8
+(11:25..11:27) scala/Predef.is#
+(11:28..11:31) _empty_/Ord# -> 4:7
+(14:14..14:17) _empty_/B#Elem# -> 14:8
+(14:14..14:17) _empty_/Ord# -> 4:7
+(15:13..15:19) scala/Predef.summon().
+(15:20..15:24) _empty_/B#Elem# -> 14:8
+(15:25..15:27) scala/Predef.is#
+(15:28..15:31) _empty_/Ord# -> 4:7
+(18:9..18:12) scala/Int#
+(18:13..18:15) scala/Predef.is#
+(18:16..18:19) _empty_/Ord# -> 4:7
+(19:17..19:20) scala/Int#
+(19:25..19:28) scala/Int#
+(19:32..19:33) _empty_/Inst.given_is_Int_Ord.less().(x) -> 19:14
+(19:34..19:35) scala/Int#`<`(+3).
+(19:36..19:37) _empty_/Inst.given_is_Int_Ord.less().(y) -> 19:22
+(22:10..22:14) _empty_/Inst. -> 17:8
+(23:19..23:20) _empty_/A# -> 8:7
+(24:17..24:20) scala/Int#
+(25:20..25:21) _empty_/A# -> 8:7
+(26:17..26:20) scala/Int#
+(27:9..27:10) _empty_/A# -> 8:7
+(28:17..28:20) scala/Int#
+(30:13..30:16) _empty_/D1#[T] -> 30:10
+(30:13..30:16) _empty_/Ord# -> 4:7
+(30:26..30:27) _empty_/B# -> 13:7
+(31:15..31:16) _empty_/D1#[T] -> 30:10
+(34:10..34:14) _empty_/Inst. -> 17:8
+(35:19..35:20) _empty_/B# -> 13:7
+(36:17..36:20) scala/Int#
+(37:20..37:21) _empty_/B# -> 13:7
+(38:17..38:20) scala/Int#
+(39:9..39:10) _empty_/B# -> 13:7
+(40:17..40:20) scala/Int#
+(42:13..42:16) _empty_/D2#[T] -> 42:10
+(42:13..42:16) _empty_/Ord# -> 4:7
+(42:26..42:27) _empty_/B# -> 13:7
+(43:15..43:16) _empty_/D2#[T] -> 42:10
+

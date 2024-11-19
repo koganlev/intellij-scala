@@ -8,7 +8,7 @@ object Test1 {
 
   // But not with newstyle
   /*
-  given [A]: Conversion[A, Foo[A]] with
+  given [A]: Conversion[A, Foo[A]]:
     def apply(a: A) = new Foo[A]:
       def foo[C]: C => A = _ => a
   */
@@ -201,7 +201,7 @@ ScalaFile
         PsiWhiteSpace('\n\n  ')
         PsiComment(comment)('// But not with newstyle')
         PsiWhiteSpace('\n  ')
-        PsiComment(BlockComment)('/*\n  given [A]: Conversion[A, Foo[A]] with\n    def apply(a: A) = new Foo[A]:\n      def foo[C]: C => A = _ => a\n  */')
+        PsiComment(BlockComment)('/*\n  given [A]: Conversion[A, Foo[A]]:\n    def apply(a: A) = new Foo[A]:\n      def foo[C]: C => A = _ => a\n  */')
         PsiWhiteSpace('\n\n  ')
         ReferenceExpression: 1.foo.foo
           ReferenceExpression: 1.foo

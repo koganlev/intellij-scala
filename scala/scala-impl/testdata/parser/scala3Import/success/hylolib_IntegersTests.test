@@ -1,0 +1,192 @@
+//> using options -language:experimental.modularity -source future
+import hylo.*
+import hylo.given
+
+class IntegersTests extends munit.FunSuite:
+
+    test("Int.hashInto"):
+        val x = Hasher.hash(42)
+        val y = Hasher.hash(42)
+        assertEquals(x, y)
+
+        val z = Hasher.hash(1337)
+        assertNotEquals(x, z)
+
+-----
+ScalaFile
+  PsiElement(SCALA_DIRECTIVE)
+    ScDirectiveToken(tDIRECTIVE_PREFIX)('//>')
+    PsiWhiteSpace(' ')
+    ScDirectiveToken(tDIRECTIVE_COMMAND)('using')
+    PsiWhiteSpace(' ')
+    ScDirectiveToken(tDIRECTIVE_KEY)('options')
+    PsiWhiteSpace(' ')
+    ScDirectiveToken(tDIRECTIVE_VALUE)('-language:experimental.modularity')
+    PsiWhiteSpace(' ')
+    ScDirectiveToken(tDIRECTIVE_VALUE)('-source')
+    PsiWhiteSpace(' ')
+    ScDirectiveToken(tDIRECTIVE_VALUE)('future')
+  PsiWhiteSpace('\n')
+  ScImportStatement
+    PsiElement(import)('import')
+    PsiWhiteSpace(' ')
+    ImportExpression
+      CodeReferenceElement: hylo
+        PsiElement(identifier)('hylo')
+      PsiElement(.)('.')
+      PsiElement(*)('*')
+  PsiWhiteSpace('\n')
+  ScImportStatement
+    PsiElement(import)('import')
+    PsiWhiteSpace(' ')
+    ImportExpression
+      CodeReferenceElement: hylo
+        PsiElement(identifier)('hylo')
+      PsiElement(.)('.')
+      ImportSelectors
+        ImportSelector
+          PsiElement(given)('given')
+  PsiWhiteSpace('\n\n')
+  ScClass: IntegersTests
+    AnnotationsList
+      <empty list>
+    Modifiers
+      <empty list>
+    PsiElement(class)('class')
+    PsiWhiteSpace(' ')
+    PsiElement(identifier)('IntegersTests')
+    PrimaryConstructor
+      AnnotationsList
+        <empty list>
+      Modifiers
+        <empty list>
+      Parameters
+        <empty list>
+    PsiWhiteSpace(' ')
+    ExtendsBlock
+      PsiElement(extends)('extends')
+      PsiWhiteSpace(' ')
+      TemplateParents
+        ConstructorInvocation
+          SimpleType: munit.FunSuite
+            CodeReferenceElement: munit.FunSuite
+              CodeReferenceElement: munit
+                PsiElement(identifier)('munit')
+              PsiElement(.)('.')
+              PsiElement(identifier)('FunSuite')
+      ScTemplateBody
+        PsiElement(:)(':')
+        PsiWhiteSpace('\n\n    ')
+        MethodCall
+          MethodCall
+            ReferenceExpression: test
+              PsiElement(identifier)('test')
+            ArgumentList
+              PsiElement(()('(')
+              StringLiteral
+                PsiElement(string content)('"Int.hashInto"')
+              PsiElement())(')')
+          ArgumentList
+            BlockExpression
+              PsiElement(:)(':')
+              PsiWhiteSpace('\n        ')
+              ScPatternDefinition: x
+                AnnotationsList
+                  <empty list>
+                Modifiers
+                  <empty list>
+                PsiElement(val)('val')
+                PsiWhiteSpace(' ')
+                ListOfPatterns
+                  ReferencePattern: x
+                    PsiElement(identifier)('x')
+                PsiWhiteSpace(' ')
+                PsiElement(=)('=')
+                PsiWhiteSpace(' ')
+                MethodCall
+                  ReferenceExpression: Hasher.hash
+                    ReferenceExpression: Hasher
+                      PsiElement(identifier)('Hasher')
+                    PsiElement(.)('.')
+                    PsiElement(identifier)('hash')
+                  ArgumentList
+                    PsiElement(()('(')
+                    IntegerLiteral
+                      PsiElement(integer)('42')
+                    PsiElement())(')')
+              PsiWhiteSpace('\n        ')
+              ScPatternDefinition: y
+                AnnotationsList
+                  <empty list>
+                Modifiers
+                  <empty list>
+                PsiElement(val)('val')
+                PsiWhiteSpace(' ')
+                ListOfPatterns
+                  ReferencePattern: y
+                    PsiElement(identifier)('y')
+                PsiWhiteSpace(' ')
+                PsiElement(=)('=')
+                PsiWhiteSpace(' ')
+                MethodCall
+                  ReferenceExpression: Hasher.hash
+                    ReferenceExpression: Hasher
+                      PsiElement(identifier)('Hasher')
+                    PsiElement(.)('.')
+                    PsiElement(identifier)('hash')
+                  ArgumentList
+                    PsiElement(()('(')
+                    IntegerLiteral
+                      PsiElement(integer)('42')
+                    PsiElement())(')')
+              PsiWhiteSpace('\n        ')
+              MethodCall
+                ReferenceExpression: assertEquals
+                  PsiElement(identifier)('assertEquals')
+                ArgumentList
+                  PsiElement(()('(')
+                  ReferenceExpression: x
+                    PsiElement(identifier)('x')
+                  PsiElement(,)(',')
+                  PsiWhiteSpace(' ')
+                  ReferenceExpression: y
+                    PsiElement(identifier)('y')
+                  PsiElement())(')')
+              PsiWhiteSpace('\n\n        ')
+              ScPatternDefinition: z
+                AnnotationsList
+                  <empty list>
+                Modifiers
+                  <empty list>
+                PsiElement(val)('val')
+                PsiWhiteSpace(' ')
+                ListOfPatterns
+                  ReferencePattern: z
+                    PsiElement(identifier)('z')
+                PsiWhiteSpace(' ')
+                PsiElement(=)('=')
+                PsiWhiteSpace(' ')
+                MethodCall
+                  ReferenceExpression: Hasher.hash
+                    ReferenceExpression: Hasher
+                      PsiElement(identifier)('Hasher')
+                    PsiElement(.)('.')
+                    PsiElement(identifier)('hash')
+                  ArgumentList
+                    PsiElement(()('(')
+                    IntegerLiteral
+                      PsiElement(integer)('1337')
+                    PsiElement())(')')
+              PsiWhiteSpace('\n        ')
+              MethodCall
+                ReferenceExpression: assertNotEquals
+                  PsiElement(identifier)('assertNotEquals')
+                ArgumentList
+                  PsiElement(()('(')
+                  ReferenceExpression: x
+                    PsiElement(identifier)('x')
+                  PsiElement(,)(',')
+                  PsiWhiteSpace(' ')
+                  ReferenceExpression: z
+                    PsiElement(identifier)('z')
+                  PsiElement())(')')

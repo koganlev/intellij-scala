@@ -29,16 +29,21 @@ Document tests/pos/i8530.scala
 (17:57..17:61) scala/Some.
 (17:62..17:63) _empty_/MyWhiteboxUnapply.unapply().(x) -> 17:34
 (19:11..19:15) scala/Unit#
-(22:32..22:33) local8 -> 22:26
+(21:10..21:27) _empty_/MyBoooleanUnapply. -> 1:8
+(22:10..22:25) _empty_/MyOptionUnapply. -> 4:8
+(22:32..22:33) local0 -> 22:26
 (22:35..22:39) scala/Long#
-(23:35..23:36) local14 -> 23:29
+(23:10..23:28) _empty_/MyUnapplyImplicits. -> 7:8
+(23:35..23:36) local1 -> 23:29
 (23:38..23:42) scala/Long#
-(24:30..24:31) local19 -> 24:24
+(24:10..24:23) _empty_/MyPolyUnapply. -> 10:8
+(24:30..24:31) local2 -> 24:24
 (24:33..24:36) scala/Int#
-(25:33..25:34) local24 -> 25:23
+(25:10..25:22) _empty_/MySeqUnapply. -> 13:8
+(25:33..25:34) local3 -> 25:23
 (25:36..25:39) scala/Int#
-(25:41..25:42) local25 -> 25:26
+(25:41..25:42) local4 -> 25:26
 (25:44..25:47) scala/Int#
-(26:34..26:35) local30 -> 26:28
+(26:34..26:35) local9 -> 26:28
 (26:37..26:40) scala/Int#
 

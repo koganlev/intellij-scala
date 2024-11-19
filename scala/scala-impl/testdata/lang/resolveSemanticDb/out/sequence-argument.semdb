@@ -12,6 +12,7 @@ Document tests/pos/sequence-argument/B_2.scala
 (5:36..5:39) scala/package.Seq.
 (5:40..5:41) _empty_/B.doubleSeq().(x) -> 5:20
 (5:43..5:44) _empty_/B.doubleSeq().(x) -> 5:20
+(6:22..6:30) _empty_/B.doubleArray().[T] -> 6:19
 (6:22..6:30) scala/reflect/ClassTag#
 (6:35..6:36) _empty_/B.doubleArray().[T] -> 6:19
 (6:39..6:44) scala/Array#

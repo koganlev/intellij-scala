@@ -1,6 +1,7 @@
 Document tests/pos/spec-params-old.scala
 (1:12..1:23) scala/specialized#
 (1:27..1:32) scala/
+(1:27..1:54) _empty_/Foo#[A] -> 1:24
 (1:33..1:40) scala/reflect/
 (1:41..1:54) scala/reflect/package.ClassManifest#
 (6:11..6:22) scala/specialized#

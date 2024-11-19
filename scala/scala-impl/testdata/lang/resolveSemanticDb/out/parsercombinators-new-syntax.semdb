@@ -1,0 +1,102 @@
+Document tests/pos/parsercombinators-new-syntax.scala
+(2:8..2:18) scala/collection/
+(2:19..2:26) scala/collection/mutable/
+(10:20..10:24) _empty_/Combinator#Self# -> 6:8
+(12:19..12:24) _empty_/Combinator#Input# -> 7:8
+(12:27..12:33) scala/Option#
+(12:34..12:40) _empty_/Combinator#Result# -> 8:8
+(13:5..13:15) _empty_/Combinator# -> 5:7
+(15:32..15:33) _empty_/Apply#[I] -> 15:18
+(15:37..15:43) scala/Option#
+(15:44..15:45) _empty_/Apply#[R] -> 15:21
+(16:33..16:34) _empty_/Combine#[A] -> 16:20
+(16:44..16:45) _empty_/Combine#[B] -> 16:23
+(18:17..18:22) _empty_/Apply# -> 15:12
+(18:23..18:24) _empty_/`parsercombinators-new-syntax$package`.given_is_Apply_Combinator#[I] -> 18:8
+(18:26..18:27) _empty_/`parsercombinators-new-syntax$package`.given_is_Apply_Combinator#[R] -> 18:11
+(18:29..18:31) scala/Predef.is#
+(18:32..18:42) _empty_/Combinator# -> 5:7
+(19:16..19:17) _empty_/`parsercombinators-new-syntax$package`.given_is_Apply_Combinator#[I] -> 18:8
+(20:17..20:18) _empty_/`parsercombinators-new-syntax$package`.given_is_Apply_Combinator#[R] -> 18:11
+(21:20..21:25) _empty_/Apply# -> 15:12
+(21:26..21:27) _empty_/`parsercombinators-new-syntax$package`.given_is_Apply_Combinator#[I] -> 18:8
+(21:29..21:30) _empty_/`parsercombinators-new-syntax$package`.given_is_Apply_Combinator#[R] -> 18:11
+(22:19..22:20) _empty_/`parsercombinators-new-syntax$package`.given_is_Apply_Combinator#[I] -> 18:8
+(22:23..22:29) scala/Option#
+(22:30..22:31) _empty_/`parsercombinators-new-syntax$package`.given_is_Apply_Combinator#[R] -> 18:11
+(22:35..22:39) _empty_/`parsercombinators-new-syntax$package`.given_is_Apply_Combinator#parse().(self) -> 21:14
+(22:40..22:46) _empty_/Apply#action. -> 15:24
+(22:47..22:49) _empty_/`parsercombinators-new-syntax$package`.given_is_Apply_Combinator#parse().(in) -> 22:15
+(24:11..24:21) _empty_/Combinator# -> 5:7
+(24:11..24:21) _empty_/`parsercombinators-new-syntax$package`.given_is_Combine_Combinator#[A] -> 24:8
+(24:11..24:21) _empty_/`parsercombinators-new-syntax$package`.given_is_Combine_Combinator().[A] -> 24:8
+(24:26..24:36) _empty_/Combinator# -> 5:7
+(24:26..24:61) _empty_/`parsercombinators-new-syntax$package`.given_is_Combine_Combinator#[B] -> 24:23
+(24:26..24:61) _empty_/`parsercombinators-new-syntax$package`.given_is_Combine_Combinator().[B] -> 24:23
+(24:52..24:53) _empty_/`parsercombinators-new-syntax$package`.given_is_Combine_Combinator#`<init>`().(evidence$1)
+(24:52..24:53) _empty_/`parsercombinators-new-syntax$package`.given_is_Combine_Combinator().(evidence$1) -> 24:11
+(24:54..24:59) _empty_/Combinator#Input# -> 7:8
+(25:8..25:15) _empty_/Combine# -> 16:12
+(25:16..25:17) _empty_/`parsercombinators-new-syntax$package`.given_is_Combine_Combinator#[A] -> 24:8
+(25:19..25:20) _empty_/`parsercombinators-new-syntax$package`.given_is_Combine_Combinator#[B] -> 24:23
+(25:22..25:24) scala/Predef.is#
+(25:25..25:35) _empty_/Combinator# -> 5:7
+(26:16..26:17) _empty_/`parsercombinators-new-syntax$package`.given_is_Combine_Combinator#evidence$1. -> 24:11
+(26:18..26:23) _empty_/Combinator#Input# -> 7:8
+(27:18..27:19) _empty_/`parsercombinators-new-syntax$package`.given_is_Combine_Combinator#evidence$1. -> 24:11
+(27:20..27:26) _empty_/Combinator#Result# -> 8:8
+(27:28..27:29) _empty_/`parsercombinators-new-syntax$package`.given_is_Combine_Combinator#evidence$2. -> 24:26
+(27:30..27:36) _empty_/Combinator#Result# -> 8:8
+(28:20..28:27) _empty_/Combine# -> 16:12
+(28:28..28:29) _empty_/`parsercombinators-new-syntax$package`.given_is_Combine_Combinator#[A] -> 24:8
+(28:31..28:32) _empty_/`parsercombinators-new-syntax$package`.given_is_Combine_Combinator#[B] -> 24:23
+(29:19..29:24) _empty_/`parsercombinators-new-syntax$package`.given_is_Combine_Combinator#Input# -> 26:8
+(29:27..29:33) scala/Option#
+(29:34..29:40) _empty_/`parsercombinators-new-syntax$package`.given_is_Combine_Combinator#Result# -> 27:8
+(30:16..30:20) _empty_/`parsercombinators-new-syntax$package`.given_is_Combine_Combinator#parse().(self) -> 28:14
+(30:21..30:26) _empty_/Combine#first. -> 16:26
+(30:27..30:32) _empty_/Combinator#parse(). -> 12:9
+(30:33..30:35) _empty_/`parsercombinators-new-syntax$package`.given_is_Combine_Combinator#parse().(in) -> 29:15
+(30:43..30:47) _empty_/`parsercombinators-new-syntax$package`.given_is_Combine_Combinator#parse().(self) -> 28:14
+(30:48..30:54) _empty_/Combine#second. -> 16:36
+(30:55..30:60) _empty_/Combinator#parse(). -> 12:9
+(30:61..30:63) _empty_/`parsercombinators-new-syntax$package`.given_is_Combine_Combinator#parse().(in) -> 29:15
+(30:72..30:73) local3 -> 30:11
+(30:75..30:76) local4 -> 30:38
+(32:21..32:28) scala/collection/mutable/
+(32:29..32:39) scala/collection/mutable/ListBuffer#
+(32:40..32:41) _empty_/`parsercombinators-new-syntax$package`.popFirst().[A] -> 32:12
+(33:6..33:9) _empty_/`parsercombinators-new-syntax$package`.popFirst().(buf) -> 32:16
+(33:10..33:17) scala/collection/mutable/ListBuffer#isEmpty().
+(33:23..33:27) scala/None.
+(34:12..34:16) scala/Some.
+(34:17..34:20) _empty_/`parsercombinators-new-syntax$package`.popFirst().(buf) -> 32:16
+(34:21..34:25) scala/collection/IterableOps#head().
+(34:35..34:38) _empty_/`parsercombinators-new-syntax$package`.popFirst().(buf) -> 32:16
+(34:39..34:45) scala/collection/mutable/ListBuffer#remove().
+(36:2..36:6) scala/main#
+(36:18..36:22) scala/Unit#
+(37:19..37:21) scala/runtime/RichInt#to().
+(37:26..37:32) scala/collection/IterableOnceOps#toList().
+(38:16..38:22) local14 -> 37:7
+(38:23..38:25) scala/collection/IterableOnceOps#to().
+(38:26..38:33) scala/collection/mutable/
+(38:34..38:44) scala/collection/mutable/ListBuffer.
+(40:11..40:16) _empty_/Apply.
+(40:17..40:24) scala/collection/mutable/
+(40:25..40:35) scala/collection/mutable/ListBuffer#
+(40:36..40:39) scala/Int#
+(40:42..40:45) scala/Int#
+(40:52..40:53) local16 -> 40:47
+(40:54..40:62) _empty_/`parsercombinators-new-syntax$package`.popFirst(). -> 32:48
+(41:11..41:18) _empty_/Combine.
+(41:19..41:20) local17 -> 40:7
+(41:22..41:23) local17 -> 40:7
+(43:11..43:12) local18 -> 41:7
+(43:13..43:18) _empty_/`parsercombinators-new-syntax$package`.given_is_Combine_Combinator#parse(). -> 29:9
+(43:19..43:25) local15 -> 38:7
+(44:11..44:17) scala/Option#
+(44:19..44:22) scala/Int#
+(44:24..44:27) scala/Int#
+(44:32..44:33) local19 -> 43:7
+

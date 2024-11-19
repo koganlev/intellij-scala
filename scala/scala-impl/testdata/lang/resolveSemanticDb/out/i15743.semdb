@@ -9,7 +9,7 @@ Document tests/pos/i15743.scala
 (5:23..5:26) _empty_/Bar# -> 1:12
 (5:33..5:34) local1 -> 5:20
 (5:35..5:36) _empty_/Bar#x. -> 1:32
-(5:37..5:41) scala/NonEmptyTuple#head().
+(5:37..5:41) scala/Tuple#head().
 (5:42..5:45) scala/Int#
 (5:46..5:48) scala/`*:`#
 (5:49..5:50) local0 -> 5:27

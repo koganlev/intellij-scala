@@ -1,0 +1,48 @@
+Document tests/pos/i20053b.scala
+(2:19..2:20) _empty_/Sub#[R] -> 2:11
+(3:16..3:17) _empty_/i20053b$package.given_Sub_R_T#[R] -> 3:8
+(3:16..3:17) _empty_/i20053b$package.given_Sub_R_T().[R] -> 3:8
+(3:22..3:25) _empty_/Sub# -> 2:7
+(3:26..3:27) _empty_/i20053b$package.given_Sub_R_T#[R] -> 3:8
+(3:29..3:30) _empty_/i20053b$package.given_Sub_R_T#[T] -> 3:11
+(7:14..7:23) _empty_/Candidate# -> 5:7
+(7:24..7:30) scala/Option#
+(7:31..7:32) _empty_/i20053b$package.given_Candidate_Option#[P] -> 7:8
+(8:15..8:16) _empty_/i20053b$package.given_Candidate_Option#[P] -> 7:8
+(10:20..10:21) _empty_/i20053b$package.`^^^`().[L] -> 10:12
+(11:19..11:25) scala/Option#
+(11:26..11:27) _empty_/i20053b$package.`^^^`().[P] -> 11:11
+(12:24..12:27) _empty_/Sub# -> 2:7
+(12:28..12:31) _empty_/i20053b$package.`^^^`().(lhs) -> 10:15
+(12:38..12:41) scala/Any#
+(13:23..13:32) _empty_/Candidate# -> 5:7
+(13:33..13:34) _empty_/i20053b$package.`^^^`().[L] -> 10:12
+(14:27..14:28) _empty_/i20053b$package.`^^^`().(c) -> 13:20
+(14:34..14:37) scala/`<:<`#
+(14:38..14:41) scala/Any#
+(14:44..14:50) scala/Option#
+(14:51..14:52) _empty_/i20053b$package.`^^^`().(c) -> 13:20
+(14:53..14:57) _empty_/Candidate#OutP# -> 6:8
+(14:61..14:64) scala/Predef.`???`().
+(16:8..16:14) scala/Option#
+(16:15..16:22) scala/Boolean#
+(16:26..16:29) scala/Predef.`???`().
+(18:10..18:11) _empty_/i20053b$package.x. -> 16:5
+(18:12..18:15) _empty_/i20053b$package.`^^^`(). -> 11:7
+(18:16..18:17) _empty_/i20053b$package.x. -> 16:5
+(19:10..19:12) _empty_/i20053b$package.z1. -> 18:5
+(19:13..19:16) _empty_/i20053b$package.`^^^`(). -> 11:7
+(19:17..19:18) _empty_/i20053b$package.x. -> 16:5
+(20:10..20:13) _empty_/i20053b$package.`^^^`(). -> 11:7
+(20:14..20:20) scala/Option#
+(20:21..20:28) scala/Boolean#
+(20:31..20:32) _empty_/i20053b$package.x. -> 16:5
+(20:33..20:36) _empty_/i20053b$package.`^^^`(). -> 11:7
+(20:37..20:38) _empty_/i20053b$package.x. -> 16:5
+(20:40..20:41) _empty_/i20053b$package.x. -> 16:5
+(22:11..22:12) _empty_/i20053b$package.x. -> 16:5
+(22:13..22:16) _empty_/i20053b$package.`^^^`(). -> 11:7
+(22:17..22:18) _empty_/i20053b$package.x. -> 16:5
+(22:19..22:22) _empty_/i20053b$package.`^^^`(). -> 11:7
+(22:23..22:24) _empty_/i20053b$package.x. -> 16:5
+

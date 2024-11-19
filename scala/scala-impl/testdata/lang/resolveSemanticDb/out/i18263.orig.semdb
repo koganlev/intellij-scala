@@ -1,0 +1,20 @@
+Document tests/pos/i18263.orig.scala
+(2:29..2:34) _empty_/Scope# -> 1:14
+(3:23..3:29) _empty_/Domain# -> 2:14
+(6:19..6:24) _empty_/Scope# -> 1:14
+(6:27..6:30) _empty_/Baz# -> 5:7
+(6:31..6:33) _empty_/`i18263.orig$package`.baz().(ck) -> 6:15
+(6:42..6:45) scala/Predef.`???`().
+(8:19..8:24) scala/
+(8:25..8:32) scala/reflect/
+(8:33..8:43) scala/reflect/Selectable#
+(9:17..9:23) _empty_/Domain# -> 2:14
+(10:25..10:31) _empty_/Foo#TScope# -> 9:8
+(10:34..10:40) _empty_/Domain. -> 3:8
+(13:23..13:26) _empty_/Foo# -> 8:7
+(14:18..14:21) _empty_/Foo# -> 8:7
+(15:15..15:18) _empty_/`i18263.orig$package`.baz(). -> 6:5
+(16:11..16:20) _empty_/ID.internal1. -> 13:7
+(16:21..16:23) scala/reflect/Selectable#selectDynamic().
+(16:24..16:25) scala/reflect/Selectable#selectDynamic().
+

@@ -8,6 +8,7 @@ Document tests/pos/opaque-immutable-array.scala
 (3:20..3:26) java/util/Arrays#
 (5:28..5:33) scala/Array#
 (5:34..5:36) _empty_/ia.IArray#[A1] -> 5:22
+(8:18..8:26) _empty_/ia.IArray.apply().[A] -> 8:15
 (8:18..8:26) scala/reflect/ClassTag#
 (8:32..8:33) _empty_/ia.IArray.apply().[A] -> 8:15
 (8:38..8:48) _empty_/ia.IArray.initialize(). -> 10:9
@@ -31,6 +32,7 @@ Document tests/pos/opaque-immutable-array.scala
 (12:47..12:48) _empty_/ia.IArray.get().(i) -> 12:31
 (15:21..15:27) scala/AnyRef#
 (15:30..15:34) scala/math/
+(15:30..15:43) _empty_/ia.IArray.sorted().[A] -> 15:16
 (15:35..15:43) scala/math/Ordering#
 (15:49..15:55) _empty_/ia.IArray# -> 5:15
 (15:56..15:57) _empty_/ia.IArray.sorted().[A] -> 15:16

@@ -54,11 +54,15 @@ Document tests/pos/i9530.scala
 (28:18..28:24) _empty_/Monkey# -> 16:7
 (30:13..30:16) scala/package.Seq.
 (31:3..31:9) _empty_/i9530$package.monkey. -> 28:5
+(31:10..31:15) _empty_/Animal.food1(). -> 10:63
 (32:3..32:9) _empty_/i9530$package.monkey. -> 28:5
+(32:10..32:15) _empty_/Animal.food2(). -> 11:63
 (33:3..33:9) _empty_/i9530$package.monkey. -> 28:5
 (33:10..33:15) _empty_/i9530$package.food3(). -> 13:61
 (34:3..34:9) _empty_/i9530$package.monkey. -> 28:5
 (34:10..34:15) _empty_/i9530$package.food4(). -> 14:61
 (35:3..35:9) _empty_/i9530$package.monkey. -> 28:5
+(35:10..35:15) _empty_/i9530$package.given_FoodOps.food5(). -> 24:63
 (36:3..36:9) _empty_/i9530$package.monkey. -> 28:5
+(36:10..36:15) _empty_/i9530$package.given_FoodOps.food6(). -> 25:63
 

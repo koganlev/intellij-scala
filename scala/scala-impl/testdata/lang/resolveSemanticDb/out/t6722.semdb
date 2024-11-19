@@ -11,9 +11,9 @@ Document tests/pos/t6722.scala
 (5:37..5:38) _empty_/Dyn#get().[T] -> 5:11
 (9:17..9:20) _empty_/Dyn# -> 3:7
 (10:3..10:6) _empty_/Foo.dyn. -> 9:7
-(10:6..10:10) _empty_/Dyn#selectDynamic(). -> 4:7
-(10:10..10:14) _empty_/Dyn#selectDynamic(). -> 4:7
-(10:14..10:18) _empty_/Dyn#selectDynamic(). -> 4:7
+(10:7..10:10) _empty_/Dyn#selectDynamic(). -> 4:7
+(10:11..10:14) _empty_/Dyn#selectDynamic(). -> 4:7
+(10:15..10:18) _empty_/Dyn#selectDynamic(). -> 4:7
 (10:19..10:22) _empty_/Dyn#get(). -> 5:7
 (10:23..10:29) scala/Predef.String#
 

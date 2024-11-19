@@ -6,22 +6,24 @@ Document tests/pos/i15670.scala
 (2:51..2:54) scala/Predef.`???`().
 (5:24..5:28) _empty_/Read# -> 4:7
 (5:29..5:30) _empty_/Codec#[T] -> 5:13
-(8:27..8:46) _empty_/CodecTypeProjection# -> 6:7
-(8:49..8:54) scala/
-(8:55..8:65) scala/Conversion#
-(8:66..8:67) _empty_/JsonTransform.SetCodec().[C] -> 8:21
-(8:68..8:69) _empty_/JsonTransform.SetCodec().[T] -> 8:18
-(8:72..8:73) _empty_/JsonTransform.SetCodec().[C] -> 8:21
-(8:74..8:77) scala/Predef.Set#
-(8:78..8:79) _empty_/JsonTransform.SetCodec().[T] -> 8:18
-(8:85..8:88) scala/Predef.`???`().
-(9:30..9:49) _empty_/CodecTypeProjection# -> 6:7
-(9:64..9:65) _empty_/JsonTransform.SetCodecExp().[C] -> 9:24
-(9:66..9:67) _empty_/JsonTransform.SetCodecExp().[T] -> 9:21
-(9:71..9:72) _empty_/JsonTransform.SetCodecExp().[C] -> 9:24
-(9:73..9:76) scala/Predef.Set#
-(9:77..9:78) _empty_/JsonTransform.SetCodecExp().[T] -> 9:21
-(9:83..9:88) _empty_/JsonTransform.SetCodecExp().(codec) -> 9:57
+(8:29..8:48) _empty_/CodecTypeProjection# -> 6:7
+(8:29..8:48) _empty_/JsonTransform.SetCodec().[C] -> 8:23
+(8:53..8:58) scala/
+(8:59..8:69) scala/Conversion#
+(8:70..8:71) _empty_/JsonTransform.SetCodec().[C] -> 8:23
+(8:72..8:73) _empty_/JsonTransform.SetCodec().[T] -> 8:20
+(8:76..8:77) _empty_/JsonTransform.SetCodec().[C] -> 8:23
+(8:78..8:81) scala/Predef.Set#
+(8:82..8:83) _empty_/JsonTransform.SetCodec().[T] -> 8:20
+(8:89..8:92) scala/Predef.`???`().
+(9:32..9:51) _empty_/CodecTypeProjection# -> 6:7
+(9:32..9:51) _empty_/JsonTransform.SetCodecExp().[C] -> 9:26
+(9:64..9:65) _empty_/JsonTransform.SetCodecExp().[C] -> 9:26
+(9:66..9:67) _empty_/JsonTransform.SetCodecExp().[T] -> 9:23
+(9:73..9:74) _empty_/JsonTransform.SetCodecExp().[C] -> 9:26
+(9:75..9:78) scala/Predef.Set#
+(9:79..9:80) _empty_/JsonTransform.SetCodecExp().[T] -> 9:23
+(9:85..9:90) _empty_/JsonTransform.SetCodecExp().(codec) -> 9:57
 (10:9..10:14) _empty_/Codec# -> 5:7
 (10:15..10:21) scala/Predef.String#
 (10:25..10:28) scala/Predef.`???`().

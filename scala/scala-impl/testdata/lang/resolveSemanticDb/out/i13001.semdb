@@ -1,22 +1,23 @@
 Document tests/pos/i13001/Main_1.scala
 (1:19..1:25) scala/Predef.String#
 (7:33..7:43) _empty_/Main_1$package.DerivedGen# -> 9:13
-(7:44..7:45) _empty_/ArbitraryDerivation.deriveArb().[A] -> 7:19
-(7:49..7:58) _empty_/Arbitrary# -> 3:7
-(7:59..7:60) _empty_/ArbitraryDerivation.deriveArb().[A] -> 7:19
-(7:64..7:67) scala/Predef.`???`().
+(7:44..7:45) _empty_/ArbitraryDerivation.deriveArb().[A] -> 7:21
+(7:51..7:60) _empty_/Arbitrary# -> 3:7
+(7:61..7:62) _empty_/ArbitraryDerivation.deriveArb().[A] -> 7:21
+(7:66..7:69) scala/Predef.`???`().
 (9:29..9:32) _empty_/Gen# -> 4:7
 (9:33..9:34) _empty_/Main_1$package.DerivedGen#[A] -> 9:24
 (10:27..10:46) _empty_/DerivedGenInstances# -> 12:23
 (13:38..13:40) _empty_/K0. -> 19:8
 (13:41..13:48) _empty_/K0.Generic# -> 21:8
-(13:49..13:50) _empty_/DerivedGenInstances#derived().[A] -> 13:24
-(13:54..13:64) _empty_/Main_1$package.DerivedGen# -> 9:13
-(13:65..13:66) _empty_/DerivedGenInstances#derived().[A] -> 13:24
+(13:49..13:50) _empty_/DerivedGenInstances#derived().[A] -> 13:26
+(13:56..13:66) _empty_/Main_1$package.DerivedGen# -> 9:13
+(13:67..13:68) _empty_/DerivedGenInstances#derived().[A] -> 13:26
 (14:16..14:26) _empty_/Main_1$package.DerivedGen# -> 9:13
-(14:27..14:28) _empty_/DerivedGenInstances#derived().[A] -> 13:24
+(14:27..14:28) _empty_/DerivedGenInstances#derived().[A] -> 13:26
 (14:32..14:35) scala/Predef.`???`().
 (15:5..15:8) _empty_/DerivedGenInstances#derived().(gen) -> 13:33
+(15:9..15:15) _empty_/K0.derive(). -> 26:16
 (15:16..15:21) local0 -> 14:9
 (15:23..15:28) local0 -> 14:9
 (18:8..18:13) scala/
@@ -67,6 +68,7 @@ Document tests/pos/i13001/Main_1.scala
 Document tests/pos/i13001/Test_2.scala
 (2:10..2:29) _empty_/ArbitraryDerivation. -> 6:8
 (3:23..3:32) _empty_/Arbitrary# -> 3:7
+(3:23..3:32) _empty_/Test#test().[A] -> 3:20
 (3:35..3:39) scala/Unit#
 (4:3..4:7) _empty_/Test#test(). -> 3:15
 (4:8..4:11) _empty_/Foo# -> 1:12

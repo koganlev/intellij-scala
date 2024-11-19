@@ -1,0 +1,74 @@
+Document tests/pos/singleton-ctx-bound.scala
+(4:20..4:21) _empty_/Test.Wrap#[T] -> 4:14
+(6:16..6:17) _empty_/Test.f0().[T] -> 6:10
+(6:20..6:24) _empty_/Test.Wrap# -> 4:9
+(6:25..6:26) _empty_/Test.f0().[T] -> 6:10
+(6:35..6:36) _empty_/Test.f0().(x) -> 6:13
+(7:12..7:14) _empty_/Test.f0(). -> 6:7
+(8:10..8:14) _empty_/Test.Wrap# -> 4:9
+(8:15..8:18) scala/Int#
+(8:22..8:24) _empty_/Test.x0. -> 7:7
+(10:15..10:24) scala/Singleton#
+(10:29..10:30) _empty_/Test.f1().[T] -> 10:10
+(10:33..10:37) _empty_/Test.Wrap# -> 4:9
+(10:38..10:39) _empty_/Test.f1().[T] -> 10:10
+(10:48..10:49) _empty_/Test.f1().(x) -> 10:26
+(11:12..11:14) _empty_/Test.f1(). -> 10:7
+(12:10..12:14) _empty_/Test.Wrap# -> 4:9
+(12:20..12:22) _empty_/Test.x1. -> 11:7
+(14:16..14:17) _empty_/Test.f2().[T] -> 14:10
+(14:25..14:34) scala/Singleton#
+(14:49..14:50) _empty_/Test.f2().[T] -> 14:10
+(14:54..14:58) _empty_/Test.Wrap# -> 4:9
+(14:59..14:60) _empty_/Test.f2().[T] -> 14:10
+(14:69..14:70) _empty_/Test.f2().(x) -> 14:13
+(15:12..15:14) _empty_/Test.f2(). -> 14:7
+(16:10..16:14) _empty_/Test.Wrap# -> 4:9
+(16:20..16:22) _empty_/Test.x2. -> 15:7
+(18:13..18:22) _empty_/Test.f3().[T] -> 18:10
+(18:13..18:22) scala/Singleton#
+(18:27..18:28) _empty_/Test.f3().[T] -> 18:10
+(18:31..18:35) _empty_/Test.Wrap# -> 4:9
+(18:36..18:37) _empty_/Test.f3().[T] -> 18:10
+(18:46..18:47) _empty_/Test.f3().(x) -> 18:24
+(19:12..19:14) _empty_/Test.f3(). -> 18:7
+(20:10..20:14) _empty_/Test.Wrap# -> 4:9
+(20:20..20:22) _empty_/Test.x3. -> 19:7
+(22:16..22:17) _empty_/Test.f4().[T] -> 22:10
+(22:25..22:26) _empty_/Test.f4().[T] -> 22:10
+(22:27..22:29) scala/Predef.is#
+(22:30..22:39) scala/Singleton#
+(22:42..22:46) _empty_/Test.Wrap# -> 4:9
+(22:47..22:48) _empty_/Test.f4().[T] -> 22:10
+(22:57..22:58) _empty_/Test.f4().(x) -> 22:13
+(23:12..23:14) _empty_/Test.f4(). -> 22:7
+(24:10..24:14) _empty_/Test.Wrap# -> 4:9
+(24:20..24:22) _empty_/Test.x4. -> 23:7
+(26:18..26:19) _empty_/Test.C0#[T] -> 26:12
+(27:14..27:15) _empty_/Test.C0#[T] -> 26:12
+(27:18..27:19) _empty_/Test.C0#x. -> 26:15
+(29:10..29:16) scala/Predef.String#
+(29:19..29:21) _empty_/Test.y0. -> 28:7
+(29:22..29:25) _empty_/Test.C0#fld(). -> 27:9
+(31:17..31:26) scala/Singleton#
+(31:31..31:32) _empty_/Test.C1#[T] -> 31:12
+(32:14..32:15) _empty_/Test.C1#[T] -> 31:12
+(32:18..32:19) _empty_/Test.C1#x. -> 31:28
+(34:17..34:19) _empty_/Test.y1. -> 33:7
+(34:20..34:23) _empty_/Test.C1#fld(). -> 32:9
+(36:18..36:19) _empty_/Test.C2#[T] -> 36:12
+(36:27..36:28) _empty_/Test.C2#[T] -> 36:12
+(36:29..36:31) scala/Predef.is#
+(36:32..36:41) scala/Singleton#
+(37:14..37:15) _empty_/Test.C2#[T] -> 36:12
+(37:18..37:19) _empty_/Test.C2#x. -> 36:15
+(39:17..39:19) _empty_/Test.y2. -> 38:7
+(39:20..39:23) _empty_/Test.C2#fld(). -> 37:9
+(41:15..41:24) _empty_/Test.C3#[T] -> 41:12
+(41:15..41:24) scala/Singleton#
+(41:29..41:30) _empty_/Test.C3#[T] -> 41:12
+(42:14..42:15) _empty_/Test.C3#[T] -> 41:12
+(42:18..42:19) _empty_/Test.C3#x. -> 41:26
+(44:17..44:19) _empty_/Test.y3. -> 43:7
+(44:20..44:23) _empty_/Test.C3#fld(). -> 42:9
+

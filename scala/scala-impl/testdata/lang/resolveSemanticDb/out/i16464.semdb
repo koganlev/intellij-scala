@@ -13,7 +13,7 @@ Document tests/pos/i16464.scala
 (8:22..8:26) scala/Long#
 (8:31..8:35) scala/package.List.
 (10:15..10:19) scala/Unit#
-(10:24..10:25) _empty_/test1.SomeOps#`-`(). -> 8:9
+(10:24..10:25) _empty_/test1.SomeOps#`-`(). -> 6:9
 (10:26..10:29) scala/package.Seq.
 (10:30..10:35) scala/collection/SeqFactory.Delegate#empty().
 (10:36..10:39) scala/Int#
@@ -27,7 +27,7 @@ Document tests/pos/i16464.scala
 (16:22..16:26) scala/Long#
 (16:31..16:35) scala/package.List.
 (18:15..18:19) scala/Unit#
-(18:24..18:25) _empty_/test2.SomeOps#`-`(). -> 16:9
+(18:24..18:25) _empty_/test2.SomeOps#`-`(). -> 15:9
 (18:26..18:29) scala/package.Seq.
 (18:30..18:35) scala/collection/SeqFactory.Delegate#empty().
 (18:36..18:39) scala/Int#
@@ -41,7 +41,7 @@ Document tests/pos/i16464.scala
 (24:22..24:26) scala/Long#
 (24:31..24:35) scala/package.List.
 (26:15..26:19) scala/Unit#
-(26:24..26:25) _empty_/test3.SomeOps#`-`(). -> 24:9
+(26:24..26:25) _empty_/test3.SomeOps#`-`(). -> 22:9
 (26:26..26:29) scala/package.Seq.
 (26:30..26:35) scala/collection/SeqFactory.Delegate#empty().
 (26:36..26:39) scala/Int#

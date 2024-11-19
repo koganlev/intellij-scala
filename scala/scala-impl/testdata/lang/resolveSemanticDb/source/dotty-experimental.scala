@@ -1,8 +1,8 @@
-//> using options -Yno-experimental
 
-package dotty.tools
+
+import language.experimental.captureChecking
 object test {
 
-  val x = caps.cap
+  val x: caps.Capability = caps.cap
 
 }

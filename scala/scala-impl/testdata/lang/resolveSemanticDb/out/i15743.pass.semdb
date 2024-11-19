@@ -9,7 +9,7 @@ Document tests/pos/i15743.pass.scala
 (4:24..4:27) scala/Int#
 (4:28..4:30) scala/`*:`#
 (4:31..4:32) _empty_/Pass#pass().[T] -> 3:12
-(4:34..4:38) scala/NonEmptyTuple#head().
+(4:34..4:38) scala/Tuple#head().
 (4:39..4:42) scala/Int#
 (4:43..4:45) scala/`*:`#
 (4:46..4:47) _empty_/Pass#pass().[T] -> 3:12

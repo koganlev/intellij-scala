@@ -1,0 +1,11 @@
+Document tests/pos/hylolib-cb-extract.scala
+(3:8..3:19) scala/compiletime/
+(3:20..3:28) scala/compiletime/package$package.deferred().
+(11:17..11:22) hylotest/Collection#Element# -> 11:8
+(11:17..11:22) hylotest/Value# -> 5:7
+(15:7..15:12) hylotest/Value# -> 5:7
+(15:13..15:20) scala/Boolean#
+(17:7..17:17) hylotest/Collection# -> 8:7
+(17:18..17:26) hylotest/BitArray# -> 13:7
+(18:18..18:25) scala/Boolean#
+

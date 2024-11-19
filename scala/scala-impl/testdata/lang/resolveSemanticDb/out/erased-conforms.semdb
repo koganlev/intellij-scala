@@ -6,12 +6,12 @@ Document tests/pos/erased-conforms.scala
 (6:38..6:42) _empty_/`=::=`#[From] -> 6:19
 (6:43..6:47) _empty_/`<::<`# -> 4:14
 (6:48..6:50) _empty_/`=::=`#[To] -> 6:25
-(8:20..8:21) _empty_/`erased-conforms$package`.`given_=::=_X_X`().[X] -> 8:15
-(8:22..8:26) _empty_/`=::=`# -> 6:14
-(8:27..8:28) _empty_/`erased-conforms$package`.`given_=::=_X_X`().[X] -> 8:15
-(8:32..8:37) scala/
-(8:38..8:49) scala/compiletime/
-(8:50..8:61) scala/compiletime/package$package.erasedValue().
+(8:22..8:23) _empty_/`erased-conforms$package`.`given_=::=_X_X`().[X] -> 8:15
+(8:24..8:28) _empty_/`=::=`# -> 6:14
+(8:29..8:30) _empty_/`erased-conforms$package`.`given_=::=_X_X`().[X] -> 8:15
+(8:34..8:39) scala/
+(8:40..8:51) scala/compiletime/
+(8:52..8:63) scala/compiletime/package$package.erasedValue().
 (10:21..10:25) _empty_/`erased-conforms$package`.cast().[From] -> 10:12
 (11:29..11:33) _empty_/`erased-conforms$package`.cast().[From] -> 10:12
 (11:34..11:38) _empty_/`<::<`# -> 4:14

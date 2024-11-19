@@ -19,8 +19,8 @@ Document tests/pos/opaque-propability.scala
 (9:24..9:26) scala/Boolean#`&&`().
 (9:27..9:28) _empty_/prob.Probability.unsafe().(p) -> 8:16
 (9:29..9:31) scala/Double#`<=`(+6).
+(9:37..9:38) scala/StringContext#s().
 (9:73..9:74) _empty_/prob.Probability.unsafe().(p) -> 8:16
-(9:75..9:76) scala/StringContext#s().
 (10:7..10:8) _empty_/prob.Probability.unsafe().(p) -> 8:16
 (13:21..13:32) _empty_/prob.Probability# -> 2:15
 (13:35..13:41) scala/Double#

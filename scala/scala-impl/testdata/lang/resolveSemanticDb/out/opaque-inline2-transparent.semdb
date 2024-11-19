@@ -18,8 +18,8 @@ Document tests/pos/opaque-inline2-transparent.scala
 (15:10..15:15) _empty_/refined.PositiveFactory#safe().(value) -> 14:33
 (15:16..15:17) scala/Int#`<`(+3).
 (15:25..15:49) java/lang/IllegalArgumentException#
+(15:50..15:51) scala/StringContext#s().
 (15:53..15:58) _empty_/refined.PositiveFactory#safe().(value) -> 14:33
-(15:74..15:75) scala/StringContext#s().
 (16:12..16:17) _empty_/refined.PositiveFactory#safe().(value) -> 14:33
 (16:19..16:27) _empty_/refined.Positive# -> 5:15
 (18:2..18:6) scala/main#

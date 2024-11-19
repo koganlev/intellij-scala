@@ -1,0 +1,22 @@
+Document tests/pos/depclass-1.scala
+(2:29..2:35) scala/Predef.String#
+(4:12..4:15) scala/Int#
+(4:38..4:44) scala/Predef.String#
+(4:54..4:55) _empty_/A# -> 2:7
+(4:56..4:63) _empty_/B#source1. -> 4:29
+(6:30..6:36) scala/Predef.String#
+(6:46..6:47) _empty_/B# -> 4:7
+(6:51..6:58) _empty_/C#source2. -> 6:21
+(9:9..9:10) _empty_/C# -> 6:7
+(10:8..10:9) _empty_/A# -> 2:7
+(10:35..10:36) _empty_/`depclass-1$package`.x. -> 9:5
+(12:35..12:38) scala/Int#
+(13:20..13:23) _empty_/Vec# -> 12:7
+(13:24..13:29) scala/Float#
+(15:13..15:18) scala/Float#
+(16:10..16:14) _empty_/Vec8# -> 13:7
+(17:14..17:15) _empty_/`depclass-1$package`.v. -> 15:5
+(17:16..17:20) _empty_/Vec#size. -> 12:29
+(18:13..18:15) _empty_/`depclass-1$package`.v2. -> 16:5
+(18:16..18:20) _empty_/Vec8#size.
+

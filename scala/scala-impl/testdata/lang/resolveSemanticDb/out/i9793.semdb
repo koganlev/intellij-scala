@@ -6,12 +6,14 @@ Document tests/pos/i9793.scala
 (6:32..6:33) _empty_/Applied#[F] -> 6:20
 (6:34..6:35) _empty_/Applied#[A] -> 6:26
 (9:24..9:38) _empty_/AppliedLowPrio# -> 13:7
+(10:33..10:36) _empty_/Applied.barApplied().[F] -> 10:27
 (10:33..10:36) _empty_/Baz# -> 4:7
 (10:39..10:42) _empty_/Baz# -> 4:7
 (10:58..10:65) _empty_/Applied# -> 6:12
 (10:66..10:67) _empty_/Applied.barApplied().[F] -> 10:27
 (10:69..10:70) local0 -> 10:53
 (10:80..10:83) scala/Predef.`???`().
+(14:33..14:36) _empty_/AppliedLowPrio#bazApplied().[F] -> 14:27
 (14:33..14:36) _empty_/Foo# -> 1:7
 (14:39..14:42) _empty_/Foo# -> 1:7
 (14:58..14:65) _empty_/Applied# -> 6:12
