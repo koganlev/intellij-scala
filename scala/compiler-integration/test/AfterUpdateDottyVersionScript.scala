@@ -5,6 +5,7 @@ import com.intellij.platform.templates.github.{DownloadUtil, ZipUtil => GithubZi
 import com.intellij.pom.java.LanguageLevel
 import junit.framework.{TestCase, TestFailure, TestResult, TestSuite}
 import org.jetbrains.plugins.scala.compiler.ScalaCompilerTestBase
+import org.jetbrains.plugins.scala.extensions.PathExt
 import org.jetbrains.plugins.scala.lang.parser.scala3.imported.{Scala3ImportedParserTest, Scala3ImportedParserTest_Move_Fixed_Tests}
 import org.jetbrains.plugins.scala.lang.resolveSemanticDb.{ComparisonTestBase, ReferenceComparisonTestsGenerator_Scala3, SemanticDbStore}
 import org.jetbrains.plugins.scala.project.VirtualFileExt
@@ -42,10 +43,16 @@ class AfterUpdateDottyVersionScript {
   @Test def test_2_CloneDottyRepository(): Unit = {
     // we have to clone the repo because it needs a git history
     //example of release branch: release-3.1.3
-    val branch = "release-" + ScalaVersion.Latest.Scala_3.minor
+    val branch = "release-3.6.2" //+ ScalaVersion.Latest.Scala_3.minor
     repoPath = cloneRepository("https://github.com/scala/scala3/", Some(branch)).toPath
   }
 
+  /**
+   * NOTE:
+   * if it fails because there are compilation errors in [[dotty.tools.dotc.FromTastyTests.posTestFromTasty]]
+   * add the failing tests to the patched blacklist file [[AfterUpdateDottyVersionScript.`pos-from-tasty.blacklist`]].
+   * See `patchFile` usages.
+   */
   @Test def test_3_Scala3ImportedParserTest_Import_FromDottyDirectory(): Unit =
     runScript(Script.FromTestCase(classOf[Scala3ImportedParserTest_Import_FromDottyDirectory]))
 
@@ -69,9 +76,11 @@ class AfterUpdateDottyVersionScript {
 }
 
 object AfterUpdateDottyVersionScript {
+  // this makes it so that the clone dir is persistent and easier to debug
+  val manualCloneDir: Option[Path] = Some(Paths.get(System.getProperty("java.io.tmpdir")) / "aftertupdate-dotty-version-script-repo-download")
 
   //Is initialized during one of the tests run
-  private var repoPath: Path = _
+  private var repoPath: Path = manualCloneDir.orNull
   private lazy val `pos-from-tasty.blacklist` =
     repoPath.resolve("compiler/test/dotc/pos-from-tasty.blacklist")
 
@@ -137,7 +146,13 @@ object AfterUpdateDottyVersionScript {
   }
 
   private def cloneRepository(url: String, branchOpt: Option[String]): File = {
-    val cloneDir = newTempDir()
+    val cloneDir = manualCloneDir match {
+      case Some(dir) =>
+        Files.createDirectories(dir)
+        clearDirectory(dir.toString)
+        dir.toFile
+      case None => newTempDir()
+    }
     println(
       s"""Clone repository to: $cloneDir
          |Repository : $url
@@ -242,6 +257,8 @@ object AfterUpdateDottyVersionScript {
       val tempRangeSourceDir = newTempDir().toPath.resolve("pos")
       tempRangeSourceDir.toFile.mkdirs()
 
+      patchTestBlacklist()
+
       // No help.ranges is generated for the source file help.scala.
       // https://github.com/scala/scala3/blob/release-3.4.0/tests/pos/help.scala
       // TODO: Understand the problems with the help.scala and widen-union.scala tests.
@@ -256,8 +273,9 @@ object AfterUpdateDottyVersionScript {
         fileName.endsWith(".scala") && fileName != "help.scala" && fileName != "widen-union.scala"
       }
 
+      val blacklist = loadBlacklist()
       var atLeastOneFileProcessed = false
-      for (file <- allFilesIn(srcDir) if acceptFile(file))  {
+      for (file <- allFilesIn(srcDir) if acceptFile(file) if !blacklist.contains(file.getName))  {
         val target = dottyParserTestsFailDir + file.toString.substring(srcDir.length).replace(".scala", "++++test")
         val content = readFile(file.toPath)
           .replaceAll("[-]{5,}", "+") // <- some test files have comment lines with dashes which confuse junit
@@ -397,47 +415,7 @@ object AfterUpdateDottyVersionScript {
           |""".stripMargin
       )
 
-      // these files fail in dotty repository but are not added to the blacklist for some reason
-      patchFile(
-        `pos-from-tasty.blacklist`,
-        """# Tree is huge and blows stack for printing Text
-          |i7034.scala""".stripMargin,
-        """# Tree is huge and blows stack for printing Text
-          |i7034.scala
-          |
-          |# class i15274.orig$package cannot be unpickled because no class file was found for denot: val <none>
-          |i15274.orig.scala
-          |
-          |# class i15743.moregadt$package cannot be unpickled because no class file was found for denot: val <none>
-          |i15743.moregadt.scala
-          |
-          |# class i15991.orig$package cannot be unpickled because no class file was found for denot: val <none>
-          |i15991.orig.scala
-          |
-          |# EnumValue[E] is not a class
-          |i15155.scala
-          |
-          |#class i15523.avoid$package cannot be unpickled because no class file was found for denot: val <none>
-          |i15523.avoid.scala
-          |
-          |#class i15029.orig$package cannot be unpickled because no class file was found for denot: val <none>
-          |i15029.orig.scala
-          |
-          |#Fatal compiler crash when compiling: tests\pos\i16785.scala:
-          |i16785.scala
-          |
-          |#Fatal compiler crash when compiling: tests\pos\i15827.scala:
-          |i15827.scala
-          |
-          |# update from 3.3.1 to 3.3.2:
-          |extend-java-enum.scala
-          |i13044.scala
-          |i17230.bootstrap.scala
-          |i7445b.scala
-          |refinements.scala
-          |typeclass-scaling.scala
-          |""".stripMargin.trim
-      )
+      patchTestBlacklist()
 
       runSbt("testCompilation --from-tasty pos", repoPath)
 
@@ -488,7 +466,7 @@ object AfterUpdateDottyVersionScript {
     val file = new File(path)
     if (file.exists()) {
       assert(file.isDirectory)
-      val files = new File(path).listFiles()
+      val files = file.listFiles()
       assert(files != null)
       files.map(_.toPath).foreach(deleteRecursively)
     }
@@ -592,6 +570,8 @@ object AfterUpdateDottyVersionScript {
          |""".stripMargin.replaceAll("\n", "\n    ")
     )
 
+    patchTestBlacklist()
+
     {
       println(s"# Ranges directory: $rangesDirectory")
       val file = new File(rangesDirectory)
@@ -605,22 +585,29 @@ object AfterUpdateDottyVersionScript {
 
     val allFilesInFailed = allFilesIn(dottyParserTestsFailDir).toSet
     val allFilesInRanges = allFilesIn(rangesDirectory).toSet
-    val blacklistedFileNames = linesInFile(`pos-from-tasty.blacklist`)
-      .filterNot(_.isBlank)
-      .filterNot(_.startsWith("#"))
+    val blacklistedFileNames = loadBlacklist()
 
     val allFilesInFailedSize = allFilesInFailed.size
     val allFilesInRangesSize = allFilesInRanges.size
     val blacklistedSize = blacklistedFileNames.size
 
-    val diff = allFilesInFailedSize - blacklistedSize - allFilesInRangesSize
+    val diff = allFilesInFailedSize - allFilesInRangesSize
     if (diff != 0) {
+      val namesInAllFilesInFailed = allFilesInFailed.map(_.getName.stripSuffix(".test"))
+      val namesInAllFilesInRanges = allFilesInRanges.map(_.getName.stripSuffix(".ranges"))
       fail(
         s"""Condition failed
            |allFilesInFailedSize : $allFilesInFailedSize
            |allFilesInRangesSize : $allFilesInRangesSize
            |blacklisted          : $blacklistedSize
            |diff                 : $diff (${if (diff < 0) "Failed less then expected" else "Failed more then expected"})
+           |
+           |Files that are in allFilesInFailed but not in allFilesInRanges:
+           |  ${(namesInAllFilesInFailed -- namesInAllFilesInRanges).mkString("\n  ")}
+           |
+           |Files that are in allFilesInRanges but not in allFilesInFailed:
+           |  ${(namesInAllFilesInRanges -- namesInAllFilesInFailed).mkString("\n  ")}
+           |
            |Blacklisted files:
            |  ${blacklistedFileNames.mkString("\n  ")}
            |""".stripMargin.trim)
@@ -669,6 +656,11 @@ object AfterUpdateDottyVersionScript {
   private def readFile(path: Path): String =
     Using.resource(Source.fromFile(path.toFile))(_.mkString)
 
+  private def loadBlacklist(): Set[String] =
+    linesInFile(`pos-from-tasty.blacklist`)
+      .filterNot(_.isBlank)
+      .filterNot(_.startsWith("#"))
+      .toSet
   /*
   def main(args: Array[String]): Unit = {
     //val tempRangeSourceDir = newTempDir().toPath.resolve("pos").toFile
@@ -679,4 +671,138 @@ object AfterUpdateDottyVersionScript {
       "/home/tobi/desktop/testing/ranges"
     )
   } // */
+
+  private def patchTestBlacklist(): Unit = {
+    // these files fail in dotty repository but are not added to the blacklist for some reason
+    patchFile(
+      `pos-from-tasty.blacklist`,
+      """# Tree is huge and blows stack for printing Text
+        |i7034.scala""".stripMargin,
+      """# Tree is huge and blows stack for printing Text
+        |i7034.scala
+        |
+        |# class i15274.orig$package cannot be unpickled because no class file was found for denot: val <none>
+        |i15274.orig.scala
+        |
+        |# class i15743.moregadt$package cannot be unpickled because no class file was found for denot: val <none>
+        |i15743.moregadt.scala
+        |
+        |# class i15991.orig$package cannot be unpickled because no class file was found for denot: val <none>
+        |i15991.orig.scala
+        |
+        |# EnumValue[E] is not a class
+        |i15155.scala
+        |
+        |#class i15523.avoid$package cannot be unpickled because no class file was found for denot: val <none>
+        |i15523.avoid.scala
+        |
+        |#class i15029.orig$package cannot be unpickled because no class file was found for denot: val <none>
+        |i15029.orig.scala
+        |
+        |#Fatal compiler crash when compiling: tests\pos\i15827.scala:
+        |i15827.scala
+        |
+        |# update from 3.3.1 to 3.3.2:
+        |extend-java-enum.scala
+        |i13044.scala
+        |i17230.bootstrap.scala
+        |i7445b.scala
+        |refinements.scala
+        |typeclass-scaling.scala
+        |
+        |## update for 3.6.2
+        |#Doesn't generate ranges for some reason
+        |B_2.scala
+        |
+        |i18699.scala
+        |i10929-new-syntax.scala
+        |i20135.scala
+        |cc-poly-source.scala
+        |i19955a.scala
+        |i18626.min1.scala
+        |mt-scrutinee-widen3.scala
+        |i21682.2.scala
+        |i15029.orig.scala
+        |10747-shapeless-min.scala
+        |gears-probem-1.scala
+        |i19001.case1.scala
+        |reach-problem.scala
+        |invariant-cc.scala
+        |i18263.orig.scala
+        |8647.scala
+        |i15155.scala
+        |i19009.case2.scala
+        |i19001.case2.scala
+        |i15827.scala
+        |Tuple.Elem.scala
+        |i15991.orig.scala
+        |with-type-operator-3.4-migration.scala
+        |i10242.scala
+        |i9804.scala
+        |parsercombinators-arrow.scala
+        |precise-ctx-bound.scala
+        |gears-probem.scala
+        |typeclasses-this.scala
+        |i15743.moregadt.scala
+        |i19942.1.scala
+        |i15926.contra.scala
+        |i19570.orig.scala
+        |singleton-ctx-bound.scala
+        |dotty-experimental.scala
+        |21400b.scala
+        |i15926.min.scala
+        |hylolib-cb-extract.scala
+        |mt-redux-norm.perspective.scala
+        |cc-poly-1.scala
+        |i20237.scala
+        |i16596.scala
+        |i18867-3.3.scala
+        |i19955b.scala
+        |with-type-operator-3.3.scala
+        |i19009.case3.scala
+        |i20053b.scala
+        |i18253.orig.scala
+        |i10929.scala
+        |i19570.min1.scala
+        |i15926.extract.scala
+        |i18867-3.4.scala
+        |i21239.orig.scala
+        |cc-ex-unpack.scala
+        |cb-companion-joins.scala
+        |parsercombinators-ctx-bounds.scala
+        |reach-capability.scala
+        |Buffer.scala
+        |deferredSummon.scala
+        |extend-java-enum.scala
+        |parsercombinators-new-syntax.scala
+        |i16596.orig.scala
+        |i19009.case1.scala
+        |i15177.hylolib.scala
+        |i17257.min.scala
+        |typeclasses-arrow.scala
+        |polycap.scala
+        |i13580.scala
+        |parsercombinators-this.scala
+        |i17395.scala
+        |9757.scala
+        |deferred-givens-singletons.scala
+        |i21390.zio.scala
+        |i21682.1.scala
+        |infer-exists.scala
+        |i16706.scala
+        |boxmap-paper.scala
+        |parsercombinators-givens.scala
+        |Tuple.Drop.scala
+        |i15523.avoid.scala
+        |i17395-spec.ordered.scala
+        |hylolib-extract.scala
+        |cc-poly-source-capability.scala
+        |i15274.orig.scala
+        |cc-experimental.scala
+        |i19001.case3.scala
+        |given-syntax.scala
+        |alphanumeric-infix-operator-compat
+        |""".stripMargin.trim
+    )
+  }
 }
