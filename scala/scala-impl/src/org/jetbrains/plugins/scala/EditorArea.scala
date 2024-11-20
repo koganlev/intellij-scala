@@ -46,11 +46,11 @@ object EditorArea {
 
   def isNativeHighlightingEnabled: Boolean = Registry.is("scala.native.highlighting")
 
+  private def nativeHighlightingTracing: Boolean = Registry.is("scala.native.highlighting.tracing")
+
   def isIncrementalHighlightingEnabled: Boolean = Registry.is("scala.incremental.highlighting")
 
   private def incrementalHighlightingLookaround: Int = Registry.intValue("scala.incremental.highlighting.lookaround")
-
-  private def incrementalHighlightingTracing: Boolean = Registry.is("scala.incremental.highlighting.tracing")
 
   def isVisible(e: PsiElement): Boolean = {
     if (!isNativeHighlightingEnabled) return false
@@ -102,7 +102,7 @@ object EditorArea {
     TextRange.create(startOffset, startOffset.max(endOffset))
   }
 
-  def trace(e: PsiElement, reason: String): Unit = if (incrementalHighlightingTracing) {
+  def trace(e: PsiElement, reason: String): Unit = if (nativeHighlightingTracing) {
     val editor = editorFor(e)
     if (editor == null) return
 
