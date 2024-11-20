@@ -163,6 +163,7 @@
         <registryKey key="scala.native.highlighting" defaultValue="true" restartRequired="false" description="Enable built-in highlighting"/>
         <registryKey key="scala.incremental.highlighting" defaultValue="false" restartRequired="false" description="Highlight only visible code"/>
         <registryKey key="scala.incremental.highlighting.lookaround" defaultValue="10" restartRequired="false" description="Number of lines to highlight beyond the visible area"/>
+        <registryKey key="scala.incremental.highlighting.tracing" defaultValue="false" restartRequired="false" description="Trace resolve and type inference"/>
 
         <editorHighlighterProvider filetype="Scala"
                                    implementationClass="org.jetbrains.plugins.scala.highlighter.ScalaEditorHighlighterProvider"/>

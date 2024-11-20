@@ -7,6 +7,7 @@ import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.{Key, TextRange}
 import com.intellij.psi.{PsiDocumentManager, PsiElement, PsiManager}
 import org.jetbrains.plugins.scala.EditorArea._
+import org.jetbrains.plugins.scala.extensions.invokeLater
 
 import java.awt.Point
 
@@ -49,21 +50,15 @@ object EditorArea {
 
   private def incrementalHighlightingLookaround: Int = Registry.intValue("scala.incremental.highlighting.lookaround")
 
+  private def incrementalHighlightingTracing: Boolean = Registry.is("scala.incremental.highlighting.tracing")
+
   def isVisible(e: PsiElement): Boolean = {
     if (!isNativeHighlightingEnabled) return false
 
     if (!isIncrementalHighlightingEnabled) return true
 
-    val psiFile = e.getContainingFile
-    if (psiFile == null) return false
-
-    val document = PsiDocumentManager.getInstance(e.getProject).getDocument(psiFile)
-    if (document == null) return false
-
-    val editors = EditorFactory.getInstance.getEditors(document)
-    if (editors.isEmpty) return false
-
-    val editor = editors.head
+    val editor = editorFor(e)
+    if (editor == null) return false
 
     val elementRange = e.getTextRange
 
@@ -74,6 +69,19 @@ object EditorArea {
     val region1 = foldingModel.getCollapsedRegionAtOffset(elementRange.getStartOffset)
     val region2 = foldingModel.getCollapsedRegionAtOffset(elementRange.getEndOffset - 1)
     region1 == null || region1 != region2
+  }
+
+  private def editorFor(e: PsiElement): Editor = {
+    val psiFile = e.getContainingFile
+    if (psiFile == null) return null
+
+    val document = PsiDocumentManager.getInstance(e.getProject).getDocument(psiFile)
+    if (document == null) return null
+
+    val editors = EditorFactory.getInstance.getEditors(document)
+    if (editors.isEmpty) return null
+
+    editors.head
   }
 
   private def visibleRangeIn(editor: Editor, lookaround: Int): TextRange = {
@@ -92,5 +100,21 @@ object EditorArea {
     }
 
     TextRange.create(startOffset, startOffset.max(endOffset))
+  }
+
+  def trace(e: PsiElement, reason: String): Unit = if (incrementalHighlightingTracing) {
+    val editor = editorFor(e)
+    if (editor == null) return
+
+    val text = {
+      val s = e.getText.replace('\n', '↵').replaceAll(" {2,}", " ")
+      if (s.length > 120) s.substring(0, 120) + "…" else s
+    }
+
+    invokeLater {
+      val line = editor.offsetToLogicalPosition(e.getTextOffset).line + 1
+
+      println(line.toString + ": " + reason + ": " + text)
+    }
   }
 }
