@@ -32,7 +32,7 @@ class ScalaPackageNameInspection extends LocalInspectionTool {
       case file: ScalaFile if IntentionAvailabilityChecker.checkInspection(this, file) =>
         if (file.isWorksheetFile) return null
 
-        if (file.firstPackaging.isDefined && file.depthFirst(isVisible).findByType[ScPackaging].isEmpty) return Array.empty
+        if (file.firstPackaging.isDefined && file.elements(isVisible).findByType[ScPackaging].isEmpty) return Array.empty
 
         val members = file.members
         if (members.isEmpty) return null

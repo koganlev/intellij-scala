@@ -43,6 +43,7 @@ private[codeInsight] trait ScalaTypeHintsPass {
     } else {
       (for {
         element <- root.depthFirst(isVisible)
+        if isVisible(element)
         definition = Definition(element) // NB: "definition" might be in fact _any_ PsiElement (e.g. ScalaFile)
         (tpe, body, menu) <- typeAndBodyOf(definition)
         if !(settings.preserveIndents && (!element.textContains('\n') && definition.hasCustomIndents || adjacentDefinitionsHaveCustomIndent(element)))

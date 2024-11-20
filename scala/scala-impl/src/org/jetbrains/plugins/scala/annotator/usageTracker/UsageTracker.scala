@@ -54,7 +54,7 @@ object UsageTracker {
       mutable.ArrayBuffer.empty
 
     val importHolders: Iterator[ScImportsHolder] =
-      file.depthFirst(isVisible).filterByType[ScImportsHolder]
+      file.elements(isVisible).filterByType[ScImportsHolder]
 
     val isSource3 = file.isSource3Enabled
 
@@ -63,6 +63,7 @@ object UsageTracker {
       importStmt   <- importHolder.getImportStatements
       importExprs  = importStmt.importExprs
       importExpr   <- importExprs
+      if isVisible(importExpr)
     } {
       val importsUsed = ImportUsed.buildAllFor(importExpr)
       importExprToUsedImports += ((importExpr, importsUsed))

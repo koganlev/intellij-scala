@@ -170,7 +170,7 @@ class ImplicitHintsPass(
       }
     }
 
-    rootElement.depthFirst(isVisible).foreach {
+    rootElement.elements(isVisible).foreach {
       case (_: ScTemplateParents) & ChildOf(ChildOf(tdef: ScTemplateDefinition)) if !tdef.is[ScTrait] =>
         val parents =
           tdef

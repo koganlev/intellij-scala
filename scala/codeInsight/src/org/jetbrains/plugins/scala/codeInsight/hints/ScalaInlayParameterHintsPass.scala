@@ -34,7 +34,7 @@ trait ScalaInlayParameterHintsPass {
 
   protected def collectParameterHints(editor: Editor, root: PsiElement): Seq[Hint] = {
     val filter = hintInfoFilterFor(ScalaLanguage, ScalaInlayParameterHintsProvider)
-    root.depthFirst(isVisible).flatMap(getParameterHints(_, filter)).toSeq
+    root.elements(isVisible).flatMap(getParameterHints(_, filter)).toSeq
   }
 
   private def getParameterHints(element: PsiElement, filter: HintInfoFilter): Seq[Hint] = {
