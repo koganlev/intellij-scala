@@ -44,9 +44,9 @@ class EditorArea extends EditorFactoryListener {
 object EditorArea {
   private val VISIBLE_RANGE_KEY: Key[TextRange] = Key.create[TextRange]("editor_visible_range")
 
-  private def isNativeHighlightingEnabled: Boolean = Registry.is("scala.native.highlighting")
+  def isNativeHighlightingEnabled: Boolean = Registry.is("scala.native.highlighting")
 
-  private def isIncrementalHighlightingEnabled: Boolean = Registry.is("scala.incremental.highlighting")
+  def isIncrementalHighlightingEnabled: Boolean = Registry.is("scala.incremental.highlighting")
 
   private def incrementalHighlightingLookaround: Int = Registry.intValue("scala.incremental.highlighting.lookaround")
 

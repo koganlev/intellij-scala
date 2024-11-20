@@ -16,9 +16,12 @@ package object uast {
     }
   }
 
-  private[uast] def isEnabled =
+  private[uast] def isEnabled: Boolean = {
+    if (!EditorArea.isNativeHighlightingEnabled || EditorArea.isIncrementalHighlightingEnabled) return false
+
     ApplicationManager.getApplication.isUnitTestMode ||
       Experiments.getInstance().isFeatureEnabled("scala.uast.enabled")
+  }
 
   private[uast] object DummyDialect extends Language(ScalaLanguage.INSTANCE, "DummyDialect") with DependentLanguage
 

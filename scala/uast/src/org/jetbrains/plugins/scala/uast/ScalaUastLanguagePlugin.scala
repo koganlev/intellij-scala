@@ -5,7 +5,6 @@ import com.intellij.lang.Language
 import com.intellij.openapi.fileTypes.ExtensionFileNameMatcher
 import com.intellij.psi.{PsiElement, PsiMethod}
 import org.jetbrains.annotations.Nullable
-import org.jetbrains.plugins.scala.EditorArea.isVisible
 import org.jetbrains.plugins.scala.extensions.ObjectExt
 import org.jetbrains.plugins.scala.lang.psi.api.base._
 import org.jetbrains.plugins.scala.lang.psi.api.expr._
@@ -36,22 +35,15 @@ final class ScalaUastLanguagePlugin extends UastLanguagePlugin {
   @Nullable
   override def convertElement(element: PsiElement,
                               @Nullable parent: UElement,
-                              @Nullable requiredType: Class[_ <: UElement]): UElement = {
-
-    if (!isVisible(element)) return null
-
+                              @Nullable requiredType: Class[_ <: UElement]): UElement =
     convertTo(element, parent)(
       toClassTag(requiredType),
       implicitly[NotNothing[UElement]]
     ).orNull
-  }
 
   @Nullable
   override def convertElementWithParent(element: PsiElement,
                                         @Nullable requiredType: Class[_ <: UElement]): UElement = {
-
-    if (!isVisible(element)) return null
-
     convertWithParentTo(element)(
       toClassTag(requiredType),
       implicitly[NotNothing[UElement]]
@@ -63,10 +55,7 @@ final class ScalaUastLanguagePlugin extends UastLanguagePlugin {
 
   @Nullable
   override def getConstructorCallExpression(element: PsiElement,
-                                            fqName: String): ResolvedConstructor = {
-
-    if (!isVisible(element)) return null
-
+                                            fqName: String): ResolvedConstructor =
     element match {
       case constructorCall: ScConstructorInvocation
         if constructorCall.typeElement
@@ -91,15 +80,11 @@ final class ScalaUastLanguagePlugin extends UastLanguagePlugin {
 
       case _ => null
     }
-  }
 
   @Nullable
   override def getMethodCallExpression(element: PsiElement,
                                        containingClassFqName: String,
-                                       methodName: String): ResolvedMethod = {
-
-    if (!isVisible(element)) return null
-
+                                       methodName: String): ResolvedMethod =
     element match {
       case methodCall: ScMethodCall
         if Option(methodCall.getInvokedExpr).exists {
@@ -125,7 +110,6 @@ final class ScalaUastLanguagePlugin extends UastLanguagePlugin {
           .orNull
       case _ => null
     }
-  }
 
   override def isExpressionValueUsed(uExpression: UExpression): Boolean =
     throw new NotImplementedError // TODO: not implemented
