@@ -3,7 +3,6 @@ package org.jetbrains.plugins.scala.codeInspection.declarationRedundancy
 import com.intellij.codeInspection.{LocalInspectionTool, LocalQuickFix, ProblemsHolder}
 import com.intellij.psi.{PsiElement, PsiElementVisitor}
 import org.jetbrains.annotations.Nls
-import org.jetbrains.plugins.scala.EditorArea.isVisible
 
 trait HighlightingPassInspection extends LocalInspectionTool {
   override final def buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): PsiElementVisitor = {
@@ -13,8 +12,6 @@ trait HighlightingPassInspection extends LocalInspectionTool {
       //REMINDER: this is for the case when inspection are run in batch mode
       new PsiElementVisitor {
         override def visitElement(element: PsiElement): Unit = {
-          if (!isVisible(element)) return
-
           if (shouldProcessElement(element)) {
             invoke(element, isOnTheFly).foreach { info =>
               holder.registerProblem(info.element, info.message, info.fixes: _*)
