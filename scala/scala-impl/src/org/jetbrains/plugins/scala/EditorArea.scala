@@ -63,8 +63,17 @@ object EditorArea {
     val editors = EditorFactory.getInstance.getEditors(document)
     if (editors.isEmpty) return false
 
-    val visibleRange = editors.head.getUserData(VISIBLE_RANGE_KEY)
-    e.getTextRange.intersects(visibleRange)
+    val editor = editors.head
+
+    val elementRange = e.getTextRange
+
+    val visibleRange = editor.getUserData(VISIBLE_RANGE_KEY)
+    if (!elementRange.intersects(visibleRange)) return false
+
+    val foldingModel = editor.getFoldingModel
+    val region1 = foldingModel.getCollapsedRegionAtOffset(elementRange.getStartOffset)
+    val region2 = foldingModel.getCollapsedRegionAtOffset(elementRange.getEndOffset - 1)
+    region1 == null || region1 != region2
   }
 
   private def visibleRangeIn(editor: Editor, lookaround: Int): TextRange = {
