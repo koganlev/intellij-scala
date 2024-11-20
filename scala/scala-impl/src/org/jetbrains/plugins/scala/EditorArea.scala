@@ -46,6 +46,8 @@ object EditorArea {
 
   def isNativeHighlightingEnabled: Boolean = Registry.is("scala.native.highlighting")
 
+  private def isNativeHighlightingSynchronized: Boolean = Registry.is("scala.native.highlighting.synchronized")
+
   private def nativeHighlightingTracing: Boolean = Registry.is("scala.native.highlighting.tracing")
 
   def isIncrementalHighlightingEnabled: Boolean = Registry.is("scala.incremental.highlighting")
@@ -115,6 +117,16 @@ object EditorArea {
       val line = editor.offsetToLogicalPosition(e.getTextOffset).line + 1
 
       println(line.toString + ": " + reason + ": " + text)
+    }
+  }
+
+  def synchronizedOn[T](e: PsiElement)(f: => T): T = {
+    if (isNativeHighlightingSynchronized) {
+      e.synchronized {
+        f
+      }
+    } else {
+      f
     }
   }
 }

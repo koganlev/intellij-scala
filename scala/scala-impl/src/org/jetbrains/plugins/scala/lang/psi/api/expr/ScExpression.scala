@@ -3,6 +3,7 @@ package org.jetbrains.plugins.scala.lang.psi.api.expr
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.psi._
 import com.intellij.psi.impl.source.codeStyle.CodeEditUtil
+import org.jetbrains.plugins.scala.EditorArea.synchronizedOn
 import org.jetbrains.plugins.scala.caches.{BlockModificationTracker, cachedWithRecursionGuard}
 import org.jetbrains.plugins.scala.extensions._
 import org.jetbrains.plugins.scala.lang.psi.ScalaPsiUtil.{MethodValue, isAnonymousExpression}
@@ -149,7 +150,7 @@ trait ScExpression extends ScBlockStatement
     expectedOption: Option[ScType] = None,
     ignoreBaseTypes: Boolean = false,
     fromUnderscore: Boolean = false
-  ): ExpressionTypeResult =
+  ): ExpressionTypeResult = synchronizedOn(this) {
     cachedWithRecursionGuard(
       "ScExpression.getTypeAfterImplicitConversion",
       this,
@@ -187,6 +188,7 @@ trait ScExpression extends ScBlockStatement
 
       result
     }
+  }
 }
 
 object ScExpression {
