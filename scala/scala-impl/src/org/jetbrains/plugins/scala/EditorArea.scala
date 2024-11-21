@@ -1,17 +1,25 @@
 package org.jetbrains.plugins.scala
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer
+import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer.DaemonListener
 import com.intellij.openapi.editor.event.{EditorFactoryEvent, EditorFactoryListener, VisibleAreaEvent, VisibleAreaListener}
+import com.intellij.openapi.editor.markup.{HighlighterLayer, HighlighterTargetArea}
 import com.intellij.openapi.editor.{Editor, EditorFactory, LogicalPosition}
+import com.intellij.openapi.fileEditor.FileEditor
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.startup.StartupActivity
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.{Key, TextRange}
+import com.intellij.openapi.wm.WindowManager
 import com.intellij.psi.{PsiDocumentManager, PsiElement, PsiManager}
+import com.intellij.ui.{Gray, JBColor}
 import org.jetbrains.plugins.scala.EditorArea._
-import org.jetbrains.plugins.scala.extensions.invokeLater
+import org.jetbrains.plugins.scala.project.ProjectExt
 
 import java.awt.Point
+import java.util
 
-class EditorArea extends EditorFactoryListener {
+class EditorArea extends EditorFactoryListener with StartupActivity {
   private val visibleAreaListener = new VisibleAreaListener {
     override def visibleAreaChanged(e: VisibleAreaEvent): Unit = {
       val editor = e.getEditor
@@ -39,6 +47,11 @@ class EditorArea extends EditorFactoryListener {
 
     event.getEditor.getScrollingModel.removeVisibleAreaListener(visibleAreaListener)
   }
+
+  override def runActivity(project: Project): Unit = {
+    val connection = project.getMessageBus.connect(project.unloadAwareDisposable)
+    connection.subscribe(DaemonCodeAnalyzer.DAEMON_EVENT_TOPIC, new HighlightingListener(project))
+  }
 }
 
 object EditorArea {
@@ -48,7 +61,7 @@ object EditorArea {
 
   private def isNativeHighlightingSynchronized: Boolean = Registry.is("scala.native.highlighting.synchronized")
 
-  private def nativeHighlightingTracing: Boolean = Registry.is("scala.native.highlighting.tracing")
+  private def isNativeHighlightingTracingEnabled: Boolean = Registry.is("scala.native.highlighting.tracing")
 
   def isIncrementalHighlightingEnabled: Boolean = Registry.is("scala.incremental.highlighting")
 
@@ -104,20 +117,23 @@ object EditorArea {
     TextRange.create(startOffset, startOffset.max(endOffset))
   }
 
-  def trace(e: PsiElement, reason: String): Unit = if (nativeHighlightingTracing) {
+  def trace(e: PsiElement, reason: String): Unit = if (isNativeHighlightingTracingEnabled) {
     val editor = editorFor(e)
     if (editor == null) return
 
-    val text = {
+    val text = reason + ": " + {
       val s = e.getText.replace('\n', '↵').replaceAll(" {2,}", " ")
       if (s.length > 120) s.substring(0, 120) + "…" else s
     }
 
-    invokeLater {
-      val line = editor.offsetToLogicalPosition(e.getTextOffset).line + 1
+    val highlighter = editor.getMarkupModel.addRangeHighlighter(
+      e.getTextRange.getStartOffset, e.getTextRange.getEndOffset, HighlighterLayer.ADDITIONAL_SYNTAX, null, HighlighterTargetArea.EXACT_RANGE)
 
-      println(line.toString + ": " + reason + ": " + text)
-    }
+    highlighter.setErrorStripeMarkColor(new JBColor(Gray._170, Gray._80))
+    highlighter.setThinErrorStripeMark(true)
+    highlighter.setErrorStripeTooltip(text)
+
+    println(text)
   }
 
   def synchronizedOn[T](e: PsiElement)(f: => T): T = {
@@ -128,5 +144,20 @@ object EditorArea {
     } else {
       f
     }
+  }
+
+  private class HighlightingListener(project: Project) extends DaemonListener {
+    private var startTime = 0L
+
+    override def daemonStarting(fileEditors: util.Collection[_ <: FileEditor]): Unit = if (EditorArea.isNativeHighlightingTracingEnabled) {
+      startTime = System.nanoTime()
+      statusBar.setInfo("Highlighting...")
+    }
+
+    override def daemonFinished(fileEditors: util.Collection[_ <: FileEditor]): Unit = if (EditorArea.isNativeHighlightingTracingEnabled) {
+      statusBar.setInfo("Highlighted: " + (System.nanoTime() - startTime) / 1000000 + " ms")
+    }
+
+    private def statusBar = WindowManager.getInstance.getStatusBar(project)
   }
 }
