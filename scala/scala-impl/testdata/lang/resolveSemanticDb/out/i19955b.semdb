@@ -1,0 +1,36 @@
+Document tests/pos/i19955b.scala
+(5:15..5:18) scala/Int#
+(6:13..6:16) scala/Int#
+(6:23..6:27) _empty_/Wrap# -> 2:7
+(6:28..6:29) _empty_/i19955b$package.given_IsWrapOfInt_R#[W] -> 6:8
+(6:28..6:29) _empty_/i19955b$package.given_IsWrapOfInt_R().[W] -> 6:8
+(6:35..6:46) _empty_/IsWrapOfInt# -> 4:7
+(6:47..6:48) _empty_/i19955b$package.given_IsWrapOfInt_R#[R] -> 6:18
+(7:14..7:17) scala/Int#
+(9:18..9:21) scala/Int#
+(10:13..10:16) scala/Int#
+(10:21..10:26) _empty_/IsInt# -> 9:7
+(10:27..10:28) _empty_/i19955b$package.given_IsInt_U().[U] -> 10:8
+(10:32..10:35) scala/Predef.`???`().
+(12:20..12:21) _empty_/i19955b$package.get().[L] -> 12:12
+(12:41..12:52) _empty_/IsWrapOfInt# -> 4:7
+(12:53..12:54) _empty_/i19955b$package.get().[L] -> 12:12
+(12:58..12:60) _empty_/i19955b$package.get().(ev) -> 12:37
+(12:61..12:64) _empty_/IsWrapOfInt#Out# -> 5:8
+(12:67..12:70) scala/Predef.`???`().
+(13:17..13:20) scala/Int#
+(13:38..13:43) _empty_/IsInt# -> 9:7
+(13:44..13:47) _empty_/i19955b$package.isInt().(lhs) -> 13:12
+(13:56..13:60) scala/Unit#
+(13:63..13:66) scala/Predef.`???`().
+(15:8..15:12) _empty_/Wrap# -> 2:7
+(15:13..15:16) scala/Int#
+(15:20..15:23) scala/Predef.`???`().
+(16:14..16:15) _empty_/i19955b$package.x. -> 15:5
+(16:16..16:19) _empty_/i19955b$package.get(). -> 12:27
+(16:21..16:24) scala/Int#
+(16:26..16:31) _empty_/i19955b$package.isInt(). -> 13:26
+(17:13..17:14) _empty_/i19955b$package.x. -> 15:5
+(17:15..17:18) _empty_/i19955b$package.get(). -> 12:27
+(17:19..17:24) _empty_/i19955b$package.isInt(). -> 13:26
+

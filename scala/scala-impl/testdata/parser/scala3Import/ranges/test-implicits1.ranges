@@ -154,12 +154,11 @@
 [914,918]: Ident
 [965,1006]: DefDef
 [976,992]: TypeDef
-[977,992]: ContextBounds
-[977,977]: TypeBoundsTree
-[977,992]: AppliedTypeTree
+[979,992]: ContextBounds
+[979,979]: TypeBoundsTree
+[979,992]: ContextBoundTypeTree
 [979,992]: Select
 [979,983]: Ident
-[992,992]: Ident
 [994,1000]: ValDef
 [998,1000]: PostfixOp
 [998,999]: Ident

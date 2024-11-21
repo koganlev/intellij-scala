@@ -119,16 +119,16 @@ Document tests/pos/i12126.scala
 (42:53..42:54) _empty_/Structures.Kleisli.apply().[A] -> 42:21
 (42:56..42:57) _empty_/Structures.Kleisli.apply().[B] -> 42:24
 (42:61..42:62) _empty_/Structures.Kleisli.apply().(f) -> 42:27
-(44:28..44:33) _empty_/Structures.Monad# -> 17:9
-(44:34..44:35) _empty_/Structures.given_Monad_Kleisli#[F] -> 44:10
-(44:34..44:35) _empty_/Structures.given_Monad_Kleisli().[F] -> 44:10
+(44:26..44:31) _empty_/Structures.Monad# -> 17:9
+(44:32..44:33) _empty_/Structures.given_Monad_Kleisli#[F] -> 44:10
+(44:32..44:33) _empty_/Structures.given_Monad_Kleisli().[F] -> 44:10
 (44:39..44:44) _empty_/Structures.Monad# -> 17:9
 (44:53..44:60) _empty_/Structures.Kleisli# -> 36:15
 (44:61..44:62) _empty_/Structures.given_Monad_Kleisli#[F] -> 44:10
 (44:64..44:65) _empty_/Structures.given_Monad_Kleisli#[A] -> 44:16
 (45:20..45:21) _empty_/Structures.given_Monad_Kleisli#pure().[B] -> 45:14
 (45:25..45:32) _empty_/Structures.Kleisli. -> 41:10
-(45:38..45:39) _empty_/Structures.given_Monad_Kleisli#F. -> 44:25
+(45:38..45:39) _empty_/Structures.given_Monad_Kleisli#F. -> 44:23
 (45:40..45:44) _empty_/Structures.Applicative#pure(). -> 10:9
 (45:45..45:46) _empty_/Structures.given_Monad_Kleisli#pure().(b) -> 45:17
 (46:21..46:28) _empty_/Structures.Kleisli# -> 36:15
@@ -142,6 +142,7 @@ Document tests/pos/i12126.scala
 (47:44..47:45) _empty_/Structures.given_Monad_Kleisli#flatMap().[C] -> 47:19
 (48:14..48:15) _empty_/Structures.given_Monad_Kleisli#flatMap().(k) -> 46:18
 (48:16..48:17) local4 -> 48:9
+(48:19..48:26) _empty_/Structures.Monad#flatMap(). -> 19:11
 (48:32..48:33) _empty_/Structures.given_Monad_Kleisli#flatMap().(f) -> 47:22
 (48:34..48:35) local5 -> 48:27
 (48:37..48:38) local4 -> 48:9
@@ -150,6 +151,7 @@ Document tests/pos/i12126.scala
 (53:10..53:20) _empty_/Structures. -> 1:8
 (54:3..54:10) scala/Predef.println(+1).
 (54:11..54:15) scala/package.List.
+(54:25..54:29) _empty_/Structures.Monad#map2(). -> 22:11
 (54:30..54:34) scala/package.List.
 (56:10..56:17) _empty_/Structures.Kleisli# -> 36:15
 (56:26..56:29) scala/Int#
@@ -174,6 +176,7 @@ Document tests/pos/i12126.scala
 (58:3..58:10) scala/Predef.println(+1).
 (58:11..58:12) local7 -> 56:7
 (58:11..58:27) _empty_/Structures.apply(). -> 39:9
+(58:13..58:17) _empty_/Structures.Monad#map2(). -> 22:11
 (58:18..58:19) local9 -> 57:7
 (58:23..58:24) scala/Int#`+`(+4).
 

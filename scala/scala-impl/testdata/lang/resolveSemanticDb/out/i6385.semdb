@@ -6,6 +6,7 @@ Document tests/pos/i6385.scala
 (11:36..11:39) _empty_/Tc2# -> 2:7
 (11:40..11:41) _empty_/X.Tc2Instance().[F][x] -> 11:30
 (11:44..11:53) _empty_/PinTypeTo# -> 4:7
+(11:44..11:53) _empty_/X.Tc2Instance().[F] -> 11:28
 (11:56..11:57) _empty_/X.Tc2Instance().[F] -> 11:28
 (11:58..11:59) _empty_/X# -> 9:7
 (11:67..11:70) _empty_/Tc2# -> 2:7

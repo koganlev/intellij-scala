@@ -1,0 +1,11 @@
+Document tests/pos/cc-experimental.scala
+(3:9..3:14) scala/
+(5:8..5:16) scala/language.
+(5:17..5:29) scala/language.experimental.
+(5:30..5:45) scala/language.experimental.captureChecking.
+(8:12..8:16) scala/Pure#
+(10:19..10:25) java/lang/Object#
+(10:27..10:31) scala/Pure#
+(11:10..11:14) scala/Pure#
+(11:17..11:20) scala/Predef.`???`().
+

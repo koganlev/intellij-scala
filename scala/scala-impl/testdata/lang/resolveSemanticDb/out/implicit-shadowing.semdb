@@ -9,7 +9,9 @@ Document tests/pos/implicit-shadowing.scala
 (10:5..10:6) local1 -> 7:9
 (10:11..10:12) _empty_/Test.C# -> 3:9
 (16:12..16:14) _empty_/Test.C1# -> 13:9
+(16:12..16:14) _empty_/Test.f().[T] -> 16:9
 (17:14..17:16) _empty_/Test.C2# -> 14:9
+(17:14..17:16) local4 -> 17:11
 (18:7..18:17) scala/Predef.implicitly().
 (18:18..18:20) _empty_/Test.C1# -> 13:9
 (18:21..18:22) _empty_/Test.f().[T] -> 16:9

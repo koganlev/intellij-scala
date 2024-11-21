@@ -12,9 +12,8 @@
 [56,75]: ContextBounds
 [56,65]: TypeBoundsTree
 [59,65]: Ident
-[65,75]: AppliedTypeTree
+[67,75]: ContextBoundTypeTree
 [67,75]: Ident
-[75,75]: Ident
 [77,88]: ValDef
 [80,88]: Function
 [80,81]: Ident

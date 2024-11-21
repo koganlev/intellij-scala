@@ -1,4 +1,4 @@
-// https://github.com/lampepfl/dotty/issues/1065
+// https://github.com/scala/scala3/issues/1065
 package hello
 
 object world {
@@ -12,7 +12,7 @@ object world {
 }
 -----
 ScalaFile
-  PsiComment(comment)('// https://github.com/lampepfl/dotty/issues/1065')
+  PsiComment(comment)('// https://github.com/scala/scala3/issues/1065')
   PsiWhiteSpace('\n')
   ScPackaging
     PsiElement(package)('package')

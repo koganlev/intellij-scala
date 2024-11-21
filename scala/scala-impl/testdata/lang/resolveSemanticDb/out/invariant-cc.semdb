@@ -1,0 +1,66 @@
+Document tests/pos/invariant-cc.scala
+(1:8..1:16) scala/language.
+(1:17..1:29) scala/language.experimental.
+(1:30..1:45) scala/language.experimental.captureChecking.
+(2:8..2:13) scala/
+(2:14..2:24) scala/annotation/
+(2:25..2:34) scala/annotation/unchecked/
+(2:35..2:52) scala/annotation/unchecked/uncheckedVariance#
+(4:39..4:43) scala/Pure#
+(6:18..6:21) scala/Int#
+(6:32..6:33) _empty_/IterableFactory#fill().[A] -> 6:12
+(6:36..6:38) _empty_/IterableFactory#[CC] -> 4:24
+(6:39..6:40) _empty_/IterableFactory#fill().[A] -> 6:12
+(6:43..6:47) _empty_/IterableFactory#fill().(elem) -> 6:23
+(6:51..6:54) scala/Predef.`???`().
+(7:19..7:22) scala/Int#
+(7:28..7:31) scala/Int#
+(7:42..7:43) _empty_/IterableFactory#fill(+1).[A] -> 7:12
+(7:46..7:48) _empty_/IterableFactory#[CC] -> 4:24
+(7:50..7:52) _empty_/IterableFactory#[CC] -> 4:24
+(7:53..7:54) _empty_/IterableFactory#fill(+1).[A] -> 7:12
+(7:57..7:61) _empty_/IterableFactory#fill(+1).(elem) -> 7:33
+(7:65..7:82) scala/annotation/unchecked/uncheckedVariance#
+(7:85..7:89) _empty_/IterableFactory#fill(+1).(elem) -> 7:33
+(8:4..8:8) _empty_/IterableFactory#fill(). -> 6:7
+(8:9..8:11) _empty_/IterableFactory#[CC] -> 4:24
+(8:12..8:13) _empty_/IterableFactory#fill(+1).[A] -> 7:12
+(8:16..8:20) _empty_/IterableFactory#fill(+1).(elem) -> 7:33
+(8:23..8:25) _empty_/IterableFactory#fill(+1).(n1) -> 7:15
+(8:27..8:31) _empty_/IterableFactory#fill(). -> 6:7
+(8:32..8:34) _empty_/IterableFactory#fill(+1).(n2) -> 7:24
+(8:36..8:40) _empty_/IterableFactory#fill(+1).(elem) -> 7:33
+(9:4..9:8) _empty_/IterableFactory#fill(). -> 6:7
+(9:9..9:11) _empty_/IterableFactory#fill(+1).(n1) -> 7:15
+(9:13..9:17) _empty_/IterableFactory#fill(). -> 6:7
+(9:18..9:20) _empty_/IterableFactory#fill(+1).(n2) -> 7:24
+(9:22..9:26) _empty_/IterableFactory#fill(+1).(elem) -> 7:33
+(11:19..11:22) scala/Int#
+(11:36..11:37) _empty_/IterableFactory#fill2().[A] -> 11:13
+(11:40..11:42) _empty_/IterableFactory#[CC] -> 4:24
+(11:43..11:44) _empty_/IterableFactory#fill2().[A] -> 11:13
+(11:47..11:51) _empty_/IterableFactory#fill2().(elem) -> 11:24
+(11:55..11:58) scala/Predef.`???`().
+(12:20..12:23) scala/Int#
+(12:29..12:32) scala/Int#
+(12:46..12:47) _empty_/IterableFactory#fill2(+1).[A] -> 12:13
+(12:50..12:52) _empty_/IterableFactory#[CC] -> 4:24
+(12:54..12:56) _empty_/IterableFactory#[CC] -> 4:24
+(12:57..12:58) _empty_/IterableFactory#fill2(+1).[A] -> 12:13
+(12:61..12:65) _empty_/IterableFactory#fill2(+1).(elem) -> 12:34
+(12:69..12:86) scala/annotation/unchecked/uncheckedVariance#
+(12:89..12:93) _empty_/IterableFactory#fill2(+1).(elem) -> 12:34
+(13:4..13:9) _empty_/IterableFactory#fill2(). -> 11:7
+(13:10..13:12) _empty_/IterableFactory#[CC] -> 4:24
+(13:13..13:14) _empty_/IterableFactory#fill2(+1).[A] -> 12:13
+(13:17..13:21) _empty_/IterableFactory#fill2(+1).(elem) -> 12:34
+(13:24..13:26) _empty_/IterableFactory#fill2(+1).(n1) -> 12:16
+(13:34..13:39) _empty_/IterableFactory#fill2(). -> 11:7
+(13:40..13:42) _empty_/IterableFactory#fill2(+1).(n2) -> 12:25
+(13:44..13:48) _empty_/IterableFactory#fill2(+1).(elem) -> 12:34
+(14:4..14:9) _empty_/IterableFactory#fill2(). -> 11:7
+(14:10..14:12) _empty_/IterableFactory#fill2(+1).(n1) -> 12:16
+(14:20..14:25) _empty_/IterableFactory#fill2(). -> 11:7
+(14:26..14:28) _empty_/IterableFactory#fill2(+1).(n2) -> 12:25
+(14:30..14:34) _empty_/IterableFactory#fill2(+1).(elem) -> 12:34
+

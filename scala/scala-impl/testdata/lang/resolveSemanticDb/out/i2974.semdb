@@ -8,7 +8,10 @@ Document tests/pos/i2974.scala
 (7:24..7:27) scala/Int#
 (7:31..7:34) scala/Predef.`???`().
 (9:13..9:17) scala/Unit#
-(10:5..10:15) scala/Predef.implicitly().
-(10:16..10:19) _empty_/Foo# -> 1:7
-(10:20..10:23) scala/Int#
+(10:13..10:19) scala/Predef.summon().
+(10:20..10:23) _empty_/Foo# -> 1:7
+(10:24..10:27) scala/Int#
+(11:12..11:15) _empty_/Bar# -> 3:7
+(11:16..11:19) scala/Int#
+(11:23..11:24) local0 -> 10:9
 

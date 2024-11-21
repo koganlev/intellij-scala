@@ -1,0 +1,27 @@
+Document tests/pos/reach-capability.scala
+(1:8..1:16) scala/language.
+(1:17..1:29) scala/language.experimental.
+(1:30..1:45) scala/language.experimental.captureChecking.
+(2:8..2:18) scala/annotation/
+(2:19..2:31) scala/annotation/experimental#
+(3:8..3:12) scala/caps.
+(4:8..4:12) scala/caps.
+(4:13..4:18) scala/caps.unbox#
+(6:2..6:14) scala/annotation/experimental#
+(9:19..9:20) _empty_/Test2.List#[A] -> 8:15
+(9:24..9:25) _empty_/Test2.List#map().[B] -> 9:13
+(9:28..9:32) _empty_/Test2.List# -> 8:9
+(9:33..9:34) _empty_/Test2.List#map().[B] -> 9:13
+(9:38..9:41) scala/Predef.`???`().
+(11:23..11:33) scala/caps.Capability#
+(15:14..15:19) scala/caps.unbox#
+(15:26..15:30) _empty_/Test2.List# -> 8:9
+(15:31..15:36) _empty_/Test2.Label# -> 11:9
+(16:27..16:32) _empty_/Test2.Label# -> 11:9
+(16:35..16:43) _empty_/Test2.Listener# -> 13:9
+(16:45..16:48) local0 -> 16:22
+(16:52..16:55) scala/Predef.`???`().
+(17:21..17:25) _empty_/Test2.test2().(lbls) -> 15:20
+(17:26..17:29) _empty_/Test2.List#map(). -> 9:9
+(17:30..17:42) local1 -> 16:9
+

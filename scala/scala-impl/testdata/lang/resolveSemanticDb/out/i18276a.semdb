@@ -21,13 +21,13 @@ Document tests/pos/i18276a.scala
 (12:28..12:34) _empty_/ParsersBase#Parser# -> 11:18
 (12:35..12:36) _empty_/ParsersBase#Parser#map().[U] -> 12:13
 (12:40..12:43) scala/Predef.`???`().
-(14:20..14:30) scala/Conversion#
-(14:32..14:33) _empty_/ParsersBase#given_Conversion_Function_Function().[A] -> 14:10
-(14:35..14:36) _empty_/ParsersBase#given_Conversion_Function_Function().[B] -> 14:13
-(14:41..14:42) _empty_/ParsersBase#given_Conversion_Function_Function().[X] -> 14:16
-(14:45..14:46) _empty_/ParsersBase#given_Conversion_Function_Function().[A] -> 14:10
-(14:47..14:48) _empty_/ParsersBase#`~`# -> 10:9
-(14:49..14:50) _empty_/ParsersBase#given_Conversion_Function_Function().[B] -> 14:13
-(14:55..14:56) _empty_/ParsersBase#given_Conversion_Function_Function().[X] -> 14:16
-(14:60..14:63) scala/Predef.`???`().
+(14:22..14:32) scala/Conversion#
+(14:34..14:35) _empty_/ParsersBase#given_Conversion_Function_Function().[A] -> 14:10
+(14:37..14:38) _empty_/ParsersBase#given_Conversion_Function_Function().[B] -> 14:13
+(14:43..14:44) _empty_/ParsersBase#given_Conversion_Function_Function().[X] -> 14:16
+(14:47..14:48) _empty_/ParsersBase#given_Conversion_Function_Function().[A] -> 14:10
+(14:49..14:50) _empty_/ParsersBase#`~`# -> 10:9
+(14:51..14:52) _empty_/ParsersBase#given_Conversion_Function_Function().[B] -> 14:13
+(14:57..14:58) _empty_/ParsersBase#given_Conversion_Function_Function().[X] -> 14:16
+(14:62..14:65) scala/Predef.`???`().
 

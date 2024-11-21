@@ -13,9 +13,11 @@ Document tests/pos/t5384.scala
 (4:40..4:41) _empty_/A#`<init>`().(y)
 (4:47..4:48) _empty_/A#`<init>`().(x)
 (4:56..4:57) _empty_/B3#o. -> 4:19
+(6:13..6:21) _empty_/AM#[E] -> 6:10
 (6:13..6:21) scala/Predef.Manifest#
 (6:30..6:34) scala/Unit#
 (6:44..6:48) scala/Unit#
+(7:13..7:21) _empty_/BM#[E] -> 7:10
 (7:13..7:21) scala/Predef.Manifest#
 (7:31..7:33) _empty_/AM# -> 6:7
 (7:34..7:35) _empty_/BM#[E] -> 7:10

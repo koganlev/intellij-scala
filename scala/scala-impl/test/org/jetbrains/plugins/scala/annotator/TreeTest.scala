@@ -9,28 +9,15 @@ import org.junit.experimental.categories.Category
 
 @Category(Array(classOf[TypecheckerTests]))
 class TreeTest extends TestCase {
+  import scala.util.parsing.combinator._
 
-  import scala.meta.internal.fastparse
-  import fastparse._
-  import NoWhitespace._
+  private object Language extends RegexParsers {
+    def comma: Parser[Unit]             = """\s*,\s*""".r                         ^^ { _ => () }
+    def element: Parser[Leaf[TypeDiff]] = """\w+""".r                             ^^ { name => Leaf(Match(name))}
+    def group: Parser[Node[TypeDiff]]   = ("(" ~> repsep(parser, comma) <~ ")")   ^^ { Node(_: _*) }
+    def parser: Parser[Tree[TypeDiff]]  = group | element
 
-  private def letterOrDigit[* : P]: P[Unit] = P {
-    CharPred(_.isLetterOrDigit)
-  }
-
-  private def comma[* : P]: P[Unit] =
-    P(", ").rep(0)
-
-  private def element[* : P]: P[Leaf[TypeDiff]] = P {
-    letterOrDigit.rep(1).!.map(s => Leaf(Match(s)))
-  }
-
-  private def group[* : P]: P[Node[TypeDiff]] = P {
-    "(" ~~ parser.rep(0) ~~ ")"
-  }.map(Node(_: _*))
-
-  private def parser[* : P]: P[Tree[TypeDiff]] = P {
-    (group | element) ~ comma
+    def apply(s: String): Node[TypeDiff] = parseAll(group, s"($s)").get
   }
 
   def testFlatten(): Unit = {
@@ -93,7 +80,7 @@ class TreeTest extends TestCase {
   }
 
   private def assertFlattenedTo(maxChars: Int, elements: String, expectedElements: String, nodeLength: Int = 0): Unit = {
-    val result = fastparse.parse("(" + elements + ")", group(_)).get.value.flattenTo(lengthOf(nodeLength), maxChars)
+    val result = Language(elements).flattenTo(lengthOf(nodeLength), maxChars)
 //    val result = group.parse("(" + elements + ")").get.value.flattenTo(lengthOf(nodeLength), maxChars)
     assertEquals(expectedElements, result.map(asString).mkString(", "))
   }

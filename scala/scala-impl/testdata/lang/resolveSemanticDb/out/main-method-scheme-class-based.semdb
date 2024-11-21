@@ -87,9 +87,9 @@ Document tests/pos/main-method-scheme-class-based.scala
 (81:31..81:32) local13 -> 81:19
 (82:14..82:18) scala/None.
 (82:22..82:27) local3 -> 63:17
+(82:28..82:29) scala/StringContext#s().
 (82:52..82:59) local10 -> 79:28
 (82:62..82:65) local11 -> 79:45
-(82:65..82:66) scala/StringContext#s().
 (84:31..84:37) scala/Predef.String#
 (84:42..84:56) _empty_/main#ArgumentParser# -> 47:8
 (84:57..84:58) local15 -> 84:19
@@ -103,8 +103,8 @@ Document tests/pos/main-method-scheme-class-based.scala
 (85:33..85:45) local18 -> 84:61
 (85:46..85:55) scala/Option#isDefined().
 (86:17..86:21) _empty_/main#command().(args) -> 50:15
+(86:30..86:31) scala/StringContext#s().
 (86:35..86:42) local16 -> 84:22
-(86:42..86:43) scala/StringContext#s().
 (87:23..87:26) local19 -> 86:11
 (87:27..87:29) scala/Int#`>=`(+3).
 (87:37..87:42) local6 -> 70:17
@@ -123,8 +123,8 @@ Document tests/pos/main-method-scheme-class-based.scala
 (91:33..91:34) local22 -> 91:21
 (92:16..92:20) scala/None.
 (92:24..92:29) local3 -> 63:17
+(92:30..92:31) scala/StringContext#s().
 (92:54..92:61) local16 -> 84:22
-(92:61..92:62) scala/StringContext#s().
 (94:32..94:38) scala/Predef.String#
 (94:43..94:57) _empty_/main#ArgumentParser# -> 47:8
 (94:58..94:59) local25 -> 94:20
@@ -149,12 +149,12 @@ Document tests/pos/main-method-scheme-class-based.scala
 (102:74..102:78) scala/Unit#
 (103:20..103:24) scala/Unit#
 (104:9..104:16) scala/Predef.println(+1).
+(104:17..104:18) scala/StringContext#s().
 (104:27..104:35) local34 -> 102:35
 (104:38..104:46) local0 -> 57:17
 (104:47..104:50) scala/collection/StrictOptimizedIterableOps#map().
 (104:53..104:54) java/lang/String#`+`().
 (104:58..104:66) scala/collection/IterableOnceOps#mkString(+1).
-(104:72..104:73) scala/StringContext#s().
 (106:22..106:26) scala/Unit#
 (107:12..107:22) local35 -> 102:53
 (107:23..107:31) scala/collection/StringOps#nonEmpty().
@@ -164,8 +164,8 @@ Document tests/pos/main-method-scheme-class-based.scala
 (109:32..109:49) local8 -> 73:17
 (110:14..110:18) scala/Some.
 (111:11..111:16) local3 -> 63:17
+(111:17..111:18) scala/StringContext#s().
 (111:37..111:40) local39 -> 110:19
-(111:40..111:41) scala/StringContext#s().
 (112:11..112:21) local40 -> 109:11
 (113:14..113:18) scala/None.
 (115:20..115:24) _empty_/main#command().(args) -> 50:15
@@ -179,8 +179,8 @@ Document tests/pos/main-method-scheme-class-based.scala
 (116:69..116:72) local41 -> 115:13
 (116:73..116:77) scala/collection/StringOps#drop().
 (118:13..118:18) local3 -> 63:17
+(118:19..118:20) scala/StringContext#s().
 (118:45..118:48) local41 -> 115:13
-(118:48..118:49) scala/StringContext#s().
 (119:11..119:21) local40 -> 109:11
 (121:10..121:14) _empty_/main#command().(args) -> 50:15
 (121:15..121:22) scala/collection/ArrayOps#isEmpty().
@@ -194,8 +194,8 @@ Document tests/pos/main-method-scheme-class-based.scala
 (126:19..126:27) scala/collection/IterableOnceOps#nonEmpty().
 (127:22..127:28) local1 -> 60:17
 (127:32..127:39) scala/Predef.println(+1).
+(127:40..127:41) scala/StringContext#s().
 (127:50..127:53) local42 -> 127:15
-(127:53..127:54) scala/StringContext#s().
 (128:11..128:16) local37 -> 103:11
 (129:14..129:15) local33 -> 102:13
 (130:19..130:22) scala/Int#
@@ -212,12 +212,12 @@ Document tests/pos/main-method-scheme-class-based.scala
 (141:32..141:35) scala/Int#
 (141:42..141:46) scala/Unit#
 (142:5..142:12) scala/Predef.println(+1).
+(142:13..142:14) scala/StringContext#s().
 (142:16..142:19) _empty_/myProgram.add().(num) -> 141:17
 (142:23..142:26) _empty_/myProgram.add().(inc) -> 141:27
 (142:31..142:34) _empty_/myProgram.add().(num) -> 141:17
 (142:35..142:36) scala/Int#`+`(+4).
 (142:37..142:40) _empty_/myProgram.add().(inc) -> 141:27
-(142:41..142:42) scala/StringContext#s().
 (144:5..144:14) _empty_/myProgram. -> 138:8
 (148:20..148:24) _empty_/main# -> 45:7
 (149:18..149:23) scala/Array#

@@ -17,11 +17,10 @@
 [66,89]: ContextBounds
 [66,74]: TypeBoundsTree
 [69,74]: Ident
-[74,89]: AppliedTypeTree
+[76,89]: ContextBoundTypeTree
 [76,89]: AppliedTypeTree
 [76,86]: Ident
 [87,88]: Ident
-[89,89]: Ident
 [92,96]: Ident
 [99,101]: Tuple
 [105,132]: TypeApply

@@ -1,15 +1,40 @@
+import scala.compiletime.ops.int.<
+
 type P[x] <: Boolean = x match {
   case 3 => false
   case _ => true
 }
+
 type RejectAll[x] = false
+
+type Pos[X <: Int] = 0 < X
 
 def Test =
   summon[Tuple.Filter[(1, 2, 3, 4), P] =:= (1, 2, 4)]
   summon[Tuple.Filter[(1, 2, 3, 4), RejectAll] =:= EmptyTuple]
   summon[Tuple.Filter[EmptyTuple, P] =:= EmptyTuple]
+  summon[Tuple.Filter[(1, -2, 3, -4), Pos] =:= (1, 3)]
 -----
 ScalaFile
+  ScImportStatement
+    PsiElement(import)('import')
+    PsiWhiteSpace(' ')
+    ImportExpression
+      CodeReferenceElement: scala.compiletime.ops.int.<
+        CodeReferenceElement: scala.compiletime.ops.int
+          CodeReferenceElement: scala.compiletime.ops
+            CodeReferenceElement: scala.compiletime
+              CodeReferenceElement: scala
+                PsiElement(identifier)('scala')
+              PsiElement(.)('.')
+              PsiElement(identifier)('compiletime')
+            PsiElement(.)('.')
+            PsiElement(identifier)('ops')
+          PsiElement(.)('.')
+          PsiElement(identifier)('int')
+        PsiElement(.)('.')
+        PsiElement(identifier)('<')
+  PsiWhiteSpace('\n\n')
   ScTypeAliasDefinition: P
     AnnotationsList
       <empty list>
@@ -71,7 +96,7 @@ ScalaFile
               PsiElement(true)('true')
       PsiWhiteSpace('\n')
       PsiElement(})('}')
-  PsiWhiteSpace('\n')
+  PsiWhiteSpace('\n\n')
   ScTypeAliasDefinition: RejectAll
     AnnotationsList
       <empty list>
@@ -91,6 +116,40 @@ ScalaFile
     LiteralType: false
       BooleanLiteral
         PsiElement(false)('false')
+  PsiWhiteSpace('\n\n')
+  ScTypeAliasDefinition: Pos
+    AnnotationsList
+      <empty list>
+    Modifiers
+      <empty list>
+    PsiElement(type)('type')
+    PsiWhiteSpace(' ')
+    PsiElement(identifier)('Pos')
+    TypeParameterClause
+      PsiElement([)('[')
+      TypeParameter: X
+        PsiElement(identifier)('X')
+        PsiWhiteSpace(' ')
+        PsiElement(<:)('<:')
+        PsiWhiteSpace(' ')
+        SimpleType: Int
+          CodeReferenceElement: Int
+            PsiElement(identifier)('Int')
+      PsiElement(])(']')
+    PsiWhiteSpace(' ')
+    PsiElement(=)('=')
+    PsiWhiteSpace(' ')
+    InfixType: 0 < X
+      LiteralType: 0
+        IntegerLiteral
+          PsiElement(integer)('0')
+      PsiWhiteSpace(' ')
+      CodeReferenceElement: <
+        PsiElement(identifier)('<')
+      PsiWhiteSpace(' ')
+      SimpleType: X
+        CodeReferenceElement: X
+          PsiElement(identifier)('X')
   PsiWhiteSpace('\n\n')
   ScFunctionDefinition: Test
     AnnotationsList
@@ -255,4 +314,67 @@ ScalaFile
             SimpleType: EmptyTuple
               CodeReferenceElement: EmptyTuple
                 PsiElement(identifier)('EmptyTuple')
+          PsiElement(])(']')
+      PsiWhiteSpace('\n  ')
+      GenericCall
+        ReferenceExpression: summon
+          PsiElement(identifier)('summon')
+        TypeArgumentsList
+          PsiElement([)('[')
+          InfixType: Tuple.Filter[(1, -2, 3, -4), Pos] =:= (1, 3)
+            ParametrizedType: Tuple.Filter[(1, -2, 3, -4), Pos]
+              SimpleType: Tuple.Filter
+                CodeReferenceElement: Tuple.Filter
+                  CodeReferenceElement: Tuple
+                    PsiElement(identifier)('Tuple')
+                  PsiElement(.)('.')
+                  PsiElement(identifier)('Filter')
+              TypeArgumentsList
+                PsiElement([)('[')
+                TupleType: (1, -2, 3, -4)
+                  PsiElement(()('(')
+                  TypesList
+                    LiteralType: 1
+                      IntegerLiteral
+                        PsiElement(integer)('1')
+                    PsiElement(,)(',')
+                    PsiWhiteSpace(' ')
+                    LiteralType: -2
+                      IntegerLiteral
+                        PsiElement(identifier)('-')
+                        PsiElement(integer)('2')
+                    PsiElement(,)(',')
+                    PsiWhiteSpace(' ')
+                    LiteralType: 3
+                      IntegerLiteral
+                        PsiElement(integer)('3')
+                    PsiElement(,)(',')
+                    PsiWhiteSpace(' ')
+                    LiteralType: -4
+                      IntegerLiteral
+                        PsiElement(identifier)('-')
+                        PsiElement(integer)('4')
+                  PsiElement())(')')
+                PsiElement(,)(',')
+                PsiWhiteSpace(' ')
+                SimpleType: Pos
+                  CodeReferenceElement: Pos
+                    PsiElement(identifier)('Pos')
+                PsiElement(])(']')
+            PsiWhiteSpace(' ')
+            CodeReferenceElement: =:=
+              PsiElement(identifier)('=:=')
+            PsiWhiteSpace(' ')
+            TupleType: (1, 3)
+              PsiElement(()('(')
+              TypesList
+                LiteralType: 1
+                  IntegerLiteral
+                    PsiElement(integer)('1')
+                PsiElement(,)(',')
+                PsiWhiteSpace(' ')
+                LiteralType: 3
+                  IntegerLiteral
+                    PsiElement(integer)('3')
+              PsiElement())(')')
           PsiElement(])(']')

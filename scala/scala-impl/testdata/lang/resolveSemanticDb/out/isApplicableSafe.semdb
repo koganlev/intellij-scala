@@ -4,6 +4,7 @@ Document tests/pos/isApplicableSafe.scala
 (1:16..1:24) scala/reflect/ClassTag.
 (2:8..2:19) scala/compiletime/
 (2:20..2:33) scala/compiletime/package$package.uninitialized().
+(8:18..8:26) _empty_/A#Array.apply().[T] -> 8:15
 (8:18..8:26) scala/reflect/ClassTag#
 (8:32..8:33) _empty_/A#Array.apply().[T] -> 8:15
 (8:37..8:42) _empty_/A#Array# -> 6:9

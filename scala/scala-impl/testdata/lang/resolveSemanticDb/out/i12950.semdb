@@ -17,6 +17,7 @@ Document tests/pos/i12950/repro_1.scala
 (16:40..16:42) repro/repro.repro().[TR] -> 16:19
 (16:46..16:49) scala/Int#
 (16:52..16:53) repro/repro.repro().(l) -> 15:19
+(16:54..16:59) repro/repro.opq.value(). -> 8:17
 (16:60..16:61) scala/Int#`+`(+4).
 (16:62..16:63) repro/repro.repro().(m) -> 16:29
 (16:64..16:69) repro/repro.Mul#value. -> 19:13

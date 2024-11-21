@@ -1623,9 +1623,8 @@
 [8887,8901]: ContextBounds
 [8887,8891]: TypeBoundsTree
 [8890,8891]: Ident
-[8891,8901]: AppliedTypeTree
+[8893,8901]: ContextBoundTypeTree
 [8893,8901]: Ident
-[8901,8901]: Ident
 [8904,8912]: AppliedTypeTree
 [8904,8909]: Ident
 [8910,8911]: Ident

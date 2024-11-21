@@ -1,0 +1,27 @@
+Document tests/pos/cc-ex-unpack.scala
+(1:8..1:16) scala/language.
+(1:17..1:29) scala/language.experimental.
+(1:30..1:45) scala/language.experimental.captureChecking.
+(2:8..2:12) scala/caps.
+(6:16..6:22) scala/caps.Exists#
+(6:28..6:29) _empty_/C# -> 4:7
+(6:31..6:32) local0 -> 6:13
+(6:35..6:36) _empty_/C# -> 4:7
+(6:38..6:39) local0 -> 6:13
+(8:23..8:29) scala/caps.Exists#
+(8:39..8:45) scala/caps.Exists#
+(8:51..8:52) _empty_/C# -> 4:7
+(8:54..8:56) local2 -> 8:19
+(8:59..8:60) _empty_/C# -> 4:7
+(8:62..8:64) local3 -> 8:35
+(10:22..10:28) scala/caps.Exists#
+(10:39..10:40) _empty_/C# -> 4:7
+(10:42..10:43) local10 -> 10:19
+(12:28..12:34) scala/caps.Exists#
+(12:39..12:40) _empty_/C# -> 4:7
+(12:42..12:43) local14 -> 12:25
+(16:14..16:17) _empty_/`cc-ex-unpack$package`.EX1# -> 6:6
+(16:20..16:23) scala/Predef.`???`().
+(17:14..17:17) local18 -> 16:9
+(18:5..18:7) local19 -> 17:9
+

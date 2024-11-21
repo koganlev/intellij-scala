@@ -40,4 +40,6 @@ Document tests/pos/i8577.scala
 (18:149..18:152) scala/Predef.`???`().
 (20:4..20:7) scala/Predef.`???`().
 (20:10..20:13) scala/Int#
+(21:10..21:13) local1 -> 17:38
+(21:10..21:19) local11 -> 18:73
 

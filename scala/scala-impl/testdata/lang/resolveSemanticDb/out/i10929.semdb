@@ -1,0 +1,66 @@
+Document tests/pos/i10929.scala
+(3:22..3:27) scala/Tuple#
+(4:17..4:18) _empty_/TupleOf#[T] -> 2:30
+(4:23..4:24) _empty_/TupleOf#[A] -> 2:34
+(4:28..4:29) _empty_/TupleOf#map().[B] -> 4:11
+(4:32..4:38) _empty_/TupleOf#Mapped# -> 3:8
+(4:39..4:40) _empty_/TupleOf#map().[B] -> 4:11
+(8:9..8:16) _empty_/TupleOf# -> 2:22
+(8:17..8:27) scala/Tuple$package.EmptyTuple#
+(8:29..8:36) scala/Nothing#
+(9:23..9:33) scala/Tuple$package.EmptyTuple#
+(10:19..10:29) scala/Tuple$package.EmptyTuple#
+(10:34..10:41) scala/Nothing#
+(10:45..10:46) _empty_/TupleOf.given_TupleOf_EmptyTuple_Nothing.map().[B] -> 10:13
+(10:49..10:55) _empty_/TupleOf.given_TupleOf_EmptyTuple_Nothing.Mapped# -> 9:10
+(10:56..10:57) _empty_/TupleOf.given_TupleOf_EmptyTuple_Nothing.map().[B] -> 10:13
+(10:61..10:62) _empty_/TupleOf.given_TupleOf_EmptyTuple_Nothing.map().(x) -> 10:16
+(12:21..12:26) scala/Tuple#
+(12:49..12:53) _empty_/TupleOf.`given_TupleOf_*:_A`#[Rest] -> 12:13
+(12:49..12:53) _empty_/TupleOf.`given_TupleOf_*:_A`().[Rest] -> 12:13
+(12:54..12:61) _empty_/TupleOf# -> 2:22
+(12:62..12:63) _empty_/TupleOf.`given_TupleOf_*:_A`#[A] -> 12:10
+(12:62..12:63) _empty_/TupleOf.`given_TupleOf_*:_A`().[A] -> 12:10
+(12:68..12:75) _empty_/TupleOf# -> 2:22
+(12:76..12:77) _empty_/TupleOf.`given_TupleOf_*:_A`#[A] -> 12:10
+(12:78..12:80) scala/`*:`#
+(12:81..12:85) _empty_/TupleOf.`given_TupleOf_*:_A`#[Rest] -> 12:13
+(12:87..12:88) _empty_/TupleOf.`given_TupleOf_*:_A`#[A] -> 12:10
+(13:23..13:24) _empty_/TupleOf.`given_TupleOf_*:_A`#Mapped#[A] -> 13:18
+(13:25..13:27) scala/`*:`#
+(13:28..13:31) _empty_/TupleOf.`given_TupleOf_*:_A`#tup. -> 12:44
+(13:32..13:38) _empty_/TupleOf#Mapped# -> 3:8
+(13:39..13:40) _empty_/TupleOf.`given_TupleOf_*:_A`#Mapped#[A] -> 13:18
+(14:19..14:20) _empty_/TupleOf.`given_TupleOf_*:_A`#[A] -> 12:10
+(14:21..14:23) scala/`*:`#
+(14:24..14:28) _empty_/TupleOf.`given_TupleOf_*:_A`#[Rest] -> 12:13
+(14:33..14:34) _empty_/TupleOf.`given_TupleOf_*:_A`#[A] -> 12:10
+(14:38..14:39) _empty_/TupleOf.`given_TupleOf_*:_A`#map().[B] -> 14:13
+(14:42..14:48) _empty_/TupleOf.`given_TupleOf_*:_A`#Mapped# -> 13:10
+(14:49..14:50) _empty_/TupleOf.`given_TupleOf_*:_A`#map().[B] -> 14:13
+(15:21..15:24) _empty_/TupleOf.`given_TupleOf_*:_A`#tup. -> 12:44
+(15:25..15:28) _empty_/TupleOf#map(). -> 4:7
+(15:29..15:30) _empty_/TupleOf.`given_TupleOf_*:_A`#map().(x) -> 14:16
+(15:31..15:35) scala/Tuple#tail().
+(15:37..15:38) _empty_/TupleOf.`given_TupleOf_*:_A`#map().(f) -> 14:30
+(17:16..17:17) _empty_/i10929$package.foo().[T] -> 17:9
+(17:30..17:31) _empty_/i10929$package.foo().[T] -> 17:9
+(17:32..17:39) _empty_/TupleOf# -> 2:22
+(17:40..17:43) scala/Int#
+(17:46..17:49) _empty_/i10929$package.foo().(tup) -> 17:25
+(17:50..17:56) _empty_/TupleOf#Mapped# -> 3:8
+(17:57..17:60) scala/Int#
+(17:64..17:67) _empty_/i10929$package.foo().(tup) -> 17:25
+(17:68..17:71) _empty_/TupleOf#map(). -> 4:7
+(17:72..17:74) _empty_/i10929$package.foo().(xs) -> 17:12
+(17:78..17:79) scala/Int#`+`(+4).
+(19:2..19:6) scala/main#
+(20:3..20:6) _empty_/i10929$package.foo(). -> 17:5
+(20:7..20:17) scala/Tuple$package.EmptyTuple.
+(20:20..20:30) scala/Tuple$package.EmptyTuple#
+(21:3..21:6) _empty_/i10929$package.foo(). -> 17:5
+(21:12..21:22) scala/Tuple$package.EmptyTuple.
+(21:25..21:28) scala/Int#
+(21:29..21:31) scala/`*:`#
+(21:32..21:42) scala/Tuple$package.EmptyTuple#
+

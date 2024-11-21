@@ -1,0 +1,70 @@
+Document tests/pos/cc-poly-source-capability.scala
+(1:8..1:16) scala/language.
+(1:17..1:29) scala/language.experimental.
+(1:30..1:45) scala/language.experimental.captureChecking.
+(2:8..2:18) scala/annotation/
+(2:19..2:31) scala/annotation/experimental#
+(3:8..3:12) scala/caps.
+(4:8..4:12) scala/caps.
+(4:13..4:18) scala/caps.unbox#
+(6:2..6:14) scala/annotation/experimental#
+(8:23..8:33) scala/caps.Capability#
+(10:23..10:28) _empty_/Test.Async# -> 8:9
+(10:31..10:39) _empty_/Test.Listener# -> 12:9
+(10:41..10:46) _empty_/Test.listener().(async) -> 10:16
+(10:50..10:53) scala/Predef.`???`().
+(15:28..15:31) scala/Predef.Set#
+(15:32..15:40) _empty_/Test.Listener# -> 12:9
+(15:42..15:43) _empty_/Test.Source#[X] -> 14:16
+(15:49..15:52) scala/Predef.Set.
+(15:53..15:58) scala/collection/immutable/Set.empty().
+(16:21..16:29) _empty_/Test.Listener# -> 12:9
+(16:31..16:32) _empty_/Test.Source#[X] -> 14:16
+(16:37..16:41) scala/Unit#
+(17:7..17:16) _empty_/Test.Source#listeners(). -> 15:17
+(17:20..17:21) _empty_/Test.Source#register().(x) -> 16:18
+(19:23..19:26) scala/Predef.Set#
+(19:27..19:35) _empty_/Test.Listener# -> 12:9
+(19:37..19:38) _empty_/Test.Source#[X] -> 14:16
+(19:44..19:53) _empty_/Test.Source#listeners(). -> 15:17
+(21:21..21:26) _empty_/Test.Async# -> 8:9
+(21:29..21:34) scala/caps.unbox#
+(21:43..21:47) scala/package.List#
+(21:48..21:53) _empty_/Test.Async# -> 8:9
+(22:22..22:28) scala/caps.CapSet#
+(22:30..22:36) _empty_/Test.test1().(async1) -> 21:13
+(22:38..22:44) _empty_/Test.test1().(others) -> 21:35
+(23:16..23:24) _empty_/Test.listener(). -> 10:7
+(23:25..23:31) _empty_/Test.test1().(async1) -> 21:13
+(24:16..24:22) _empty_/Test.test1().(others) -> 21:35
+(24:23..24:26) scala/collection/immutable/List#map().
+(24:27..24:35) _empty_/Test.listener(). -> 10:7
+(25:12..25:16) scala/package.List#
+(25:17..25:25) _empty_/Test.Listener# -> 12:9
+(25:27..25:33) _empty_/Test.test1().(others) -> 21:35
+(25:39..25:43) local3 -> 24:9
+(26:5..26:8) local0 -> 22:9
+(26:9..26:17) _empty_/Test.Source#register(). -> 16:9
+(26:18..26:22) local1 -> 23:9
+(27:5..27:8) local0 -> 22:9
+(27:9..27:17) _empty_/Test.Source#register(). -> 16:9
+(27:18..27:26) _empty_/Test.listener(). -> 10:7
+(27:27..27:33) _empty_/Test.test1().(async1) -> 21:13
+(28:5..28:9) local3 -> 24:9
+(28:10..28:17) scala/collection/immutable/List#foreach().
+(28:18..28:21) local0 -> 22:9
+(28:22..28:30) _empty_/Test.Source#register(). -> 16:9
+(29:5..29:11) _empty_/Test.test1().(others) -> 21:35
+(29:12..29:15) scala/collection/immutable/List#map().
+(29:16..29:24) _empty_/Test.listener(). -> 10:7
+(29:26..29:33) scala/collection/immutable/List#foreach().
+(29:34..29:37) local0 -> 22:9
+(29:38..29:46) _empty_/Test.Source#register(). -> 16:9
+(30:14..30:17) local0 -> 22:9
+(30:18..30:30) _empty_/Test.Source#allListeners(). -> 19:9
+(31:12..31:15) scala/Predef.Set#
+(31:16..31:24) _empty_/Test.Listener# -> 12:9
+(31:26..31:32) _empty_/Test.test1().(async1) -> 21:13
+(31:34..31:40) _empty_/Test.test1().(others) -> 21:35
+(31:46..31:48) local7 -> 30:9
+

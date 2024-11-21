@@ -65,6 +65,7 @@ Document tests/pos/overloaded_ho_fun.scala
 (38:12..38:14) scala/Char#`==`(+2).
 (39:3..39:5) _empty_/Test.sl. -> 37:7
 (39:6..39:9) _empty_/StringLike#map(+1). -> 25:7
+(43:21..43:29) _empty_/sorting.stableSort().[K] -> 43:18
 (43:21..43:29) scala/reflect/ClassTag#
 (43:34..43:37) scala/package.Seq#
 (43:38..43:39) _empty_/sorting.stableSort().[K] -> 43:18
@@ -74,6 +75,7 @@ Document tests/pos/overloaded_ho_fun.scala
 (43:65..43:70) scala/Array#
 (43:71..43:72) _empty_/sorting.stableSort().[K] -> 43:18
 (43:76..43:79) scala/Predef.`???`().
+(44:21..44:29) _empty_/sorting.stableSort(+1).[L] -> 44:18
 (44:21..44:29) scala/reflect/ClassTag#
 (44:34..44:39) scala/Array#
 (44:40..44:41) _empty_/sorting.stableSort(+1).[L] -> 44:18
@@ -122,6 +124,7 @@ Document tests/pos/overloaded_ho_fun.scala
 (72:26..72:29) scala/Any#
 (72:33..72:37) scala/Unit#
 (73:14..73:19) scala/
+(73:14..73:36) _empty_/B.map().[T] -> 73:11
 (73:20..73:27) scala/reflect/
 (73:28..73:36) scala/reflect/ClassTag#
 (73:41..73:44) scala/Int#
@@ -161,6 +164,7 @@ Document tests/pos/overloaded_ho_fun.scala
 (92:26..92:29) scala/Any#
 (92:33..92:37) scala/Unit#
 (93:14..93:19) scala/
+(93:14..93:36) _empty_/B2.map().[T] -> 93:11
 (93:20..93:27) scala/reflect/
 (93:28..93:36) scala/reflect/ClassTag#
 (93:41..93:44) _empty_/SAM# -> 89:7

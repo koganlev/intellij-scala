@@ -1,0 +1,30 @@
+Document tests/pos/i16596.scala
+(1:8..1:13) scala/
+(1:14..1:25) scala/compiletime/
+(1:26..1:29) scala/compiletime/ops/
+(1:30..1:33) scala/compiletime/ops/int.
+(1:35..1:38) scala/compiletime/ops/int.
+(3:21..3:26) scala/Tuple#
+(3:30..3:31) _empty_/i16596$package.Count#[N] -> 3:12
+(3:33..3:34) _empty_/i16596$package.Count#[T] -> 3:15
+(4:12..4:13) _empty_/i16596$package.Count#[T] -> 3:15
+(4:18..4:28) scala/Tuple$package.EmptyTuple#
+(5:9..5:10) _empty_/i16596$package.Count#[N] -> 3:12
+(5:12..5:13) _empty_/i16596$package.Count#[T] -> 3:15
+(5:18..5:19) _empty_/i16596$package.Count#[T] -> 3:15
+(5:20..5:22) scala/`*:`#
+(5:23..5:28) _empty_/i16596$package.Count# -> 3:6
+(5:29..5:30) _empty_/i16596$package.Count#[N] -> 3:12
+(5:31..5:32) scala/compiletime/ops/int.`-`#
+(5:36..5:37) _empty_/i16596$package.Count#[T] -> 3:15
+(7:8..7:13) _empty_/i16596$package.Count# -> 3:6
+(7:17..7:20) scala/Int#
+(8:8..8:13) _empty_/i16596$package.Count# -> 3:6
+(8:17..8:20) scala/Int#
+(9:8..9:13) _empty_/i16596$package.Count# -> 3:6
+(9:17..9:20) scala/Int#
+(10:8..10:13) _empty_/i16596$package.Count# -> 3:6
+(10:17..10:20) scala/Int#
+(11:8..11:13) _empty_/i16596$package.Count# -> 3:6
+(11:18..11:21) scala/Int#
+

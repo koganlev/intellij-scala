@@ -1,0 +1,260 @@
+Document tests/pos/typeclasses-arrow.scala
+(7:19..7:23) _empty_/Common#Ord#Self# -> 6:10
+(8:24..8:28) _empty_/Common#Ord#Self# -> 6:10
+(8:31..8:34) scala/Int#
+(9:17..9:21) _empty_/Common#Ord#Self# -> 6:10
+(9:24..9:31) scala/Boolean#
+(9:34..9:43) _empty_/Common#Ord#compareTo(). -> 8:11
+(9:44..9:45) _empty_/Common#Ord#`<`().(y) -> 9:14
+(9:47..9:48) scala/Int#`<`(+3).
+(10:17..10:21) _empty_/Common#Ord#Self# -> 6:10
+(10:24..10:31) scala/Boolean#
+(10:34..10:43) _empty_/Common#Ord#compareTo(). -> 8:11
+(10:44..10:45) _empty_/Common#Ord#`>`().(y) -> 10:14
+(10:47..10:48) scala/Int#`>`(+3).
+(11:18..11:22) _empty_/Common#Ord#Self# -> 6:10
+(11:25..11:32) scala/Boolean#
+(11:35..11:44) _empty_/Common#Ord#compareTo(). -> 8:11
+(11:45..11:46) _empty_/Common#Ord#`<=`().(y) -> 11:15
+(11:48..11:50) scala/Int#`<=`(+3).
+(12:18..12:22) _empty_/Common#Ord#Self# -> 6:10
+(12:25..12:32) scala/Boolean#
+(12:35..12:44) _empty_/Common#Ord#compareTo(). -> 8:11
+(12:45..12:46) _empty_/Common#Ord#`>=`().(y) -> 12:15
+(12:48..12:50) scala/Int#`>=`(+3).
+(13:18..13:22) _empty_/Common#Ord#Self# -> 6:10
+(13:25..13:29) _empty_/Common#Ord#Self# -> 6:10
+(13:35..13:36) _empty_/Common#Ord#max().(x) -> 7:16
+(13:37..13:38) _empty_/Common#Ord#`<`(). -> 9:11
+(13:39..13:40) _empty_/Common#Ord#max().(y) -> 13:15
+(13:46..13:47) _empty_/Common#Ord#max().(y) -> 13:15
+(13:53..13:54) _empty_/Common#Ord#max().(x) -> 7:16
+(17:19..17:23) _empty_/Common#Show#Self# -> 16:10
+(17:35..17:41) scala/Predef.String#
+(21:19..21:23) _empty_/Common#SemiGroup#Self# -> 20:10
+(21:40..21:44) _empty_/Common#SemiGroup#Self# -> 20:10
+(21:47..21:51) _empty_/Common#SemiGroup#Self# -> 20:10
+(23:24..23:33) _empty_/Common#SemiGroup# -> 19:9
+(24:15..24:19) _empty_/Common#SemiGroup#Self# -> 20:10
+(28:22..28:26) _empty_/Common#Functor#Self# -> 27:10
+(28:27..28:28) _empty_/Common#Functor#map().[A] -> 28:16
+(28:45..28:46) _empty_/Common#Functor#map().[A] -> 28:16
+(28:50..28:51) _empty_/Common#Functor#map().[B] -> 28:39
+(28:54..28:58) _empty_/Common#Functor#Self# -> 27:10
+(28:59..28:60) _empty_/Common#Functor#map().[B] -> 28:39
+(30:23..30:30) _empty_/Common#Functor# -> 26:9
+(31:20..31:21) _empty_/Common#Monad#pure().[A] -> 31:14
+(31:24..31:28) _empty_/Common#Functor#Self# -> 27:10
+(31:29..31:30) _empty_/Common#Monad#pure().[A] -> 31:14
+(32:22..32:26) _empty_/Common#Functor#Self# -> 27:10
+(32:27..32:28) _empty_/Common#Monad#flatMap().[A] -> 32:16
+(32:27..32:28) _empty_/Common#Monad#map().[A] -> 32:16
+(33:25..33:26) _empty_/Common#Monad#flatMap().[A] -> 32:16
+(33:30..33:34) _empty_/Common#Functor#Self# -> 27:10
+(33:35..33:36) _empty_/Common#Monad#flatMap().[B] -> 33:19
+(33:40..33:44) _empty_/Common#Functor#Self# -> 27:10
+(33:45..33:46) _empty_/Common#Monad#flatMap().[B] -> 33:19
+(34:21..34:22) _empty_/Common#Monad#map().[A] -> 32:16
+(34:26..34:27) _empty_/Common#Monad#map().[B] -> 34:15
+(34:31..34:32) _empty_/Common#Monad#map().(x) -> 32:19
+(34:33..34:40) _empty_/Common#Monad#flatMap(). -> 33:11
+(34:41..34:42) _empty_/Common#Monad#map().(f) -> 34:18
+(34:43..34:52) scala/Function1#andThen().
+(34:53..34:57) _empty_/Common#Monad#pure(). -> 31:9
+(35:5..35:11) _empty_/Common# -> 3:7
+(37:26..37:32) _empty_/Common# -> 3:7
+(39:17..39:20) scala/Int#
+(39:21..39:23) scala/Predef.is#
+(39:24..39:27) _empty_/Common#Ord# -> 5:9
+(40:19..40:22) scala/Int#
+(41:24..41:27) scala/Int#
+(42:12..42:13) _empty_/Instances.intOrd.compareTo().(x) -> 40:16
+(42:14..42:15) scala/Int#`<`(+3).
+(42:16..42:17) _empty_/Instances.intOrd.compareTo().(y) -> 41:21
+(43:17..43:18) _empty_/Instances.intOrd.compareTo().(x) -> 40:16
+(43:19..43:20) scala/Int#`>`(+3).
+(43:21..43:22) _empty_/Instances.intOrd.compareTo().(y) -> 41:21
+(46:13..46:16) _empty_/Common#Ord# -> 5:9
+(46:13..46:16) _empty_/Instances.given_is_List_Ord#[T] -> 46:10
+(46:13..46:16) _empty_/Instances.given_is_List_Ord().[T] -> 46:10
+(46:21..46:25) scala/package.List#
+(46:26..46:27) _empty_/Instances.given_is_List_Ord#[T] -> 46:10
+(46:29..46:31) scala/Predef.is#
+(46:32..46:35) _empty_/Common#Ord# -> 5:9
+(47:20..47:24) scala/package.List#
+(47:25..47:26) _empty_/Instances.given_is_List_Ord#[T] -> 46:10
+(47:47..47:51) scala/package.List#
+(47:52..47:53) _empty_/Instances.given_is_List_Ord#[T] -> 46:10
+(47:57..47:60) scala/Int#
+(47:64..47:66) _empty_/Instances.given_is_List_Ord#compareTo().(xs) -> 47:16
+(47:68..47:70) _empty_/Instances.given_is_List_Ord#compareTo().(ys) -> 47:43
+(48:13..48:16) scala/package.Nil.
+(48:18..48:21) scala/package.Nil.
+(49:13..49:16) scala/package.Nil.
+(50:16..50:19) scala/package.Nil.
+(51:15..51:17) scala/package.`::`.
+(51:25..51:27) scala/package.`::`.
+(52:19..52:20) local2 -> 51:13
+(52:21..52:30) _empty_/Common#Ord#compareTo(). -> 8:11
+(52:31..52:32) local4 -> 51:23
+(53:13..53:16) local6 -> 52:13
+(53:17..53:19) scala/Int#`!=`(+3).
+(53:23..53:26) local6 -> 52:13
+(53:32..53:35) local3 -> 51:18
+(53:36..53:45) _empty_/Instances.given_is_List_Ord#compareTo(). -> 47:33
+(53:46..53:49) local5 -> 51:28
+(55:20..55:24) scala/package.List#
+(55:25..55:27) scala/Predef.is#
+(55:28..55:33) _empty_/Common#Monad# -> 30:9
+(56:23..56:27) scala/package.List#
+(56:28..56:29) _empty_/Instances.listMonad.flatMap().[A] -> 56:16
+(56:50..56:51) _empty_/Instances.listMonad.flatMap().[A] -> 56:16
+(56:55..56:59) scala/package.List#
+(56:60..56:61) _empty_/Instances.listMonad.flatMap().[B] -> 56:44
+(56:65..56:69) scala/package.List#
+(56:70..56:71) _empty_/Instances.listMonad.flatMap().[B] -> 56:44
+(57:7..57:9) _empty_/Instances.listMonad.flatMap().(xs) -> 56:19
+(57:10..57:17) scala/collection/immutable/List#flatMap().
+(57:18..57:19) _empty_/Instances.listMonad.flatMap().(f) -> 56:47
+(58:20..58:21) _empty_/Instances.listMonad.pure().[A] -> 58:14
+(58:24..58:28) scala/package.List#
+(58:29..58:30) _empty_/Instances.listMonad.pure().[A] -> 58:14
+(59:7..59:11) scala/package.List.
+(59:12..59:13) _empty_/Instances.listMonad.pure().(x) -> 58:17
+(61:30..61:33) _empty_/Instances.Reader#[Ctx] -> 61:15
+(61:37..61:38) _empty_/Instances.Reader#[X] -> 61:23
+(63:31..63:37) _empty_/Instances.Reader# -> 61:8
+(63:38..63:41) _empty_/Instances.readerMonad#[Ctx] -> 63:23
+(63:43..63:45) scala/Predef.is#
+(63:46..63:51) _empty_/Common#Monad# -> 30:9
+(64:22..64:25) _empty_/Instances.readerMonad#[Ctx] -> 63:23
+(64:29..64:30) _empty_/Instances.readerMonad#flatMap().[A] -> 64:16
+(64:50..64:51) _empty_/Instances.readerMonad#flatMap().[A] -> 64:16
+(64:55..64:58) _empty_/Instances.readerMonad#[Ctx] -> 63:23
+(64:62..64:63) _empty_/Instances.readerMonad#flatMap().[B] -> 64:44
+(64:66..64:69) _empty_/Instances.readerMonad#[Ctx] -> 63:23
+(64:73..64:74) _empty_/Instances.readerMonad#flatMap().[B] -> 64:44
+(65:14..65:15) _empty_/Instances.readerMonad#flatMap().(f) -> 64:47
+(65:16..65:17) _empty_/Instances.readerMonad#flatMap().(r) -> 64:19
+(65:18..65:21) local9 -> 65:7
+(65:24..65:27) local9 -> 65:7
+(66:20..66:21) _empty_/Instances.readerMonad#pure().[A] -> 66:14
+(66:24..66:27) _empty_/Instances.readerMonad#[Ctx] -> 63:23
+(66:31..66:32) _empty_/Instances.readerMonad#pure().[A] -> 66:14
+(67:14..67:15) _empty_/Instances.readerMonad#pure().(x) -> 66:17
+(69:18..69:21) scala/package.Seq#
+(69:22..69:28) scala/Predef.String#
+(70:25..70:28) scala/package.Seq#
+(70:29..70:35) scala/Predef.String#
+(71:23..71:25) _empty_/Instances.longestStrings().(xs) -> 69:14
+(71:26..71:29) scala/collection/IterableOps#map().
+(71:32..71:38) java/lang/String#length().
+(71:40..71:43) scala/collection/IterableOnceOps#max().
+(72:7..72:9) _empty_/Instances.longestStrings().(xs) -> 69:14
+(72:10..72:16) scala/collection/IterableOps#filter().
+(72:19..72:25) java/lang/String#length().
+(72:26..72:28) scala/Int#`==`(+3).
+(72:29..72:38) local11 -> 71:11
+(74:21..74:25) scala/package.List#
+(74:26..74:27) _empty_/Instances.second().[T] -> 74:14
+(74:26..74:27) _empty_/Instances.third().[T] -> 74:14
+(75:18..75:20) _empty_/Instances.second().(xs) -> 74:17
+(75:21..75:25) scala/collection/IterableOps#tail().
+(75:26..75:30) scala/collection/IterableOps#head().
+(76:17..76:19) _empty_/Instances.third().(xs) -> 74:17
+(76:20..76:24) scala/collection/IterableOps#tail().
+(76:25..76:29) scala/collection/IterableOps#tail().
+(76:30..76:34) scala/collection/IterableOps#head().
+(78:20..78:25) _empty_/Common#Monad# -> 30:9
+(78:20..78:25) _empty_/Instances.flatten().[M] -> 78:14
+(78:35..78:36) _empty_/Instances.flatten().[M] -> 78:14
+(78:37..78:38) _empty_/Instances.flatten().[M] -> 78:14
+(78:39..78:40) _empty_/Instances.flatten().[A] -> 78:27
+(79:18..79:19) _empty_/Instances.flatten().[M] -> 78:14
+(79:20..79:21) _empty_/Instances.flatten().[A] -> 78:27
+(80:7..80:10) _empty_/Instances.flatten().(xss) -> 78:30
+(80:11..80:18) _empty_/Common#Monad#flatMap(). -> 33:11
+(80:19..80:27) scala/Predef.identity().
+(82:18..82:21) _empty_/Common#Ord# -> 5:9
+(82:18..82:21) _empty_/Instances.maximum().[T] -> 82:15
+(82:27..82:31) scala/package.List#
+(82:32..82:33) _empty_/Instances.maximum().[T] -> 82:15
+(82:37..82:38) _empty_/Instances.maximum().[T] -> 82:15
+(83:5..83:7) _empty_/Instances.maximum().(xs) -> 82:23
+(83:8..83:14) scala/collection/IterableOnceOps#reduce().
+(83:17..83:22) _empty_/Common#Ord#max(). -> 13:11
+(85:25..85:28) _empty_/Common#Ord# -> 5:9
+(85:25..85:28) _empty_/Instances.descending#[T] -> 85:22
+(85:25..85:28) _empty_/Instances.descending().[T] -> 85:22
+(85:33..85:34) _empty_/Instances.descending#[T] -> 85:22
+(85:35..85:37) scala/Predef.is#
+(85:38..85:41) _empty_/Common#Ord# -> 5:9
+(86:19..86:20) _empty_/Instances.descending#[T] -> 85:22
+(86:39..86:40) _empty_/Instances.descending#[T] -> 85:22
+(86:44..86:45) _empty_/Instances.descending#evidence$1. -> 85:25
+(86:46..86:55) _empty_/Common#Ord#compareTo(). -> 8:11
+(86:56..86:57) _empty_/Instances.descending#compareTo().(y) -> 86:36
+(86:59..86:60) _empty_/Instances.descending#compareTo().(x) -> 86:16
+(88:18..88:21) _empty_/Common#Ord# -> 5:9
+(88:18..88:21) _empty_/Instances.minimum().[T] -> 88:15
+(88:27..88:31) scala/package.List#
+(88:32..88:33) _empty_/Instances.minimum().[T] -> 88:15
+(89:5..89:12) _empty_/Instances.maximum(). -> 82:7
+(89:13..89:15) _empty_/Instances.minimum().(xs) -> 88:23
+(89:23..89:33) _empty_/Instances.descending(). -> 85:9
+(91:15..91:19) scala/Unit#
+(92:14..92:18) scala/package.List.
+(93:5..93:12) scala/Predef.println(+1).
+(93:13..93:20) _empty_/Instances.maximum(). -> 82:7
+(93:21..93:23) local19 -> 92:9
+(94:5..94:12) scala/Predef.println(+1).
+(94:13..94:20) _empty_/Instances.maximum(). -> 82:7
+(94:21..94:23) local19 -> 92:9
+(94:31..94:41) _empty_/Instances.descending(). -> 85:9
+(95:5..95:12) scala/Predef.println(+1).
+(95:13..95:20) _empty_/Instances.maximum(). -> 82:7
+(95:21..95:23) local19 -> 92:9
+(95:31..95:41) _empty_/Instances.descending(). -> 85:9
+(95:48..95:54) _empty_/Instances.intOrd. -> 39:9
+(96:5..96:12) scala/Predef.println(+1).
+(96:13..96:20) _empty_/Instances.minimum(). -> 88:7
+(96:21..96:23) local19 -> 92:9
+(107:19..107:25) scala/Predef.String#
+(107:28..107:32) _empty_/Animal#Self# -> 105:8
+(110:20..110:24) _empty_/Animal#Self# -> 105:8
+(111:15..111:21) scala/Predef.String#
+(112:16..112:22) scala/Predef.String#
+(113:17..113:21) scala/Unit#
+(113:24..113:31) scala/Predef.println(+1).
+(113:32..113:33) scala/StringContext#s().
+(113:35..113:39) _empty_/Animal#name(). -> 111:9
+(113:42..113:47) _empty_/Animal#noise(). -> 112:9
+(114:5..114:11) _empty_/Animal# -> 104:7
+(116:23..116:29) scala/Predef.String#
+(119:8..119:15) _empty_/Sheep#isNaked(). -> 117:7
+(120:7..120:14) scala/Predef.println(+1).
+(120:15..120:16) scala/StringContext#s().
+(120:18..120:22) _empty_/Sheep#name. -> 116:17
+(122:7..122:14) scala/Predef.println(+1).
+(122:15..122:16) scala/StringContext#s().
+(122:18..122:22) _empty_/Sheep#name. -> 116:17
+(123:7..123:14) _empty_/Sheep#`isNaked_=`().
+(125:7..125:12) _empty_/Sheep# -> 116:7
+(125:13..125:15) scala/Predef.is#
+(125:16..125:22) _empty_/Animal# -> 104:7
+(126:19..126:25) scala/Predef.String#
+(126:29..126:34) _empty_/Sheep# -> 116:7
+(126:35..126:39) _empty_/`typeclasses-arrow$package`.given_is_Sheep_Animal.apply().(name) -> 126:13
+(127:20..127:24) _empty_/`typeclasses-arrow$package`.given_is_Sheep_Animal.Self#
+(128:15..128:21) scala/Predef.String#
+(128:24..128:28) _empty_/`typeclasses-arrow$package`.given_is_Sheep_Animal.name().(self) -> 127:14
+(128:29..128:33) _empty_/Sheep#name. -> 116:17
+(129:16..129:22) scala/Predef.String#
+(129:28..129:32) _empty_/`typeclasses-arrow$package`.given_is_Sheep_Animal.noise().(self) -> 127:14
+(129:33..129:40) _empty_/Sheep#isNaked(). -> 117:7
+(130:26..130:30) scala/Unit#
+(131:7..131:14) scala/Predef.println(+1).
+(131:15..131:16) scala/StringContext#s().
+(131:18..131:22) _empty_/Sheep#name. -> 116:17
+(131:42..131:47) _empty_/`typeclasses-arrow$package`.given_is_Sheep_Animal.noise(). -> 129:9
+

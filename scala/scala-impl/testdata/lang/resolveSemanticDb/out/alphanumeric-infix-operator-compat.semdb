@@ -1,0 +1,74 @@
+Document tests/pos/alphanumeric-infix-operator-compat/A_1_c3.0.0.scala
+(2:12..2:15) scala/Int#
+(2:19..2:20) _empty_/A#x().(i) -> 2:9
+(3:18..3:21) scala/Int#
+(3:25..3:26) _empty_/A#y().(i) -> 3:15
+
+Document tests/pos/alphanumeric-infix-operator-compat/B_1_c3.1.0.scala
+(2:12..2:15) scala/Int#
+(2:19..2:20) _empty_/B#x().(i) -> 2:9
+(3:18..3:21) scala/Int#
+(3:25..3:26) _empty_/B#y().(i) -> 3:15
+
+Document tests/pos/alphanumeric-infix-operator-compat/C_1_c3.2.0.scala
+(2:12..2:15) scala/Int#
+(2:19..2:20) _empty_/C#x().(i) -> 2:9
+(3:18..3:21) scala/Int#
+(3:25..3:26) _empty_/C#y().(i) -> 3:15
+
+Document tests/pos/alphanumeric-infix-operator-compat/D_1_c3.3.0.scala
+(2:12..2:15) scala/Int#
+(2:19..2:20) _empty_/D#x().(i) -> 2:9
+(3:18..3:21) scala/Int#
+(3:25..3:26) _empty_/D#y().(i) -> 3:15
+
+Document tests/pos/alphanumeric-infix-operator-compat/Test3.4_2.scala
+(3:8..3:16) scala/language.
+(3:17..3:22) scala/language.`3.4`.
+(5:14..5:15) _empty_/A# -> 1:7
+(5:20..5:21) _empty_/B# -> 1:7
+(5:26..5:27) _empty_/C# -> 1:7
+(5:32..5:33) _empty_/D# -> 1:7
+(5:36..5:40) scala/Unit#
+(6:3..6:4) _empty_/`Test3.4_2$package`.test1().(a) -> 5:11
+(6:5..6:6) _empty_/A#x(). -> 2:7
+(7:3..7:4) _empty_/`Test3.4_2$package`.test1().(b) -> 5:17
+(7:5..7:6) _empty_/B#x(). -> 2:7
+(8:3..8:4) _empty_/`Test3.4_2$package`.test1().(c) -> 5:23
+(8:5..8:6) _empty_/C#x(). -> 2:7
+(9:3..9:4) _empty_/`Test3.4_2$package`.test1().(d) -> 5:29
+(9:5..9:6) _empty_/D#x(). -> 2:7
+(12:3..12:4) _empty_/`Test3.4_2$package`.test1().(a) -> 5:11
+(12:5..12:6) _empty_/A#y(). -> 3:13
+(13:3..13:4) _empty_/`Test3.4_2$package`.test1().(b) -> 5:17
+(13:5..13:6) _empty_/B#y(). -> 3:13
+(14:3..14:4) _empty_/`Test3.4_2$package`.test1().(c) -> 5:23
+(14:5..14:6) _empty_/C#y(). -> 3:13
+(15:3..15:4) _empty_/`Test3.4_2$package`.test1().(d) -> 5:29
+(15:5..15:6) _empty_/D#y(). -> 3:13
+
+Document tests/pos/alphanumeric-infix-operator-compat/TestFuture_2.scala
+(1:8..1:16) scala/language.
+(1:17..1:23) scala/language.future.
+(3:14..3:15) _empty_/A# -> 1:7
+(3:20..3:21) _empty_/B# -> 1:7
+(3:26..3:27) _empty_/C# -> 1:7
+(3:32..3:33) _empty_/D# -> 1:7
+(3:36..3:40) scala/Unit#
+(4:3..4:4) _empty_/TestFuture_2$package.test2().(a) -> 3:11
+(4:5..4:6) _empty_/A#x(). -> 2:7
+(5:3..5:4) _empty_/TestFuture_2$package.test2().(b) -> 3:17
+(5:5..5:6) _empty_/B#x(). -> 2:7
+(6:3..6:4) _empty_/TestFuture_2$package.test2().(c) -> 3:23
+(6:5..6:6) _empty_/C#x(). -> 2:7
+(7:3..7:4) _empty_/TestFuture_2$package.test2().(d) -> 3:29
+(7:5..7:6) _empty_/D#x(). -> 2:7
+(10:3..10:4) _empty_/TestFuture_2$package.test2().(a) -> 3:11
+(10:5..10:6) _empty_/A#y(). -> 3:13
+(11:3..11:4) _empty_/TestFuture_2$package.test2().(b) -> 3:17
+(11:5..11:6) _empty_/B#y(). -> 3:13
+(12:3..12:4) _empty_/TestFuture_2$package.test2().(c) -> 3:23
+(12:5..12:6) _empty_/C#y(). -> 3:13
+(13:3..13:4) _empty_/TestFuture_2$package.test2().(d) -> 3:29
+(13:5..13:6) _empty_/D#y(). -> 3:13
+

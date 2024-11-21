@@ -1,0 +1,25 @@
+Document tests/pos/cbproxy-expansion.scala
+(5:14..5:16) _empty_/TC# -> 2:7
+(5:14..5:19) _empty_/`cbproxy-expansion$package`.f1().[T] -> 5:11
+(5:17..5:18) _empty_/`cbproxy-expansion$package`.f1().[S] -> 5:8
+(5:30..5:31) _empty_/`cbproxy-expansion$package`.f1().[S] -> 5:8
+(5:36..5:38) _empty_/`cbproxy-expansion$package`.f1().(tc)
+(5:39..5:43) _empty_/TC#Self# -> 3:8
+(6:14..6:16) _empty_/TC# -> 2:7
+(6:14..6:19) _empty_/`cbproxy-expansion$package`.f2().[T] -> 6:11
+(6:17..6:18) _empty_/`cbproxy-expansion$package`.f2().[S] -> 6:8
+(6:24..6:25) _empty_/`cbproxy-expansion$package`.f2().[S] -> 6:8
+(6:30..6:31) _empty_/`cbproxy-expansion$package`.f2().(evidence$1) -> 6:14
+(6:32..6:36) _empty_/TC#Self# -> 3:8
+(7:14..7:16) _empty_/TC# -> 2:7
+(7:14..7:19) _empty_/`cbproxy-expansion$package`.f3().[T] -> 7:11
+(7:17..7:18) _empty_/`cbproxy-expansion$package`.f3().[S] -> 7:8
+(7:24..7:25) _empty_/`cbproxy-expansion$package`.f3().[S] -> 7:8
+(7:30..7:33) scala/Int#
+(9:7..9:9) _empty_/TC# -> 2:7
+(9:10..9:16) scala/Predef.String#
+(10:15..10:18) scala/Int#
+(14:3..14:5) _empty_/`cbproxy-expansion$package`.f1(). -> 5:5
+(15:3..15:5) _empty_/`cbproxy-expansion$package`.f2(). -> 6:5
+(16:3..16:5) _empty_/`cbproxy-expansion$package`.f3(). -> 7:5
+

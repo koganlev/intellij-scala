@@ -131,7 +131,7 @@ Document tests/pos/i5978.scala
 (79:22..79:30) test/i5978$package.Position# -> 4:13
 (79:31..79:43) java/lang/CharSequence#
 (88:12..88:14) test/p4/TC# -> 86:9
-(90:21..90:23) test/p4/TC# -> 86:9
-(92:17..92:19) test/p4/TC# -> 86:9
-(92:22..92:24) test/p4/TC# -> 86:9
+(90:25..90:27) test/p4/TC# -> 86:9
+(92:12..92:14) test/p4/TC# -> 86:9
+(92:18..92:20) test/p4/TC# -> 86:9
 

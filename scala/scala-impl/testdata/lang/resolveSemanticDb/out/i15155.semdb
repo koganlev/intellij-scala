@@ -1,0 +1,18 @@
+Document tests/pos/i15155.scala
+(3:8..3:13) scala/
+(3:14..3:21) scala/reflect/
+(3:22..3:30) scala/reflect/ClassTag#
+(3:22..3:30) scala/reflect/ClassTag.
+(5:30..5:31) _empty_/i15155$package.Aux#[A] -> 5:10
+(6:21..6:32) scala/Enumeration#
+(6:36..6:37) _empty_/i15155$package.EnumValue#[A] -> 6:16
+(7:8..7:11) _empty_/i15155$package.Aux# -> 5:6
+(7:18..7:19) local1 -> 7:12
+(11:27..11:38) scala/Enumeration#
+(11:40..11:48) _empty_/EnumSerializer#[E] -> 11:22
+(11:40..11:48) scala/reflect/ClassTag#
+(11:63..11:64) _empty_/EnumSerializer#[E] -> 11:22
+(12:26..12:33) scala/Predef.classOf().
+(12:34..12:43) _empty_/i15155$package.EnumValue# -> 6:6
+(12:44..12:45) _empty_/EnumSerializer#[E] -> 11:22
+

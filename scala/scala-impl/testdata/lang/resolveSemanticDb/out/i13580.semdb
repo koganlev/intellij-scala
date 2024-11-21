@@ -1,0 +1,13 @@
+Document tests/pos/i13580.scala
+(4:7..4:15) _empty_/IntWidth# -> 2:7
+(9:23..9:31) _empty_/IntWidth# -> 2:7
+(9:36..9:48) _empty_/IntCandidate# -> 7:7
+(10:14..10:15) _empty_/i13580$package.given_IntCandidate#w. -> 9:20
+(10:16..10:19) _empty_/IntWidth#Out# -> 3:8
+(12:9..12:15) scala/Predef.summon().
+(12:16..12:28) _empty_/IntCandidate# -> 7:7
+(13:10..13:16) scala/Predef.summon().
+(13:17..13:18) _empty_/i13580$package.x. -> 12:5
+(13:19..13:22) _empty_/i13580$package.given_IntCandidate#Out# -> 10:8
+(13:23..13:26) scala/`=:=`#
+

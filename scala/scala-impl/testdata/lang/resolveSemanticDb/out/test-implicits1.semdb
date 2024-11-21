@@ -58,6 +58,7 @@ Document tests/pos/test-implicits1.scala
 (55:11..55:14) scala/Int#
 (55:21..55:25) scala/Byte#
 (58:17..58:21) scala/math/
+(58:17..58:30) _empty_/Implicits.useOrd().[T] -> 58:14
 (58:22..58:30) scala/math/Ordering#
 (58:36..58:37) _empty_/Implicits.useOrd().[T] -> 58:14
 (59:3..59:9) _empty_/Implicits.useOrd(). -> 58:7

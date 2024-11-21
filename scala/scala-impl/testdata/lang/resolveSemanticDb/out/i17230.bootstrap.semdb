@@ -1,0 +1,20 @@
+Document tests/pos/i17230.bootstrap.scala
+(1:16..1:20) _empty_/Type# -> 3:7
+(1:21..1:22) scala/`|`#
+(1:23..1:27) scala/Null#
+(4:42..4:46) _empty_/Type# -> 3:7
+(6:27..6:34) _empty_/`i17230.bootstrap$package`.Untyped# -> 1:6
+(7:12..7:13) _empty_/Tree#[T] -> 6:22
+(7:21..7:33) scala/Any#asInstanceOf().
+(7:34..7:35) _empty_/Tree#[T] -> 6:22
+(9:32..9:39) _empty_/`i17230.bootstrap$package`.Untyped# -> 1:6
+(9:49..9:53) _empty_/Tree# -> 6:16
+(9:54..9:55) _empty_/SearchFailureIdent#[T] -> 9:27
+(12:15..12:19) _empty_/Tree# -> 6:16
+(12:20..12:24) _empty_/Type# -> 3:7
+(12:29..12:32) _empty_/Test_i17230_bootstrap#t1().(arg) -> 12:10
+(13:15..13:33) _empty_/SearchFailureIdent# -> 9:7
+(13:40..13:43) local0 -> 13:10
+(13:44..13:47) _empty_/Tree#tpe(). -> 7:7
+(14:15..14:32) _empty_/SearchFailureType# -> 4:16
+

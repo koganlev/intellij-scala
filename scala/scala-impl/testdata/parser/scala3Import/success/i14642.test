@@ -1,4 +1,4 @@
-// https://github.com/lampepfl/dotty/issues/14642
+// https://github.com/scala/scala3/issues/14642
 case object A
 case class B()
 case class C()
@@ -17,7 +17,7 @@ val l4: List[Union] = (a: List[Union]) ++ (b ++ c)
 -----
 ScalaFile
   ScObject: A
-    PsiComment(comment)('// https://github.com/lampepfl/dotty/issues/14642')
+    PsiComment(comment)('// https://github.com/scala/scala3/issues/14642')
     PsiWhiteSpace('\n')
     AnnotationsList
       <empty list>
