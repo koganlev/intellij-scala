@@ -21,7 +21,7 @@ class ScNamingPatternImpl private(stub: ScBindingPatternStub[ScNamingPattern], n
 
   def this(stub: ScBindingPatternStub[ScNamingPattern]) = this(stub, null)
 
-  override def isIrrefutableFor(t: Option[ScType]): Boolean = named.isIrrefutableFor(t)
+  override def isIrrefutableForImpl(t: Option[ScType]): Boolean = named.isIrrefutableFor(t)
 
   override def toString: String = "NamingPattern: " + ifReadAllowed(name)("")
 

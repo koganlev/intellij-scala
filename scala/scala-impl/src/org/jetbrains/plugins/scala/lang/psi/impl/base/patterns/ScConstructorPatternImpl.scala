@@ -22,7 +22,7 @@ class ScConstructorPatternImpl(node: ASTNode) extends ScalaPsiElementImpl (node)
 
   override def subpatterns: Seq[ScPattern] = if (args != null) args.patterns else Seq.empty
 
-  override def isIrrefutableFor(t: Option[ScType]): Boolean =
+  override def isIrrefutableForImpl(t: Option[ScType]): Boolean =
     ScConstructorPatternImpl.isIrrefutable(t, ref, subpatterns)
 
   override def `type`(): TypeResult =

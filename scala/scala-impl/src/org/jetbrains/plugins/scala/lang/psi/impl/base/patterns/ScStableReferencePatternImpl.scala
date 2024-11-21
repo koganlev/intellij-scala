@@ -17,7 +17,11 @@ final class ScStableReferencePatternImpl(node: ASTNode,
   override def referenceExpression: Option[ScReferenceExpression] =
     Option(findChildByClass(classOf[ScReferenceExpression]))
 
-  override def isIrrefutableFor(t: Option[ScType]): Boolean = false
+  override def isIrrefutableForImpl(t: Option[ScType]): Boolean = {
+    // TODO: this is obviously wrong but fixing is is difficult
+    //       because we need to fix narrowing for dependent types first
+    false
+  }
 
   override def `type`(): TypeResult = this.flatMapType(referenceExpression)
 }

@@ -18,17 +18,17 @@ abstract class ScLiteralImplBase(node: ASTNode,
 
   protected def fallbackType: ScType
 
-  override protected def innerType: result.TypeResult = getValue match {
-    case null =>
-      Right(fallbackType)
-    case value =>
-      Right(
-        ScLiteralType(wrappedValue(value), psiElement = this)(getProject)
-      )
-  }
+  override protected def innerType: result.TypeResult = Right(literalType)
 
   override protected final def acceptScala(visitor: ScalaElementVisitor): Unit = {
     visitor.visitLiteral(this)
+  }
+
+  override def literalType: ScType = getValue match {
+    case null =>
+      fallbackType
+    case value =>
+      ScLiteralType(wrappedValue(value), psiElement = this)(getProject)
   }
 
   override def contentRange: TextRange = getTextRange

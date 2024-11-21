@@ -29,7 +29,8 @@ import org.jetbrains.plugins.scala.scalaMeta.QuasiquoteInferUtil
 import scala.annotation.tailrec
 
 trait ScPattern extends ScalaPsiElement with Typeable {
-  def isIrrefutableFor(t: Option[ScType]): Boolean
+  final def isIrrefutableFor(t: Option[ScType]): Boolean = t.exists(_.isNothing) || isIrrefutableForImpl(t)
+  protected def isIrrefutableForImpl(t: Option[ScType]): Boolean
 
   def bindings: Seq[ScBindingPattern]
 

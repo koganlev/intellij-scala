@@ -35,7 +35,7 @@ class ScReferencePatternImpl private(stub: ScBindingPatternStub[ScReferencePatte
 
   def this(stub: ScBindingPatternStub[ScReferencePattern]) = this(stub, null)
 
-  override def isIrrefutableFor(t: Option[ScType]): Boolean = true
+  override def isIrrefutableForImpl(t: Option[ScType]): Boolean = true
 
   override def nameId: PsiElement = findChildByType[PsiElement](TokenSets.ID_SET)
 
