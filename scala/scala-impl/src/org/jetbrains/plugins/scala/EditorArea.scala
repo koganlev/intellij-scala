@@ -1,18 +1,25 @@
 package org.jetbrains.plugins.scala
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer
+import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer.DaemonListener
 import com.intellij.openapi.editor.event.{EditorFactoryEvent, EditorFactoryListener, VisibleAreaEvent, VisibleAreaListener}
 import com.intellij.openapi.editor.markup.{HighlighterLayer, HighlighterTargetArea}
 import com.intellij.openapi.editor.{Editor, EditorFactory, LogicalPosition}
+import com.intellij.openapi.fileEditor.FileEditor
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.startup.StartupActivity
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.{Key, TextRange}
+import com.intellij.openapi.wm.WindowManager
 import com.intellij.psi.{PsiDocumentManager, PsiElement, PsiManager}
 import com.intellij.ui.{Gray, JBColor}
 import org.jetbrains.plugins.scala.EditorArea._
+import org.jetbrains.plugins.scala.project.ProjectExt
 
 import java.awt.Point
+import java.util
 
-class EditorArea extends EditorFactoryListener {
+class EditorArea extends EditorFactoryListener with StartupActivity {
   private val visibleAreaListener = new VisibleAreaListener {
     override def visibleAreaChanged(e: VisibleAreaEvent): Unit = {
       val editor = e.getEditor
@@ -39,6 +46,11 @@ class EditorArea extends EditorFactoryListener {
     if (!isIncrementalHighlightingEnabled) return
 
     event.getEditor.getScrollingModel.removeVisibleAreaListener(visibleAreaListener)
+  }
+
+  override def runActivity(project: Project): Unit = {
+    val connection = project.getMessageBus.connect(project.unloadAwareDisposable)
+    connection.subscribe(DaemonCodeAnalyzer.DAEMON_EVENT_TOPIC, new HighlightingListener(project))
   }
 }
 
@@ -132,5 +144,20 @@ object EditorArea {
     } else {
       f
     }
+  }
+
+  private class HighlightingListener(project: Project) extends DaemonListener {
+    private var startTime = 0L
+
+    override def daemonStarting(fileEditors: util.Collection[_ <: FileEditor]): Unit = if (EditorArea.isNativeHighlightingTracingEnabled) {
+      startTime = System.nanoTime()
+      statusBar.setInfo("Highlighting...")
+    }
+
+    override def daemonFinished(fileEditors: util.Collection[_ <: FileEditor]): Unit = if (EditorArea.isNativeHighlightingTracingEnabled) {
+      statusBar.setInfo("Highlighted: " + (System.nanoTime() - startTime) / 1000000 + " ms")
+    }
+
+    private def statusBar = WindowManager.getInstance.getStatusBar(project)
   }
 }
