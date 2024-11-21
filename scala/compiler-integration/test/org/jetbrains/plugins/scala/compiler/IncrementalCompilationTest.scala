@@ -2,39 +2,25 @@ package org.jetbrains.plugins.scala.compiler
 
 import com.intellij.openapi.roots.CompilerModuleExtension
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.pom.java.LanguageLevel
 import com.intellij.testFramework.VfsTestUtil
 import org.hamcrest.CoreMatchers.equalTo
 import org.hamcrest.MatcherAssert.assertThat
 import org.jetbrains.plugins.scala.compiler.data.IncrementalityType
 import org.jetbrains.plugins.scala.util.matchers.HamcrestMatchers.everyValueGreaterThanIn
-import org.jetbrains.plugins.scala.util.runners.{MultipleScalaVersionsRunner, RunWithJdkVersions, RunWithScalaVersions, TestJdkVersion, TestScalaVersion}
 import org.jetbrains.plugins.scala.{CompilationTests, ScalaVersion}
 import org.junit.experimental.categories.Category
-import org.junit.runner.RunWith
 
 import java.io.File
 
-@RunWith(classOf[MultipleScalaVersionsRunner])
-@RunWithScalaVersions(Array(
-  TestScalaVersion.Scala_2_10_6,
-  TestScalaVersion.Scala_2_10,
-  TestScalaVersion.Scala_2_11_0,
-  TestScalaVersion.Scala_2_11,
-  TestScalaVersion.Scala_2_12_0,
-  TestScalaVersion.Scala_2_12,
-  TestScalaVersion.Scala_2_13,
-  TestScalaVersion.Scala_3_0,
-  TestScalaVersion.Scala_3_1,
-  TestScalaVersion.Scala_3_2,
-  TestScalaVersion.Scala_3_3,
-  TestScalaVersion.Scala_3_4,
-  TestScalaVersion.Scala_3_Latest_RC,
-  TestScalaVersion.Scala_3_Next_RC
-))
 @Category(Array(classOf[CompilationTests]))
-abstract class IncrementalCompilationTestBase(override protected val incrementalityType: IncrementalityType,
-                                              override protected val useCompileServer: Boolean = false)
-  extends ScalaCompilerTestBase {
+abstract class IncrementalCompilationTestBase(
+  scalaVersion: ScalaVersion,
+  override protected val incrementalityType: IncrementalityType,
+  override protected val useCompileServer: Boolean
+) extends ScalaCompilerTestBase with JdkVersionDiscovery {
+
+  override protected def supportedIn(version: ScalaVersion): Boolean = version == scalaVersion
 
   def testRecompileOnlyAffectedFiles(): Unit = {
     val sources = initBuildProject(
@@ -229,19 +215,86 @@ abstract class IncrementalCompilationTestBase(override protected val incremental
   }
 }
 
-@RunWithJdkVersions(Array(
-  TestJdkVersion.JDK_1_8,
-  TestJdkVersion.JDK_11,
-  TestJdkVersion.JDK_17
-))
-class IncrementalIdeaOnServerCompilationTest
-  extends IncrementalCompilationTestBase(IncrementalityType.IDEA, useCompileServer = true)
+// IncrementalIdeaOnServerCompilationTests
 
-class IncrementalIdeaCompilationTest
-  extends IncrementalCompilationTestBase(IncrementalityType.IDEA)
+abstract class IncrementalIdeaOnServerCompilationTestBase(scalaVersion: ScalaVersion)
+  extends IncrementalCompilationTestBase(scalaVersion, IncrementalityType.IDEA, useCompileServer = true)
+  
+class IncrementalIdeaOnServerCompilationTest_2_10_6 extends IncrementalIdeaOnServerCompilationTestBase(MinorScalaVersions.Scala_2_10_6)
 
-class IncrementalSbtCompilationTest
-  extends IncrementalCompilationTestBase(IncrementalityType.SBT) {
+class IncrementalIdeaOnServerCompilationTest_2_10 extends IncrementalIdeaOnServerCompilationTestBase(ScalaVersion.Latest.Scala_2_10)
+
+class IncrementalIdeaOnServerCompilationTest_2_11_0 extends IncrementalIdeaOnServerCompilationTestBase(MinorScalaVersions.Scala_2_11_0)
+
+class IncrementalIdeaOnServerCompilationTest_2_11 extends IncrementalIdeaOnServerCompilationTestBase(ScalaVersion.Latest.Scala_2_11)
+
+class IncrementalIdeaOnServerCompilationTest_2_12_0 extends IncrementalIdeaOnServerCompilationTestBase(MinorScalaVersions.Scala_2_12_0)
+
+class IncrementalIdeaOnServerCompilationTest_2_12 extends IncrementalIdeaOnServerCompilationTestBase(ScalaVersion.Latest.Scala_2_12)
+
+class IncrementalIdeaOnServerCompilationTest_2_13 extends IncrementalIdeaOnServerCompilationTestBase(ScalaVersion.Latest.Scala_2_13)
+
+class IncrementalIdeaOnServerCompilationTest_3_0 extends IncrementalIdeaOnServerCompilationTestBase(ScalaVersion.Latest.Scala_3_0)
+
+class IncrementalIdeaOnServerCompilationTest_3_1 extends IncrementalIdeaOnServerCompilationTestBase(ScalaVersion.Latest.Scala_3_1)
+
+class IncrementalIdeaOnServerCompilationTest_3_2 extends IncrementalIdeaOnServerCompilationTestBase(ScalaVersion.Latest.Scala_3_2)
+
+class IncrementalIdeaOnServerCompilationTest_3_3 extends IncrementalIdeaOnServerCompilationTestBase(ScalaVersion.Latest.Scala_3_3)
+
+class IncrementalIdeaOnServerCompilationTest_3_4 extends IncrementalIdeaOnServerCompilationTestBase(ScalaVersion.Latest.Scala_3_4)
+
+class IncrementalIdeaOnServerCompilationTest_3_5 extends IncrementalIdeaOnServerCompilationTestBase(ScalaVersion.Latest.Scala_3_5)
+
+class IncrementalIdeaOnServerCompilationTest_3_6 extends IncrementalIdeaOnServerCompilationTestBase(ScalaVersion.Latest.Scala_3_6)
+
+class IncrementalIdeaOnServerCompilationTest_3_LTS_RC extends IncrementalIdeaOnServerCompilationTestBase(ScalaVersion.Latest.Scala_3_LTS_RC)
+
+class IncrementalIdeaOnServerCompilationTest_3_Next_RC extends IncrementalIdeaOnServerCompilationTestBase(ScalaVersion.Latest.Scala_3_Next_RC)
+
+// IncrementalIdeaCompilationTests
+
+abstract class IncrementalIdeaCompilationTestBase(scalaVersion: ScalaVersion)
+  extends IncrementalCompilationTestBase(scalaVersion, IncrementalityType.IDEA, useCompileServer = false) {
+  override def testProjectJdkVersion: LanguageLevel = LanguageLevel.JDK_17
+}
+  
+class IncrementalIdeaCompilationTest_2_10_6 extends IncrementalIdeaCompilationTestBase(MinorScalaVersions.Scala_2_10_6)
+
+class IncrementalIdeaCompilationTest_2_10 extends IncrementalIdeaCompilationTestBase(ScalaVersion.Latest.Scala_2_10)
+
+class IncrementalIdeaCompilationTest_2_11_0 extends IncrementalIdeaCompilationTestBase(MinorScalaVersions.Scala_2_11_0)
+
+class IncrementalIdeaCompilationTest_2_11 extends IncrementalIdeaCompilationTestBase(ScalaVersion.Latest.Scala_2_11)
+
+class IncrementalIdeaCompilationTest_2_12_0 extends IncrementalIdeaCompilationTestBase(MinorScalaVersions.Scala_2_12_0)
+
+class IncrementalIdeaCompilationTest_2_12 extends IncrementalIdeaCompilationTestBase(ScalaVersion.Latest.Scala_2_12)
+
+class IncrementalIdeaCompilationTest_2_13 extends IncrementalIdeaCompilationTestBase(ScalaVersion.Latest.Scala_2_13)
+
+class IncrementalIdeaCompilationTest_3_0 extends IncrementalIdeaCompilationTestBase(ScalaVersion.Latest.Scala_3_0)
+
+class IncrementalIdeaCompilationTest_3_1 extends IncrementalIdeaCompilationTestBase(ScalaVersion.Latest.Scala_3_1)
+
+class IncrementalIdeaCompilationTest_3_2 extends IncrementalIdeaCompilationTestBase(ScalaVersion.Latest.Scala_3_2)
+
+class IncrementalIdeaCompilationTest_3_3 extends IncrementalIdeaCompilationTestBase(ScalaVersion.Latest.Scala_3_3)
+
+class IncrementalIdeaCompilationTest_3_4 extends IncrementalIdeaCompilationTestBase(ScalaVersion.Latest.Scala_3_4)
+
+class IncrementalIdeaCompilationTest_3_5 extends IncrementalIdeaCompilationTestBase(ScalaVersion.Latest.Scala_3_5)
+
+class IncrementalIdeaCompilationTest_3_6 extends IncrementalIdeaCompilationTestBase(ScalaVersion.Latest.Scala_3_6)
+
+class IncrementalIdeaCompilationTest_3_LTS_RC extends IncrementalIdeaCompilationTestBase(ScalaVersion.Latest.Scala_3_LTS_RC)
+
+class IncrementalIdeaCompilationTest_3_Next_RC extends IncrementalIdeaCompilationTestBase(ScalaVersion.Latest.Scala_3_Next_RC)
+
+// IncrementalSbtCompilationTests
+
+abstract class IncrementalSbtOnServerCompilationTestBase(scalaVersion: ScalaVersion)
+  extends IncrementalCompilationTestBase(scalaVersion, IncrementalityType.SBT, useCompileServer = true) {
 
   def testRecompileOnlyAffectedFilesScalaSpecific(): Unit = {
     val sources = initBuildProjectAllowWarnings(
@@ -286,11 +339,81 @@ class IncrementalSbtCompilationTest
   }
 }
 
-@RunWithJdkVersions(Array(
-  TestJdkVersion.JDK_1_8,
-  TestJdkVersion.JDK_11,
-  TestJdkVersion.JDK_17
-))
-class IncrementalSbtOnServerCompilationTest extends IncrementalSbtCompilationTest {
-  override protected val useCompileServer: Boolean = true
+class IncrementalSbtOnServerCompilationTest_2_10_6 extends IncrementalSbtOnServerCompilationTestBase(MinorScalaVersions.Scala_2_10_6)
+
+class IncrementalSbtOnServerCompilationTest_2_10 extends IncrementalSbtOnServerCompilationTestBase(ScalaVersion.Latest.Scala_2_10)
+
+class IncrementalSbtOnServerCompilationTest_2_11_0 extends IncrementalSbtOnServerCompilationTestBase(MinorScalaVersions.Scala_2_11_0)
+
+class IncrementalSbtOnServerCompilationTest_2_11 extends IncrementalSbtOnServerCompilationTestBase(ScalaVersion.Latest.Scala_2_11)
+
+class IncrementalSbtOnServerCompilationTest_2_12_0 extends IncrementalSbtOnServerCompilationTestBase(MinorScalaVersions.Scala_2_12_0)
+
+class IncrementalSbtOnServerCompilationTest_2_12 extends IncrementalSbtOnServerCompilationTestBase(ScalaVersion.Latest.Scala_2_12)
+
+class IncrementalSbtOnServerCompilationTest_2_13 extends IncrementalSbtOnServerCompilationTestBase(ScalaVersion.Latest.Scala_2_13)
+
+class IncrementalSbtOnServerCompilationTest_3_0 extends IncrementalSbtOnServerCompilationTestBase(ScalaVersion.Latest.Scala_3_0)
+
+class IncrementalSbtOnServerCompilationTest_3_1 extends IncrementalSbtOnServerCompilationTestBase(ScalaVersion.Latest.Scala_3_1)
+
+class IncrementalSbtOnServerCompilationTest_3_2 extends IncrementalSbtOnServerCompilationTestBase(ScalaVersion.Latest.Scala_3_2)
+
+class IncrementalSbtOnServerCompilationTest_3_3 extends IncrementalSbtOnServerCompilationTestBase(ScalaVersion.Latest.Scala_3_3)
+
+class IncrementalSbtOnServerCompilationTest_3_4 extends IncrementalSbtOnServerCompilationTestBase(ScalaVersion.Latest.Scala_3_4)
+
+class IncrementalSbtOnServerCompilationTest_3_5 extends IncrementalSbtOnServerCompilationTestBase(ScalaVersion.Latest.Scala_3_5)
+
+class IncrementalSbtOnServerCompilationTest_3_6 extends IncrementalSbtOnServerCompilationTestBase(ScalaVersion.Latest.Scala_3_6)
+
+class IncrementalSbtOnServerCompilationTest_3_LTS_RC extends IncrementalSbtOnServerCompilationTestBase(ScalaVersion.Latest.Scala_3_LTS_RC)
+
+class IncrementalSbtOnServerCompilationTest_3_Next_RC extends IncrementalSbtOnServerCompilationTestBase(ScalaVersion.Latest.Scala_3_Next_RC)
+
+// IncrementalSbtCompilationTests
+abstract class IncrementalSbtCompilationTestBase(scalaVersion: ScalaVersion)
+  extends IncrementalSbtOnServerCompilationTestBase(scalaVersion) {
+
+  override protected val useCompileServer: Boolean = false
+
+  override def testProjectJdkVersion: LanguageLevel = LanguageLevel.JDK_17
+}
+
+class IncrementalSbtCompilationTest_2_10_6 extends IncrementalSbtCompilationTestBase(MinorScalaVersions.Scala_2_10_6)
+
+class IncrementalSbtCompilationTest_2_10 extends IncrementalSbtCompilationTestBase(ScalaVersion.Latest.Scala_2_10)
+
+class IncrementalSbtCompilationTest_2_11_0 extends IncrementalSbtCompilationTestBase(MinorScalaVersions.Scala_2_11_0)
+
+class IncrementalSbtCompilationTest_2_11 extends IncrementalSbtCompilationTestBase(ScalaVersion.Latest.Scala_2_11)
+
+class IncrementalSbtCompilationTest_2_12_0 extends IncrementalSbtCompilationTestBase(MinorScalaVersions.Scala_2_12_0)
+
+class IncrementalSbtCompilationTest_2_12 extends IncrementalSbtCompilationTestBase(ScalaVersion.Latest.Scala_2_12)
+
+class IncrementalSbtCompilationTest_2_13 extends IncrementalSbtCompilationTestBase(ScalaVersion.Latest.Scala_2_13)
+
+class IncrementalSbtCompilationTest_3_0 extends IncrementalSbtCompilationTestBase(ScalaVersion.Latest.Scala_3_0)
+
+class IncrementalSbtCompilationTest_3_1 extends IncrementalSbtCompilationTestBase(ScalaVersion.Latest.Scala_3_1)
+
+class IncrementalSbtCompilationTest_3_2 extends IncrementalSbtCompilationTestBase(ScalaVersion.Latest.Scala_3_2)
+
+class IncrementalSbtCompilationTest_3_3 extends IncrementalSbtCompilationTestBase(ScalaVersion.Latest.Scala_3_3)
+
+class IncrementalSbtCompilationTest_3_4 extends IncrementalSbtCompilationTestBase(ScalaVersion.Latest.Scala_3_4)
+
+class IncrementalSbtCompilationTest_3_5 extends IncrementalSbtCompilationTestBase(ScalaVersion.Latest.Scala_3_5)
+
+class IncrementalSbtCompilationTest_3_6 extends IncrementalSbtCompilationTestBase(ScalaVersion.Latest.Scala_3_6)
+
+class IncrementalSbtCompilationTest_3_LTS_RC extends IncrementalSbtCompilationTestBase(ScalaVersion.Latest.Scala_3_LTS_RC)
+
+class IncrementalSbtCompilationTest_3_Next_RC extends IncrementalSbtCompilationTestBase(ScalaVersion.Latest.Scala_3_Next_RC)
+
+private object MinorScalaVersions {
+  val Scala_2_10_6: ScalaVersion = ScalaVersion.Latest.Scala_2_10.withMinor("6")
+  val Scala_2_11_0: ScalaVersion = ScalaVersion.Latest.Scala_2_11.withMinor("0")
+  val Scala_2_12_0: ScalaVersion = ScalaVersion.Latest.Scala_2_12.withMinor("0")
 }
