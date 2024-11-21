@@ -2,12 +2,13 @@ package org.jetbrains.plugins.scala
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer
 import com.intellij.openapi.editor.event.{EditorFactoryEvent, EditorFactoryListener, VisibleAreaEvent, VisibleAreaListener}
+import com.intellij.openapi.editor.markup.{HighlighterLayer, HighlighterTargetArea}
 import com.intellij.openapi.editor.{Editor, EditorFactory, LogicalPosition}
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.{Key, TextRange}
 import com.intellij.psi.{PsiDocumentManager, PsiElement, PsiManager}
+import com.intellij.ui.{Gray, JBColor}
 import org.jetbrains.plugins.scala.EditorArea._
-import org.jetbrains.plugins.scala.extensions.invokeLater
 
 import java.awt.Point
 
@@ -48,7 +49,7 @@ object EditorArea {
 
   private def isNativeHighlightingSynchronized: Boolean = Registry.is("scala.native.highlighting.synchronized")
 
-  private def nativeHighlightingTracing: Boolean = Registry.is("scala.native.highlighting.tracing")
+  private def isNativeHighlightingTracingEnabled: Boolean = Registry.is("scala.native.highlighting.tracing")
 
   def isIncrementalHighlightingEnabled: Boolean = Registry.is("scala.incremental.highlighting")
 
@@ -104,20 +105,23 @@ object EditorArea {
     TextRange.create(startOffset, startOffset.max(endOffset))
   }
 
-  def trace(e: PsiElement, reason: String): Unit = if (nativeHighlightingTracing) {
+  def trace(e: PsiElement, reason: String): Unit = if (isNativeHighlightingTracingEnabled) {
     val editor = editorFor(e)
     if (editor == null) return
 
-    val text = {
+    val text = reason + ": " + {
       val s = e.getText.replace('\n', '↵').replaceAll(" {2,}", " ")
       if (s.length > 120) s.substring(0, 120) + "…" else s
     }
 
-    invokeLater {
-      val line = editor.offsetToLogicalPosition(e.getTextOffset).line + 1
+    val highlighter = editor.getMarkupModel.addRangeHighlighter(
+      e.getTextRange.getStartOffset, e.getTextRange.getEndOffset, HighlighterLayer.ADDITIONAL_SYNTAX, null, HighlighterTargetArea.EXACT_RANGE)
 
-      println(line.toString + ": " + reason + ": " + text)
-    }
+    highlighter.setErrorStripeMarkColor(new JBColor(Gray._170, Gray._80))
+    highlighter.setThinErrorStripeMark(true)
+    highlighter.setErrorStripeTooltip(text)
+
+    println(text)
   }
 
   def synchronizedOn[T](e: PsiElement)(f: => T): T = {
