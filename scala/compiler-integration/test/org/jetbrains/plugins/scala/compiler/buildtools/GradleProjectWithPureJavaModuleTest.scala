@@ -11,13 +11,12 @@ import org.jetbrains.plugins.gradle.settings.GradleProjectSettings
 import org.jetbrains.plugins.gradle.util.GradleConstants
 import org.jetbrains.plugins.scala.CompilationTests
 import org.jetbrains.plugins.scala.base.libraryLoaders.SmartJDKLoader
-import org.jetbrains.plugins.scala.compiler.CompileServerLauncher
 import org.jetbrains.plugins.scala.compiler.data.IncrementalityType
+import org.jetbrains.plugins.scala.compiler.{CompileServerLauncher, JdkVersionDiscovery}
 import org.jetbrains.plugins.scala.extensions.inWriteAction
 import org.jetbrains.plugins.scala.project.gradle.GradleTestUtil
 import org.jetbrains.plugins.scala.project.settings.ScalaCompilerConfiguration
 import org.jetbrains.plugins.scala.settings.ScalaCompileServerSettings
-import org.jetbrains.plugins.scala.util.runners.TestJdkVersion
 import org.junit.Assert.{assertNotNull, assertTrue}
 import org.junit.experimental.categories.Category
 
@@ -49,12 +48,7 @@ abstract class GradleProjectWithPureJavaModuleTestBase(incrementality: Increment
     GradleTestUtil.setupGradleHome(getProject)
 
     sdk = {
-      val jdkVersion =
-        Option(System.getProperty("filter.test.jdk.version"))
-          .map(TestJdkVersion.valueOf)
-          .getOrElse(TestJdkVersion.JDK_17)
-          .toProductionVersion
-
+      val jdkVersion = JdkVersionDiscovery.discoveredJdk
       val res = SmartJDKLoader.getOrCreateJDK(jdkVersion)
       val settings = ScalaCompileServerSettings.getInstance()
       settings.COMPILE_SERVER_SDK = res.getName

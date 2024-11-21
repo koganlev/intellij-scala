@@ -9,10 +9,9 @@ import com.intellij.platform.externalSystem.testFramework.ExternalSystemImportin
 import com.intellij.testFramework.CompilerTester
 import org.jetbrains.annotations.Nullable
 import org.jetbrains.plugins.scala.base.libraryLoaders.SmartJDKLoader
-import org.jetbrains.plugins.scala.compiler.CompileServerLauncher
+import org.jetbrains.plugins.scala.compiler.{CompileServerLauncher, JdkVersionDiscovery}
 import org.jetbrains.plugins.scala.extensions.inWriteAction
 import org.jetbrains.plugins.scala.settings.ScalaCompileServerSettings
-import org.jetbrains.plugins.scala.util.runners.TestJdkVersion
 import org.jetbrains.sbt.Sbt
 import org.jetbrains.sbt.project.settings.SbtProjectSettings
 import org.jetbrains.sbt.project.{SbtCachesSetupUtil, SbtProjectSystem}
@@ -46,12 +45,7 @@ abstract class ZincTestBase(separateProdAndTestSources: Boolean = false) extends
     super.setUp()
 
     sdk = {
-      val jdkVersion =
-        Option(System.getProperty("filter.test.jdk.version"))
-          .map(TestJdkVersion.valueOf)
-          .getOrElse(TestJdkVersion.JDK_17)
-          .toProductionVersion
-
+      val jdkVersion = JdkVersionDiscovery.discoveredJdk
       val res = SmartJDKLoader.getOrCreateJDK(jdkVersion)
       val settings = ScalaCompileServerSettings.getInstance()
       settings.COMPILE_SERVER_SDK = res.getName

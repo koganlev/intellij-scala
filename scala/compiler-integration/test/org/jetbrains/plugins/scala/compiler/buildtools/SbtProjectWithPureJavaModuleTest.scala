@@ -2,22 +2,20 @@ package org.jetbrains.plugins.scala.compiler.buildtools
 
 import com.intellij.openapi.compiler.CompilerMessageCategory
 import com.intellij.openapi.externalSystem.model.ProjectSystemId
-import com.intellij.openapi.module.ModuleManager
-import com.intellij.openapi.module.Module
+import com.intellij.openapi.module.{Module, ModuleManager}
 import com.intellij.openapi.projectRoots.{ProjectJdkTable, Sdk}
 import com.intellij.platform.externalSystem.testFramework.ExternalSystemImportingTestCase
 import com.intellij.testFramework.CompilerTester
 import org.jetbrains.plugins.scala.CompilationTests
 import org.jetbrains.plugins.scala.base.libraryLoaders.SmartJDKLoader
-import org.jetbrains.plugins.scala.compiler.CompileServerLauncher
 import org.jetbrains.plugins.scala.compiler.data.IncrementalityType
+import org.jetbrains.plugins.scala.compiler.{CompileServerLauncher, JdkVersionDiscovery}
 import org.jetbrains.plugins.scala.extensions.inWriteAction
 import org.jetbrains.plugins.scala.project.settings.ScalaCompilerConfiguration
 import org.jetbrains.plugins.scala.settings.ScalaCompileServerSettings
-import org.jetbrains.plugins.scala.util.runners.TestJdkVersion
 import org.jetbrains.sbt.Sbt
-import org.jetbrains.sbt.project.{SbtCachesSetupUtil, SbtProjectSystem}
 import org.jetbrains.sbt.project.settings.SbtProjectSettings
+import org.jetbrains.sbt.project.{SbtCachesSetupUtil, SbtProjectSystem}
 import org.junit.Assert.{assertNotNull, assertTrue}
 import org.junit.experimental.categories.Category
 
@@ -47,12 +45,7 @@ abstract class SbtProjectWithPureJavaModuleTestBase(incrementality: Incrementali
     super.setUp()
 
     sdk = {
-      val jdkVersion =
-        Option(System.getProperty("filter.test.jdk.version"))
-          .map(TestJdkVersion.valueOf)
-          .getOrElse(TestJdkVersion.JDK_17)
-          .toProductionVersion
-
+      val jdkVersion = JdkVersionDiscovery.discoveredJdk
       val res = SmartJDKLoader.getOrCreateJDK(jdkVersion)
       val settings = ScalaCompileServerSettings.getInstance()
       settings.COMPILE_SERVER_SDK = res.getName
