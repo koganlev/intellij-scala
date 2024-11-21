@@ -2,9 +2,10 @@ package org.jetbrains.plugins.scala
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer.DaemonListener
+import com.intellij.codeInsight.daemon.impl.{DaemonCodeAnalyzerEx, DaemonCodeAnalyzerImpl, FileStatusMap}
 import com.intellij.openapi.editor.event.{EditorFactoryEvent, EditorFactoryListener, VisibleAreaEvent, VisibleAreaListener}
 import com.intellij.openapi.editor.markup.{HighlighterLayer, HighlighterTargetArea}
-import com.intellij.openapi.editor.{Editor, EditorFactory, LogicalPosition}
+import com.intellij.openapi.editor.{Document, Editor, EditorFactory, LogicalPosition}
 import com.intellij.openapi.fileEditor.FileEditor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.StartupActivity
@@ -18,18 +19,51 @@ import org.jetbrains.plugins.scala.project.ProjectExt
 
 import java.awt.Point
 import java.util
+import javax.swing.Timer
 
 class EditorArea extends EditorFactoryListener with StartupActivity {
+  private var editor: Editor = _
+
+  private var previousVisibleRange: TextRange = _
+
+  private val timer = new Timer(200, _ => {
+    val visibleRange = editor.getUserData(VISIBLE_RANGE_KEY)
+
+    val visibleRangeDelta: TextRange = if (previousVisibleRange == null) visibleRange else {
+      // TODO optimize
+      val r = Range(visibleRange.getStartOffset, visibleRange.getEndOffset).toSet.diff(Range(previousVisibleRange.getStartOffset, previousVisibleRange.getEndOffset).toSet)
+      if (r.isEmpty) TextRange.EMPTY_RANGE else new TextRange(r.min, r.max + 1)
+    }
+
+    val document = PsiManager.getInstance(editor.getProject).findFile(editor.getVirtualFile).getViewProvider.getDocument
+    val daemon = DaemonCodeAnalyzer.getInstance(editor.getProject).asInstanceOf[DaemonCodeAnalyzerEx]
+    combineDirtyScopesMethod.invoke(daemon.getFileStatusMap, document, visibleRangeDelta, "Incremental highlighting")
+    stopProcessMethod.invoke(daemon, true, "Incremental highlighting")
+
+    previousVisibleRange = visibleRange
+  })
+
+  timer.setRepeats(false)
+
   private val visibleAreaListener = new VisibleAreaListener {
     override def visibleAreaChanged(e: VisibleAreaEvent): Unit = {
-      val editor = e.getEditor
-
+      editor = e.getEditor
       val visibleRange = visibleRangeIn(editor, incrementalHighlightingLookaround)
       editor.putUserData(VISIBLE_RANGE_KEY, visibleRange)
-
-      val psiFile = PsiManager.getInstance(editor.getProject).findFile(editor.getVirtualFile)
-      DaemonCodeAnalyzer.getInstance(editor.getProject).restart(psiFile)
+      timer.restart()
     }
+  }
+
+  private val combineDirtyScopesMethod = {
+    val m = classOf[FileStatusMap].getDeclaredMethod("combineDirtyScopes", classOf[Document], classOf[TextRange], classOf[Object])
+    m.setAccessible(true)
+    m
+  }
+
+  private val stopProcessMethod = {
+    val m = classOf[DaemonCodeAnalyzerImpl].getDeclaredMethod("stopProcess", classOf[Boolean], classOf[String])
+    m.setAccessible(true)
+    m
   }
 
   override def editorCreated(event: EditorFactoryEvent): Unit = {
