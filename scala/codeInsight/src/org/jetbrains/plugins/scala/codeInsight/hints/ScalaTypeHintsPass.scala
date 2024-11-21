@@ -42,8 +42,7 @@ private[codeInsight] trait ScalaTypeHintsPass {
       Seq.empty
     } else {
       (for {
-        element <- root.depthFirst(isVisible)
-        if isVisible(element)
+        element <- root.elements(isVisible)
         definition = Definition(element) // NB: "definition" might be in fact _any_ PsiElement (e.g. ScalaFile)
         (tpe, body, menu) <- typeAndBodyOf(definition)
         if !(settings.preserveIndents && (!element.textContains('\n') && definition.hasCustomIndents || adjacentDefinitionsHaveCustomIndent(element)))
@@ -54,7 +53,7 @@ private[codeInsight] trait ScalaTypeHintsPass {
     }.toSeq
   }
 
-  private def collectXRayHints(editor: Editor, root: PsiElement) = root.elements.flatMap {
+  private def collectXRayHints(editor: Editor, root: PsiElement) = root.elements(isVisible).flatMap {
     case e @ Typeable(t) => xRayHintsFor(e, t)(editor.getColorsScheme, TypePresentationContext(e), settings)
     case _ => Seq.empty
   }

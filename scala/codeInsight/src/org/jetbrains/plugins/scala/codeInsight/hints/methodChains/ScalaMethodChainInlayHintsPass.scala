@@ -42,13 +42,13 @@ private[codeInsight] trait ScalaMethodChainInlayHintsPass {
       }
 
   private def gatherMethodChainHints(editor: Editor, root: PsiElement): Seq[(Seq[AlignedHintTemplate], ScExpression)] = {
-    if (!isVisible(root)) return Seq.empty
-
     val document = editor.getDocument
     val minChainCount = math.max(2, settings.uniqueTypesToShowMethodChains)
     val builder = Seq.newBuilder[(Seq[AlignedHintTemplate], ScExpression)]
 
     def gatherFor(elem: PsiElement): Set[Int] = {
+      if (!isVisible(elem)) return Set.empty
+
       var occupiedLines = Set.empty[Int]
       for (child <- elem.children)
         occupiedLines |= gatherFor(child)
