@@ -8,27 +8,20 @@ import com.intellij.psi.PsiClass
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.testFramework.IdeaTestUtil
-import org.jetbrains.plugins.scala.CompilationTests
 import org.jetbrains.plugins.scala.compiler.CompilerMessagesUtil.assertNoErrorsOrWarnings
 import org.jetbrains.plugins.scala.compiler.data.IncrementalityType
-import org.jetbrains.plugins.scala.util.runners.{MultipleScalaVersionsRunner, RunWithJdkVersions, RunWithScalaVersions, TestJdkVersion, TestScalaVersion}
+import org.jetbrains.plugins.scala.{CompilationTests, ScalaVersion}
 import org.junit.Assert.{assertEquals, assertNotNull, assertNull}
 import org.junit.experimental.categories.Category
-import org.junit.runner.RunWith
 
 import scala.jdk.CollectionConverters._
 
-@RunWith(classOf[MultipleScalaVersionsRunner])
-@RunWithScalaVersions(Array(TestScalaVersion.Scala_2_13))
-@RunWithJdkVersions(Array(
-  TestJdkVersion.JDK_1_8,
-  TestJdkVersion.JDK_11,
-  TestJdkVersion.JDK_17
-))
 @Category(Array(classOf[CompilationTests]))
 abstract class JavaCompilerReferencesSearchTestBase(
   override protected val incrementalityType: IncrementalityType
-) extends ScalaCompilerTestBase {
+) extends ScalaCompilerTestBase with JdkVersionDiscovery {
+
+  override protected def supportedIn(version: ScalaVersion): Boolean = version == ScalaVersion.Latest.Scala_2_13
 
   def testCompilerReferencesSearch(): Unit = {
     IdeaTestUtil.setProjectLanguageLevel(getProject, LanguageLevel.JDK_1_8)
