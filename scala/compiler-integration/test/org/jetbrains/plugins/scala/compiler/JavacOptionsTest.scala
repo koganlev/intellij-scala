@@ -3,28 +3,21 @@ package org.jetbrains.plugins.scala.compiler
 import com.intellij.pom.java.LanguageLevel
 import com.intellij.psi.JavaCompilerConfigurationProxy
 import com.intellij.testFramework.IdeaTestUtil
-import org.jetbrains.plugins.scala.CompilationTests
 import org.jetbrains.plugins.scala.compiler.CompilerMessagesUtil.assertNoErrorsOrWarnings
 import org.jetbrains.plugins.scala.compiler.data.IncrementalityType
-import org.jetbrains.plugins.scala.util.runners.{MultipleScalaVersionsRunner, RunWithJdkVersions, RunWithScalaVersions, TestJdkVersion, TestScalaVersion}
+import org.jetbrains.plugins.scala.{CompilationTests, ScalaVersion}
 import org.junit.Assert.{assertEquals, assertNotNull}
 import org.junit.experimental.categories.Category
-import org.junit.runner.RunWith
 
 import java.net.URLClassLoader
 import scala.jdk.CollectionConverters._
 
-@RunWith(classOf[MultipleScalaVersionsRunner])
-@RunWithScalaVersions(Array(TestScalaVersion.Scala_3_Latest))
-@RunWithJdkVersions(Array(
-  TestJdkVersion.JDK_1_8,
-  TestJdkVersion.JDK_11,
-  TestJdkVersion.JDK_17
-))
 @Category(Array(classOf[CompilationTests]))
 abstract class JavacOptionsTestBase(
   override protected val incrementalityType: IncrementalityType
-) extends ScalaCompilerTestBase {
+) extends ScalaCompilerTestBase with JdkVersionDiscovery {
+
+  override protected def supportedIn(version: ScalaVersion): Boolean = version == ScalaVersion.Latest.Scala_3
 
   def testJavacOptions_Parameters(): Unit = {
     IdeaTestUtil.setProjectLanguageLevel(getProject, LanguageLevel.JDK_1_8)

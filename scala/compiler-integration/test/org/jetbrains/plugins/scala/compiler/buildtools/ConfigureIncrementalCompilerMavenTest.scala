@@ -8,10 +8,10 @@ import com.intellij.openapi.roots.ModuleRootModificationUtil
 import com.intellij.testFramework.IndexingTestUtil
 import org.jetbrains.plugins.scala.CompilationTests
 import org.jetbrains.plugins.scala.base.libraryLoaders.SmartJDKLoader
+import org.jetbrains.plugins.scala.compiler.JdkVersionDiscovery
 import org.jetbrains.plugins.scala.compiler.data.IncrementalityType
 import org.jetbrains.plugins.scala.extensions.inWriteAction
 import org.jetbrains.plugins.scala.project.settings.ScalaCompilerConfiguration
-import org.jetbrains.plugins.scala.util.runners.TestJdkVersion
 import org.junit.Assert.assertEquals
 import org.junit.experimental.categories.Category
 
@@ -31,12 +31,7 @@ class ConfigureIncrementalCompilerMavenTest extends MavenImportingTestCase {
     ModuleTypeManager.getInstance.registerModuleType(StdModuleTypes.JAVA)
 
     sdk = {
-      val jdkVersion =
-        Option(System.getProperty("filter.test.jdk.version"))
-          .map(TestJdkVersion.valueOf)
-          .getOrElse(TestJdkVersion.JDK_17)
-          .toProductionVersion
-
+      val jdkVersion = JdkVersionDiscovery.discoveredJdk
       SmartJDKLoader.getOrCreateJDK(jdkVersion)
     }
 

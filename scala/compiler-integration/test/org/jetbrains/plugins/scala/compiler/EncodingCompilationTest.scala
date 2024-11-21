@@ -1,24 +1,17 @@
 package org.jetbrains.plugins.scala.compiler
 
-import org.jetbrains.plugins.scala.CompilationTests
 import org.jetbrains.plugins.scala.compiler.CompilerMessagesUtil.{assertCompilingScalaSources, assertNoErrorsOrWarnings}
 import org.jetbrains.plugins.scala.compiler.data.IncrementalityType
 import org.jetbrains.plugins.scala.project.ModuleExt
-import org.jetbrains.plugins.scala.util.runners.{MultipleScalaVersionsRunner, RunWithJdkVersions, RunWithScalaVersions, TestJdkVersion, TestScalaVersion}
+import org.jetbrains.plugins.scala.{CompilationTests, ScalaVersion}
 import org.junit.experimental.categories.Category
-import org.junit.runner.RunWith
 
 import scala.jdk.CollectionConverters._
 
-@RunWith(classOf[MultipleScalaVersionsRunner])
-@RunWithScalaVersions(Array(TestScalaVersion.Scala_3_Latest))
-@RunWithJdkVersions(Array(
-  TestJdkVersion.JDK_1_8,
-  TestJdkVersion.JDK_11,
-  TestJdkVersion.JDK_17
-))
 @Category(Array(classOf[CompilationTests]))
-abstract class EncodingCompilationTestBase(override val incrementalityType: IncrementalityType) extends ScalaCompilerTestBase {
+abstract class EncodingCompilationTestBase(override val incrementalityType: IncrementalityType) extends ScalaCompilerTestBase with JdkVersionDiscovery {
+
+  override protected def supportedIn(version: ScalaVersion): Boolean = version == ScalaVersion.Latest.Scala_3
 
   def testEncoding1(): Unit = {
     runEncodingTest(Seq("-encoding", "UTF-8"))
