@@ -124,11 +124,12 @@ abstract class ScalaProjectHighlightingTestBase extends ScalaExternalSystemImpor
 
   private def forceSaveProject(): Unit = {
     val app = ApplicationManagerEx.getApplicationEx
+    val old = app.isSaveAllowed
     try {
       app.setSaveAllowed(true)
       myProject.save()
     } finally {
-      app.setSaveAllowed(false)
+      app.setSaveAllowed(old)
     }
   }
 

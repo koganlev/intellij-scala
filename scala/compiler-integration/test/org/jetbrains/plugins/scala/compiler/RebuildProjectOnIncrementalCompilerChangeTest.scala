@@ -204,12 +204,13 @@ class RebuildProjectOnIncrementalCompilerChangeTest extends ExternalSystemImport
   private def saveSettings(): Unit = {
     ScalaCompilerConfiguration.incModificationCount()
     val app = ApplicationManagerEx.getApplicationEx
+    val old = app.isSaveAllowed
     try {
       app.setSaveAllowed(true)
       myProject.save()
       app.saveSettings()
     } finally {
-      app.setSaveAllowed(false)
+      app.setSaveAllowed(old)
     }
   }
 }
