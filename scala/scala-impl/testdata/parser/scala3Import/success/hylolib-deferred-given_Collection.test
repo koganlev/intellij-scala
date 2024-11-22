@@ -1,0 +1,4198 @@
+//> using options -language:experimental.modularity -source future
+package hylo
+
+/** A collection of elements accessible by their position. */
+trait Collection[Self] {
+
+  /** The type of the elements in the collection. */
+  type Element
+  given elementIsValue: Value[Element] = compiletime.deferred
+
+  /** The type of a position in the collection. */
+  type Position
+  given positionIsValue: Value[Position]
+
+  extension (self: Self) {
+
+    /** Returns `true` iff `self` is empty. */
+    def isEmpty: Boolean =
+      startPosition `eq` endPosition
+
+    /** Returns the number of elements in `self`.
+      *
+      * @complexity
+      *   O(n) where n is the number of elements in `self`.
+      */
+    def count: Int =
+      val e = endPosition
+      def _count(p: Position, n: Int): Int =
+        if p `eq` e then n else _count(self.positionAfter(p), n + 1)
+      _count(startPosition, 0)
+
+    /** Returns the position of `self`'s first element', or `endPosition` if `self` is empty.
+      *
+      * @complexity
+      *   O(1)
+      */
+    def startPosition: Position
+
+    /** Returns the "past the end" position in `self`, that is, the position immediately after the
+      * last element in `self`.
+      *
+      * @complexity
+      *   O(1).
+      */
+    def endPosition: Position
+
+    /** Returns the position immediately after `p`.
+      *
+      * @requires
+      *   `p` is a valid position in `self` different from `endPosition`.
+      * @complexity
+      *   O(1).
+      */
+    def positionAfter(p: Position): Position
+
+    /** Accesses the element at `p`.
+      *
+      * @requires
+      *   `p` is a valid position in `self` different from `endPosition`.
+      * @complexity
+      *   O(1).
+      */
+    def at(p: Position): Element
+
+    /** Returns `true` iff `i` precedes `j`.
+      *
+      * @requires
+      *   `i` and j` are valid positions in `self`.
+      * @complexity
+      *   O(n) where n is the number of elements in `self`.
+      */
+    def isBefore(i: Position, j: Position): Boolean =
+      val e = self.endPosition
+      if (i.eq(e)) {
+        false
+      } else if (j.eq(e)) {
+        true
+      } else {
+        def _isBefore(n: Position): Boolean =
+          if (n.eq(j)) {
+            true
+          } else if (n.eq(e)) {
+            false
+          } else {
+            _isBefore(self.positionAfter(n))
+          }
+        _isBefore(self.positionAfter(i))
+      }
+
+  }
+
+}
+
+extension [Self](self: Self)(using s: Collection[Self]) {
+
+  /** Returns the first element of `self` along with a slice containing the suffix after this
+    * element, or `None` if `self` is empty.
+    *
+    * @complexity
+    *   O(1)
+    */
+  def headAndTail: Option[(s.Element, Slice[Self])] =
+    if (self.isEmpty) {
+      None
+    } else {
+      val p = self.startPosition
+      val q = self.positionAfter(p)
+      val t = Slice(self, Range(q, self.endPosition, (a, b) => (a `eq` b) || self.isBefore(a, b)))
+      Some((self.at(p), t))
+    }
+
+  /** Applies `combine` on `partialResult` and each element of `self`, in order.
+    *
+    * @complexity
+    *   O(n) where n is the number of elements in `self`.
+    */
+  def reduce[T](partialResult: T, combine: (T, s.Element) => T): T =
+    val e = self.endPosition
+    def loop(p: s.Position, r: T): T =
+      if (p.eq(e)) {
+        r
+      } else {
+        loop(self.positionAfter(p), combine(r, self.at(p)))
+      }
+    loop(self.startPosition, partialResult)
+
+  /** Applies `action` on each element of `self`, in order, until `action` returns `false`, and
+    * returns `false` iff `action` did.
+    *
+    * You can return `false` from `action` to emulate a `continue` statement as found in traditional
+    * imperative languages (e.g., C).
+    *
+    * @complexity
+    *   O(n) where n is the number of elements in `self`.
+    */
+  def forEach(action: (s.Element) => Boolean): Boolean =
+    val e = self.endPosition
+    def loop(p: s.Position): Boolean =
+      if (p.eq(e)) {
+        true
+      } else if (!action(self.at(p))) {
+        false
+      } else {
+        loop(self.positionAfter(p))
+      }
+    loop(self.startPosition)
+
+  /** Returns a collection with the elements of `self` transformed by `transform`, in order.
+    *
+    * @complexity
+    *   O(n) where n is the number of elements in `self`.
+    */
+  def map[T](using Value[T])(transform: (s.Element) => T): HyArray[T] =
+    self.reduce(
+      HyArray[T](),
+      (r, e) => r.append(transform(e), assumeUniqueness = true)
+    )
+
+  /** Returns a collection with the elements of `self` satisfying `isInclude`, in order.
+    *
+    * @complexity
+    *   O(n) where n is the number of elements in `self`.
+    */
+  def filter(isIncluded: (s.Element) => Boolean): HyArray[s.Element] =
+    self.reduce(
+      HyArray[s.Element](),
+      (r, e) => if (isIncluded(e)) then r.append(e, assumeUniqueness = true) else r
+    )
+
+  /** Returns `true` if `self` contains an element satisfying `predicate`.
+    *
+    * @complexity
+    *   O(n) where n is the number of elements in `self`.
+    */
+  def containsWhere(predicate: (s.Element) => Boolean): Boolean =
+    self.firstPositionWhere(predicate) != None
+
+  /** Returns `true` if all elements in `self` satisfy `predicate`.
+    *
+    * @complexity
+    *   O(n) where n is the number of elements in `self`.
+    */
+  def allSatisfy(predicate: (s.Element) => Boolean): Boolean =
+    self.firstPositionWhere(predicate) == None
+
+  /** Returns the position of the first element of `self` satisfying `predicate`, or `None` if no
+    * such element exists.
+    *
+    * @complexity
+    *   O(n) where n is the number of elements in `self`.
+    */
+  def firstPositionWhere(predicate: (s.Element) => Boolean): Option[s.Position] =
+    val e = self.endPosition
+    def loop(p: s.Position): Option[s.Position] =
+      if (p.eq(e)) {
+        None
+      } else if (predicate(self.at(p))) {
+        Some(p)
+      } else {
+        loop(self.positionAfter(p))
+      }
+    loop(self.startPosition)
+
+  /** Returns the minimum element in `self`, using `isLessThan` to compare elements.
+    *
+    * @complexity
+    *   O(n) where n is the number of elements in `self`.
+    */
+  def minElement(isLessThan: (s.Element, s.Element) => Boolean): Option[s.Element] =
+    self.leastElement(isLessThan)
+
+  // NOTE: I can't find a reasonable way to call this method.
+  /** Returns the minimum element in `self`.
+    *
+    * @complexity
+    *   O(n) where n is the number of elements in `self`.
+    */
+  def minElement()(using Comparable[s.Element]): Option[s.Element] =
+    self.minElement(isLessThan = _ `lt` _)
+
+  /** Returns the maximum element in `self`, using `isGreaterThan` to compare elements.
+    *
+    * @complexity
+    *   O(n) where n is the number of elements in `self`.
+    */
+  def maxElement(isGreaterThan: (s.Element, s.Element) => Boolean): Option[s.Element] =
+    self.leastElement(isGreaterThan)
+
+  /** Returns the maximum element in `self`.
+    *
+    * @complexity
+    *   O(n) where n is the number of elements in `self`.
+    */
+  def maxElement()(using Comparable[s.Element]): Option[s.Element] =
+    self.maxElement(isGreaterThan = _ `gt` _)
+
+  /** Returns the maximum element in `self`, using `isOrderedBefore` to compare elements.
+    *
+    * @complexity
+    *   O(n) where n is the number of elements in `self`.
+    */
+  def leastElement(isOrderedBefore: (s.Element, s.Element) => Boolean): Option[s.Element] =
+    if (self.isEmpty) {
+      None
+    } else {
+      val e = self.endPosition
+      def _least(p: s.Position, least: s.Element): s.Element =
+        if (p.eq(e)) {
+          least
+        } else {
+          val x = self.at(p)
+          val y = if isOrderedBefore(x, least) then x else least
+          _least(self.positionAfter(p), y)
+        }
+
+      val b = self.startPosition
+      Some(_least(self.positionAfter(b), self.at(b)))
+    }
+
+}
+
+extension [Self](self: Self)(using
+    s: Collection[Self],
+    e: Value[s.Element]
+) {
+
+  /** Returns `true` if `self` contains the same elements as `other`, in the same order. */
+  def elementsEqual[T](using o: Collection[T] { type Element = s.Element })(other: T): Boolean =
+    def loop(i: s.Position, j: o.Position): Boolean =
+      if (i `eq` self.endPosition) {
+        j `eq` other.endPosition
+      } else if (j `eq` other.endPosition) {
+        false
+      } else if (self.at(i) `neq` other.at(j)) {
+        false
+      } else {
+        loop(self.positionAfter(i), other.positionAfter(j))
+      }
+    loop(self.startPosition, other.startPosition)
+
+}
+-----
+ScalaFile
+  PsiElement(SCALA_DIRECTIVE)
+    ScDirectiveToken(tDIRECTIVE_PREFIX)('//>')
+    PsiWhiteSpace(' ')
+    ScDirectiveToken(tDIRECTIVE_COMMAND)('using')
+    PsiWhiteSpace(' ')
+    ScDirectiveToken(tDIRECTIVE_KEY)('options')
+    PsiWhiteSpace(' ')
+    ScDirectiveToken(tDIRECTIVE_VALUE)('-language:experimental.modularity')
+    PsiWhiteSpace(' ')
+    ScDirectiveToken(tDIRECTIVE_VALUE)('-source')
+    PsiWhiteSpace(' ')
+    ScDirectiveToken(tDIRECTIVE_VALUE)('future')
+  PsiWhiteSpace('\n')
+  ScPackaging
+    PsiElement(package)('package')
+    PsiWhiteSpace(' ')
+    CodeReferenceElement: hylo
+      PsiElement(identifier)('hylo')
+    PsiWhiteSpace('\n\n')
+    ScTrait: Collection
+      DocComment
+        ScPsiDocToken(DOC_COMMENT_START)('/**')
+        ScDocParagraph
+          ScPsiDocToken(DOC_WHITESPACE)(' ')
+          ScPsiDocToken(DOC_COMMENT_DATA)('A collection of elements accessible by their position.')
+          ScPsiDocToken(DOC_WHITESPACE)(' ')
+        ScPsiDocToken(DOC_COMMENT_END)('*/')
+      PsiWhiteSpace('\n')
+      AnnotationsList
+        <empty list>
+      Modifiers
+        <empty list>
+      PsiElement(trait)('trait')
+      PsiWhiteSpace(' ')
+      PsiElement(identifier)('Collection')
+      TypeParameterClause
+        PsiElement([)('[')
+        TypeParameter: Self
+          PsiElement(identifier)('Self')
+        PsiElement(])(']')
+      PsiWhiteSpace(' ')
+      ExtendsBlock
+        ScTemplateBody
+          PsiElement({)('{')
+          PsiWhiteSpace('\n\n  ')
+          ScTypeAliasDeclaration: Element
+            DocComment
+              ScPsiDocToken(DOC_COMMENT_START)('/**')
+              ScDocParagraph
+                ScPsiDocToken(DOC_WHITESPACE)(' ')
+                ScPsiDocToken(DOC_COMMENT_DATA)('The type of the elements in the collection.')
+                ScPsiDocToken(DOC_WHITESPACE)(' ')
+              ScPsiDocToken(DOC_COMMENT_END)('*/')
+            PsiWhiteSpace('\n  ')
+            AnnotationsList
+              <empty list>
+            Modifiers
+              <empty list>
+            PsiElement(type)('type')
+            PsiWhiteSpace(' ')
+            PsiElement(identifier)('Element')
+          PsiWhiteSpace('\n  ')
+          ScGivenAliasDefinition: elementIsValue
+            AnnotationsList
+              <empty list>
+            Modifiers
+              <empty list>
+            PsiElement(given)('given')
+            PsiWhiteSpace(' ')
+            PsiElement(identifier)('elementIsValue')
+            Parameters
+              <empty list>
+            PsiElement(:)(':')
+            PsiWhiteSpace(' ')
+            ParametrizedType: Value[Element]
+              SimpleType: Value
+                CodeReferenceElement: Value
+                  PsiElement(identifier)('Value')
+              TypeArgumentsList
+                PsiElement([)('[')
+                SimpleType: Element
+                  CodeReferenceElement: Element
+                    PsiElement(identifier)('Element')
+                PsiElement(])(']')
+            PsiWhiteSpace(' ')
+            PsiElement(=)('=')
+            PsiWhiteSpace(' ')
+            ReferenceExpression: compiletime.deferred
+              ReferenceExpression: compiletime
+                PsiElement(identifier)('compiletime')
+              PsiElement(.)('.')
+              PsiElement(identifier)('deferred')
+          PsiWhiteSpace('\n\n  ')
+          ScTypeAliasDeclaration: Position
+            DocComment
+              ScPsiDocToken(DOC_COMMENT_START)('/**')
+              ScDocParagraph
+                ScPsiDocToken(DOC_WHITESPACE)(' ')
+                ScPsiDocToken(DOC_COMMENT_DATA)('The type of a position in the collection.')
+                ScPsiDocToken(DOC_WHITESPACE)(' ')
+              ScPsiDocToken(DOC_COMMENT_END)('*/')
+            PsiWhiteSpace('\n  ')
+            AnnotationsList
+              <empty list>
+            Modifiers
+              <empty list>
+            PsiElement(type)('type')
+            PsiWhiteSpace(' ')
+            PsiElement(identifier)('Position')
+          PsiWhiteSpace('\n  ')
+          ScGivenAliasDeclaration: positionIsValue
+            AnnotationsList
+              <empty list>
+            Modifiers
+              <empty list>
+            PsiElement(given)('given')
+            PsiWhiteSpace(' ')
+            PsiElement(identifier)('positionIsValue')
+            Parameters
+              <empty list>
+            PsiElement(:)(':')
+            PsiWhiteSpace(' ')
+            ParametrizedType: Value[Position]
+              SimpleType: Value
+                CodeReferenceElement: Value
+                  PsiElement(identifier)('Value')
+              TypeArgumentsList
+                PsiElement([)('[')
+                SimpleType: Position
+                  CodeReferenceElement: Position
+                    PsiElement(identifier)('Position')
+                PsiElement(])(']')
+          PsiWhiteSpace('\n\n  ')
+          Extension on Self
+            PsiElement(extension)('extension')
+            PsiWhiteSpace(' ')
+            Parameters
+              ParametersClause
+                PsiElement(()('(')
+                Parameter: self
+                  AnnotationsList
+                    <empty list>
+                  Modifiers
+                    <empty list>
+                  PsiElement(identifier)('self')
+                  PsiElement(:)(':')
+                  PsiWhiteSpace(' ')
+                  ParameterType
+                    SimpleType: Self
+                      CodeReferenceElement: Self
+                        PsiElement(identifier)('Self')
+                PsiElement())(')')
+            PsiWhiteSpace(' ')
+            ScExtensionBody
+              PsiElement({)('{')
+              PsiWhiteSpace('\n\n    ')
+              ScFunctionDefinition: isEmpty
+                DocComment
+                  ScPsiDocToken(DOC_COMMENT_START)('/**')
+                  ScDocParagraph
+                    ScPsiDocToken(DOC_WHITESPACE)(' ')
+                    ScPsiDocToken(DOC_COMMENT_DATA)('Returns ')
+                    DocSyntaxElement 8
+                      ScPsiDocToken(DOC_MONOSPACE_TAG 8)('`')
+                      ScPsiDocToken(DOC_COMMENT_DATA)('true')
+                      ScPsiDocToken(DOC_MONOSPACE_TAG 8)('`')
+                    ScPsiDocToken(DOC_COMMENT_DATA)(' iff ')
+                    DocSyntaxElement 8
+                      ScPsiDocToken(DOC_MONOSPACE_TAG 8)('`')
+                      ScPsiDocToken(DOC_COMMENT_DATA)('self')
+                      ScPsiDocToken(DOC_MONOSPACE_TAG 8)('`')
+                    ScPsiDocToken(DOC_COMMENT_DATA)(' is empty.')
+                    ScPsiDocToken(DOC_WHITESPACE)(' ')
+                  ScPsiDocToken(DOC_COMMENT_END)('*/')
+                PsiWhiteSpace('\n    ')
+                AnnotationsList
+                  <empty list>
+                Modifiers
+                  <empty list>
+                PsiElement(def)('def')
+                PsiWhiteSpace(' ')
+                PsiElement(identifier)('isEmpty')
+                Parameters
+                  <empty list>
+                PsiElement(:)(':')
+                PsiWhiteSpace(' ')
+                SimpleType: Boolean
+                  CodeReferenceElement: Boolean
+                    PsiElement(identifier)('Boolean')
+                PsiWhiteSpace(' ')
+                PsiElement(=)('=')
+                PsiWhiteSpace('\n      ')
+                InfixExpression
+                  ReferenceExpression: startPosition
+                    PsiElement(identifier)('startPosition')
+                  PsiWhiteSpace(' ')
+                  ReferenceExpression: `eq`
+                    PsiElement(identifier)('`eq`')
+                  PsiWhiteSpace(' ')
+                  ReferenceExpression: endPosition
+                    PsiElement(identifier)('endPosition')
+              PsiWhiteSpace('\n\n    ')
+              ScFunctionDefinition: count
+                DocComment
+                  ScPsiDocToken(DOC_COMMENT_START)('/**')
+                  ScDocParagraph
+                    ScPsiDocToken(DOC_WHITESPACE)(' ')
+                    ScPsiDocToken(DOC_COMMENT_DATA)('Returns the number of elements in ')
+                    DocSyntaxElement 8
+                      ScPsiDocToken(DOC_MONOSPACE_TAG 8)('`')
+                      ScPsiDocToken(DOC_COMMENT_DATA)('self')
+                      ScPsiDocToken(DOC_MONOSPACE_TAG 8)('`')
+                    ScPsiDocToken(DOC_COMMENT_DATA)('.')
+                    ScPsiDocToken(DOC_WHITESPACE)('\n      ')
+                    ScPsiDocToken(DOC_COMMENT_LEADING_ASTERISKS)('*')
+                    ScPsiDocToken(DOC_WHITESPACE)('\n      ')
+                    ScPsiDocToken(DOC_COMMENT_LEADING_ASTERISKS)('*')
+                  DocTag
+                    ScPsiDocToken(DOC_WHITESPACE)(' ')
+                    ScPsiDocToken(DOC_TAG_NAME)('@complexity')
+                    PsiErrorElement:Unknown tag: @complexity
+                      <empty list>
+                    ScPsiDocToken(DOC_WHITESPACE)('\n      ')
+                    ScPsiDocToken(DOC_COMMENT_LEADING_ASTERISKS)('*')
+                    ScDocParagraph
+                      ScPsiDocToken(DOC_WHITESPACE)('   ')
+                      ScPsiDocToken(DOC_COMMENT_DATA)('O(n) where n is the number of elements in ')
+                      DocSyntaxElement 8
+                        ScPsiDocToken(DOC_MONOSPACE_TAG 8)('`')
+                        ScPsiDocToken(DOC_COMMENT_DATA)('self')
+                        ScPsiDocToken(DOC_MONOSPACE_TAG 8)('`')
+                      ScPsiDocToken(DOC_COMMENT_DATA)('.')
+                      ScPsiDocToken(DOC_WHITESPACE)('\n      ')
+                  ScPsiDocToken(DOC_COMMENT_END)('*/')
+                PsiWhiteSpace('\n    ')
+                AnnotationsList
+                  <empty list>
+                Modifiers
+                  <empty list>
+                PsiElement(def)('def')
+                PsiWhiteSpace(' ')
+                PsiElement(identifier)('count')
+                Parameters
+                  <empty list>
+                PsiElement(:)(':')
+                PsiWhiteSpace(' ')
+                SimpleType: Int
+                  CodeReferenceElement: Int
+                    PsiElement(identifier)('Int')
+                PsiWhiteSpace(' ')
+                PsiElement(=)('=')
+                BlockExpression
+                  PsiWhiteSpace('\n      ')
+                  ScPatternDefinition: e
+                    AnnotationsList
+                      <empty list>
+                    Modifiers
+                      <empty list>
+                    PsiElement(val)('val')
+                    PsiWhiteSpace(' ')
+                    ListOfPatterns
+                      ReferencePattern: e
+                        PsiElement(identifier)('e')
+                    PsiWhiteSpace(' ')
+                    PsiElement(=)('=')
+                    PsiWhiteSpace(' ')
+                    ReferenceExpression: endPosition
+                      PsiElement(identifier)('endPosition')
+                  PsiWhiteSpace('\n      ')
+                  ScFunctionDefinition: _count
+                    AnnotationsList
+                      <empty list>
+                    Modifiers
+                      <empty list>
+                    PsiElement(def)('def')
+                    PsiWhiteSpace(' ')
+                    PsiElement(identifier)('_count')
+                    Parameters
+                      ParametersClause
+                        PsiElement(()('(')
+                        Parameter: p
+                          AnnotationsList
+                            <empty list>
+                          Modifiers
+                            <empty list>
+                          PsiElement(identifier)('p')
+                          PsiElement(:)(':')
+                          PsiWhiteSpace(' ')
+                          ParameterType
+                            SimpleType: Position
+                              CodeReferenceElement: Position
+                                PsiElement(identifier)('Position')
+                        PsiElement(,)(',')
+                        PsiWhiteSpace(' ')
+                        Parameter: n
+                          AnnotationsList
+                            <empty list>
+                          Modifiers
+                            <empty list>
+                          PsiElement(identifier)('n')
+                          PsiElement(:)(':')
+                          PsiWhiteSpace(' ')
+                          ParameterType
+                            SimpleType: Int
+                              CodeReferenceElement: Int
+                                PsiElement(identifier)('Int')
+                        PsiElement())(')')
+                    PsiElement(:)(':')
+                    PsiWhiteSpace(' ')
+                    SimpleType: Int
+                      CodeReferenceElement: Int
+                        PsiElement(identifier)('Int')
+                    PsiWhiteSpace(' ')
+                    PsiElement(=)('=')
+                    PsiWhiteSpace('\n        ')
+                    IfStatement
+                      PsiElement(if)('if')
+                      PsiWhiteSpace(' ')
+                      InfixExpression
+                        ReferenceExpression: p
+                          PsiElement(identifier)('p')
+                        PsiWhiteSpace(' ')
+                        ReferenceExpression: `eq`
+                          PsiElement(identifier)('`eq`')
+                        PsiWhiteSpace(' ')
+                        ReferenceExpression: e
+                          PsiElement(identifier)('e')
+                      PsiWhiteSpace(' ')
+                      PsiElement(then)('then')
+                      PsiWhiteSpace(' ')
+                      ReferenceExpression: n
+                        PsiElement(identifier)('n')
+                      PsiWhiteSpace(' ')
+                      PsiElement(else)('else')
+                      PsiWhiteSpace(' ')
+                      MethodCall
+                        ReferenceExpression: _count
+                          PsiElement(identifier)('_count')
+                        ArgumentList
+                          PsiElement(()('(')
+                          MethodCall
+                            ReferenceExpression: self.positionAfter
+                              ReferenceExpression: self
+                                PsiElement(identifier)('self')
+                              PsiElement(.)('.')
+                              PsiElement(identifier)('positionAfter')
+                            ArgumentList
+                              PsiElement(()('(')
+                              ReferenceExpression: p
+                                PsiElement(identifier)('p')
+                              PsiElement())(')')
+                          PsiElement(,)(',')
+                          PsiWhiteSpace(' ')
+                          InfixExpression
+                            ReferenceExpression: n
+                              PsiElement(identifier)('n')
+                            PsiWhiteSpace(' ')
+                            ReferenceExpression: +
+                              PsiElement(identifier)('+')
+                            PsiWhiteSpace(' ')
+                            IntegerLiteral
+                              PsiElement(integer)('1')
+                          PsiElement())(')')
+                  PsiWhiteSpace('\n      ')
+                  MethodCall
+                    ReferenceExpression: _count
+                      PsiElement(identifier)('_count')
+                    ArgumentList
+                      PsiElement(()('(')
+                      ReferenceExpression: startPosition
+                        PsiElement(identifier)('startPosition')
+                      PsiElement(,)(',')
+                      PsiWhiteSpace(' ')
+                      IntegerLiteral
+                        PsiElement(integer)('0')
+                      PsiElement())(')')
+              PsiWhiteSpace('\n\n    ')
+              ScFunctionDeclaration: startPosition
+                DocComment
+                  ScPsiDocToken(DOC_COMMENT_START)('/**')
+                  ScDocParagraph
+                    ScPsiDocToken(DOC_WHITESPACE)(' ')
+                    ScPsiDocToken(DOC_COMMENT_DATA)('Returns the position of ')
+                    DocSyntaxElement 8
+                      ScPsiDocToken(DOC_MONOSPACE_TAG 8)('`')
+                      ScPsiDocToken(DOC_COMMENT_DATA)('self')
+                      ScPsiDocToken(DOC_MONOSPACE_TAG 8)('`')
+                    ScPsiDocToken(DOC_COMMENT_DATA)(''s first element', or ')
+                    DocSyntaxElement 8
+                      ScPsiDocToken(DOC_MONOSPACE_TAG 8)('`')
+                      ScPsiDocToken(DOC_COMMENT_DATA)('endPosition')
+                      ScPsiDocToken(DOC_MONOSPACE_TAG 8)('`')
+                    ScPsiDocToken(DOC_COMMENT_DATA)(' if ')
+                    DocSyntaxElement 8
+                      ScPsiDocToken(DOC_MONOSPACE_TAG 8)('`')
+                      ScPsiDocToken(DOC_COMMENT_DATA)('self')
+                      ScPsiDocToken(DOC_MONOSPACE_TAG 8)('`')
+                    ScPsiDocToken(DOC_COMMENT_DATA)(' is empty.')
+                    ScPsiDocToken(DOC_WHITESPACE)('\n      ')
+                    ScPsiDocToken(DOC_COMMENT_LEADING_ASTERISKS)('*')
+                    ScPsiDocToken(DOC_WHITESPACE)('\n      ')
+                    ScPsiDocToken(DOC_COMMENT_LEADING_ASTERISKS)('*')
+                  DocTag
+                    ScPsiDocToken(DOC_WHITESPACE)(' ')
+                    ScPsiDocToken(DOC_TAG_NAME)('@complexity')
+                    PsiErrorElement:Unknown tag: @complexity
+                      <empty list>
+                    ScPsiDocToken(DOC_WHITESPACE)('\n      ')
+                    ScPsiDocToken(DOC_COMMENT_LEADING_ASTERISKS)('*')
+                    ScDocParagraph
+                      ScPsiDocToken(DOC_WHITESPACE)('   ')
+                      ScPsiDocToken(DOC_COMMENT_DATA)('O(1)')
+                      ScPsiDocToken(DOC_WHITESPACE)('\n      ')
+                  ScPsiDocToken(DOC_COMMENT_END)('*/')
+                PsiWhiteSpace('\n    ')
+                AnnotationsList
+                  <empty list>
+                Modifiers
+                  <empty list>
+                PsiElement(def)('def')
+                PsiWhiteSpace(' ')
+                PsiElement(identifier)('startPosition')
+                Parameters
+                  <empty list>
+                PsiElement(:)(':')
+                PsiWhiteSpace(' ')
+                SimpleType: Position
+                  CodeReferenceElement: Position
+                    PsiElement(identifier)('Position')
+              PsiWhiteSpace('\n\n    ')
+              ScFunctionDeclaration: endPosition
+                DocComment
+                  ScPsiDocToken(DOC_COMMENT_START)('/**')
+                  ScDocParagraph
+                    ScPsiDocToken(DOC_WHITESPACE)(' ')
+                    ScPsiDocToken(DOC_COMMENT_DATA)('Returns the "past the end" position in ')
+                    DocSyntaxElement 8
+                      ScPsiDocToken(DOC_MONOSPACE_TAG 8)('`')
+                      ScPsiDocToken(DOC_COMMENT_DATA)('self')
+                      ScPsiDocToken(DOC_MONOSPACE_TAG 8)('`')
+                    ScPsiDocToken(DOC_COMMENT_DATA)(', that is, the position immediately after the')
+                    ScPsiDocToken(DOC_WHITESPACE)('\n      ')
+                    ScPsiDocToken(DOC_COMMENT_LEADING_ASTERISKS)('*')
+                    ScPsiDocToken(DOC_WHITESPACE)(' ')
+                    ScPsiDocToken(DOC_COMMENT_DATA)('last element in ')
+                    DocSyntaxElement 8
+                      ScPsiDocToken(DOC_MONOSPACE_TAG 8)('`')
+                      ScPsiDocToken(DOC_COMMENT_DATA)('self')
+                      ScPsiDocToken(DOC_MONOSPACE_TAG 8)('`')
+                    ScPsiDocToken(DOC_COMMENT_DATA)('.')
+                    ScPsiDocToken(DOC_WHITESPACE)('\n      ')
+                    ScPsiDocToken(DOC_COMMENT_LEADING_ASTERISKS)('*')
+                    ScPsiDocToken(DOC_WHITESPACE)('\n      ')
+                    ScPsiDocToken(DOC_COMMENT_LEADING_ASTERISKS)('*')
+                  DocTag
+                    ScPsiDocToken(DOC_WHITESPACE)(' ')
+                    ScPsiDocToken(DOC_TAG_NAME)('@complexity')
+                    PsiErrorElement:Unknown tag: @complexity
+                      <empty list>
+                    ScPsiDocToken(DOC_WHITESPACE)('\n      ')
+                    ScPsiDocToken(DOC_COMMENT_LEADING_ASTERISKS)('*')
+                    ScDocParagraph
+                      ScPsiDocToken(DOC_WHITESPACE)('   ')
+                      ScPsiDocToken(DOC_COMMENT_DATA)('O(1).')
+                      ScPsiDocToken(DOC_WHITESPACE)('\n      ')
+                  ScPsiDocToken(DOC_COMMENT_END)('*/')
+                PsiWhiteSpace('\n    ')
+                AnnotationsList
+                  <empty list>
+                Modifiers
+                  <empty list>
+                PsiElement(def)('def')
+                PsiWhiteSpace(' ')
+                PsiElement(identifier)('endPosition')
+                Parameters
+                  <empty list>
+                PsiElement(:)(':')
+                PsiWhiteSpace(' ')
+                SimpleType: Position
+                  CodeReferenceElement: Position
+                    PsiElement(identifier)('Position')
+              PsiWhiteSpace('\n\n    ')
+              ScFunctionDeclaration: positionAfter
+                DocComment
+                  ScPsiDocToken(DOC_COMMENT_START)('/**')
+                  ScDocParagraph
+                    ScPsiDocToken(DOC_WHITESPACE)(' ')
+                    ScPsiDocToken(DOC_COMMENT_DATA)('Returns the position immediately after ')
+                    DocSyntaxElement 8
+                      ScPsiDocToken(DOC_MONOSPACE_TAG 8)('`')
+                      ScPsiDocToken(DOC_COMMENT_DATA)('p')
+                      ScPsiDocToken(DOC_MONOSPACE_TAG 8)('`')
+                    ScPsiDocToken(DOC_COMMENT_DATA)('.')
+                    ScPsiDocToken(DOC_WHITESPACE)('\n      ')
+                    ScPsiDocToken(DOC_COMMENT_LEADING_ASTERISKS)('*')
+                    ScPsiDocToken(DOC_WHITESPACE)('\n      ')
+                    ScPsiDocToken(DOC_COMMENT_LEADING_ASTERISKS)('*')
+                  DocTag
+                    ScPsiDocToken(DOC_WHITESPACE)(' ')
+                    ScPsiDocToken(DOC_TAG_NAME)('@requires')
+                    PsiErrorElement:Unknown tag: @requires
+                      <empty list>
+                    ScPsiDocToken(DOC_WHITESPACE)('\n      ')
+                    ScPsiDocToken(DOC_COMMENT_LEADING_ASTERISKS)('*')
+                    ScDocParagraph
+                      ScPsiDocToken(DOC_WHITESPACE)('   ')
+                      DocSyntaxElement 8
+                        ScPsiDocToken(DOC_MONOSPACE_TAG 8)('`')
+                        ScPsiDocToken(DOC_COMMENT_DATA)('p')
+                        ScPsiDocToken(DOC_MONOSPACE_TAG 8)('`')
+                      ScPsiDocToken(DOC_COMMENT_DATA)(' is a valid position in ')
+                      DocSyntaxElement 8
+                        ScPsiDocToken(DOC_MONOSPACE_TAG 8)('`')
+                        ScPsiDocToken(DOC_COMMENT_DATA)('self')
+                        ScPsiDocToken(DOC_MONOSPACE_TAG 8)('`')
+                      ScPsiDocToken(DOC_COMMENT_DATA)(' different from ')
+                      DocSyntaxElement 8
+                        ScPsiDocToken(DOC_MONOSPACE_TAG 8)('`')
+                        ScPsiDocToken(DOC_COMMENT_DATA)('endPosition')
+                        ScPsiDocToken(DOC_MONOSPACE_TAG 8)('`')
+                      ScPsiDocToken(DOC_COMMENT_DATA)('.')
+                      ScPsiDocToken(DOC_WHITESPACE)('\n      ')
+                      ScPsiDocToken(DOC_COMMENT_LEADING_ASTERISKS)('*')
+                  DocTag
+                    ScPsiDocToken(DOC_WHITESPACE)(' ')
+                    ScPsiDocToken(DOC_TAG_NAME)('@complexity')
+                    PsiErrorElement:Unknown tag: @complexity
+                      <empty list>
+                    ScPsiDocToken(DOC_WHITESPACE)('\n      ')
+                    ScPsiDocToken(DOC_COMMENT_LEADING_ASTERISKS)('*')
+                    ScDocParagraph
+                      ScPsiDocToken(DOC_WHITESPACE)('   ')
+                      ScPsiDocToken(DOC_COMMENT_DATA)('O(1).')
+                      ScPsiDocToken(DOC_WHITESPACE)('\n      ')
+                  ScPsiDocToken(DOC_COMMENT_END)('*/')
+                PsiWhiteSpace('\n    ')
+                AnnotationsList
+                  <empty list>
+                Modifiers
+                  <empty list>
+                PsiElement(def)('def')
+                PsiWhiteSpace(' ')
+                PsiElement(identifier)('positionAfter')
+                Parameters
+                  ParametersClause
+                    PsiElement(()('(')
+                    Parameter: p
+                      AnnotationsList
+                        <empty list>
+                      Modifiers
+                        <empty list>
+                      PsiElement(identifier)('p')
+                      PsiElement(:)(':')
+                      PsiWhiteSpace(' ')
+                      ParameterType
+                        SimpleType: Position
+                          CodeReferenceElement: Position
+                            PsiElement(identifier)('Position')
+                    PsiElement())(')')
+                PsiElement(:)(':')
+                PsiWhiteSpace(' ')
+                SimpleType: Position
+                  CodeReferenceElement: Position
+                    PsiElement(identifier)('Position')
+              PsiWhiteSpace('\n\n    ')
+              ScFunctionDeclaration: at
+                DocComment
+                  ScPsiDocToken(DOC_COMMENT_START)('/**')
+                  ScDocParagraph
+                    ScPsiDocToken(DOC_WHITESPACE)(' ')
+                    ScPsiDocToken(DOC_COMMENT_DATA)('Accesses the element at ')
+                    DocSyntaxElement 8
+                      ScPsiDocToken(DOC_MONOSPACE_TAG 8)('`')
+                      ScPsiDocToken(DOC_COMMENT_DATA)('p')
+                      ScPsiDocToken(DOC_MONOSPACE_TAG 8)('`')
+                    ScPsiDocToken(DOC_COMMENT_DATA)('.')
+                    ScPsiDocToken(DOC_WHITESPACE)('\n      ')
+                    ScPsiDocToken(DOC_COMMENT_LEADING_ASTERISKS)('*')
+                    ScPsiDocToken(DOC_WHITESPACE)('\n      ')
+                    ScPsiDocToken(DOC_COMMENT_LEADING_ASTERISKS)('*')
+                  DocTag
+                    ScPsiDocToken(DOC_WHITESPACE)(' ')
+                    ScPsiDocToken(DOC_TAG_NAME)('@requires')
+                    PsiErrorElement:Unknown tag: @requires
+                      <empty list>
+                    ScPsiDocToken(DOC_WHITESPACE)('\n      ')
+                    ScPsiDocToken(DOC_COMMENT_LEADING_ASTERISKS)('*')
+                    ScDocParagraph
+                      ScPsiDocToken(DOC_WHITESPACE)('   ')
+                      DocSyntaxElement 8
+                        ScPsiDocToken(DOC_MONOSPACE_TAG 8)('`')
+                        ScPsiDocToken(DOC_COMMENT_DATA)('p')
+                        ScPsiDocToken(DOC_MONOSPACE_TAG 8)('`')
+                      ScPsiDocToken(DOC_COMMENT_DATA)(' is a valid position in ')
+                      DocSyntaxElement 8
+                        ScPsiDocToken(DOC_MONOSPACE_TAG 8)('`')
+                        ScPsiDocToken(DOC_COMMENT_DATA)('self')
+                        ScPsiDocToken(DOC_MONOSPACE_TAG 8)('`')
+                      ScPsiDocToken(DOC_COMMENT_DATA)(' different from ')
+                      DocSyntaxElement 8
+                        ScPsiDocToken(DOC_MONOSPACE_TAG 8)('`')
+                        ScPsiDocToken(DOC_COMMENT_DATA)('endPosition')
+                        ScPsiDocToken(DOC_MONOSPACE_TAG 8)('`')
+                      ScPsiDocToken(DOC_COMMENT_DATA)('.')
+                      ScPsiDocToken(DOC_WHITESPACE)('\n      ')
+                      ScPsiDocToken(DOC_COMMENT_LEADING_ASTERISKS)('*')
+                  DocTag
+                    ScPsiDocToken(DOC_WHITESPACE)(' ')
+                    ScPsiDocToken(DOC_TAG_NAME)('@complexity')
+                    PsiErrorElement:Unknown tag: @complexity
+                      <empty list>
+                    ScPsiDocToken(DOC_WHITESPACE)('\n      ')
+                    ScPsiDocToken(DOC_COMMENT_LEADING_ASTERISKS)('*')
+                    ScDocParagraph
+                      ScPsiDocToken(DOC_WHITESPACE)('   ')
+                      ScPsiDocToken(DOC_COMMENT_DATA)('O(1).')
+                      ScPsiDocToken(DOC_WHITESPACE)('\n      ')
+                  ScPsiDocToken(DOC_COMMENT_END)('*/')
+                PsiWhiteSpace('\n    ')
+                AnnotationsList
+                  <empty list>
+                Modifiers
+                  <empty list>
+                PsiElement(def)('def')
+                PsiWhiteSpace(' ')
+                PsiElement(identifier)('at')
+                Parameters
+                  ParametersClause
+                    PsiElement(()('(')
+                    Parameter: p
+                      AnnotationsList
+                        <empty list>
+                      Modifiers
+                        <empty list>
+                      PsiElement(identifier)('p')
+                      PsiElement(:)(':')
+                      PsiWhiteSpace(' ')
+                      ParameterType
+                        SimpleType: Position
+                          CodeReferenceElement: Position
+                            PsiElement(identifier)('Position')
+                    PsiElement())(')')
+                PsiElement(:)(':')
+                PsiWhiteSpace(' ')
+                SimpleType: Element
+                  CodeReferenceElement: Element
+                    PsiElement(identifier)('Element')
+              PsiWhiteSpace('\n\n    ')
+              ScFunctionDefinition: isBefore
+                DocComment
+                  ScPsiDocToken(DOC_COMMENT_START)('/**')
+                  ScDocParagraph
+                    ScPsiDocToken(DOC_WHITESPACE)(' ')
+                    ScPsiDocToken(DOC_COMMENT_DATA)('Returns ')
+                    DocSyntaxElement 8
+                      ScPsiDocToken(DOC_MONOSPACE_TAG 8)('`')
+                      ScPsiDocToken(DOC_COMMENT_DATA)('true')
+                      ScPsiDocToken(DOC_MONOSPACE_TAG 8)('`')
+                    ScPsiDocToken(DOC_COMMENT_DATA)(' iff ')
+                    DocSyntaxElement 8
+                      ScPsiDocToken(DOC_MONOSPACE_TAG 8)('`')
+                      ScPsiDocToken(DOC_COMMENT_DATA)('i')
+                      ScPsiDocToken(DOC_MONOSPACE_TAG 8)('`')
+                    ScPsiDocToken(DOC_COMMENT_DATA)(' precedes ')
+                    DocSyntaxElement 8
+                      ScPsiDocToken(DOC_MONOSPACE_TAG 8)('`')
+                      ScPsiDocToken(DOC_COMMENT_DATA)('j')
+                      ScPsiDocToken(DOC_MONOSPACE_TAG 8)('`')
+                    ScPsiDocToken(DOC_COMMENT_DATA)('.')
+                    ScPsiDocToken(DOC_WHITESPACE)('\n      ')
+                    ScPsiDocToken(DOC_COMMENT_LEADING_ASTERISKS)('*')
+                    ScPsiDocToken(DOC_WHITESPACE)('\n      ')
+                    ScPsiDocToken(DOC_COMMENT_LEADING_ASTERISKS)('*')
+                  DocTag
+                    ScPsiDocToken(DOC_WHITESPACE)(' ')
+                    ScPsiDocToken(DOC_TAG_NAME)('@requires')
+                    PsiErrorElement:Unknown tag: @requires
+                      <empty list>
+                    ScPsiDocToken(DOC_WHITESPACE)('\n      ')
+                    ScPsiDocToken(DOC_COMMENT_LEADING_ASTERISKS)('*')
+                    ScDocParagraph
+                      ScPsiDocToken(DOC_WHITESPACE)('   ')
+                      DocSyntaxElement 8
+                        ScPsiDocToken(DOC_MONOSPACE_TAG 8)('`')
+                        ScPsiDocToken(DOC_COMMENT_DATA)('i')
+                        ScPsiDocToken(DOC_MONOSPACE_TAG 8)('`')
+                      ScPsiDocToken(DOC_COMMENT_DATA)(' and j')
+                      DocSyntaxElement 8
+                        ScPsiDocToken(DOC_MONOSPACE_TAG 8)('`')
+                        ScPsiDocToken(DOC_COMMENT_DATA)(' are valid positions in ')
+                        ScPsiDocToken(DOC_MONOSPACE_TAG 8)('`')
+                      ScPsiDocToken(DOC_COMMENT_DATA)('self')
+                      DocSyntaxElement 8
+                        ScPsiDocToken(DOC_MONOSPACE_TAG 8)('`')
+                        ScPsiDocToken(DOC_COMMENT_DATA)('.')
+                        ScPsiDocToken(DOC_WHITESPACE)('\n      ')
+                      ScPsiDocToken(DOC_COMMENT_LEADING_ASTERISKS)('*')
+                  DocTag
+                    ScPsiDocToken(DOC_WHITESPACE)(' ')
+                    ScPsiDocToken(DOC_TAG_NAME)('@complexity')
+                    PsiErrorElement:Unknown tag: @complexity
+                      <empty list>
+                    ScPsiDocToken(DOC_WHITESPACE)('\n      ')
+                    ScPsiDocToken(DOC_COMMENT_LEADING_ASTERISKS)('*')
+                    ScDocParagraph
+                      ScPsiDocToken(DOC_WHITESPACE)('   ')
+                      ScPsiDocToken(DOC_COMMENT_DATA)('O(n) where n is the number of elements in ')
+                      DocSyntaxElement 8
+                        ScPsiDocToken(DOC_MONOSPACE_TAG 8)('`')
+                        ScPsiDocToken(DOC_COMMENT_DATA)('self')
+                        ScPsiDocToken(DOC_MONOSPACE_TAG 8)('`')
+                      ScPsiDocToken(DOC_COMMENT_DATA)('.')
+                      ScPsiDocToken(DOC_WHITESPACE)('\n      ')
+                  ScPsiDocToken(DOC_COMMENT_END)('*/')
+                PsiWhiteSpace('\n    ')
+                AnnotationsList
+                  <empty list>
+                Modifiers
+                  <empty list>
+                PsiElement(def)('def')
+                PsiWhiteSpace(' ')
+                PsiElement(identifier)('isBefore')
+                Parameters
+                  ParametersClause
+                    PsiElement(()('(')
+                    Parameter: i
+                      AnnotationsList
+                        <empty list>
+                      Modifiers
+                        <empty list>
+                      PsiElement(identifier)('i')
+                      PsiElement(:)(':')
+                      PsiWhiteSpace(' ')
+                      ParameterType
+                        SimpleType: Position
+                          CodeReferenceElement: Position
+                            PsiElement(identifier)('Position')
+                    PsiElement(,)(',')
+                    PsiWhiteSpace(' ')
+                    Parameter: j
+                      AnnotationsList
+                        <empty list>
+                      Modifiers
+                        <empty list>
+                      PsiElement(identifier)('j')
+                      PsiElement(:)(':')
+                      PsiWhiteSpace(' ')
+                      ParameterType
+                        SimpleType: Position
+                          CodeReferenceElement: Position
+                            PsiElement(identifier)('Position')
+                    PsiElement())(')')
+                PsiElement(:)(':')
+                PsiWhiteSpace(' ')
+                SimpleType: Boolean
+                  CodeReferenceElement: Boolean
+                    PsiElement(identifier)('Boolean')
+                PsiWhiteSpace(' ')
+                PsiElement(=)('=')
+                BlockExpression
+                  PsiWhiteSpace('\n      ')
+                  ScPatternDefinition: e
+                    AnnotationsList
+                      <empty list>
+                    Modifiers
+                      <empty list>
+                    PsiElement(val)('val')
+                    PsiWhiteSpace(' ')
+                    ListOfPatterns
+                      ReferencePattern: e
+                        PsiElement(identifier)('e')
+                    PsiWhiteSpace(' ')
+                    PsiElement(=)('=')
+                    PsiWhiteSpace(' ')
+                    ReferenceExpression: self.endPosition
+                      ReferenceExpression: self
+                        PsiElement(identifier)('self')
+                      PsiElement(.)('.')
+                      PsiElement(identifier)('endPosition')
+                  PsiWhiteSpace('\n      ')
+                  IfStatement
+                    PsiElement(if)('if')
+                    PsiWhiteSpace(' ')
+                    PsiElement(()('(')
+                    MethodCall
+                      ReferenceExpression: i.eq
+                        ReferenceExpression: i
+                          PsiElement(identifier)('i')
+                        PsiElement(.)('.')
+                        PsiElement(identifier)('eq')
+                      ArgumentList
+                        PsiElement(()('(')
+                        ReferenceExpression: e
+                          PsiElement(identifier)('e')
+                        PsiElement())(')')
+                    PsiElement())(')')
+                    PsiWhiteSpace(' ')
+                    BlockExpression
+                      PsiElement({)('{')
+                      PsiWhiteSpace('\n        ')
+                      BooleanLiteral
+                        PsiElement(false)('false')
+                      PsiWhiteSpace('\n      ')
+                      PsiElement(})('}')
+                    PsiWhiteSpace(' ')
+                    PsiElement(else)('else')
+                    PsiWhiteSpace(' ')
+                    IfStatement
+                      PsiElement(if)('if')
+                      PsiWhiteSpace(' ')
+                      PsiElement(()('(')
+                      MethodCall
+                        ReferenceExpression: j.eq
+                          ReferenceExpression: j
+                            PsiElement(identifier)('j')
+                          PsiElement(.)('.')
+                          PsiElement(identifier)('eq')
+                        ArgumentList
+                          PsiElement(()('(')
+                          ReferenceExpression: e
+                            PsiElement(identifier)('e')
+                          PsiElement())(')')
+                      PsiElement())(')')
+                      PsiWhiteSpace(' ')
+                      BlockExpression
+                        PsiElement({)('{')
+                        PsiWhiteSpace('\n        ')
+                        BooleanLiteral
+                          PsiElement(true)('true')
+                        PsiWhiteSpace('\n      ')
+                        PsiElement(})('}')
+                      PsiWhiteSpace(' ')
+                      PsiElement(else)('else')
+                      PsiWhiteSpace(' ')
+                      BlockExpression
+                        PsiElement({)('{')
+                        PsiWhiteSpace('\n        ')
+                        ScFunctionDefinition: _isBefore
+                          AnnotationsList
+                            <empty list>
+                          Modifiers
+                            <empty list>
+                          PsiElement(def)('def')
+                          PsiWhiteSpace(' ')
+                          PsiElement(identifier)('_isBefore')
+                          Parameters
+                            ParametersClause
+                              PsiElement(()('(')
+                              Parameter: n
+                                AnnotationsList
+                                  <empty list>
+                                Modifiers
+                                  <empty list>
+                                PsiElement(identifier)('n')
+                                PsiElement(:)(':')
+                                PsiWhiteSpace(' ')
+                                ParameterType
+                                  SimpleType: Position
+                                    CodeReferenceElement: Position
+                                      PsiElement(identifier)('Position')
+                              PsiElement())(')')
+                          PsiElement(:)(':')
+                          PsiWhiteSpace(' ')
+                          SimpleType: Boolean
+                            CodeReferenceElement: Boolean
+                              PsiElement(identifier)('Boolean')
+                          PsiWhiteSpace(' ')
+                          PsiElement(=)('=')
+                          PsiWhiteSpace('\n          ')
+                          IfStatement
+                            PsiElement(if)('if')
+                            PsiWhiteSpace(' ')
+                            PsiElement(()('(')
+                            MethodCall
+                              ReferenceExpression: n.eq
+                                ReferenceExpression: n
+                                  PsiElement(identifier)('n')
+                                PsiElement(.)('.')
+                                PsiElement(identifier)('eq')
+                              ArgumentList
+                                PsiElement(()('(')
+                                ReferenceExpression: j
+                                  PsiElement(identifier)('j')
+                                PsiElement())(')')
+                            PsiElement())(')')
+                            PsiWhiteSpace(' ')
+                            BlockExpression
+                              PsiElement({)('{')
+                              PsiWhiteSpace('\n            ')
+                              BooleanLiteral
+                                PsiElement(true)('true')
+                              PsiWhiteSpace('\n          ')
+                              PsiElement(})('}')
+                            PsiWhiteSpace(' ')
+                            PsiElement(else)('else')
+                            PsiWhiteSpace(' ')
+                            IfStatement
+                              PsiElement(if)('if')
+                              PsiWhiteSpace(' ')
+                              PsiElement(()('(')
+                              MethodCall
+                                ReferenceExpression: n.eq
+                                  ReferenceExpression: n
+                                    PsiElement(identifier)('n')
+                                  PsiElement(.)('.')
+                                  PsiElement(identifier)('eq')
+                                ArgumentList
+                                  PsiElement(()('(')
+                                  ReferenceExpression: e
+                                    PsiElement(identifier)('e')
+                                  PsiElement())(')')
+                              PsiElement())(')')
+                              PsiWhiteSpace(' ')
+                              BlockExpression
+                                PsiElement({)('{')
+                                PsiWhiteSpace('\n            ')
+                                BooleanLiteral
+                                  PsiElement(false)('false')
+                                PsiWhiteSpace('\n          ')
+                                PsiElement(})('}')
+                              PsiWhiteSpace(' ')
+                              PsiElement(else)('else')
+                              PsiWhiteSpace(' ')
+                              BlockExpression
+                                PsiElement({)('{')
+                                PsiWhiteSpace('\n            ')
+                                MethodCall
+                                  ReferenceExpression: _isBefore
+                                    PsiElement(identifier)('_isBefore')
+                                  ArgumentList
+                                    PsiElement(()('(')
+                                    MethodCall
+                                      ReferenceExpression: self.positionAfter
+                                        ReferenceExpression: self
+                                          PsiElement(identifier)('self')
+                                        PsiElement(.)('.')
+                                        PsiElement(identifier)('positionAfter')
+                                      ArgumentList
+                                        PsiElement(()('(')
+                                        ReferenceExpression: n
+                                          PsiElement(identifier)('n')
+                                        PsiElement())(')')
+                                    PsiElement())(')')
+                                PsiWhiteSpace('\n          ')
+                                PsiElement(})('}')
+                        PsiWhiteSpace('\n        ')
+                        MethodCall
+                          ReferenceExpression: _isBefore
+                            PsiElement(identifier)('_isBefore')
+                          ArgumentList
+                            PsiElement(()('(')
+                            MethodCall
+                              ReferenceExpression: self.positionAfter
+                                ReferenceExpression: self
+                                  PsiElement(identifier)('self')
+                                PsiElement(.)('.')
+                                PsiElement(identifier)('positionAfter')
+                              ArgumentList
+                                PsiElement(()('(')
+                                ReferenceExpression: i
+                                  PsiElement(identifier)('i')
+                                PsiElement())(')')
+                            PsiElement())(')')
+                        PsiWhiteSpace('\n      ')
+                        PsiElement(})('}')
+              PsiWhiteSpace('\n\n  ')
+              PsiElement(})('}')
+          PsiWhiteSpace('\n\n')
+          PsiElement(})('}')
+    PsiWhiteSpace('\n\n')
+    Extension on Self
+      PsiElement(extension)('extension')
+      PsiWhiteSpace(' ')
+      TypeParameterClause
+        PsiElement([)('[')
+        TypeParameter: Self
+          PsiElement(identifier)('Self')
+        PsiElement(])(']')
+      Parameters
+        ParametersClause
+          PsiElement(()('(')
+          Parameter: self
+            AnnotationsList
+              <empty list>
+            Modifiers
+              <empty list>
+            PsiElement(identifier)('self')
+            PsiElement(:)(':')
+            PsiWhiteSpace(' ')
+            ParameterType
+              SimpleType: Self
+                CodeReferenceElement: Self
+                  PsiElement(identifier)('Self')
+          PsiElement())(')')
+        ParametersClause
+          PsiElement(()('(')
+          PsiElement(using)('using')
+          PsiWhiteSpace(' ')
+          Parameter: s
+            AnnotationsList
+              <empty list>
+            Modifiers
+              <empty list>
+            PsiElement(identifier)('s')
+            PsiElement(:)(':')
+            PsiWhiteSpace(' ')
+            ParameterType
+              ParametrizedType: Collection[Self]
+                SimpleType: Collection
+                  CodeReferenceElement: Collection
+                    PsiElement(identifier)('Collection')
+                TypeArgumentsList
+                  PsiElement([)('[')
+                  SimpleType: Self
+                    CodeReferenceElement: Self
+                      PsiElement(identifier)('Self')
+                  PsiElement(])(']')
+          PsiElement())(')')
+      PsiWhiteSpace(' ')
+      ScExtensionBody
+        PsiElement({)('{')
+        PsiWhiteSpace('\n\n  ')
+        ScFunctionDefinition: headAndTail
+          DocComment
+            ScPsiDocToken(DOC_COMMENT_START)('/**')
+            ScDocParagraph
+              ScPsiDocToken(DOC_WHITESPACE)(' ')
+              ScPsiDocToken(DOC_COMMENT_DATA)('Returns the first element of ')
+              DocSyntaxElement 8
+                ScPsiDocToken(DOC_MONOSPACE_TAG 8)('`')
+                ScPsiDocToken(DOC_COMMENT_DATA)('self')
+                ScPsiDocToken(DOC_MONOSPACE_TAG 8)('`')
+              ScPsiDocToken(DOC_COMMENT_DATA)(' along with a slice containing the suffix after this')
+              ScPsiDocToken(DOC_WHITESPACE)('\n    ')
+              ScPsiDocToken(DOC_COMMENT_LEADING_ASTERISKS)('*')
+              ScPsiDocToken(DOC_WHITESPACE)(' ')
+              ScPsiDocToken(DOC_COMMENT_DATA)('element, or ')
+              DocSyntaxElement 8
+                ScPsiDocToken(DOC_MONOSPACE_TAG 8)('`')
+                ScPsiDocToken(DOC_COMMENT_DATA)('None')
+                ScPsiDocToken(DOC_MONOSPACE_TAG 8)('`')
+              ScPsiDocToken(DOC_COMMENT_DATA)(' if ')
+              DocSyntaxElement 8
+                ScPsiDocToken(DOC_MONOSPACE_TAG 8)('`')
+                ScPsiDocToken(DOC_COMMENT_DATA)('self')
+                ScPsiDocToken(DOC_MONOSPACE_TAG 8)('`')
+              ScPsiDocToken(DOC_COMMENT_DATA)(' is empty.')
+              ScPsiDocToken(DOC_WHITESPACE)('\n    ')
+              ScPsiDocToken(DOC_COMMENT_LEADING_ASTERISKS)('*')
+              ScPsiDocToken(DOC_WHITESPACE)('\n    ')
+              ScPsiDocToken(DOC_COMMENT_LEADING_ASTERISKS)('*')
+            DocTag
+              ScPsiDocToken(DOC_WHITESPACE)(' ')
+              ScPsiDocToken(DOC_TAG_NAME)('@complexity')
+              PsiErrorElement:Unknown tag: @complexity
+                <empty list>
+              ScPsiDocToken(DOC_WHITESPACE)('\n    ')
+              ScPsiDocToken(DOC_COMMENT_LEADING_ASTERISKS)('*')
+              ScDocParagraph
+                ScPsiDocToken(DOC_WHITESPACE)('   ')
+                ScPsiDocToken(DOC_COMMENT_DATA)('O(1)')
+                ScPsiDocToken(DOC_WHITESPACE)('\n    ')
+            ScPsiDocToken(DOC_COMMENT_END)('*/')
+          PsiWhiteSpace('\n  ')
+          AnnotationsList
+            <empty list>
+          Modifiers
+            <empty list>
+          PsiElement(def)('def')
+          PsiWhiteSpace(' ')
+          PsiElement(identifier)('headAndTail')
+          Parameters
+            <empty list>
+          PsiElement(:)(':')
+          PsiWhiteSpace(' ')
+          ParametrizedType: Option[(s.Element, Slice[Self])]
+            SimpleType: Option
+              CodeReferenceElement: Option
+                PsiElement(identifier)('Option')
+            TypeArgumentsList
+              PsiElement([)('[')
+              TupleType: (s.Element, Slice[Self])
+                PsiElement(()('(')
+                TypesList
+                  SimpleType: s.Element
+                    CodeReferenceElement: s.Element
+                      CodeReferenceElement: s
+                        PsiElement(identifier)('s')
+                      PsiElement(.)('.')
+                      PsiElement(identifier)('Element')
+                  PsiElement(,)(',')
+                  PsiWhiteSpace(' ')
+                  ParametrizedType: Slice[Self]
+                    SimpleType: Slice
+                      CodeReferenceElement: Slice
+                        PsiElement(identifier)('Slice')
+                    TypeArgumentsList
+                      PsiElement([)('[')
+                      SimpleType: Self
+                        CodeReferenceElement: Self
+                          PsiElement(identifier)('Self')
+                      PsiElement(])(']')
+                PsiElement())(')')
+              PsiElement(])(']')
+          PsiWhiteSpace(' ')
+          PsiElement(=)('=')
+          PsiWhiteSpace('\n    ')
+          IfStatement
+            PsiElement(if)('if')
+            PsiWhiteSpace(' ')
+            PsiElement(()('(')
+            ReferenceExpression: self.isEmpty
+              ReferenceExpression: self
+                PsiElement(identifier)('self')
+              PsiElement(.)('.')
+              PsiElement(identifier)('isEmpty')
+            PsiElement())(')')
+            PsiWhiteSpace(' ')
+            BlockExpression
+              PsiElement({)('{')
+              PsiWhiteSpace('\n      ')
+              ReferenceExpression: None
+                PsiElement(identifier)('None')
+              PsiWhiteSpace('\n    ')
+              PsiElement(})('}')
+            PsiWhiteSpace(' ')
+            PsiElement(else)('else')
+            PsiWhiteSpace(' ')
+            BlockExpression
+              PsiElement({)('{')
+              PsiWhiteSpace('\n      ')
+              ScPatternDefinition: p
+                AnnotationsList
+                  <empty list>
+                Modifiers
+                  <empty list>
+                PsiElement(val)('val')
+                PsiWhiteSpace(' ')
+                ListOfPatterns
+                  ReferencePattern: p
+                    PsiElement(identifier)('p')
+                PsiWhiteSpace(' ')
+                PsiElement(=)('=')
+                PsiWhiteSpace(' ')
+                ReferenceExpression: self.startPosition
+                  ReferenceExpression: self
+                    PsiElement(identifier)('self')
+                  PsiElement(.)('.')
+                  PsiElement(identifier)('startPosition')
+              PsiWhiteSpace('\n      ')
+              ScPatternDefinition: q
+                AnnotationsList
+                  <empty list>
+                Modifiers
+                  <empty list>
+                PsiElement(val)('val')
+                PsiWhiteSpace(' ')
+                ListOfPatterns
+                  ReferencePattern: q
+                    PsiElement(identifier)('q')
+                PsiWhiteSpace(' ')
+                PsiElement(=)('=')
+                PsiWhiteSpace(' ')
+                MethodCall
+                  ReferenceExpression: self.positionAfter
+                    ReferenceExpression: self
+                      PsiElement(identifier)('self')
+                    PsiElement(.)('.')
+                    PsiElement(identifier)('positionAfter')
+                  ArgumentList
+                    PsiElement(()('(')
+                    ReferenceExpression: p
+                      PsiElement(identifier)('p')
+                    PsiElement())(')')
+              PsiWhiteSpace('\n      ')
+              ScPatternDefinition: t
+                AnnotationsList
+                  <empty list>
+                Modifiers
+                  <empty list>
+                PsiElement(val)('val')
+                PsiWhiteSpace(' ')
+                ListOfPatterns
+                  ReferencePattern: t
+                    PsiElement(identifier)('t')
+                PsiWhiteSpace(' ')
+                PsiElement(=)('=')
+                PsiWhiteSpace(' ')
+                MethodCall
+                  ReferenceExpression: Slice
+                    PsiElement(identifier)('Slice')
+                  ArgumentList
+                    PsiElement(()('(')
+                    ReferenceExpression: self
+                      PsiElement(identifier)('self')
+                    PsiElement(,)(',')
+                    PsiWhiteSpace(' ')
+                    MethodCall
+                      ReferenceExpression: Range
+                        PsiElement(identifier)('Range')
+                      ArgumentList
+                        PsiElement(()('(')
+                        ReferenceExpression: q
+                          PsiElement(identifier)('q')
+                        PsiElement(,)(',')
+                        PsiWhiteSpace(' ')
+                        ReferenceExpression: self.endPosition
+                          ReferenceExpression: self
+                            PsiElement(identifier)('self')
+                          PsiElement(.)('.')
+                          PsiElement(identifier)('endPosition')
+                        PsiElement(,)(',')
+                        PsiWhiteSpace(' ')
+                        FunctionExpression
+                          Parameters
+                            ParametersClause
+                              PsiElement(()('(')
+                              Parameter: a
+                                AnnotationsList
+                                  <empty list>
+                                PsiElement(identifier)('a')
+                              PsiElement(,)(',')
+                              PsiWhiteSpace(' ')
+                              Parameter: b
+                                AnnotationsList
+                                  <empty list>
+                                PsiElement(identifier)('b')
+                              PsiElement())(')')
+                          PsiWhiteSpace(' ')
+                          PsiElement(=>)('=>')
+                          PsiWhiteSpace(' ')
+                          InfixExpression
+                            ExpressionInParenthesis
+                              PsiElement(()('(')
+                              InfixExpression
+                                ReferenceExpression: a
+                                  PsiElement(identifier)('a')
+                                PsiWhiteSpace(' ')
+                                ReferenceExpression: `eq`
+                                  PsiElement(identifier)('`eq`')
+                                PsiWhiteSpace(' ')
+                                ReferenceExpression: b
+                                  PsiElement(identifier)('b')
+                              PsiElement())(')')
+                            PsiWhiteSpace(' ')
+                            ReferenceExpression: ||
+                              PsiElement(identifier)('||')
+                            PsiWhiteSpace(' ')
+                            MethodCall
+                              ReferenceExpression: self.isBefore
+                                ReferenceExpression: self
+                                  PsiElement(identifier)('self')
+                                PsiElement(.)('.')
+                                PsiElement(identifier)('isBefore')
+                              ArgumentList
+                                PsiElement(()('(')
+                                ReferenceExpression: a
+                                  PsiElement(identifier)('a')
+                                PsiElement(,)(',')
+                                PsiWhiteSpace(' ')
+                                ReferenceExpression: b
+                                  PsiElement(identifier)('b')
+                                PsiElement())(')')
+                        PsiElement())(')')
+                    PsiElement())(')')
+              PsiWhiteSpace('\n      ')
+              MethodCall
+                ReferenceExpression: Some
+                  PsiElement(identifier)('Some')
+                ArgumentList
+                  PsiElement(()('(')
+                  Tuple
+                    PsiElement(()('(')
+                    MethodCall
+                      ReferenceExpression: self.at
+                        ReferenceExpression: self
+                          PsiElement(identifier)('self')
+                        PsiElement(.)('.')
+                        PsiElement(identifier)('at')
+                      ArgumentList
+                        PsiElement(()('(')
+                        ReferenceExpression: p
+                          PsiElement(identifier)('p')
+                        PsiElement())(')')
+                    PsiElement(,)(',')
+                    PsiWhiteSpace(' ')
+                    ReferenceExpression: t
+                      PsiElement(identifier)('t')
+                    PsiElement())(')')
+                  PsiElement())(')')
+              PsiWhiteSpace('\n    ')
+              PsiElement(})('}')
+        PsiWhiteSpace('\n\n  ')
+        ScFunctionDefinition: reduce
+          DocComment
+            ScPsiDocToken(DOC_COMMENT_START)('/**')
+            ScDocParagraph
+              ScPsiDocToken(DOC_WHITESPACE)(' ')
+              ScPsiDocToken(DOC_COMMENT_DATA)('Applies ')
+              DocSyntaxElement 8
+                ScPsiDocToken(DOC_MONOSPACE_TAG 8)('`')
+                ScPsiDocToken(DOC_COMMENT_DATA)('combine')
+                ScPsiDocToken(DOC_MONOSPACE_TAG 8)('`')
+              ScPsiDocToken(DOC_COMMENT_DATA)(' on ')
+              DocSyntaxElement 8
+                ScPsiDocToken(DOC_MONOSPACE_TAG 8)('`')
+                ScPsiDocToken(DOC_COMMENT_DATA)('partialResult')
+                ScPsiDocToken(DOC_MONOSPACE_TAG 8)('`')
+              ScPsiDocToken(DOC_COMMENT_DATA)(' and each element of ')
+              DocSyntaxElement 8
+                ScPsiDocToken(DOC_MONOSPACE_TAG 8)('`')
+                ScPsiDocToken(DOC_COMMENT_DATA)('self')
+                ScPsiDocToken(DOC_MONOSPACE_TAG 8)('`')
+              ScPsiDocToken(DOC_COMMENT_DATA)(', in order.')
+              ScPsiDocToken(DOC_WHITESPACE)('\n    ')
+              ScPsiDocToken(DOC_COMMENT_LEADING_ASTERISKS)('*')
+              ScPsiDocToken(DOC_WHITESPACE)('\n    ')
+              ScPsiDocToken(DOC_COMMENT_LEADING_ASTERISKS)('*')
+            DocTag
+              ScPsiDocToken(DOC_WHITESPACE)(' ')
+              ScPsiDocToken(DOC_TAG_NAME)('@complexity')
+              PsiErrorElement:Unknown tag: @complexity
+                <empty list>
+              ScPsiDocToken(DOC_WHITESPACE)('\n    ')
+              ScPsiDocToken(DOC_COMMENT_LEADING_ASTERISKS)('*')
+              ScDocParagraph
+                ScPsiDocToken(DOC_WHITESPACE)('   ')
+                ScPsiDocToken(DOC_COMMENT_DATA)('O(n) where n is the number of elements in ')
+                DocSyntaxElement 8
+                  ScPsiDocToken(DOC_MONOSPACE_TAG 8)('`')
+                  ScPsiDocToken(DOC_COMMENT_DATA)('self')
+                  ScPsiDocToken(DOC_MONOSPACE_TAG 8)('`')
+                ScPsiDocToken(DOC_COMMENT_DATA)('.')
+                ScPsiDocToken(DOC_WHITESPACE)('\n    ')
+            ScPsiDocToken(DOC_COMMENT_END)('*/')
+          PsiWhiteSpace('\n  ')
+          AnnotationsList
+            <empty list>
+          Modifiers
+            <empty list>
+          PsiElement(def)('def')
+          PsiWhiteSpace(' ')
+          PsiElement(identifier)('reduce')
+          TypeParameterClause
+            PsiElement([)('[')
+            TypeParameter: T
+              PsiElement(identifier)('T')
+            PsiElement(])(']')
+          Parameters
+            ParametersClause
+              PsiElement(()('(')
+              Parameter: partialResult
+                AnnotationsList
+                  <empty list>
+                Modifiers
+                  <empty list>
+                PsiElement(identifier)('partialResult')
+                PsiElement(:)(':')
+                PsiWhiteSpace(' ')
+                ParameterType
+                  SimpleType: T
+                    CodeReferenceElement: T
+                      PsiElement(identifier)('T')
+              PsiElement(,)(',')
+              PsiWhiteSpace(' ')
+              Parameter: combine
+                AnnotationsList
+                  <empty list>
+                Modifiers
+                  <empty list>
+                PsiElement(identifier)('combine')
+                PsiElement(:)(':')
+                PsiWhiteSpace(' ')
+                ParameterType
+                  FunctionalType: (T, s.Element) => T
+                    TupleType: (T, s.Element)
+                      PsiElement(()('(')
+                      TypesList
+                        SimpleType: T
+                          CodeReferenceElement: T
+                            PsiElement(identifier)('T')
+                        PsiElement(,)(',')
+                        PsiWhiteSpace(' ')
+                        SimpleType: s.Element
+                          CodeReferenceElement: s.Element
+                            CodeReferenceElement: s
+                              PsiElement(identifier)('s')
+                            PsiElement(.)('.')
+                            PsiElement(identifier)('Element')
+                      PsiElement())(')')
+                    PsiWhiteSpace(' ')
+                    PsiElement(=>)('=>')
+                    PsiWhiteSpace(' ')
+                    SimpleType: T
+                      CodeReferenceElement: T
+                        PsiElement(identifier)('T')
+              PsiElement())(')')
+          PsiElement(:)(':')
+          PsiWhiteSpace(' ')
+          SimpleType: T
+            CodeReferenceElement: T
+              PsiElement(identifier)('T')
+          PsiWhiteSpace(' ')
+          PsiElement(=)('=')
+          BlockExpression
+            PsiWhiteSpace('\n    ')
+            ScPatternDefinition: e
+              AnnotationsList
+                <empty list>
+              Modifiers
+                <empty list>
+              PsiElement(val)('val')
+              PsiWhiteSpace(' ')
+              ListOfPatterns
+                ReferencePattern: e
+                  PsiElement(identifier)('e')
+              PsiWhiteSpace(' ')
+              PsiElement(=)('=')
+              PsiWhiteSpace(' ')
+              ReferenceExpression: self.endPosition
+                ReferenceExpression: self
+                  PsiElement(identifier)('self')
+                PsiElement(.)('.')
+                PsiElement(identifier)('endPosition')
+            PsiWhiteSpace('\n    ')
+            ScFunctionDefinition: loop
+              AnnotationsList
+                <empty list>
+              Modifiers
+                <empty list>
+              PsiElement(def)('def')
+              PsiWhiteSpace(' ')
+              PsiElement(identifier)('loop')
+              Parameters
+                ParametersClause
+                  PsiElement(()('(')
+                  Parameter: p
+                    AnnotationsList
+                      <empty list>
+                    Modifiers
+                      <empty list>
+                    PsiElement(identifier)('p')
+                    PsiElement(:)(':')
+                    PsiWhiteSpace(' ')
+                    ParameterType
+                      SimpleType: s.Position
+                        CodeReferenceElement: s.Position
+                          CodeReferenceElement: s
+                            PsiElement(identifier)('s')
+                          PsiElement(.)('.')
+                          PsiElement(identifier)('Position')
+                  PsiElement(,)(',')
+                  PsiWhiteSpace(' ')
+                  Parameter: r
+                    AnnotationsList
+                      <empty list>
+                    Modifiers
+                      <empty list>
+                    PsiElement(identifier)('r')
+                    PsiElement(:)(':')
+                    PsiWhiteSpace(' ')
+                    ParameterType
+                      SimpleType: T
+                        CodeReferenceElement: T
+                          PsiElement(identifier)('T')
+                  PsiElement())(')')
+              PsiElement(:)(':')
+              PsiWhiteSpace(' ')
+              SimpleType: T
+                CodeReferenceElement: T
+                  PsiElement(identifier)('T')
+              PsiWhiteSpace(' ')
+              PsiElement(=)('=')
+              PsiWhiteSpace('\n      ')
+              IfStatement
+                PsiElement(if)('if')
+                PsiWhiteSpace(' ')
+                PsiElement(()('(')
+                MethodCall
+                  ReferenceExpression: p.eq
+                    ReferenceExpression: p
+                      PsiElement(identifier)('p')
+                    PsiElement(.)('.')
+                    PsiElement(identifier)('eq')
+                  ArgumentList
+                    PsiElement(()('(')
+                    ReferenceExpression: e
+                      PsiElement(identifier)('e')
+                    PsiElement())(')')
+                PsiElement())(')')
+                PsiWhiteSpace(' ')
+                BlockExpression
+                  PsiElement({)('{')
+                  PsiWhiteSpace('\n        ')
+                  ReferenceExpression: r
+                    PsiElement(identifier)('r')
+                  PsiWhiteSpace('\n      ')
+                  PsiElement(})('}')
+                PsiWhiteSpace(' ')
+                PsiElement(else)('else')
+                PsiWhiteSpace(' ')
+                BlockExpression
+                  PsiElement({)('{')
+                  PsiWhiteSpace('\n        ')
+                  MethodCall
+                    ReferenceExpression: loop
+                      PsiElement(identifier)('loop')
+                    ArgumentList
+                      PsiElement(()('(')
+                      MethodCall
+                        ReferenceExpression: self.positionAfter
+                          ReferenceExpression: self
+                            PsiElement(identifier)('self')
+                          PsiElement(.)('.')
+                          PsiElement(identifier)('positionAfter')
+                        ArgumentList
+                          PsiElement(()('(')
+                          ReferenceExpression: p
+                            PsiElement(identifier)('p')
+                          PsiElement())(')')
+                      PsiElement(,)(',')
+                      PsiWhiteSpace(' ')
+                      MethodCall
+                        ReferenceExpression: combine
+                          PsiElement(identifier)('combine')
+                        ArgumentList
+                          PsiElement(()('(')
+                          ReferenceExpression: r
+                            PsiElement(identifier)('r')
+                          PsiElement(,)(',')
+                          PsiWhiteSpace(' ')
+                          MethodCall
+                            ReferenceExpression: self.at
+                              ReferenceExpression: self
+                                PsiElement(identifier)('self')
+                              PsiElement(.)('.')
+                              PsiElement(identifier)('at')
+                            ArgumentList
+                              PsiElement(()('(')
+                              ReferenceExpression: p
+                                PsiElement(identifier)('p')
+                              PsiElement())(')')
+                          PsiElement())(')')
+                      PsiElement())(')')
+                  PsiWhiteSpace('\n      ')
+                  PsiElement(})('}')
+            PsiWhiteSpace('\n    ')
+            MethodCall
+              ReferenceExpression: loop
+                PsiElement(identifier)('loop')
+              ArgumentList
+                PsiElement(()('(')
+                ReferenceExpression: self.startPosition
+                  ReferenceExpression: self
+                    PsiElement(identifier)('self')
+                  PsiElement(.)('.')
+                  PsiElement(identifier)('startPosition')
+                PsiElement(,)(',')
+                PsiWhiteSpace(' ')
+                ReferenceExpression: partialResult
+                  PsiElement(identifier)('partialResult')
+                PsiElement())(')')
+        PsiWhiteSpace('\n\n  ')
+        ScFunctionDefinition: forEach
+          DocComment
+            ScPsiDocToken(DOC_COMMENT_START)('/**')
+            ScDocParagraph
+              ScPsiDocToken(DOC_WHITESPACE)(' ')
+              ScPsiDocToken(DOC_COMMENT_DATA)('Applies ')
+              DocSyntaxElement 8
+                ScPsiDocToken(DOC_MONOSPACE_TAG 8)('`')
+                ScPsiDocToken(DOC_COMMENT_DATA)('action')
+                ScPsiDocToken(DOC_MONOSPACE_TAG 8)('`')
+              ScPsiDocToken(DOC_COMMENT_DATA)(' on each element of ')
+              DocSyntaxElement 8
+                ScPsiDocToken(DOC_MONOSPACE_TAG 8)('`')
+                ScPsiDocToken(DOC_COMMENT_DATA)('self')
+                ScPsiDocToken(DOC_MONOSPACE_TAG 8)('`')
+              ScPsiDocToken(DOC_COMMENT_DATA)(', in order, until ')
+              DocSyntaxElement 8
+                ScPsiDocToken(DOC_MONOSPACE_TAG 8)('`')
+                ScPsiDocToken(DOC_COMMENT_DATA)('action')
+                ScPsiDocToken(DOC_MONOSPACE_TAG 8)('`')
+              ScPsiDocToken(DOC_COMMENT_DATA)(' returns ')
+              DocSyntaxElement 8
+                ScPsiDocToken(DOC_MONOSPACE_TAG 8)('`')
+                ScPsiDocToken(DOC_COMMENT_DATA)('false')
+                ScPsiDocToken(DOC_MONOSPACE_TAG 8)('`')
+              ScPsiDocToken(DOC_COMMENT_DATA)(', and')
+              ScPsiDocToken(DOC_WHITESPACE)('\n    ')
+              ScPsiDocToken(DOC_COMMENT_LEADING_ASTERISKS)('*')
+              ScPsiDocToken(DOC_WHITESPACE)(' ')
+              ScPsiDocToken(DOC_COMMENT_DATA)('returns ')
+              DocSyntaxElement 8
+                ScPsiDocToken(DOC_MONOSPACE_TAG 8)('`')
+                ScPsiDocToken(DOC_COMMENT_DATA)('false')
+                ScPsiDocToken(DOC_MONOSPACE_TAG 8)('`')
+              ScPsiDocToken(DOC_COMMENT_DATA)(' iff ')
+              DocSyntaxElement 8
+                ScPsiDocToken(DOC_MONOSPACE_TAG 8)('`')
+                ScPsiDocToken(DOC_COMMENT_DATA)('action')
+                ScPsiDocToken(DOC_MONOSPACE_TAG 8)('`')
+              ScPsiDocToken(DOC_COMMENT_DATA)(' did.')
+              ScPsiDocToken(DOC_WHITESPACE)('\n    ')
+              ScPsiDocToken(DOC_COMMENT_LEADING_ASTERISKS)('*')
+              ScPsiDocToken(DOC_WHITESPACE)('\n    ')
+              ScPsiDocToken(DOC_COMMENT_LEADING_ASTERISKS)('*')
+            ScDocParagraph
+              ScPsiDocToken(DOC_WHITESPACE)(' ')
+              ScPsiDocToken(DOC_COMMENT_DATA)('You can return ')
+              DocSyntaxElement 8
+                ScPsiDocToken(DOC_MONOSPACE_TAG 8)('`')
+                ScPsiDocToken(DOC_COMMENT_DATA)('false')
+                ScPsiDocToken(DOC_MONOSPACE_TAG 8)('`')
+              ScPsiDocToken(DOC_COMMENT_DATA)(' from ')
+              DocSyntaxElement 8
+                ScPsiDocToken(DOC_MONOSPACE_TAG 8)('`')
+                ScPsiDocToken(DOC_COMMENT_DATA)('action')
+                ScPsiDocToken(DOC_MONOSPACE_TAG 8)('`')
+              ScPsiDocToken(DOC_COMMENT_DATA)(' to emulate a ')
+              DocSyntaxElement 8
+                ScPsiDocToken(DOC_MONOSPACE_TAG 8)('`')
+                ScPsiDocToken(DOC_COMMENT_DATA)('continue')
+                ScPsiDocToken(DOC_MONOSPACE_TAG 8)('`')
+              ScPsiDocToken(DOC_COMMENT_DATA)(' statement as found in traditional')
+              ScPsiDocToken(DOC_WHITESPACE)('\n    ')
+              ScPsiDocToken(DOC_COMMENT_LEADING_ASTERISKS)('*')
+              ScPsiDocToken(DOC_WHITESPACE)(' ')
+              ScPsiDocToken(DOC_COMMENT_DATA)('imperative languages (e.g., C).')
+              ScPsiDocToken(DOC_WHITESPACE)('\n    ')
+              ScPsiDocToken(DOC_COMMENT_LEADING_ASTERISKS)('*')
+              ScPsiDocToken(DOC_WHITESPACE)('\n    ')
+              ScPsiDocToken(DOC_COMMENT_LEADING_ASTERISKS)('*')
+            DocTag
+              ScPsiDocToken(DOC_WHITESPACE)(' ')
+              ScPsiDocToken(DOC_TAG_NAME)('@complexity')
+              PsiErrorElement:Unknown tag: @complexity
+                <empty list>
+              ScPsiDocToken(DOC_WHITESPACE)('\n    ')
+              ScPsiDocToken(DOC_COMMENT_LEADING_ASTERISKS)('*')
+              ScDocParagraph
+                ScPsiDocToken(DOC_WHITESPACE)('   ')
+                ScPsiDocToken(DOC_COMMENT_DATA)('O(n) where n is the number of elements in ')
+                DocSyntaxElement 8
+                  ScPsiDocToken(DOC_MONOSPACE_TAG 8)('`')
+                  ScPsiDocToken(DOC_COMMENT_DATA)('self')
+                  ScPsiDocToken(DOC_MONOSPACE_TAG 8)('`')
+                ScPsiDocToken(DOC_COMMENT_DATA)('.')
+                ScPsiDocToken(DOC_WHITESPACE)('\n    ')
+            ScPsiDocToken(DOC_COMMENT_END)('*/')
+          PsiWhiteSpace('\n  ')
+          AnnotationsList
+            <empty list>
+          Modifiers
+            <empty list>
+          PsiElement(def)('def')
+          PsiWhiteSpace(' ')
+          PsiElement(identifier)('forEach')
+          Parameters
+            ParametersClause
+              PsiElement(()('(')
+              Parameter: action
+                AnnotationsList
+                  <empty list>
+                Modifiers
+                  <empty list>
+                PsiElement(identifier)('action')
+                PsiElement(:)(':')
+                PsiWhiteSpace(' ')
+                ParameterType
+                  FunctionalType: (s.Element) => Boolean
+                    TypeInParenthesis: (s.Element)
+                      PsiElement(()('(')
+                      SimpleType: s.Element
+                        CodeReferenceElement: s.Element
+                          CodeReferenceElement: s
+                            PsiElement(identifier)('s')
+                          PsiElement(.)('.')
+                          PsiElement(identifier)('Element')
+                      PsiElement())(')')
+                    PsiWhiteSpace(' ')
+                    PsiElement(=>)('=>')
+                    PsiWhiteSpace(' ')
+                    SimpleType: Boolean
+                      CodeReferenceElement: Boolean
+                        PsiElement(identifier)('Boolean')
+              PsiElement())(')')
+          PsiElement(:)(':')
+          PsiWhiteSpace(' ')
+          SimpleType: Boolean
+            CodeReferenceElement: Boolean
+              PsiElement(identifier)('Boolean')
+          PsiWhiteSpace(' ')
+          PsiElement(=)('=')
+          BlockExpression
+            PsiWhiteSpace('\n    ')
+            ScPatternDefinition: e
+              AnnotationsList
+                <empty list>
+              Modifiers
+                <empty list>
+              PsiElement(val)('val')
+              PsiWhiteSpace(' ')
+              ListOfPatterns
+                ReferencePattern: e
+                  PsiElement(identifier)('e')
+              PsiWhiteSpace(' ')
+              PsiElement(=)('=')
+              PsiWhiteSpace(' ')
+              ReferenceExpression: self.endPosition
+                ReferenceExpression: self
+                  PsiElement(identifier)('self')
+                PsiElement(.)('.')
+                PsiElement(identifier)('endPosition')
+            PsiWhiteSpace('\n    ')
+            ScFunctionDefinition: loop
+              AnnotationsList
+                <empty list>
+              Modifiers
+                <empty list>
+              PsiElement(def)('def')
+              PsiWhiteSpace(' ')
+              PsiElement(identifier)('loop')
+              Parameters
+                ParametersClause
+                  PsiElement(()('(')
+                  Parameter: p
+                    AnnotationsList
+                      <empty list>
+                    Modifiers
+                      <empty list>
+                    PsiElement(identifier)('p')
+                    PsiElement(:)(':')
+                    PsiWhiteSpace(' ')
+                    ParameterType
+                      SimpleType: s.Position
+                        CodeReferenceElement: s.Position
+                          CodeReferenceElement: s
+                            PsiElement(identifier)('s')
+                          PsiElement(.)('.')
+                          PsiElement(identifier)('Position')
+                  PsiElement())(')')
+              PsiElement(:)(':')
+              PsiWhiteSpace(' ')
+              SimpleType: Boolean
+                CodeReferenceElement: Boolean
+                  PsiElement(identifier)('Boolean')
+              PsiWhiteSpace(' ')
+              PsiElement(=)('=')
+              PsiWhiteSpace('\n      ')
+              IfStatement
+                PsiElement(if)('if')
+                PsiWhiteSpace(' ')
+                PsiElement(()('(')
+                MethodCall
+                  ReferenceExpression: p.eq
+                    ReferenceExpression: p
+                      PsiElement(identifier)('p')
+                    PsiElement(.)('.')
+                    PsiElement(identifier)('eq')
+                  ArgumentList
+                    PsiElement(()('(')
+                    ReferenceExpression: e
+                      PsiElement(identifier)('e')
+                    PsiElement())(')')
+                PsiElement())(')')
+                PsiWhiteSpace(' ')
+                BlockExpression
+                  PsiElement({)('{')
+                  PsiWhiteSpace('\n        ')
+                  BooleanLiteral
+                    PsiElement(true)('true')
+                  PsiWhiteSpace('\n      ')
+                  PsiElement(})('}')
+                PsiWhiteSpace(' ')
+                PsiElement(else)('else')
+                PsiWhiteSpace(' ')
+                IfStatement
+                  PsiElement(if)('if')
+                  PsiWhiteSpace(' ')
+                  PsiElement(()('(')
+                  PrefixExpression
+                    ReferenceExpression: !
+                      PsiElement(identifier)('!')
+                    MethodCall
+                      ReferenceExpression: action
+                        PsiElement(identifier)('action')
+                      ArgumentList
+                        PsiElement(()('(')
+                        MethodCall
+                          ReferenceExpression: self.at
+                            ReferenceExpression: self
+                              PsiElement(identifier)('self')
+                            PsiElement(.)('.')
+                            PsiElement(identifier)('at')
+                          ArgumentList
+                            PsiElement(()('(')
+                            ReferenceExpression: p
+                              PsiElement(identifier)('p')
+                            PsiElement())(')')
+                        PsiElement())(')')
+                  PsiElement())(')')
+                  PsiWhiteSpace(' ')
+                  BlockExpression
+                    PsiElement({)('{')
+                    PsiWhiteSpace('\n        ')
+                    BooleanLiteral
+                      PsiElement(false)('false')
+                    PsiWhiteSpace('\n      ')
+                    PsiElement(})('}')
+                  PsiWhiteSpace(' ')
+                  PsiElement(else)('else')
+                  PsiWhiteSpace(' ')
+                  BlockExpression
+                    PsiElement({)('{')
+                    PsiWhiteSpace('\n        ')
+                    MethodCall
+                      ReferenceExpression: loop
+                        PsiElement(identifier)('loop')
+                      ArgumentList
+                        PsiElement(()('(')
+                        MethodCall
+                          ReferenceExpression: self.positionAfter
+                            ReferenceExpression: self
+                              PsiElement(identifier)('self')
+                            PsiElement(.)('.')
+                            PsiElement(identifier)('positionAfter')
+                          ArgumentList
+                            PsiElement(()('(')
+                            ReferenceExpression: p
+                              PsiElement(identifier)('p')
+                            PsiElement())(')')
+                        PsiElement())(')')
+                    PsiWhiteSpace('\n      ')
+                    PsiElement(})('}')
+            PsiWhiteSpace('\n    ')
+            MethodCall
+              ReferenceExpression: loop
+                PsiElement(identifier)('loop')
+              ArgumentList
+                PsiElement(()('(')
+                ReferenceExpression: self.startPosition
+                  ReferenceExpression: self
+                    PsiElement(identifier)('self')
+                  PsiElement(.)('.')
+                  PsiElement(identifier)('startPosition')
+                PsiElement())(')')
+        PsiWhiteSpace('\n\n  ')
+        ScFunctionDefinition: map
+          DocComment
+            ScPsiDocToken(DOC_COMMENT_START)('/**')
+            ScDocParagraph
+              ScPsiDocToken(DOC_WHITESPACE)(' ')
+              ScPsiDocToken(DOC_COMMENT_DATA)('Returns a collection with the elements of ')
+              DocSyntaxElement 8
+                ScPsiDocToken(DOC_MONOSPACE_TAG 8)('`')
+                ScPsiDocToken(DOC_COMMENT_DATA)('self')
+                ScPsiDocToken(DOC_MONOSPACE_TAG 8)('`')
+              ScPsiDocToken(DOC_COMMENT_DATA)(' transformed by ')
+              DocSyntaxElement 8
+                ScPsiDocToken(DOC_MONOSPACE_TAG 8)('`')
+                ScPsiDocToken(DOC_COMMENT_DATA)('transform')
+                ScPsiDocToken(DOC_MONOSPACE_TAG 8)('`')
+              ScPsiDocToken(DOC_COMMENT_DATA)(', in order.')
+              ScPsiDocToken(DOC_WHITESPACE)('\n    ')
+              ScPsiDocToken(DOC_COMMENT_LEADING_ASTERISKS)('*')
+              ScPsiDocToken(DOC_WHITESPACE)('\n    ')
+              ScPsiDocToken(DOC_COMMENT_LEADING_ASTERISKS)('*')
+            DocTag
+              ScPsiDocToken(DOC_WHITESPACE)(' ')
+              ScPsiDocToken(DOC_TAG_NAME)('@complexity')
+              PsiErrorElement:Unknown tag: @complexity
+                <empty list>
+              ScPsiDocToken(DOC_WHITESPACE)('\n    ')
+              ScPsiDocToken(DOC_COMMENT_LEADING_ASTERISKS)('*')
+              ScDocParagraph
+                ScPsiDocToken(DOC_WHITESPACE)('   ')
+                ScPsiDocToken(DOC_COMMENT_DATA)('O(n) where n is the number of elements in ')
+                DocSyntaxElement 8
+                  ScPsiDocToken(DOC_MONOSPACE_TAG 8)('`')
+                  ScPsiDocToken(DOC_COMMENT_DATA)('self')
+                  ScPsiDocToken(DOC_MONOSPACE_TAG 8)('`')
+                ScPsiDocToken(DOC_COMMENT_DATA)('.')
+                ScPsiDocToken(DOC_WHITESPACE)('\n    ')
+            ScPsiDocToken(DOC_COMMENT_END)('*/')
+          PsiWhiteSpace('\n  ')
+          AnnotationsList
+            <empty list>
+          Modifiers
+            <empty list>
+          PsiElement(def)('def')
+          PsiWhiteSpace(' ')
+          PsiElement(identifier)('map')
+          TypeParameterClause
+            PsiElement([)('[')
+            TypeParameter: T
+              PsiElement(identifier)('T')
+            PsiElement(])(']')
+          Parameters
+            ParametersClause
+              PsiElement(()('(')
+              PsiElement(using)('using')
+              PsiWhiteSpace(' ')
+              Parameter: <anonymous>
+                ParameterType
+                  ParametrizedType: Value[T]
+                    SimpleType: Value
+                      CodeReferenceElement: Value
+                        PsiElement(identifier)('Value')
+                    TypeArgumentsList
+                      PsiElement([)('[')
+                      SimpleType: T
+                        CodeReferenceElement: T
+                          PsiElement(identifier)('T')
+                      PsiElement(])(']')
+              PsiElement())(')')
+            ParametersClause
+              PsiElement(()('(')
+              Parameter: transform
+                AnnotationsList
+                  <empty list>
+                Modifiers
+                  <empty list>
+                PsiElement(identifier)('transform')
+                PsiElement(:)(':')
+                PsiWhiteSpace(' ')
+                ParameterType
+                  FunctionalType: (s.Element) => T
+                    TypeInParenthesis: (s.Element)
+                      PsiElement(()('(')
+                      SimpleType: s.Element
+                        CodeReferenceElement: s.Element
+                          CodeReferenceElement: s
+                            PsiElement(identifier)('s')
+                          PsiElement(.)('.')
+                          PsiElement(identifier)('Element')
+                      PsiElement())(')')
+                    PsiWhiteSpace(' ')
+                    PsiElement(=>)('=>')
+                    PsiWhiteSpace(' ')
+                    SimpleType: T
+                      CodeReferenceElement: T
+                        PsiElement(identifier)('T')
+              PsiElement())(')')
+          PsiElement(:)(':')
+          PsiWhiteSpace(' ')
+          ParametrizedType: HyArray[T]
+            SimpleType: HyArray
+              CodeReferenceElement: HyArray
+                PsiElement(identifier)('HyArray')
+            TypeArgumentsList
+              PsiElement([)('[')
+              SimpleType: T
+                CodeReferenceElement: T
+                  PsiElement(identifier)('T')
+              PsiElement(])(']')
+          PsiWhiteSpace(' ')
+          PsiElement(=)('=')
+          PsiWhiteSpace('\n    ')
+          MethodCall
+            ReferenceExpression: self.reduce
+              ReferenceExpression: self
+                PsiElement(identifier)('self')
+              PsiElement(.)('.')
+              PsiElement(identifier)('reduce')
+            ArgumentList
+              PsiElement(()('(')
+              PsiWhiteSpace('\n      ')
+              MethodCall
+                GenericCall
+                  ReferenceExpression: HyArray
+                    PsiElement(identifier)('HyArray')
+                  TypeArgumentsList
+                    PsiElement([)('[')
+                    SimpleType: T
+                      CodeReferenceElement: T
+                        PsiElement(identifier)('T')
+                    PsiElement(])(']')
+                ArgumentList
+                  PsiElement(()('(')
+                  PsiElement())(')')
+              PsiElement(,)(',')
+              PsiWhiteSpace('\n      ')
+              FunctionExpression
+                Parameters
+                  ParametersClause
+                    PsiElement(()('(')
+                    Parameter: r
+                      AnnotationsList
+                        <empty list>
+                      PsiElement(identifier)('r')
+                    PsiElement(,)(',')
+                    PsiWhiteSpace(' ')
+                    Parameter: e
+                      AnnotationsList
+                        <empty list>
+                      PsiElement(identifier)('e')
+                    PsiElement())(')')
+                PsiWhiteSpace(' ')
+                PsiElement(=>)('=>')
+                PsiWhiteSpace(' ')
+                MethodCall
+                  ReferenceExpression: r.append
+                    ReferenceExpression: r
+                      PsiElement(identifier)('r')
+                    PsiElement(.)('.')
+                    PsiElement(identifier)('append')
+                  ArgumentList
+                    PsiElement(()('(')
+                    MethodCall
+                      ReferenceExpression: transform
+                        PsiElement(identifier)('transform')
+                      ArgumentList
+                        PsiElement(()('(')
+                        ReferenceExpression: e
+                          PsiElement(identifier)('e')
+                        PsiElement())(')')
+                    PsiElement(,)(',')
+                    PsiWhiteSpace(' ')
+                    AssignStatement
+                      ReferenceExpression: assumeUniqueness
+                        PsiElement(identifier)('assumeUniqueness')
+                      PsiWhiteSpace(' ')
+                      PsiElement(=)('=')
+                      PsiWhiteSpace(' ')
+                      BooleanLiteral
+                        PsiElement(true)('true')
+                    PsiElement())(')')
+              PsiWhiteSpace('\n    ')
+              PsiElement())(')')
+        PsiWhiteSpace('\n\n  ')
+        ScFunctionDefinition: filter
+          DocComment
+            ScPsiDocToken(DOC_COMMENT_START)('/**')
+            ScDocParagraph
+              ScPsiDocToken(DOC_WHITESPACE)(' ')
+              ScPsiDocToken(DOC_COMMENT_DATA)('Returns a collection with the elements of ')
+              DocSyntaxElement 8
+                ScPsiDocToken(DOC_MONOSPACE_TAG 8)('`')
+                ScPsiDocToken(DOC_COMMENT_DATA)('self')
+                ScPsiDocToken(DOC_MONOSPACE_TAG 8)('`')
+              ScPsiDocToken(DOC_COMMENT_DATA)(' satisfying ')
+              DocSyntaxElement 8
+                ScPsiDocToken(DOC_MONOSPACE_TAG 8)('`')
+                ScPsiDocToken(DOC_COMMENT_DATA)('isInclude')
+                ScPsiDocToken(DOC_MONOSPACE_TAG 8)('`')
+              ScPsiDocToken(DOC_COMMENT_DATA)(', in order.')
+              ScPsiDocToken(DOC_WHITESPACE)('\n    ')
+              ScPsiDocToken(DOC_COMMENT_LEADING_ASTERISKS)('*')
+              ScPsiDocToken(DOC_WHITESPACE)('\n    ')
+              ScPsiDocToken(DOC_COMMENT_LEADING_ASTERISKS)('*')
+            DocTag
+              ScPsiDocToken(DOC_WHITESPACE)(' ')
+              ScPsiDocToken(DOC_TAG_NAME)('@complexity')
+              PsiErrorElement:Unknown tag: @complexity
+                <empty list>
+              ScPsiDocToken(DOC_WHITESPACE)('\n    ')
+              ScPsiDocToken(DOC_COMMENT_LEADING_ASTERISKS)('*')
+              ScDocParagraph
+                ScPsiDocToken(DOC_WHITESPACE)('   ')
+                ScPsiDocToken(DOC_COMMENT_DATA)('O(n) where n is the number of elements in ')
+                DocSyntaxElement 8
+                  ScPsiDocToken(DOC_MONOSPACE_TAG 8)('`')
+                  ScPsiDocToken(DOC_COMMENT_DATA)('self')
+                  ScPsiDocToken(DOC_MONOSPACE_TAG 8)('`')
+                ScPsiDocToken(DOC_COMMENT_DATA)('.')
+                ScPsiDocToken(DOC_WHITESPACE)('\n    ')
+            ScPsiDocToken(DOC_COMMENT_END)('*/')
+          PsiWhiteSpace('\n  ')
+          AnnotationsList
+            <empty list>
+          Modifiers
+            <empty list>
+          PsiElement(def)('def')
+          PsiWhiteSpace(' ')
+          PsiElement(identifier)('filter')
+          Parameters
+            ParametersClause
+              PsiElement(()('(')
+              Parameter: isIncluded
+                AnnotationsList
+                  <empty list>
+                Modifiers
+                  <empty list>
+                PsiElement(identifier)('isIncluded')
+                PsiElement(:)(':')
+                PsiWhiteSpace(' ')
+                ParameterType
+                  FunctionalType: (s.Element) => Boolean
+                    TypeInParenthesis: (s.Element)
+                      PsiElement(()('(')
+                      SimpleType: s.Element
+                        CodeReferenceElement: s.Element
+                          CodeReferenceElement: s
+                            PsiElement(identifier)('s')
+                          PsiElement(.)('.')
+                          PsiElement(identifier)('Element')
+                      PsiElement())(')')
+                    PsiWhiteSpace(' ')
+                    PsiElement(=>)('=>')
+                    PsiWhiteSpace(' ')
+                    SimpleType: Boolean
+                      CodeReferenceElement: Boolean
+                        PsiElement(identifier)('Boolean')
+              PsiElement())(')')
+          PsiElement(:)(':')
+          PsiWhiteSpace(' ')
+          ParametrizedType: HyArray[s.Element]
+            SimpleType: HyArray
+              CodeReferenceElement: HyArray
+                PsiElement(identifier)('HyArray')
+            TypeArgumentsList
+              PsiElement([)('[')
+              SimpleType: s.Element
+                CodeReferenceElement: s.Element
+                  CodeReferenceElement: s
+                    PsiElement(identifier)('s')
+                  PsiElement(.)('.')
+                  PsiElement(identifier)('Element')
+              PsiElement(])(']')
+          PsiWhiteSpace(' ')
+          PsiElement(=)('=')
+          PsiWhiteSpace('\n    ')
+          MethodCall
+            ReferenceExpression: self.reduce
+              ReferenceExpression: self
+                PsiElement(identifier)('self')
+              PsiElement(.)('.')
+              PsiElement(identifier)('reduce')
+            ArgumentList
+              PsiElement(()('(')
+              PsiWhiteSpace('\n      ')
+              MethodCall
+                GenericCall
+                  ReferenceExpression: HyArray
+                    PsiElement(identifier)('HyArray')
+                  TypeArgumentsList
+                    PsiElement([)('[')
+                    SimpleType: s.Element
+                      CodeReferenceElement: s.Element
+                        CodeReferenceElement: s
+                          PsiElement(identifier)('s')
+                        PsiElement(.)('.')
+                        PsiElement(identifier)('Element')
+                    PsiElement(])(']')
+                ArgumentList
+                  PsiElement(()('(')
+                  PsiElement())(')')
+              PsiElement(,)(',')
+              PsiWhiteSpace('\n      ')
+              FunctionExpression
+                Parameters
+                  ParametersClause
+                    PsiElement(()('(')
+                    Parameter: r
+                      AnnotationsList
+                        <empty list>
+                      PsiElement(identifier)('r')
+                    PsiElement(,)(',')
+                    PsiWhiteSpace(' ')
+                    Parameter: e
+                      AnnotationsList
+                        <empty list>
+                      PsiElement(identifier)('e')
+                    PsiElement())(')')
+                PsiWhiteSpace(' ')
+                PsiElement(=>)('=>')
+                PsiWhiteSpace(' ')
+                IfStatement
+                  PsiElement(if)('if')
+                  PsiWhiteSpace(' ')
+                  ExpressionInParenthesis
+                    PsiElement(()('(')
+                    MethodCall
+                      ReferenceExpression: isIncluded
+                        PsiElement(identifier)('isIncluded')
+                      ArgumentList
+                        PsiElement(()('(')
+                        ReferenceExpression: e
+                          PsiElement(identifier)('e')
+                        PsiElement())(')')
+                    PsiElement())(')')
+                  PsiWhiteSpace(' ')
+                  PsiElement(then)('then')
+                  PsiWhiteSpace(' ')
+                  MethodCall
+                    ReferenceExpression: r.append
+                      ReferenceExpression: r
+                        PsiElement(identifier)('r')
+                      PsiElement(.)('.')
+                      PsiElement(identifier)('append')
+                    ArgumentList
+                      PsiElement(()('(')
+                      ReferenceExpression: e
+                        PsiElement(identifier)('e')
+                      PsiElement(,)(',')
+                      PsiWhiteSpace(' ')
+                      AssignStatement
+                        ReferenceExpression: assumeUniqueness
+                          PsiElement(identifier)('assumeUniqueness')
+                        PsiWhiteSpace(' ')
+                        PsiElement(=)('=')
+                        PsiWhiteSpace(' ')
+                        BooleanLiteral
+                          PsiElement(true)('true')
+                      PsiElement())(')')
+                  PsiWhiteSpace(' ')
+                  PsiElement(else)('else')
+                  PsiWhiteSpace(' ')
+                  ReferenceExpression: r
+                    PsiElement(identifier)('r')
+              PsiWhiteSpace('\n    ')
+              PsiElement())(')')
+        PsiWhiteSpace('\n\n  ')
+        ScFunctionDefinition: containsWhere
+          DocComment
+            ScPsiDocToken(DOC_COMMENT_START)('/**')
+            ScDocParagraph
+              ScPsiDocToken(DOC_WHITESPACE)(' ')
+              ScPsiDocToken(DOC_COMMENT_DATA)('Returns ')
+              DocSyntaxElement 8
+                ScPsiDocToken(DOC_MONOSPACE_TAG 8)('`')
+                ScPsiDocToken(DOC_COMMENT_DATA)('true')
+                ScPsiDocToken(DOC_MONOSPACE_TAG 8)('`')
+              ScPsiDocToken(DOC_COMMENT_DATA)(' if ')
+              DocSyntaxElement 8
+                ScPsiDocToken(DOC_MONOSPACE_TAG 8)('`')
+                ScPsiDocToken(DOC_COMMENT_DATA)('self')
+                ScPsiDocToken(DOC_MONOSPACE_TAG 8)('`')
+              ScPsiDocToken(DOC_COMMENT_DATA)(' contains an element satisfying ')
+              DocSyntaxElement 8
+                ScPsiDocToken(DOC_MONOSPACE_TAG 8)('`')
+                ScPsiDocToken(DOC_COMMENT_DATA)('predicate')
+                ScPsiDocToken(DOC_MONOSPACE_TAG 8)('`')
+              ScPsiDocToken(DOC_COMMENT_DATA)('.')
+              ScPsiDocToken(DOC_WHITESPACE)('\n    ')
+              ScPsiDocToken(DOC_COMMENT_LEADING_ASTERISKS)('*')
+              ScPsiDocToken(DOC_WHITESPACE)('\n    ')
+              ScPsiDocToken(DOC_COMMENT_LEADING_ASTERISKS)('*')
+            DocTag
+              ScPsiDocToken(DOC_WHITESPACE)(' ')
+              ScPsiDocToken(DOC_TAG_NAME)('@complexity')
+              PsiErrorElement:Unknown tag: @complexity
+                <empty list>
+              ScPsiDocToken(DOC_WHITESPACE)('\n    ')
+              ScPsiDocToken(DOC_COMMENT_LEADING_ASTERISKS)('*')
+              ScDocParagraph
+                ScPsiDocToken(DOC_WHITESPACE)('   ')
+                ScPsiDocToken(DOC_COMMENT_DATA)('O(n) where n is the number of elements in ')
+                DocSyntaxElement 8
+                  ScPsiDocToken(DOC_MONOSPACE_TAG 8)('`')
+                  ScPsiDocToken(DOC_COMMENT_DATA)('self')
+                  ScPsiDocToken(DOC_MONOSPACE_TAG 8)('`')
+                ScPsiDocToken(DOC_COMMENT_DATA)('.')
+                ScPsiDocToken(DOC_WHITESPACE)('\n    ')
+            ScPsiDocToken(DOC_COMMENT_END)('*/')
+          PsiWhiteSpace('\n  ')
+          AnnotationsList
+            <empty list>
+          Modifiers
+            <empty list>
+          PsiElement(def)('def')
+          PsiWhiteSpace(' ')
+          PsiElement(identifier)('containsWhere')
+          Parameters
+            ParametersClause
+              PsiElement(()('(')
+              Parameter: predicate
+                AnnotationsList
+                  <empty list>
+                Modifiers
+                  <empty list>
+                PsiElement(identifier)('predicate')
+                PsiElement(:)(':')
+                PsiWhiteSpace(' ')
+                ParameterType
+                  FunctionalType: (s.Element) => Boolean
+                    TypeInParenthesis: (s.Element)
+                      PsiElement(()('(')
+                      SimpleType: s.Element
+                        CodeReferenceElement: s.Element
+                          CodeReferenceElement: s
+                            PsiElement(identifier)('s')
+                          PsiElement(.)('.')
+                          PsiElement(identifier)('Element')
+                      PsiElement())(')')
+                    PsiWhiteSpace(' ')
+                    PsiElement(=>)('=>')
+                    PsiWhiteSpace(' ')
+                    SimpleType: Boolean
+                      CodeReferenceElement: Boolean
+                        PsiElement(identifier)('Boolean')
+              PsiElement())(')')
+          PsiElement(:)(':')
+          PsiWhiteSpace(' ')
+          SimpleType: Boolean
+            CodeReferenceElement: Boolean
+              PsiElement(identifier)('Boolean')
+          PsiWhiteSpace(' ')
+          PsiElement(=)('=')
+          PsiWhiteSpace('\n    ')
+          InfixExpression
+            MethodCall
+              ReferenceExpression: self.firstPositionWhere
+                ReferenceExpression: self
+                  PsiElement(identifier)('self')
+                PsiElement(.)('.')
+                PsiElement(identifier)('firstPositionWhere')
+              ArgumentList
+                PsiElement(()('(')
+                ReferenceExpression: predicate
+                  PsiElement(identifier)('predicate')
+                PsiElement())(')')
+            PsiWhiteSpace(' ')
+            ReferenceExpression: !=
+              PsiElement(identifier)('!=')
+            PsiWhiteSpace(' ')
+            ReferenceExpression: None
+              PsiElement(identifier)('None')
+        PsiWhiteSpace('\n\n  ')
+        ScFunctionDefinition: allSatisfy
+          DocComment
+            ScPsiDocToken(DOC_COMMENT_START)('/**')
+            ScDocParagraph
+              ScPsiDocToken(DOC_WHITESPACE)(' ')
+              ScPsiDocToken(DOC_COMMENT_DATA)('Returns ')
+              DocSyntaxElement 8
+                ScPsiDocToken(DOC_MONOSPACE_TAG 8)('`')
+                ScPsiDocToken(DOC_COMMENT_DATA)('true')
+                ScPsiDocToken(DOC_MONOSPACE_TAG 8)('`')
+              ScPsiDocToken(DOC_COMMENT_DATA)(' if all elements in ')
+              DocSyntaxElement 8
+                ScPsiDocToken(DOC_MONOSPACE_TAG 8)('`')
+                ScPsiDocToken(DOC_COMMENT_DATA)('self')
+                ScPsiDocToken(DOC_MONOSPACE_TAG 8)('`')
+              ScPsiDocToken(DOC_COMMENT_DATA)(' satisfy ')
+              DocSyntaxElement 8
+                ScPsiDocToken(DOC_MONOSPACE_TAG 8)('`')
+                ScPsiDocToken(DOC_COMMENT_DATA)('predicate')
+                ScPsiDocToken(DOC_MONOSPACE_TAG 8)('`')
+              ScPsiDocToken(DOC_COMMENT_DATA)('.')
+              ScPsiDocToken(DOC_WHITESPACE)('\n    ')
+              ScPsiDocToken(DOC_COMMENT_LEADING_ASTERISKS)('*')
+              ScPsiDocToken(DOC_WHITESPACE)('\n    ')
+              ScPsiDocToken(DOC_COMMENT_LEADING_ASTERISKS)('*')
+            DocTag
+              ScPsiDocToken(DOC_WHITESPACE)(' ')
+              ScPsiDocToken(DOC_TAG_NAME)('@complexity')
+              PsiErrorElement:Unknown tag: @complexity
+                <empty list>
+              ScPsiDocToken(DOC_WHITESPACE)('\n    ')
+              ScPsiDocToken(DOC_COMMENT_LEADING_ASTERISKS)('*')
+              ScDocParagraph
+                ScPsiDocToken(DOC_WHITESPACE)('   ')
+                ScPsiDocToken(DOC_COMMENT_DATA)('O(n) where n is the number of elements in ')
+                DocSyntaxElement 8
+                  ScPsiDocToken(DOC_MONOSPACE_TAG 8)('`')
+                  ScPsiDocToken(DOC_COMMENT_DATA)('self')
+                  ScPsiDocToken(DOC_MONOSPACE_TAG 8)('`')
+                ScPsiDocToken(DOC_COMMENT_DATA)('.')
+                ScPsiDocToken(DOC_WHITESPACE)('\n    ')
+            ScPsiDocToken(DOC_COMMENT_END)('*/')
+          PsiWhiteSpace('\n  ')
+          AnnotationsList
+            <empty list>
+          Modifiers
+            <empty list>
+          PsiElement(def)('def')
+          PsiWhiteSpace(' ')
+          PsiElement(identifier)('allSatisfy')
+          Parameters
+            ParametersClause
+              PsiElement(()('(')
+              Parameter: predicate
+                AnnotationsList
+                  <empty list>
+                Modifiers
+                  <empty list>
+                PsiElement(identifier)('predicate')
+                PsiElement(:)(':')
+                PsiWhiteSpace(' ')
+                ParameterType
+                  FunctionalType: (s.Element) => Boolean
+                    TypeInParenthesis: (s.Element)
+                      PsiElement(()('(')
+                      SimpleType: s.Element
+                        CodeReferenceElement: s.Element
+                          CodeReferenceElement: s
+                            PsiElement(identifier)('s')
+                          PsiElement(.)('.')
+                          PsiElement(identifier)('Element')
+                      PsiElement())(')')
+                    PsiWhiteSpace(' ')
+                    PsiElement(=>)('=>')
+                    PsiWhiteSpace(' ')
+                    SimpleType: Boolean
+                      CodeReferenceElement: Boolean
+                        PsiElement(identifier)('Boolean')
+              PsiElement())(')')
+          PsiElement(:)(':')
+          PsiWhiteSpace(' ')
+          SimpleType: Boolean
+            CodeReferenceElement: Boolean
+              PsiElement(identifier)('Boolean')
+          PsiWhiteSpace(' ')
+          PsiElement(=)('=')
+          PsiWhiteSpace('\n    ')
+          InfixExpression
+            MethodCall
+              ReferenceExpression: self.firstPositionWhere
+                ReferenceExpression: self
+                  PsiElement(identifier)('self')
+                PsiElement(.)('.')
+                PsiElement(identifier)('firstPositionWhere')
+              ArgumentList
+                PsiElement(()('(')
+                ReferenceExpression: predicate
+                  PsiElement(identifier)('predicate')
+                PsiElement())(')')
+            PsiWhiteSpace(' ')
+            ReferenceExpression: ==
+              PsiElement(identifier)('==')
+            PsiWhiteSpace(' ')
+            ReferenceExpression: None
+              PsiElement(identifier)('None')
+        PsiWhiteSpace('\n\n  ')
+        ScFunctionDefinition: firstPositionWhere
+          DocComment
+            ScPsiDocToken(DOC_COMMENT_START)('/**')
+            ScDocParagraph
+              ScPsiDocToken(DOC_WHITESPACE)(' ')
+              ScPsiDocToken(DOC_COMMENT_DATA)('Returns the position of the first element of ')
+              DocSyntaxElement 8
+                ScPsiDocToken(DOC_MONOSPACE_TAG 8)('`')
+                ScPsiDocToken(DOC_COMMENT_DATA)('self')
+                ScPsiDocToken(DOC_MONOSPACE_TAG 8)('`')
+              ScPsiDocToken(DOC_COMMENT_DATA)(' satisfying ')
+              DocSyntaxElement 8
+                ScPsiDocToken(DOC_MONOSPACE_TAG 8)('`')
+                ScPsiDocToken(DOC_COMMENT_DATA)('predicate')
+                ScPsiDocToken(DOC_MONOSPACE_TAG 8)('`')
+              ScPsiDocToken(DOC_COMMENT_DATA)(', or ')
+              DocSyntaxElement 8
+                ScPsiDocToken(DOC_MONOSPACE_TAG 8)('`')
+                ScPsiDocToken(DOC_COMMENT_DATA)('None')
+                ScPsiDocToken(DOC_MONOSPACE_TAG 8)('`')
+              ScPsiDocToken(DOC_COMMENT_DATA)(' if no')
+              ScPsiDocToken(DOC_WHITESPACE)('\n    ')
+              ScPsiDocToken(DOC_COMMENT_LEADING_ASTERISKS)('*')
+              ScPsiDocToken(DOC_WHITESPACE)(' ')
+              ScPsiDocToken(DOC_COMMENT_DATA)('such element exists.')
+              ScPsiDocToken(DOC_WHITESPACE)('\n    ')
+              ScPsiDocToken(DOC_COMMENT_LEADING_ASTERISKS)('*')
+              ScPsiDocToken(DOC_WHITESPACE)('\n    ')
+              ScPsiDocToken(DOC_COMMENT_LEADING_ASTERISKS)('*')
+            DocTag
+              ScPsiDocToken(DOC_WHITESPACE)(' ')
+              ScPsiDocToken(DOC_TAG_NAME)('@complexity')
+              PsiErrorElement:Unknown tag: @complexity
+                <empty list>
+              ScPsiDocToken(DOC_WHITESPACE)('\n    ')
+              ScPsiDocToken(DOC_COMMENT_LEADING_ASTERISKS)('*')
+              ScDocParagraph
+                ScPsiDocToken(DOC_WHITESPACE)('   ')
+                ScPsiDocToken(DOC_COMMENT_DATA)('O(n) where n is the number of elements in ')
+                DocSyntaxElement 8
+                  ScPsiDocToken(DOC_MONOSPACE_TAG 8)('`')
+                  ScPsiDocToken(DOC_COMMENT_DATA)('self')
+                  ScPsiDocToken(DOC_MONOSPACE_TAG 8)('`')
+                ScPsiDocToken(DOC_COMMENT_DATA)('.')
+                ScPsiDocToken(DOC_WHITESPACE)('\n    ')
+            ScPsiDocToken(DOC_COMMENT_END)('*/')
+          PsiWhiteSpace('\n  ')
+          AnnotationsList
+            <empty list>
+          Modifiers
+            <empty list>
+          PsiElement(def)('def')
+          PsiWhiteSpace(' ')
+          PsiElement(identifier)('firstPositionWhere')
+          Parameters
+            ParametersClause
+              PsiElement(()('(')
+              Parameter: predicate
+                AnnotationsList
+                  <empty list>
+                Modifiers
+                  <empty list>
+                PsiElement(identifier)('predicate')
+                PsiElement(:)(':')
+                PsiWhiteSpace(' ')
+                ParameterType
+                  FunctionalType: (s.Element) => Boolean
+                    TypeInParenthesis: (s.Element)
+                      PsiElement(()('(')
+                      SimpleType: s.Element
+                        CodeReferenceElement: s.Element
+                          CodeReferenceElement: s
+                            PsiElement(identifier)('s')
+                          PsiElement(.)('.')
+                          PsiElement(identifier)('Element')
+                      PsiElement())(')')
+                    PsiWhiteSpace(' ')
+                    PsiElement(=>)('=>')
+                    PsiWhiteSpace(' ')
+                    SimpleType: Boolean
+                      CodeReferenceElement: Boolean
+                        PsiElement(identifier)('Boolean')
+              PsiElement())(')')
+          PsiElement(:)(':')
+          PsiWhiteSpace(' ')
+          ParametrizedType: Option[s.Position]
+            SimpleType: Option
+              CodeReferenceElement: Option
+                PsiElement(identifier)('Option')
+            TypeArgumentsList
+              PsiElement([)('[')
+              SimpleType: s.Position
+                CodeReferenceElement: s.Position
+                  CodeReferenceElement: s
+                    PsiElement(identifier)('s')
+                  PsiElement(.)('.')
+                  PsiElement(identifier)('Position')
+              PsiElement(])(']')
+          PsiWhiteSpace(' ')
+          PsiElement(=)('=')
+          BlockExpression
+            PsiWhiteSpace('\n    ')
+            ScPatternDefinition: e
+              AnnotationsList
+                <empty list>
+              Modifiers
+                <empty list>
+              PsiElement(val)('val')
+              PsiWhiteSpace(' ')
+              ListOfPatterns
+                ReferencePattern: e
+                  PsiElement(identifier)('e')
+              PsiWhiteSpace(' ')
+              PsiElement(=)('=')
+              PsiWhiteSpace(' ')
+              ReferenceExpression: self.endPosition
+                ReferenceExpression: self
+                  PsiElement(identifier)('self')
+                PsiElement(.)('.')
+                PsiElement(identifier)('endPosition')
+            PsiWhiteSpace('\n    ')
+            ScFunctionDefinition: loop
+              AnnotationsList
+                <empty list>
+              Modifiers
+                <empty list>
+              PsiElement(def)('def')
+              PsiWhiteSpace(' ')
+              PsiElement(identifier)('loop')
+              Parameters
+                ParametersClause
+                  PsiElement(()('(')
+                  Parameter: p
+                    AnnotationsList
+                      <empty list>
+                    Modifiers
+                      <empty list>
+                    PsiElement(identifier)('p')
+                    PsiElement(:)(':')
+                    PsiWhiteSpace(' ')
+                    ParameterType
+                      SimpleType: s.Position
+                        CodeReferenceElement: s.Position
+                          CodeReferenceElement: s
+                            PsiElement(identifier)('s')
+                          PsiElement(.)('.')
+                          PsiElement(identifier)('Position')
+                  PsiElement())(')')
+              PsiElement(:)(':')
+              PsiWhiteSpace(' ')
+              ParametrizedType: Option[s.Position]
+                SimpleType: Option
+                  CodeReferenceElement: Option
+                    PsiElement(identifier)('Option')
+                TypeArgumentsList
+                  PsiElement([)('[')
+                  SimpleType: s.Position
+                    CodeReferenceElement: s.Position
+                      CodeReferenceElement: s
+                        PsiElement(identifier)('s')
+                      PsiElement(.)('.')
+                      PsiElement(identifier)('Position')
+                  PsiElement(])(']')
+              PsiWhiteSpace(' ')
+              PsiElement(=)('=')
+              PsiWhiteSpace('\n      ')
+              IfStatement
+                PsiElement(if)('if')
+                PsiWhiteSpace(' ')
+                PsiElement(()('(')
+                MethodCall
+                  ReferenceExpression: p.eq
+                    ReferenceExpression: p
+                      PsiElement(identifier)('p')
+                    PsiElement(.)('.')
+                    PsiElement(identifier)('eq')
+                  ArgumentList
+                    PsiElement(()('(')
+                    ReferenceExpression: e
+                      PsiElement(identifier)('e')
+                    PsiElement())(')')
+                PsiElement())(')')
+                PsiWhiteSpace(' ')
+                BlockExpression
+                  PsiElement({)('{')
+                  PsiWhiteSpace('\n        ')
+                  ReferenceExpression: None
+                    PsiElement(identifier)('None')
+                  PsiWhiteSpace('\n      ')
+                  PsiElement(})('}')
+                PsiWhiteSpace(' ')
+                PsiElement(else)('else')
+                PsiWhiteSpace(' ')
+                IfStatement
+                  PsiElement(if)('if')
+                  PsiWhiteSpace(' ')
+                  PsiElement(()('(')
+                  MethodCall
+                    ReferenceExpression: predicate
+                      PsiElement(identifier)('predicate')
+                    ArgumentList
+                      PsiElement(()('(')
+                      MethodCall
+                        ReferenceExpression: self.at
+                          ReferenceExpression: self
+                            PsiElement(identifier)('self')
+                          PsiElement(.)('.')
+                          PsiElement(identifier)('at')
+                        ArgumentList
+                          PsiElement(()('(')
+                          ReferenceExpression: p
+                            PsiElement(identifier)('p')
+                          PsiElement())(')')
+                      PsiElement())(')')
+                  PsiElement())(')')
+                  PsiWhiteSpace(' ')
+                  BlockExpression
+                    PsiElement({)('{')
+                    PsiWhiteSpace('\n        ')
+                    MethodCall
+                      ReferenceExpression: Some
+                        PsiElement(identifier)('Some')
+                      ArgumentList
+                        PsiElement(()('(')
+                        ReferenceExpression: p
+                          PsiElement(identifier)('p')
+                        PsiElement())(')')
+                    PsiWhiteSpace('\n      ')
+                    PsiElement(})('}')
+                  PsiWhiteSpace(' ')
+                  PsiElement(else)('else')
+                  PsiWhiteSpace(' ')
+                  BlockExpression
+                    PsiElement({)('{')
+                    PsiWhiteSpace('\n        ')
+                    MethodCall
+                      ReferenceExpression: loop
+                        PsiElement(identifier)('loop')
+                      ArgumentList
+                        PsiElement(()('(')
+                        MethodCall
+                          ReferenceExpression: self.positionAfter
+                            ReferenceExpression: self
+                              PsiElement(identifier)('self')
+                            PsiElement(.)('.')
+                            PsiElement(identifier)('positionAfter')
+                          ArgumentList
+                            PsiElement(()('(')
+                            ReferenceExpression: p
+                              PsiElement(identifier)('p')
+                            PsiElement())(')')
+                        PsiElement())(')')
+                    PsiWhiteSpace('\n      ')
+                    PsiElement(})('}')
+            PsiWhiteSpace('\n    ')
+            MethodCall
+              ReferenceExpression: loop
+                PsiElement(identifier)('loop')
+              ArgumentList
+                PsiElement(()('(')
+                ReferenceExpression: self.startPosition
+                  ReferenceExpression: self
+                    PsiElement(identifier)('self')
+                  PsiElement(.)('.')
+                  PsiElement(identifier)('startPosition')
+                PsiElement())(')')
+        PsiWhiteSpace('\n\n  ')
+        ScFunctionDefinition: minElement
+          DocComment
+            ScPsiDocToken(DOC_COMMENT_START)('/**')
+            ScDocParagraph
+              ScPsiDocToken(DOC_WHITESPACE)(' ')
+              ScPsiDocToken(DOC_COMMENT_DATA)('Returns the minimum element in ')
+              DocSyntaxElement 8
+                ScPsiDocToken(DOC_MONOSPACE_TAG 8)('`')
+                ScPsiDocToken(DOC_COMMENT_DATA)('self')
+                ScPsiDocToken(DOC_MONOSPACE_TAG 8)('`')
+              ScPsiDocToken(DOC_COMMENT_DATA)(', using ')
+              DocSyntaxElement 8
+                ScPsiDocToken(DOC_MONOSPACE_TAG 8)('`')
+                ScPsiDocToken(DOC_COMMENT_DATA)('isLessThan')
+                ScPsiDocToken(DOC_MONOSPACE_TAG 8)('`')
+              ScPsiDocToken(DOC_COMMENT_DATA)(' to compare elements.')
+              ScPsiDocToken(DOC_WHITESPACE)('\n    ')
+              ScPsiDocToken(DOC_COMMENT_LEADING_ASTERISKS)('*')
+              ScPsiDocToken(DOC_WHITESPACE)('\n    ')
+              ScPsiDocToken(DOC_COMMENT_LEADING_ASTERISKS)('*')
+            DocTag
+              ScPsiDocToken(DOC_WHITESPACE)(' ')
+              ScPsiDocToken(DOC_TAG_NAME)('@complexity')
+              PsiErrorElement:Unknown tag: @complexity
+                <empty list>
+              ScPsiDocToken(DOC_WHITESPACE)('\n    ')
+              ScPsiDocToken(DOC_COMMENT_LEADING_ASTERISKS)('*')
+              ScDocParagraph
+                ScPsiDocToken(DOC_WHITESPACE)('   ')
+                ScPsiDocToken(DOC_COMMENT_DATA)('O(n) where n is the number of elements in ')
+                DocSyntaxElement 8
+                  ScPsiDocToken(DOC_MONOSPACE_TAG 8)('`')
+                  ScPsiDocToken(DOC_COMMENT_DATA)('self')
+                  ScPsiDocToken(DOC_MONOSPACE_TAG 8)('`')
+                ScPsiDocToken(DOC_COMMENT_DATA)('.')
+                ScPsiDocToken(DOC_WHITESPACE)('\n    ')
+            ScPsiDocToken(DOC_COMMENT_END)('*/')
+          PsiWhiteSpace('\n  ')
+          AnnotationsList
+            <empty list>
+          Modifiers
+            <empty list>
+          PsiElement(def)('def')
+          PsiWhiteSpace(' ')
+          PsiElement(identifier)('minElement')
+          Parameters
+            ParametersClause
+              PsiElement(()('(')
+              Parameter: isLessThan
+                AnnotationsList
+                  <empty list>
+                Modifiers
+                  <empty list>
+                PsiElement(identifier)('isLessThan')
+                PsiElement(:)(':')
+                PsiWhiteSpace(' ')
+                ParameterType
+                  FunctionalType: (s.Element, s.Element) => Boolean
+                    TupleType: (s.Element, s.Element)
+                      PsiElement(()('(')
+                      TypesList
+                        SimpleType: s.Element
+                          CodeReferenceElement: s.Element
+                            CodeReferenceElement: s
+                              PsiElement(identifier)('s')
+                            PsiElement(.)('.')
+                            PsiElement(identifier)('Element')
+                        PsiElement(,)(',')
+                        PsiWhiteSpace(' ')
+                        SimpleType: s.Element
+                          CodeReferenceElement: s.Element
+                            CodeReferenceElement: s
+                              PsiElement(identifier)('s')
+                            PsiElement(.)('.')
+                            PsiElement(identifier)('Element')
+                      PsiElement())(')')
+                    PsiWhiteSpace(' ')
+                    PsiElement(=>)('=>')
+                    PsiWhiteSpace(' ')
+                    SimpleType: Boolean
+                      CodeReferenceElement: Boolean
+                        PsiElement(identifier)('Boolean')
+              PsiElement())(')')
+          PsiElement(:)(':')
+          PsiWhiteSpace(' ')
+          ParametrizedType: Option[s.Element]
+            SimpleType: Option
+              CodeReferenceElement: Option
+                PsiElement(identifier)('Option')
+            TypeArgumentsList
+              PsiElement([)('[')
+              SimpleType: s.Element
+                CodeReferenceElement: s.Element
+                  CodeReferenceElement: s
+                    PsiElement(identifier)('s')
+                  PsiElement(.)('.')
+                  PsiElement(identifier)('Element')
+              PsiElement(])(']')
+          PsiWhiteSpace(' ')
+          PsiElement(=)('=')
+          PsiWhiteSpace('\n    ')
+          MethodCall
+            ReferenceExpression: self.leastElement
+              ReferenceExpression: self
+                PsiElement(identifier)('self')
+              PsiElement(.)('.')
+              PsiElement(identifier)('leastElement')
+            ArgumentList
+              PsiElement(()('(')
+              ReferenceExpression: isLessThan
+                PsiElement(identifier)('isLessThan')
+              PsiElement())(')')
+        PsiWhiteSpace('\n\n  ')
+        PsiComment(comment)('// NOTE: I can't find a reasonable way to call this method.')
+        PsiWhiteSpace('\n  ')
+        ScFunctionDefinition: minElement
+          DocComment
+            ScPsiDocToken(DOC_COMMENT_START)('/**')
+            ScDocParagraph
+              ScPsiDocToken(DOC_WHITESPACE)(' ')
+              ScPsiDocToken(DOC_COMMENT_DATA)('Returns the minimum element in ')
+              DocSyntaxElement 8
+                ScPsiDocToken(DOC_MONOSPACE_TAG 8)('`')
+                ScPsiDocToken(DOC_COMMENT_DATA)('self')
+                ScPsiDocToken(DOC_MONOSPACE_TAG 8)('`')
+              ScPsiDocToken(DOC_COMMENT_DATA)('.')
+              ScPsiDocToken(DOC_WHITESPACE)('\n    ')
+              ScPsiDocToken(DOC_COMMENT_LEADING_ASTERISKS)('*')
+              ScPsiDocToken(DOC_WHITESPACE)('\n    ')
+              ScPsiDocToken(DOC_COMMENT_LEADING_ASTERISKS)('*')
+            DocTag
+              ScPsiDocToken(DOC_WHITESPACE)(' ')
+              ScPsiDocToken(DOC_TAG_NAME)('@complexity')
+              PsiErrorElement:Unknown tag: @complexity
+                <empty list>
+              ScPsiDocToken(DOC_WHITESPACE)('\n    ')
+              ScPsiDocToken(DOC_COMMENT_LEADING_ASTERISKS)('*')
+              ScDocParagraph
+                ScPsiDocToken(DOC_WHITESPACE)('   ')
+                ScPsiDocToken(DOC_COMMENT_DATA)('O(n) where n is the number of elements in ')
+                DocSyntaxElement 8
+                  ScPsiDocToken(DOC_MONOSPACE_TAG 8)('`')
+                  ScPsiDocToken(DOC_COMMENT_DATA)('self')
+                  ScPsiDocToken(DOC_MONOSPACE_TAG 8)('`')
+                ScPsiDocToken(DOC_COMMENT_DATA)('.')
+                ScPsiDocToken(DOC_WHITESPACE)('\n    ')
+            ScPsiDocToken(DOC_COMMENT_END)('*/')
+          PsiWhiteSpace('\n  ')
+          AnnotationsList
+            <empty list>
+          Modifiers
+            <empty list>
+          PsiElement(def)('def')
+          PsiWhiteSpace(' ')
+          PsiElement(identifier)('minElement')
+          Parameters
+            ParametersClause
+              PsiElement(()('(')
+              PsiElement())(')')
+            ParametersClause
+              PsiElement(()('(')
+              PsiElement(using)('using')
+              PsiWhiteSpace(' ')
+              Parameter: <anonymous>
+                ParameterType
+                  ParametrizedType: Comparable[s.Element]
+                    SimpleType: Comparable
+                      CodeReferenceElement: Comparable
+                        PsiElement(identifier)('Comparable')
+                    TypeArgumentsList
+                      PsiElement([)('[')
+                      SimpleType: s.Element
+                        CodeReferenceElement: s.Element
+                          CodeReferenceElement: s
+                            PsiElement(identifier)('s')
+                          PsiElement(.)('.')
+                          PsiElement(identifier)('Element')
+                      PsiElement(])(']')
+              PsiElement())(')')
+          PsiElement(:)(':')
+          PsiWhiteSpace(' ')
+          ParametrizedType: Option[s.Element]
+            SimpleType: Option
+              CodeReferenceElement: Option
+                PsiElement(identifier)('Option')
+            TypeArgumentsList
+              PsiElement([)('[')
+              SimpleType: s.Element
+                CodeReferenceElement: s.Element
+                  CodeReferenceElement: s
+                    PsiElement(identifier)('s')
+                  PsiElement(.)('.')
+                  PsiElement(identifier)('Element')
+              PsiElement(])(']')
+          PsiWhiteSpace(' ')
+          PsiElement(=)('=')
+          PsiWhiteSpace('\n    ')
+          MethodCall
+            ReferenceExpression: self.minElement
+              ReferenceExpression: self
+                PsiElement(identifier)('self')
+              PsiElement(.)('.')
+              PsiElement(identifier)('minElement')
+            ArgumentList
+              PsiElement(()('(')
+              AssignStatement
+                ReferenceExpression: isLessThan
+                  PsiElement(identifier)('isLessThan')
+                PsiWhiteSpace(' ')
+                PsiElement(=)('=')
+                PsiWhiteSpace(' ')
+                InfixExpression
+                  UnderscoreSection
+                    PsiElement(_)('_')
+                  PsiWhiteSpace(' ')
+                  ReferenceExpression: `lt`
+                    PsiElement(identifier)('`lt`')
+                  PsiWhiteSpace(' ')
+                  UnderscoreSection
+                    PsiElement(_)('_')
+              PsiElement())(')')
+        PsiWhiteSpace('\n\n  ')
+        ScFunctionDefinition: maxElement
+          DocComment
+            ScPsiDocToken(DOC_COMMENT_START)('/**')
+            ScDocParagraph
+              ScPsiDocToken(DOC_WHITESPACE)(' ')
+              ScPsiDocToken(DOC_COMMENT_DATA)('Returns the maximum element in ')
+              DocSyntaxElement 8
+                ScPsiDocToken(DOC_MONOSPACE_TAG 8)('`')
+                ScPsiDocToken(DOC_COMMENT_DATA)('self')
+                ScPsiDocToken(DOC_MONOSPACE_TAG 8)('`')
+              ScPsiDocToken(DOC_COMMENT_DATA)(', using ')
+              DocSyntaxElement 8
+                ScPsiDocToken(DOC_MONOSPACE_TAG 8)('`')
+                ScPsiDocToken(DOC_COMMENT_DATA)('isGreaterThan')
+                ScPsiDocToken(DOC_MONOSPACE_TAG 8)('`')
+              ScPsiDocToken(DOC_COMMENT_DATA)(' to compare elements.')
+              ScPsiDocToken(DOC_WHITESPACE)('\n    ')
+              ScPsiDocToken(DOC_COMMENT_LEADING_ASTERISKS)('*')
+              ScPsiDocToken(DOC_WHITESPACE)('\n    ')
+              ScPsiDocToken(DOC_COMMENT_LEADING_ASTERISKS)('*')
+            DocTag
+              ScPsiDocToken(DOC_WHITESPACE)(' ')
+              ScPsiDocToken(DOC_TAG_NAME)('@complexity')
+              PsiErrorElement:Unknown tag: @complexity
+                <empty list>
+              ScPsiDocToken(DOC_WHITESPACE)('\n    ')
+              ScPsiDocToken(DOC_COMMENT_LEADING_ASTERISKS)('*')
+              ScDocParagraph
+                ScPsiDocToken(DOC_WHITESPACE)('   ')
+                ScPsiDocToken(DOC_COMMENT_DATA)('O(n) where n is the number of elements in ')
+                DocSyntaxElement 8
+                  ScPsiDocToken(DOC_MONOSPACE_TAG 8)('`')
+                  ScPsiDocToken(DOC_COMMENT_DATA)('self')
+                  ScPsiDocToken(DOC_MONOSPACE_TAG 8)('`')
+                ScPsiDocToken(DOC_COMMENT_DATA)('.')
+                ScPsiDocToken(DOC_WHITESPACE)('\n    ')
+            ScPsiDocToken(DOC_COMMENT_END)('*/')
+          PsiWhiteSpace('\n  ')
+          AnnotationsList
+            <empty list>
+          Modifiers
+            <empty list>
+          PsiElement(def)('def')
+          PsiWhiteSpace(' ')
+          PsiElement(identifier)('maxElement')
+          Parameters
+            ParametersClause
+              PsiElement(()('(')
+              Parameter: isGreaterThan
+                AnnotationsList
+                  <empty list>
+                Modifiers
+                  <empty list>
+                PsiElement(identifier)('isGreaterThan')
+                PsiElement(:)(':')
+                PsiWhiteSpace(' ')
+                ParameterType
+                  FunctionalType: (s.Element, s.Element) => Boolean
+                    TupleType: (s.Element, s.Element)
+                      PsiElement(()('(')
+                      TypesList
+                        SimpleType: s.Element
+                          CodeReferenceElement: s.Element
+                            CodeReferenceElement: s
+                              PsiElement(identifier)('s')
+                            PsiElement(.)('.')
+                            PsiElement(identifier)('Element')
+                        PsiElement(,)(',')
+                        PsiWhiteSpace(' ')
+                        SimpleType: s.Element
+                          CodeReferenceElement: s.Element
+                            CodeReferenceElement: s
+                              PsiElement(identifier)('s')
+                            PsiElement(.)('.')
+                            PsiElement(identifier)('Element')
+                      PsiElement())(')')
+                    PsiWhiteSpace(' ')
+                    PsiElement(=>)('=>')
+                    PsiWhiteSpace(' ')
+                    SimpleType: Boolean
+                      CodeReferenceElement: Boolean
+                        PsiElement(identifier)('Boolean')
+              PsiElement())(')')
+          PsiElement(:)(':')
+          PsiWhiteSpace(' ')
+          ParametrizedType: Option[s.Element]
+            SimpleType: Option
+              CodeReferenceElement: Option
+                PsiElement(identifier)('Option')
+            TypeArgumentsList
+              PsiElement([)('[')
+              SimpleType: s.Element
+                CodeReferenceElement: s.Element
+                  CodeReferenceElement: s
+                    PsiElement(identifier)('s')
+                  PsiElement(.)('.')
+                  PsiElement(identifier)('Element')
+              PsiElement(])(']')
+          PsiWhiteSpace(' ')
+          PsiElement(=)('=')
+          PsiWhiteSpace('\n    ')
+          MethodCall
+            ReferenceExpression: self.leastElement
+              ReferenceExpression: self
+                PsiElement(identifier)('self')
+              PsiElement(.)('.')
+              PsiElement(identifier)('leastElement')
+            ArgumentList
+              PsiElement(()('(')
+              ReferenceExpression: isGreaterThan
+                PsiElement(identifier)('isGreaterThan')
+              PsiElement())(')')
+        PsiWhiteSpace('\n\n  ')
+        ScFunctionDefinition: maxElement
+          DocComment
+            ScPsiDocToken(DOC_COMMENT_START)('/**')
+            ScDocParagraph
+              ScPsiDocToken(DOC_WHITESPACE)(' ')
+              ScPsiDocToken(DOC_COMMENT_DATA)('Returns the maximum element in ')
+              DocSyntaxElement 8
+                ScPsiDocToken(DOC_MONOSPACE_TAG 8)('`')
+                ScPsiDocToken(DOC_COMMENT_DATA)('self')
+                ScPsiDocToken(DOC_MONOSPACE_TAG 8)('`')
+              ScPsiDocToken(DOC_COMMENT_DATA)('.')
+              ScPsiDocToken(DOC_WHITESPACE)('\n    ')
+              ScPsiDocToken(DOC_COMMENT_LEADING_ASTERISKS)('*')
+              ScPsiDocToken(DOC_WHITESPACE)('\n    ')
+              ScPsiDocToken(DOC_COMMENT_LEADING_ASTERISKS)('*')
+            DocTag
+              ScPsiDocToken(DOC_WHITESPACE)(' ')
+              ScPsiDocToken(DOC_TAG_NAME)('@complexity')
+              PsiErrorElement:Unknown tag: @complexity
+                <empty list>
+              ScPsiDocToken(DOC_WHITESPACE)('\n    ')
+              ScPsiDocToken(DOC_COMMENT_LEADING_ASTERISKS)('*')
+              ScDocParagraph
+                ScPsiDocToken(DOC_WHITESPACE)('   ')
+                ScPsiDocToken(DOC_COMMENT_DATA)('O(n) where n is the number of elements in ')
+                DocSyntaxElement 8
+                  ScPsiDocToken(DOC_MONOSPACE_TAG 8)('`')
+                  ScPsiDocToken(DOC_COMMENT_DATA)('self')
+                  ScPsiDocToken(DOC_MONOSPACE_TAG 8)('`')
+                ScPsiDocToken(DOC_COMMENT_DATA)('.')
+                ScPsiDocToken(DOC_WHITESPACE)('\n    ')
+            ScPsiDocToken(DOC_COMMENT_END)('*/')
+          PsiWhiteSpace('\n  ')
+          AnnotationsList
+            <empty list>
+          Modifiers
+            <empty list>
+          PsiElement(def)('def')
+          PsiWhiteSpace(' ')
+          PsiElement(identifier)('maxElement')
+          Parameters
+            ParametersClause
+              PsiElement(()('(')
+              PsiElement())(')')
+            ParametersClause
+              PsiElement(()('(')
+              PsiElement(using)('using')
+              PsiWhiteSpace(' ')
+              Parameter: <anonymous>
+                ParameterType
+                  ParametrizedType: Comparable[s.Element]
+                    SimpleType: Comparable
+                      CodeReferenceElement: Comparable
+                        PsiElement(identifier)('Comparable')
+                    TypeArgumentsList
+                      PsiElement([)('[')
+                      SimpleType: s.Element
+                        CodeReferenceElement: s.Element
+                          CodeReferenceElement: s
+                            PsiElement(identifier)('s')
+                          PsiElement(.)('.')
+                          PsiElement(identifier)('Element')
+                      PsiElement(])(']')
+              PsiElement())(')')
+          PsiElement(:)(':')
+          PsiWhiteSpace(' ')
+          ParametrizedType: Option[s.Element]
+            SimpleType: Option
+              CodeReferenceElement: Option
+                PsiElement(identifier)('Option')
+            TypeArgumentsList
+              PsiElement([)('[')
+              SimpleType: s.Element
+                CodeReferenceElement: s.Element
+                  CodeReferenceElement: s
+                    PsiElement(identifier)('s')
+                  PsiElement(.)('.')
+                  PsiElement(identifier)('Element')
+              PsiElement(])(']')
+          PsiWhiteSpace(' ')
+          PsiElement(=)('=')
+          PsiWhiteSpace('\n    ')
+          MethodCall
+            ReferenceExpression: self.maxElement
+              ReferenceExpression: self
+                PsiElement(identifier)('self')
+              PsiElement(.)('.')
+              PsiElement(identifier)('maxElement')
+            ArgumentList
+              PsiElement(()('(')
+              AssignStatement
+                ReferenceExpression: isGreaterThan
+                  PsiElement(identifier)('isGreaterThan')
+                PsiWhiteSpace(' ')
+                PsiElement(=)('=')
+                PsiWhiteSpace(' ')
+                InfixExpression
+                  UnderscoreSection
+                    PsiElement(_)('_')
+                  PsiWhiteSpace(' ')
+                  ReferenceExpression: `gt`
+                    PsiElement(identifier)('`gt`')
+                  PsiWhiteSpace(' ')
+                  UnderscoreSection
+                    PsiElement(_)('_')
+              PsiElement())(')')
+        PsiWhiteSpace('\n\n  ')
+        ScFunctionDefinition: leastElement
+          DocComment
+            ScPsiDocToken(DOC_COMMENT_START)('/**')
+            ScDocParagraph
+              ScPsiDocToken(DOC_WHITESPACE)(' ')
+              ScPsiDocToken(DOC_COMMENT_DATA)('Returns the maximum element in ')
+              DocSyntaxElement 8
+                ScPsiDocToken(DOC_MONOSPACE_TAG 8)('`')
+                ScPsiDocToken(DOC_COMMENT_DATA)('self')
+                ScPsiDocToken(DOC_MONOSPACE_TAG 8)('`')
+              ScPsiDocToken(DOC_COMMENT_DATA)(', using ')
+              DocSyntaxElement 8
+                ScPsiDocToken(DOC_MONOSPACE_TAG 8)('`')
+                ScPsiDocToken(DOC_COMMENT_DATA)('isOrderedBefore')
+                ScPsiDocToken(DOC_MONOSPACE_TAG 8)('`')
+              ScPsiDocToken(DOC_COMMENT_DATA)(' to compare elements.')
+              ScPsiDocToken(DOC_WHITESPACE)('\n    ')
+              ScPsiDocToken(DOC_COMMENT_LEADING_ASTERISKS)('*')
+              ScPsiDocToken(DOC_WHITESPACE)('\n    ')
+              ScPsiDocToken(DOC_COMMENT_LEADING_ASTERISKS)('*')
+            DocTag
+              ScPsiDocToken(DOC_WHITESPACE)(' ')
+              ScPsiDocToken(DOC_TAG_NAME)('@complexity')
+              PsiErrorElement:Unknown tag: @complexity
+                <empty list>
+              ScPsiDocToken(DOC_WHITESPACE)('\n    ')
+              ScPsiDocToken(DOC_COMMENT_LEADING_ASTERISKS)('*')
+              ScDocParagraph
+                ScPsiDocToken(DOC_WHITESPACE)('   ')
+                ScPsiDocToken(DOC_COMMENT_DATA)('O(n) where n is the number of elements in ')
+                DocSyntaxElement 8
+                  ScPsiDocToken(DOC_MONOSPACE_TAG 8)('`')
+                  ScPsiDocToken(DOC_COMMENT_DATA)('self')
+                  ScPsiDocToken(DOC_MONOSPACE_TAG 8)('`')
+                ScPsiDocToken(DOC_COMMENT_DATA)('.')
+                ScPsiDocToken(DOC_WHITESPACE)('\n    ')
+            ScPsiDocToken(DOC_COMMENT_END)('*/')
+          PsiWhiteSpace('\n  ')
+          AnnotationsList
+            <empty list>
+          Modifiers
+            <empty list>
+          PsiElement(def)('def')
+          PsiWhiteSpace(' ')
+          PsiElement(identifier)('leastElement')
+          Parameters
+            ParametersClause
+              PsiElement(()('(')
+              Parameter: isOrderedBefore
+                AnnotationsList
+                  <empty list>
+                Modifiers
+                  <empty list>
+                PsiElement(identifier)('isOrderedBefore')
+                PsiElement(:)(':')
+                PsiWhiteSpace(' ')
+                ParameterType
+                  FunctionalType: (s.Element, s.Element) => Boolean
+                    TupleType: (s.Element, s.Element)
+                      PsiElement(()('(')
+                      TypesList
+                        SimpleType: s.Element
+                          CodeReferenceElement: s.Element
+                            CodeReferenceElement: s
+                              PsiElement(identifier)('s')
+                            PsiElement(.)('.')
+                            PsiElement(identifier)('Element')
+                        PsiElement(,)(',')
+                        PsiWhiteSpace(' ')
+                        SimpleType: s.Element
+                          CodeReferenceElement: s.Element
+                            CodeReferenceElement: s
+                              PsiElement(identifier)('s')
+                            PsiElement(.)('.')
+                            PsiElement(identifier)('Element')
+                      PsiElement())(')')
+                    PsiWhiteSpace(' ')
+                    PsiElement(=>)('=>')
+                    PsiWhiteSpace(' ')
+                    SimpleType: Boolean
+                      CodeReferenceElement: Boolean
+                        PsiElement(identifier)('Boolean')
+              PsiElement())(')')
+          PsiElement(:)(':')
+          PsiWhiteSpace(' ')
+          ParametrizedType: Option[s.Element]
+            SimpleType: Option
+              CodeReferenceElement: Option
+                PsiElement(identifier)('Option')
+            TypeArgumentsList
+              PsiElement([)('[')
+              SimpleType: s.Element
+                CodeReferenceElement: s.Element
+                  CodeReferenceElement: s
+                    PsiElement(identifier)('s')
+                  PsiElement(.)('.')
+                  PsiElement(identifier)('Element')
+              PsiElement(])(']')
+          PsiWhiteSpace(' ')
+          PsiElement(=)('=')
+          PsiWhiteSpace('\n    ')
+          IfStatement
+            PsiElement(if)('if')
+            PsiWhiteSpace(' ')
+            PsiElement(()('(')
+            ReferenceExpression: self.isEmpty
+              ReferenceExpression: self
+                PsiElement(identifier)('self')
+              PsiElement(.)('.')
+              PsiElement(identifier)('isEmpty')
+            PsiElement())(')')
+            PsiWhiteSpace(' ')
+            BlockExpression
+              PsiElement({)('{')
+              PsiWhiteSpace('\n      ')
+              ReferenceExpression: None
+                PsiElement(identifier)('None')
+              PsiWhiteSpace('\n    ')
+              PsiElement(})('}')
+            PsiWhiteSpace(' ')
+            PsiElement(else)('else')
+            PsiWhiteSpace(' ')
+            BlockExpression
+              PsiElement({)('{')
+              PsiWhiteSpace('\n      ')
+              ScPatternDefinition: e
+                AnnotationsList
+                  <empty list>
+                Modifiers
+                  <empty list>
+                PsiElement(val)('val')
+                PsiWhiteSpace(' ')
+                ListOfPatterns
+                  ReferencePattern: e
+                    PsiElement(identifier)('e')
+                PsiWhiteSpace(' ')
+                PsiElement(=)('=')
+                PsiWhiteSpace(' ')
+                ReferenceExpression: self.endPosition
+                  ReferenceExpression: self
+                    PsiElement(identifier)('self')
+                  PsiElement(.)('.')
+                  PsiElement(identifier)('endPosition')
+              PsiWhiteSpace('\n      ')
+              ScFunctionDefinition: _least
+                AnnotationsList
+                  <empty list>
+                Modifiers
+                  <empty list>
+                PsiElement(def)('def')
+                PsiWhiteSpace(' ')
+                PsiElement(identifier)('_least')
+                Parameters
+                  ParametersClause
+                    PsiElement(()('(')
+                    Parameter: p
+                      AnnotationsList
+                        <empty list>
+                      Modifiers
+                        <empty list>
+                      PsiElement(identifier)('p')
+                      PsiElement(:)(':')
+                      PsiWhiteSpace(' ')
+                      ParameterType
+                        SimpleType: s.Position
+                          CodeReferenceElement: s.Position
+                            CodeReferenceElement: s
+                              PsiElement(identifier)('s')
+                            PsiElement(.)('.')
+                            PsiElement(identifier)('Position')
+                    PsiElement(,)(',')
+                    PsiWhiteSpace(' ')
+                    Parameter: least
+                      AnnotationsList
+                        <empty list>
+                      Modifiers
+                        <empty list>
+                      PsiElement(identifier)('least')
+                      PsiElement(:)(':')
+                      PsiWhiteSpace(' ')
+                      ParameterType
+                        SimpleType: s.Element
+                          CodeReferenceElement: s.Element
+                            CodeReferenceElement: s
+                              PsiElement(identifier)('s')
+                            PsiElement(.)('.')
+                            PsiElement(identifier)('Element')
+                    PsiElement())(')')
+                PsiElement(:)(':')
+                PsiWhiteSpace(' ')
+                SimpleType: s.Element
+                  CodeReferenceElement: s.Element
+                    CodeReferenceElement: s
+                      PsiElement(identifier)('s')
+                    PsiElement(.)('.')
+                    PsiElement(identifier)('Element')
+                PsiWhiteSpace(' ')
+                PsiElement(=)('=')
+                PsiWhiteSpace('\n        ')
+                IfStatement
+                  PsiElement(if)('if')
+                  PsiWhiteSpace(' ')
+                  PsiElement(()('(')
+                  MethodCall
+                    ReferenceExpression: p.eq
+                      ReferenceExpression: p
+                        PsiElement(identifier)('p')
+                      PsiElement(.)('.')
+                      PsiElement(identifier)('eq')
+                    ArgumentList
+                      PsiElement(()('(')
+                      ReferenceExpression: e
+                        PsiElement(identifier)('e')
+                      PsiElement())(')')
+                  PsiElement())(')')
+                  PsiWhiteSpace(' ')
+                  BlockExpression
+                    PsiElement({)('{')
+                    PsiWhiteSpace('\n          ')
+                    ReferenceExpression: least
+                      PsiElement(identifier)('least')
+                    PsiWhiteSpace('\n        ')
+                    PsiElement(})('}')
+                  PsiWhiteSpace(' ')
+                  PsiElement(else)('else')
+                  PsiWhiteSpace(' ')
+                  BlockExpression
+                    PsiElement({)('{')
+                    PsiWhiteSpace('\n          ')
+                    ScPatternDefinition: x
+                      AnnotationsList
+                        <empty list>
+                      Modifiers
+                        <empty list>
+                      PsiElement(val)('val')
+                      PsiWhiteSpace(' ')
+                      ListOfPatterns
+                        ReferencePattern: x
+                          PsiElement(identifier)('x')
+                      PsiWhiteSpace(' ')
+                      PsiElement(=)('=')
+                      PsiWhiteSpace(' ')
+                      MethodCall
+                        ReferenceExpression: self.at
+                          ReferenceExpression: self
+                            PsiElement(identifier)('self')
+                          PsiElement(.)('.')
+                          PsiElement(identifier)('at')
+                        ArgumentList
+                          PsiElement(()('(')
+                          ReferenceExpression: p
+                            PsiElement(identifier)('p')
+                          PsiElement())(')')
+                    PsiWhiteSpace('\n          ')
+                    ScPatternDefinition: y
+                      AnnotationsList
+                        <empty list>
+                      Modifiers
+                        <empty list>
+                      PsiElement(val)('val')
+                      PsiWhiteSpace(' ')
+                      ListOfPatterns
+                        ReferencePattern: y
+                          PsiElement(identifier)('y')
+                      PsiWhiteSpace(' ')
+                      PsiElement(=)('=')
+                      PsiWhiteSpace(' ')
+                      IfStatement
+                        PsiElement(if)('if')
+                        PsiWhiteSpace(' ')
+                        MethodCall
+                          ReferenceExpression: isOrderedBefore
+                            PsiElement(identifier)('isOrderedBefore')
+                          ArgumentList
+                            PsiElement(()('(')
+                            ReferenceExpression: x
+                              PsiElement(identifier)('x')
+                            PsiElement(,)(',')
+                            PsiWhiteSpace(' ')
+                            ReferenceExpression: least
+                              PsiElement(identifier)('least')
+                            PsiElement())(')')
+                        PsiWhiteSpace(' ')
+                        PsiElement(then)('then')
+                        PsiWhiteSpace(' ')
+                        ReferenceExpression: x
+                          PsiElement(identifier)('x')
+                        PsiWhiteSpace(' ')
+                        PsiElement(else)('else')
+                        PsiWhiteSpace(' ')
+                        ReferenceExpression: least
+                          PsiElement(identifier)('least')
+                    PsiWhiteSpace('\n          ')
+                    MethodCall
+                      ReferenceExpression: _least
+                        PsiElement(identifier)('_least')
+                      ArgumentList
+                        PsiElement(()('(')
+                        MethodCall
+                          ReferenceExpression: self.positionAfter
+                            ReferenceExpression: self
+                              PsiElement(identifier)('self')
+                            PsiElement(.)('.')
+                            PsiElement(identifier)('positionAfter')
+                          ArgumentList
+                            PsiElement(()('(')
+                            ReferenceExpression: p
+                              PsiElement(identifier)('p')
+                            PsiElement())(')')
+                        PsiElement(,)(',')
+                        PsiWhiteSpace(' ')
+                        ReferenceExpression: y
+                          PsiElement(identifier)('y')
+                        PsiElement())(')')
+                    PsiWhiteSpace('\n        ')
+                    PsiElement(})('}')
+              PsiWhiteSpace('\n\n      ')
+              ScPatternDefinition: b
+                AnnotationsList
+                  <empty list>
+                Modifiers
+                  <empty list>
+                PsiElement(val)('val')
+                PsiWhiteSpace(' ')
+                ListOfPatterns
+                  ReferencePattern: b
+                    PsiElement(identifier)('b')
+                PsiWhiteSpace(' ')
+                PsiElement(=)('=')
+                PsiWhiteSpace(' ')
+                ReferenceExpression: self.startPosition
+                  ReferenceExpression: self
+                    PsiElement(identifier)('self')
+                  PsiElement(.)('.')
+                  PsiElement(identifier)('startPosition')
+              PsiWhiteSpace('\n      ')
+              MethodCall
+                ReferenceExpression: Some
+                  PsiElement(identifier)('Some')
+                ArgumentList
+                  PsiElement(()('(')
+                  MethodCall
+                    ReferenceExpression: _least
+                      PsiElement(identifier)('_least')
+                    ArgumentList
+                      PsiElement(()('(')
+                      MethodCall
+                        ReferenceExpression: self.positionAfter
+                          ReferenceExpression: self
+                            PsiElement(identifier)('self')
+                          PsiElement(.)('.')
+                          PsiElement(identifier)('positionAfter')
+                        ArgumentList
+                          PsiElement(()('(')
+                          ReferenceExpression: b
+                            PsiElement(identifier)('b')
+                          PsiElement())(')')
+                      PsiElement(,)(',')
+                      PsiWhiteSpace(' ')
+                      MethodCall
+                        ReferenceExpression: self.at
+                          ReferenceExpression: self
+                            PsiElement(identifier)('self')
+                          PsiElement(.)('.')
+                          PsiElement(identifier)('at')
+                        ArgumentList
+                          PsiElement(()('(')
+                          ReferenceExpression: b
+                            PsiElement(identifier)('b')
+                          PsiElement())(')')
+                      PsiElement())(')')
+                  PsiElement())(')')
+              PsiWhiteSpace('\n    ')
+              PsiElement(})('}')
+        PsiWhiteSpace('\n\n')
+        PsiElement(})('}')
+    PsiWhiteSpace('\n\n')
+    Extension on Self
+      PsiElement(extension)('extension')
+      PsiWhiteSpace(' ')
+      TypeParameterClause
+        PsiElement([)('[')
+        TypeParameter: Self
+          PsiElement(identifier)('Self')
+        PsiElement(])(']')
+      Parameters
+        ParametersClause
+          PsiElement(()('(')
+          Parameter: self
+            AnnotationsList
+              <empty list>
+            Modifiers
+              <empty list>
+            PsiElement(identifier)('self')
+            PsiElement(:)(':')
+            PsiWhiteSpace(' ')
+            ParameterType
+              SimpleType: Self
+                CodeReferenceElement: Self
+                  PsiElement(identifier)('Self')
+          PsiElement())(')')
+        ParametersClause
+          PsiElement(()('(')
+          PsiElement(using)('using')
+          PsiWhiteSpace('\n    ')
+          Parameter: s
+            AnnotationsList
+              <empty list>
+            Modifiers
+              <empty list>
+            PsiElement(identifier)('s')
+            PsiElement(:)(':')
+            PsiWhiteSpace(' ')
+            ParameterType
+              ParametrizedType: Collection[Self]
+                SimpleType: Collection
+                  CodeReferenceElement: Collection
+                    PsiElement(identifier)('Collection')
+                TypeArgumentsList
+                  PsiElement([)('[')
+                  SimpleType: Self
+                    CodeReferenceElement: Self
+                      PsiElement(identifier)('Self')
+                  PsiElement(])(']')
+          PsiElement(,)(',')
+          PsiWhiteSpace('\n    ')
+          Parameter: e
+            AnnotationsList
+              <empty list>
+            Modifiers
+              <empty list>
+            PsiElement(identifier)('e')
+            PsiElement(:)(':')
+            PsiWhiteSpace(' ')
+            ParameterType
+              ParametrizedType: Value[s.Element]
+                SimpleType: Value
+                  CodeReferenceElement: Value
+                    PsiElement(identifier)('Value')
+                TypeArgumentsList
+                  PsiElement([)('[')
+                  SimpleType: s.Element
+                    CodeReferenceElement: s.Element
+                      CodeReferenceElement: s
+                        PsiElement(identifier)('s')
+                      PsiElement(.)('.')
+                      PsiElement(identifier)('Element')
+                  PsiElement(])(']')
+          PsiWhiteSpace('\n')
+          PsiElement())(')')
+      PsiWhiteSpace(' ')
+      ScExtensionBody
+        PsiElement({)('{')
+        PsiWhiteSpace('\n\n  ')
+        ScFunctionDefinition: elementsEqual
+          DocComment
+            ScPsiDocToken(DOC_COMMENT_START)('/**')
+            ScDocParagraph
+              ScPsiDocToken(DOC_WHITESPACE)(' ')
+              ScPsiDocToken(DOC_COMMENT_DATA)('Returns ')
+              DocSyntaxElement 8
+                ScPsiDocToken(DOC_MONOSPACE_TAG 8)('`')
+                ScPsiDocToken(DOC_COMMENT_DATA)('true')
+                ScPsiDocToken(DOC_MONOSPACE_TAG 8)('`')
+              ScPsiDocToken(DOC_COMMENT_DATA)(' if ')
+              DocSyntaxElement 8
+                ScPsiDocToken(DOC_MONOSPACE_TAG 8)('`')
+                ScPsiDocToken(DOC_COMMENT_DATA)('self')
+                ScPsiDocToken(DOC_MONOSPACE_TAG 8)('`')
+              ScPsiDocToken(DOC_COMMENT_DATA)(' contains the same elements as ')
+              DocSyntaxElement 8
+                ScPsiDocToken(DOC_MONOSPACE_TAG 8)('`')
+                ScPsiDocToken(DOC_COMMENT_DATA)('other')
+                ScPsiDocToken(DOC_MONOSPACE_TAG 8)('`')
+              ScPsiDocToken(DOC_COMMENT_DATA)(', in the same order.')
+              ScPsiDocToken(DOC_WHITESPACE)(' ')
+            ScPsiDocToken(DOC_COMMENT_END)('*/')
+          PsiWhiteSpace('\n  ')
+          AnnotationsList
+            <empty list>
+          Modifiers
+            <empty list>
+          PsiElement(def)('def')
+          PsiWhiteSpace(' ')
+          PsiElement(identifier)('elementsEqual')
+          TypeParameterClause
+            PsiElement([)('[')
+            TypeParameter: T
+              PsiElement(identifier)('T')
+            PsiElement(])(']')
+          Parameters
+            ParametersClause
+              PsiElement(()('(')
+              PsiElement(using)('using')
+              PsiWhiteSpace(' ')
+              Parameter: o
+                AnnotationsList
+                  <empty list>
+                Modifiers
+                  <empty list>
+                PsiElement(identifier)('o')
+                PsiElement(:)(':')
+                PsiWhiteSpace(' ')
+                ParameterType
+                  CompoundType: Collection[T] { type Element = s.Element }
+                    ParametrizedType: Collection[T]
+                      SimpleType: Collection
+                        CodeReferenceElement: Collection
+                          PsiElement(identifier)('Collection')
+                      TypeArgumentsList
+                        PsiElement([)('[')
+                        SimpleType: T
+                          CodeReferenceElement: T
+                            PsiElement(identifier)('T')
+                        PsiElement(])(']')
+                    PsiWhiteSpace(' ')
+                    Refinement
+                      PsiElement({)('{')
+                      PsiWhiteSpace(' ')
+                      ScTypeAliasDefinition: Element
+                        AnnotationsList
+                          <empty list>
+                        Modifiers
+                          <empty list>
+                        PsiElement(type)('type')
+                        PsiWhiteSpace(' ')
+                        PsiElement(identifier)('Element')
+                        PsiWhiteSpace(' ')
+                        PsiElement(=)('=')
+                        PsiWhiteSpace(' ')
+                        SimpleType: s.Element
+                          CodeReferenceElement: s.Element
+                            CodeReferenceElement: s
+                              PsiElement(identifier)('s')
+                            PsiElement(.)('.')
+                            PsiElement(identifier)('Element')
+                      PsiWhiteSpace(' ')
+                      PsiElement(})('}')
+              PsiElement())(')')
+            ParametersClause
+              PsiElement(()('(')
+              Parameter: other
+                AnnotationsList
+                  <empty list>
+                Modifiers
+                  <empty list>
+                PsiElement(identifier)('other')
+                PsiElement(:)(':')
+                PsiWhiteSpace(' ')
+                ParameterType
+                  SimpleType: T
+                    CodeReferenceElement: T
+                      PsiElement(identifier)('T')
+              PsiElement())(')')
+          PsiElement(:)(':')
+          PsiWhiteSpace(' ')
+          SimpleType: Boolean
+            CodeReferenceElement: Boolean
+              PsiElement(identifier)('Boolean')
+          PsiWhiteSpace(' ')
+          PsiElement(=)('=')
+          BlockExpression
+            PsiWhiteSpace('\n    ')
+            ScFunctionDefinition: loop
+              AnnotationsList
+                <empty list>
+              Modifiers
+                <empty list>
+              PsiElement(def)('def')
+              PsiWhiteSpace(' ')
+              PsiElement(identifier)('loop')
+              Parameters
+                ParametersClause
+                  PsiElement(()('(')
+                  Parameter: i
+                    AnnotationsList
+                      <empty list>
+                    Modifiers
+                      <empty list>
+                    PsiElement(identifier)('i')
+                    PsiElement(:)(':')
+                    PsiWhiteSpace(' ')
+                    ParameterType
+                      SimpleType: s.Position
+                        CodeReferenceElement: s.Position
+                          CodeReferenceElement: s
+                            PsiElement(identifier)('s')
+                          PsiElement(.)('.')
+                          PsiElement(identifier)('Position')
+                  PsiElement(,)(',')
+                  PsiWhiteSpace(' ')
+                  Parameter: j
+                    AnnotationsList
+                      <empty list>
+                    Modifiers
+                      <empty list>
+                    PsiElement(identifier)('j')
+                    PsiElement(:)(':')
+                    PsiWhiteSpace(' ')
+                    ParameterType
+                      SimpleType: o.Position
+                        CodeReferenceElement: o.Position
+                          CodeReferenceElement: o
+                            PsiElement(identifier)('o')
+                          PsiElement(.)('.')
+                          PsiElement(identifier)('Position')
+                  PsiElement())(')')
+              PsiElement(:)(':')
+              PsiWhiteSpace(' ')
+              SimpleType: Boolean
+                CodeReferenceElement: Boolean
+                  PsiElement(identifier)('Boolean')
+              PsiWhiteSpace(' ')
+              PsiElement(=)('=')
+              PsiWhiteSpace('\n      ')
+              IfStatement
+                PsiElement(if)('if')
+                PsiWhiteSpace(' ')
+                PsiElement(()('(')
+                InfixExpression
+                  ReferenceExpression: i
+                    PsiElement(identifier)('i')
+                  PsiWhiteSpace(' ')
+                  ReferenceExpression: `eq`
+                    PsiElement(identifier)('`eq`')
+                  PsiWhiteSpace(' ')
+                  ReferenceExpression: self.endPosition
+                    ReferenceExpression: self
+                      PsiElement(identifier)('self')
+                    PsiElement(.)('.')
+                    PsiElement(identifier)('endPosition')
+                PsiElement())(')')
+                PsiWhiteSpace(' ')
+                BlockExpression
+                  PsiElement({)('{')
+                  PsiWhiteSpace('\n        ')
+                  InfixExpression
+                    ReferenceExpression: j
+                      PsiElement(identifier)('j')
+                    PsiWhiteSpace(' ')
+                    ReferenceExpression: `eq`
+                      PsiElement(identifier)('`eq`')
+                    PsiWhiteSpace(' ')
+                    ReferenceExpression: other.endPosition
+                      ReferenceExpression: other
+                        PsiElement(identifier)('other')
+                      PsiElement(.)('.')
+                      PsiElement(identifier)('endPosition')
+                  PsiWhiteSpace('\n      ')
+                  PsiElement(})('}')
+                PsiWhiteSpace(' ')
+                PsiElement(else)('else')
+                PsiWhiteSpace(' ')
+                IfStatement
+                  PsiElement(if)('if')
+                  PsiWhiteSpace(' ')
+                  PsiElement(()('(')
+                  InfixExpression
+                    ReferenceExpression: j
+                      PsiElement(identifier)('j')
+                    PsiWhiteSpace(' ')
+                    ReferenceExpression: `eq`
+                      PsiElement(identifier)('`eq`')
+                    PsiWhiteSpace(' ')
+                    ReferenceExpression: other.endPosition
+                      ReferenceExpression: other
+                        PsiElement(identifier)('other')
+                      PsiElement(.)('.')
+                      PsiElement(identifier)('endPosition')
+                  PsiElement())(')')
+                  PsiWhiteSpace(' ')
+                  BlockExpression
+                    PsiElement({)('{')
+                    PsiWhiteSpace('\n        ')
+                    BooleanLiteral
+                      PsiElement(false)('false')
+                    PsiWhiteSpace('\n      ')
+                    PsiElement(})('}')
+                  PsiWhiteSpace(' ')
+                  PsiElement(else)('else')
+                  PsiWhiteSpace(' ')
+                  IfStatement
+                    PsiElement(if)('if')
+                    PsiWhiteSpace(' ')
+                    PsiElement(()('(')
+                    InfixExpression
+                      MethodCall
+                        ReferenceExpression: self.at
+                          ReferenceExpression: self
+                            PsiElement(identifier)('self')
+                          PsiElement(.)('.')
+                          PsiElement(identifier)('at')
+                        ArgumentList
+                          PsiElement(()('(')
+                          ReferenceExpression: i
+                            PsiElement(identifier)('i')
+                          PsiElement())(')')
+                      PsiWhiteSpace(' ')
+                      ReferenceExpression: `neq`
+                        PsiElement(identifier)('`neq`')
+                      PsiWhiteSpace(' ')
+                      MethodCall
+                        ReferenceExpression: other.at
+                          ReferenceExpression: other
+                            PsiElement(identifier)('other')
+                          PsiElement(.)('.')
+                          PsiElement(identifier)('at')
+                        ArgumentList
+                          PsiElement(()('(')
+                          ReferenceExpression: j
+                            PsiElement(identifier)('j')
+                          PsiElement())(')')
+                    PsiElement())(')')
+                    PsiWhiteSpace(' ')
+                    BlockExpression
+                      PsiElement({)('{')
+                      PsiWhiteSpace('\n        ')
+                      BooleanLiteral
+                        PsiElement(false)('false')
+                      PsiWhiteSpace('\n      ')
+                      PsiElement(})('}')
+                    PsiWhiteSpace(' ')
+                    PsiElement(else)('else')
+                    PsiWhiteSpace(' ')
+                    BlockExpression
+                      PsiElement({)('{')
+                      PsiWhiteSpace('\n        ')
+                      MethodCall
+                        ReferenceExpression: loop
+                          PsiElement(identifier)('loop')
+                        ArgumentList
+                          PsiElement(()('(')
+                          MethodCall
+                            ReferenceExpression: self.positionAfter
+                              ReferenceExpression: self
+                                PsiElement(identifier)('self')
+                              PsiElement(.)('.')
+                              PsiElement(identifier)('positionAfter')
+                            ArgumentList
+                              PsiElement(()('(')
+                              ReferenceExpression: i
+                                PsiElement(identifier)('i')
+                              PsiElement())(')')
+                          PsiElement(,)(',')
+                          PsiWhiteSpace(' ')
+                          MethodCall
+                            ReferenceExpression: other.positionAfter
+                              ReferenceExpression: other
+                                PsiElement(identifier)('other')
+                              PsiElement(.)('.')
+                              PsiElement(identifier)('positionAfter')
+                            ArgumentList
+                              PsiElement(()('(')
+                              ReferenceExpression: j
+                                PsiElement(identifier)('j')
+                              PsiElement())(')')
+                          PsiElement())(')')
+                      PsiWhiteSpace('\n      ')
+                      PsiElement(})('}')
+            PsiWhiteSpace('\n    ')
+            MethodCall
+              ReferenceExpression: loop
+                PsiElement(identifier)('loop')
+              ArgumentList
+                PsiElement(()('(')
+                ReferenceExpression: self.startPosition
+                  ReferenceExpression: self
+                    PsiElement(identifier)('self')
+                  PsiElement(.)('.')
+                  PsiElement(identifier)('startPosition')
+                PsiElement(,)(',')
+                PsiWhiteSpace(' ')
+                ReferenceExpression: other.startPosition
+                  ReferenceExpression: other
+                    PsiElement(identifier)('other')
+                  PsiElement(.)('.')
+                  PsiElement(identifier)('startPosition')
+                PsiElement())(')')
+        PsiWhiteSpace('\n\n')
+        PsiElement(})('}')

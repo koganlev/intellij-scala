@@ -29,6 +29,7 @@ private[imported] abstract class Scala3ImportedParserTestBase(dir: String) exten
     val errors = lightFile
       .elements
       .collect { case error: PsiErrorElement => error }
+      .filterNot(_.parentsInFile.exists(_.isComment))
       .toSeq
 
     errors -> lightFile
