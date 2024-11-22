@@ -1874,7 +1874,7 @@ class ReferenceComparisonTest_Scala3 extends ReferenceComparisonTestBase_Scala3 
   def test_i20136b(): Unit = doTest("i20136b", true) // #matchType
   def test_i20154(): Unit = doTest("i20154", true) // #opaque, #intersectionType, #unionType
   def test_i20166(): Unit = doTest("i20166", true) // #matchType
-  def test_i20176(): Unit = doTest("i20176", false)
+  def test_i20176(): Unit = doTest("i20176", true)
   def test_i20184(): Unit = doTest("i20184", true)
   def test_i20187(): Unit = doTest("i20187", false) // #enum
   def test_i20206(): Unit = doTest("i20206", false)
