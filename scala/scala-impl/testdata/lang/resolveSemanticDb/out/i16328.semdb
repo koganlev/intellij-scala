@@ -3,7 +3,6 @@ Document tests/pos/i16328.scala
 (1:14..1:21) scala/reflect/
 (1:22..1:30) scala/reflect/ClassTag#
 (1:22..1:30) scala/reflect/ClassTag.
-(4:23..4:31) _empty_/Test.getParamType().[T] -> 4:20
 (4:23..4:31) scala/reflect/ClassTag#
 (4:36..4:37) _empty_/Test.getParamType().[T] -> 4:20
 (4:41..4:44) scala/Int#

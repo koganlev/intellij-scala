@@ -1,9 +1,5 @@
 Document tests/pos/dotty-experimental.scala
-(3:8..3:16) scala/language.
-(3:17..3:29) scala/language.experimental.
-(3:30..3:45) scala/language.experimental.captureChecking.
-(6:10..6:14) scala/caps.
-(6:15..6:25) scala/caps.Capability#
-(6:28..6:32) scala/caps.
-(6:33..6:36) scala/caps.cap.
+(3:9..3:14) dotty/
+(6:11..6:15) scala/caps.
+(6:16..6:19) scala/caps.cap.
 

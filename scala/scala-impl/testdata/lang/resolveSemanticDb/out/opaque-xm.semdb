@@ -48,10 +48,8 @@ Document tests/pos/opaque-xm.scala
 (26:11..26:20) _empty_/opaquetypes.Logarithm. -> 5:19
 (27:12..27:21) _empty_/opaquetypes.Logarithm. -> 5:19
 (28:12..28:13) _empty_/usesites.l. -> 26:7
-(28:14..28:15) _empty_/opaquetypes.Logarithm.`*`(). -> 21:34
 (28:16..28:18) _empty_/usesites.l2. -> 27:7
 (29:12..29:13) _empty_/usesites.l. -> 26:7
-(29:14..29:15) _empty_/opaquetypes.Logarithm.`+`(). -> 20:34
 (29:16..29:18) _empty_/usesites.l2. -> 27:7
 (33:11..33:20) _empty_/opaquetypes.Logarithm. -> 5:19
 (33:21..33:29) _empty_/opaquetypes.Logarithm.toDouble(). -> 19:34

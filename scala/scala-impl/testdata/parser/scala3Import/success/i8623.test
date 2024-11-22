@@ -11,7 +11,7 @@ def test1 =
   unseal.pos
 
 def test2 =
-  given QC()
+  given QC with {}
   def unseal(using qctx: QC): qctx.tasty.Tree = ???
   unseal.pos
 
@@ -200,9 +200,12 @@ ScalaFile
               SimpleType: QC
                 CodeReferenceElement: QC
                   PsiElement(identifier)('QC')
-              ArgumentList
-                PsiElement(()('(')
-                PsiElement())(')')
+          PsiWhiteSpace(' ')
+          PsiElement(with)('with')
+          PsiWhiteSpace(' ')
+          ScTemplateBody
+            PsiElement({)('{')
+            PsiElement(})('}')
       PsiWhiteSpace('\n  ')
       ScFunctionDefinition: unseal
         AnnotationsList

@@ -1,3 +1,4 @@
+import scala.language.experimental.clauseInterleaving
 
 class Params{
     type U

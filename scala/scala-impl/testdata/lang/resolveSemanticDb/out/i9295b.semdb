@@ -13,6 +13,6 @@ Document tests/pos/i9295b.scala
 (8:44..8:47) scala/Predef.`???`().
 (11:15..11:18) _empty_/Foo# -> 3:7
 (12:11..12:14) _empty_/i9295b$package.foo. -> 11:5
-(12:15..12:19) _empty_/Foo#applyDynamic(). -> 4:7
-(12:22..12:27) _empty_/Bar#applyDynamic(). -> 8:7
+(12:14..12:19) _empty_/Foo#applyDynamic(). -> 4:7
+(12:19..12:27) _empty_/Bar#applyDynamic(). -> 8:7
 

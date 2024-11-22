@@ -8,7 +8,7 @@ Document tests/pos/t1406.scala
 (9:20..9:22) local2 -> 9:10
 (25:30..25:43) scala/StringContext#
 (26:19..26:22) scala/Any#
-(29:22..29:23) scala/StringContext#s().
 (29:25..29:27) _empty_/Strings#`𝓅`(). -> 28:7
-(31:11..31:13) _empty_/Strings#Interps#`𝓅`(). -> 26:9
+(29:27..29:28) scala/StringContext#s().
+(31:17..31:18) _empty_/Strings#Interps#`𝓅`(). -> 26:9
 

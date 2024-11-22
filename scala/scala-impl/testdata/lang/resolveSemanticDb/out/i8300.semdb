@@ -3,11 +3,11 @@ Document tests/pos/i8300.scala
 (4:8..4:12) scala/package.List#
 (4:19..4:23) scala/package.List#
 (4:24..4:30) scala/Tuple1#
-(4:31..4:32) local4 -> 4:13
+(4:31..4:32) local7 -> 4:13
 (5:8..5:11) scala/Predef.Set#
 (5:19..5:22) scala/Predef.Set#
 (5:23..5:29) scala/Tuple1#
-(5:30..5:31) local5 -> 5:12
+(5:30..5:31) local8 -> 5:12
 (9:4..9:7) scala/Predef.Set.
 (9:18..9:22) scala/package.List.
 (9:34..9:37) scala/Tuple#map().

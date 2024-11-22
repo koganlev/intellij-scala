@@ -34,11 +34,11 @@ Document tests/pos/test-desugar.scala
 (21:53..21:54) _empty_/desugar.caseClasses.Cons#[T] -> 21:22
 (21:65..21:69) _empty_/desugar.caseClasses.List# -> 16:11
 (21:70..21:71) _empty_/desugar.caseClasses.Cons#[T] -> 21:22
-(24:26..24:27) _empty_/desugar.caseClasses.Cons.apply().[T] -> 24:17
+(24:26..24:27) _empty_/desugar.caseClasses.Cons.apply(+1).[T] -> 24:17
 (24:30..24:34) _empty_/desugar.caseClasses.Cons# -> 21:16
-(24:35..24:36) _empty_/desugar.caseClasses.Cons.apply().[T] -> 24:17
-(24:40..24:45) _empty_/desugar.caseClasses.Cons.apply(+1).
-(24:46..24:50) _empty_/desugar.caseClasses.Cons.apply().(head) -> 24:20
+(24:35..24:36) _empty_/desugar.caseClasses.Cons.apply(+1).[T] -> 24:17
+(24:40..24:45) _empty_/desugar.caseClasses.Cons.apply().
+(24:46..24:50) _empty_/desugar.caseClasses.Cons.apply(+1).(head) -> 24:20
 (24:52..24:55) _empty_/desugar.caseClasses.Nil. -> 27:17
 (27:29..27:33) _empty_/desugar.caseClasses.List# -> 16:11
 (27:34..27:41) scala/Nothing#
@@ -189,11 +189,11 @@ Document tests/pos/test-desugar.scala
 (70:83..70:84) scala/Int#`*`(+3).
 (70:85..70:86) local29 -> 70:52
 (74:5..74:11) scala/Symbol.
-(75:5..75:6) scala/StringContext#s().
 (75:18..75:19) _empty_/desugar.x(). -> 5:7
 (75:24..75:25) _empty_/desugar.x(). -> 5:7
 (75:26..75:27) scala/Int#`+`(+4).
 (75:28..75:29) _empty_/desugar.y(). -> 6:7
+(75:37..75:38) scala/StringContext#s().
 (76:20..76:26) scala/Tuple2#
 (76:27..76:28) _empty_/desugar.misc.`~`#[X] -> 76:12
 (76:30..76:31) _empty_/desugar.misc.`~`#[Y] -> 76:15
@@ -207,6 +207,7 @@ Document tests/pos/test-desugar.scala
 (79:5..79:8) _empty_/desugar.misc.foo(). -> 78:9
 (79:9..79:13) _empty_/desugar.list. -> 7:7
 (80:6..80:10) _empty_/desugar.list. -> 7:7
+(80:11..80:17) scala/collection/immutable/List#length().
 (81:5..81:6) scala/Int#`-`(+3).
 (81:7..81:14) _empty_/desugar. -> 2:8
 (81:15..81:16) _empty_/desugar.x(). -> 5:7

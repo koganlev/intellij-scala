@@ -1,4 +1,5 @@
 package testcode
+import language.experimental.relaxedExtensionImports
 
 class A
 

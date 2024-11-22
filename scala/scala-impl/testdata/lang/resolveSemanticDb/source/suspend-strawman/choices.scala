@@ -7,7 +7,7 @@ trait Choice:
 // the handler
 def choices[T](body: Choice ?=> T): Seq[T] =
   boundary[Seq[T]]:
-    given Choice:
+    given Choice with
       def choose[A](choices: A*): A =
         suspend[A, Seq[T]](s => choices.flatMap(s.resume))
     Seq(body)

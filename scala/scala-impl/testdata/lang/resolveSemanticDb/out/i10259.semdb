@@ -10,5 +10,4 @@ Document tests/pos/i10259.scala
 (8:17..8:20) scala/Int#
 (8:33..8:34) _empty_/i10259$package.given_S_Int.show().(x) -> 8:14
 (8:35..8:43) scala/Any#toString().
-(10:12..10:16) _empty_/i10259$package.given_S_Int.show(). -> 8:26
 

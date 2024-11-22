@@ -18,11 +18,11 @@ Document tests/pos/i12910.scala
 (18:65..18:71) scala/Predef.String#
 (18:74..18:75) _empty_/Encoder.apply().(e) -> 18:41
 (18:76..18:82) _empty_/Encoder#encode(). -> 15:7
-(20:19..20:26) _empty_/Encoder# -> 14:7
-(20:27..20:38) _empty_/Placeholder# -> 9:7
-(20:39..20:40) _empty_/Encoder.given_Encoder_Placeholder_X#[T] -> 20:10
-(20:42..20:43) _empty_/Encoder.given_Encoder_Placeholder_X#[X] -> 20:13
-(20:46..20:47) _empty_/Encoder.given_Encoder_Placeholder_X#[X] -> 20:13
+(20:17..20:24) _empty_/Encoder# -> 14:7
+(20:25..20:36) _empty_/Placeholder# -> 9:7
+(20:37..20:38) _empty_/Encoder.given_Encoder_Placeholder_X#[T] -> 20:10
+(20:40..20:41) _empty_/Encoder.given_Encoder_Placeholder_X#[X] -> 20:13
+(20:44..20:45) _empty_/Encoder.given_Encoder_Placeholder_X#[X] -> 20:13
 (21:19..21:20) _empty_/Encoder.given_Encoder_Placeholder_X#[X] -> 20:13
 (21:23..21:29) scala/Predef.String#
 (21:32..21:35) scala/Predef.`???`().

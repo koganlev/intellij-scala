@@ -1,9 +1,9 @@
 Document tests/pos/i9342b.scala
 (2:16..2:17) _empty_/Label#[A] -> 1:13
 (2:20..2:26) scala/Predef.String#
-(4:14..4:19) _empty_/Label# -> 1:7
-(4:20..4:21) _empty_/i9342b$package.given_Label_A().[A] -> 4:8
-(4:27..4:35) scala/Any#toString().
+(4:12..4:17) _empty_/Label# -> 1:7
+(4:18..4:19) _empty_/i9342b$package.given_Label_A().[A] -> 4:8
+(4:25..4:33) scala/Any#toString().
 (6:18..6:19) _empty_/i9342b$package.label().[A] -> 6:12
 (6:54..6:59) _empty_/Label# -> 1:7
 (6:60..6:61) _empty_/i9342b$package.label().[A] -> 6:12

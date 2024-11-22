@@ -2,9 +2,9 @@ Document tests/pos/i12945/A_1.scala
 (1:22..1:25) scala/Int#
 (1:29..1:32) scala/Int#
 (6:17..6:20) scala/Int#
-(6:25..6:27) _empty_/A_1$package.Lie.TC# -> 3:9
-(6:28..6:31) _empty_/A_1$package.Lie# -> 1:13
-(6:32..6:33) _empty_/A_1$package.Lie.TC.given_TC_Lie#[W] -> 6:12
+(6:23..6:25) _empty_/A_1$package.Lie.TC# -> 3:9
+(6:26..6:29) _empty_/A_1$package.Lie# -> 1:13
+(6:30..6:31) _empty_/A_1$package.Lie.TC.given_TC_Lie#[W] -> 6:12
 (7:18..7:19) _empty_/A_1$package.Lie.TC.given_TC_Lie#[W] -> 6:12
 (9:10..9:16) scala/Predef.summon().
 (9:17..9:20) _empty_/A_1$package.Lie. -> 2:8

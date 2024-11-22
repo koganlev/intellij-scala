@@ -27,11 +27,11 @@ Document tests/pos/i15664.scala
 (13:43..13:44) _empty_/i15664$package.ForZManaged#[R] -> 13:18
 (13:46..13:47) _empty_/i15664$package.ForZManaged#[E] -> 13:21
 (13:49..13:50) _empty_/i15664$package.ForZManaged#[X] -> 13:27
-(14:35..14:58) _empty_/CpsMonadInstanceContext# -> 5:7
-(14:59..14:70) _empty_/i15664$package.ForZManaged# -> 13:6
-(14:71..14:72) _empty_/i15664$package.zManagedCpsMonad().[R] -> 14:26
-(14:74..14:75) _empty_/i15664$package.zManagedCpsMonad().[E] -> 14:29
-(14:80..14:83) scala/Predef.`???`().
+(14:31..14:54) _empty_/CpsMonadInstanceContext# -> 5:7
+(14:55..14:66) _empty_/i15664$package.ForZManaged# -> 13:6
+(14:67..14:68) _empty_/i15664$package.zManagedCpsMonad().[R] -> 14:24
+(14:70..14:71) _empty_/i15664$package.zManagedCpsMonad().[E] -> 14:27
+(14:76..14:79) scala/Predef.`???`().
 (18:5..18:13) _empty_/CpsMonad# -> 1:7
 (18:14..18:25) _empty_/i15664$package.ForZManaged# -> 13:6
 (18:26..18:27) _empty_/i15664$package.failing().[R] -> 17:13

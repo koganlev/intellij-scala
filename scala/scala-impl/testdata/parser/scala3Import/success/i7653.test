@@ -1,4 +1,4 @@
-// https://github.com/scala/scala3/issues/7653
+// https://github.com/lampepfl/dotty/issues/7653
 
 object options2 {
   type Option[T] = {
@@ -22,7 +22,7 @@ object options2 {
 }
 -----
 ScalaFile
-  PsiComment(comment)('// https://github.com/scala/scala3/issues/7653')
+  PsiComment(comment)('// https://github.com/lampepfl/dotty/issues/7653')
   PsiWhiteSpace('\n\n')
   ScObject: options2
     AnnotationsList

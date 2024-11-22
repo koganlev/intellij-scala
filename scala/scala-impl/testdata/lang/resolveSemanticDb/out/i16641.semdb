@@ -13,6 +13,7 @@ Document tests/pos/i16641.scala
 (16:30..16:34) scala/Unit#
 (17:16..17:23) scala/Predef.valueOf().
 (17:24..17:30) _empty_/Logger# -> 1:7
+(17:31..17:36) _empty_/Logger#debug# -> 3:14
 (17:39..17:46) scala/Predef.println(+1).
 (17:47..17:48) _empty_/Logger.log().(s) -> 16:18
 (21:16..21:26) _empty_/BaseLogger# -> 10:7

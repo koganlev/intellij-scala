@@ -29,5 +29,4 @@ Document tests/pos/i11894a.scala
 (21:27..21:33) scala/Option#
 (21:34..21:35) _empty_/CallbackTo#[A] -> 8:24
 (22:5..22:6) local1 -> 21:9
-(22:7..22:15) _empty_/CallbackTo.asOption(). -> 3:28
 

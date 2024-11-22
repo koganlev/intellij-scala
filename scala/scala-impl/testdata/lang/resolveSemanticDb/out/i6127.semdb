@@ -2,12 +2,10 @@ Document tests/pos/i6127.scala
 (1:8..1:15) scala/reflect/
 (1:16..1:24) scala/reflect/ClassTag#
 (1:16..1:24) scala/reflect/ClassTag.
-(4:16..4:24) _empty_/Co.empty().[X] -> 4:13
 (4:16..4:24) scala/reflect/ClassTag#
 (4:27..4:29) _empty_/Co# -> 2:7
 (4:30..4:31) _empty_/Co.empty().[X] -> 4:13
 (4:35..4:38) scala/Predef.`???`().
-(8:16..8:24) _empty_/Contra.empty().[X] -> 8:13
 (8:16..8:24) scala/reflect/ClassTag#
 (8:27..8:33) _empty_/Contra# -> 6:7
 (8:34..8:35) _empty_/Contra.empty().[X] -> 8:13

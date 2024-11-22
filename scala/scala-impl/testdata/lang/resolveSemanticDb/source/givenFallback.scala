@@ -1,11 +1,13 @@
 trait TC[T] { def x: Int; def y: Int = 0 }
 
-given [T] => TC[T]:
+given [T]: TC[T] with {
   inline val x = 1
+}
 
-given TC[Int]:
+given TC[Int] with {
   inline val x = 2
   inline override val y = 3
+}
 
 object Test extends App {
   val z: 2 = summon[TC[Int]].x

@@ -5,7 +5,6 @@ Document tests/pos/i12127.scala
 (1:37..1:38) scala/Int#`+`(+4).
 (2:14..2:19) scala/Tuple#
 (2:22..2:27) scala/Tuple.
-(2:22..2:46) _empty_/i12127$package.foo().[T] -> 2:9
 (2:28..2:38) scala/Tuple.IsMappedBy#
 (2:51..2:52) _empty_/i12127$package.foo().[T] -> 2:9
 (2:57..2:62) scala/Tuple.

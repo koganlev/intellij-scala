@@ -1,7 +1,11 @@
 Document tests/pos/interleaving-newline.scala
-(5:13..5:14) _empty_/newline.multipleLines().[T] -> 4:10
-(7:17..7:18) _empty_/newline.multipleLines().[T] -> 4:10
-(7:19..7:20) _empty_/newline.multipleLines().[U] -> 6:10
-(8:13..8:14) _empty_/newline.multipleLines().[U] -> 6:10
-(9:11..9:14) scala/Predef.`???`().
+(1:8..1:13) scala/
+(1:14..1:22) scala/language.
+(1:23..1:35) scala/language.experimental.
+(1:36..1:54) scala/language.experimental.clauseInterleaving.
+(6:13..6:14) _empty_/newline.multipleLines().[T] -> 5:10
+(8:17..8:18) _empty_/newline.multipleLines().[T] -> 5:10
+(8:19..8:20) _empty_/newline.multipleLines().[U] -> 7:10
+(9:13..9:14) _empty_/newline.multipleLines().[U] -> 7:10
+(10:11..10:14) scala/Predef.`???`().
 

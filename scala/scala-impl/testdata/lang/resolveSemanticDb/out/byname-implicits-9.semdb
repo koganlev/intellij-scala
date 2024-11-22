@@ -118,7 +118,6 @@ Document tests/pos/byname-implicits-9.scala
 (55:18..55:19) _empty_/Show.showPair().[T] -> 54:25
 (55:21..55:22) _empty_/Show.showPair().[U] -> 54:28
 (55:26..55:32) scala/Predef.String#
-(55:35..55:36) scala/StringContext#s().
 (55:40..55:42) _empty_/Show.showPair().(st) -> 54:40
 (55:43..55:47) _empty_/Show#show(). -> 42:7
 (55:48..55:49) local35 -> 55:14
@@ -127,6 +126,7 @@ Document tests/pos/byname-implicits-9.scala
 (55:61..55:65) _empty_/Show#show(). -> 42:7
 (55:66..55:67) local35 -> 55:14
 (55:68..55:70) scala/Tuple2#_2.
+(55:72..55:73) scala/StringContext#s().
 (58:46..58:50) _empty_/Show# -> 41:7
 (58:51..58:52) _empty_/Show.showEither().[T] -> 58:27
 (58:59..58:63) _empty_/Show# -> 41:7
@@ -145,15 +145,15 @@ Document tests/pos/byname-implicits-9.scala
 (59:32..59:38) scala/Predef.String#
 (59:41..59:42) local39 -> 59:14
 (60:12..60:16) scala/package.Left.
-(60:23..60:24) scala/StringContext#s().
 (60:32..60:34) _empty_/Show.showEither().(st) -> 58:42
 (60:35..60:39) _empty_/Show#show(). -> 42:7
 (60:40..60:41) local40 -> 60:17
+(60:44..60:45) scala/StringContext#s().
 (61:12..61:17) scala/package.Right.
-(61:24..61:25) scala/StringContext#s().
 (61:34..61:36) _empty_/Show.showEither().(su) -> 58:55
 (61:37..61:41) _empty_/Show#show(). -> 42:7
 (61:42..61:43) local41 -> 61:18
+(61:46..61:47) scala/StringContext#s().
 (65:44..65:51) _empty_/Generic. -> 7:8
 (65:52..65:55) _empty_/Generic.Aux# -> 8:8
 (65:56..65:57) _empty_/Show.showGen().[T] -> 65:24

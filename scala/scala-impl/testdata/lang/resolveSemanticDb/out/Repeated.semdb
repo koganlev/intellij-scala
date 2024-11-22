@@ -1069,7 +1069,6 @@ Document tests/pos/Repeated.scala
 (141:50..141:52) scala/collection/IterableOnceOps#to().
 (141:53..141:60) scala/collection/immutable/Repeated$package.Repeated.to().(factory) -> 141:16
 (142:22..142:23) scala/collection/immutable/Repeated$package.Repeated.toArray().[A] -> 17:14
-(142:25..142:33) scala/collection/immutable/Repeated$package.Repeated.toArray().[B] -> 142:17
 (142:25..142:33) scala/reflect/ClassTag#
 (142:36..142:41) scala/Array#
 (142:42..142:43) scala/collection/immutable/Repeated$package.Repeated.toArray().[B] -> 142:17

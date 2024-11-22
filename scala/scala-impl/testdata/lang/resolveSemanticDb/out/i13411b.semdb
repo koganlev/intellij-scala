@@ -20,7 +20,7 @@ Document tests/pos/i13411b/Test.scala
 (24:27..24:32) scala/Float#
 (25:16..25:21) scala/Float#
 (26:15..26:18) _empty_/broken#Foo# -> 2:16
-(26:21..26:22) _empty_/broken#A. -> 3:15
+(26:22..26:23) _empty_/broken#A. -> 3:15
 (28:5..28:8) _empty_/broken#foo(). -> 8:14
 (28:9..28:10) _empty_/broken#thingy().(f) -> 26:12
 (31:3..31:9) _empty_/broken#thingy(). -> 15:14

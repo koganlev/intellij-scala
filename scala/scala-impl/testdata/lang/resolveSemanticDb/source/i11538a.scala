@@ -3,7 +3,7 @@ package a:
   trait Printer[A]:
     def print(a: A): Unit
 
-  given Printer[String]:
+  given Printer[String] with
     def print(s: String) = println(s)
 
 package b:

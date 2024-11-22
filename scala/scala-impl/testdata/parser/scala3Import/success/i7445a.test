@@ -1,4 +1,4 @@
-// https://github.com/scala/scala3/issues/7445
+// https://github.com/lampepfl/dotty/issues/7445
 
 object Main {
   type O1[A] = {
@@ -10,7 +10,7 @@ object Main {
 }
 -----
 ScalaFile
-  PsiComment(comment)('// https://github.com/scala/scala3/issues/7445')
+  PsiComment(comment)('// https://github.com/lampepfl/dotty/issues/7445')
   PsiWhiteSpace('\n\n')
   ScObject: Main
     AnnotationsList

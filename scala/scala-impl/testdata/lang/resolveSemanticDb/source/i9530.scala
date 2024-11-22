@@ -15,12 +15,12 @@ extension [A <: Animal](animal: A)(using diet: Diet[A]) def food4 = diet.food
 
 trait Monkey extends Animal
 
-given Diet[Monkey]:
+given Diet[Monkey] with
   type F = Banana
   def food: Seq[Banana] = Seq(new Banana("yellow"), Banana("green"))
 
 trait FoodOps
-given FoodOps:
+given FoodOps with
   extension [A <: Animal](using diet: Diet[A])(animal: A) def food5 = diet.food
   extension [A <: Animal](animal: A)(using diet: Diet[A]) def food6 = diet.food
 

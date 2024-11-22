@@ -13,9 +13,8 @@ object circelike {
     inline final def derived[A](using conf: Configuration)(using
       inline mirror: Mirror.Of[A]
     ): ConfiguredCodec[A] =
-      class InlinedConfiguredCodec extends ConfiguredCodec[A]:
+      new ConfiguredCodec[A]:
         val codec = summonInline[Codec[URI]] // simplification
-      new InlinedConfiguredCodec
 }
 
 object foo {
@@ -229,83 +228,57 @@ ScalaFile
                     PsiElement(])(']')
                 PsiWhiteSpace(' ')
                 PsiElement(=)('=')
-                BlockExpression
-                  PsiWhiteSpace('\n      ')
-                  ScClass: InlinedConfiguredCodec
-                    AnnotationsList
-                      <empty list>
-                    Modifiers
-                      <empty list>
-                    PsiElement(class)('class')
-                    PsiWhiteSpace(' ')
-                    PsiElement(identifier)('InlinedConfiguredCodec')
-                    PrimaryConstructor
-                      AnnotationsList
-                        <empty list>
-                      Modifiers
-                        <empty list>
-                      Parameters
-                        <empty list>
-                    PsiWhiteSpace(' ')
-                    ExtendsBlock
-                      PsiElement(extends)('extends')
-                      PsiWhiteSpace(' ')
-                      TemplateParents
-                        ConstructorInvocation
-                          ParametrizedType: ConfiguredCodec[A]
-                            SimpleType: ConfiguredCodec
-                              CodeReferenceElement: ConfiguredCodec
-                                PsiElement(identifier)('ConfiguredCodec')
-                            TypeArgumentsList
-                              PsiElement([)('[')
-                              SimpleType: A
-                                CodeReferenceElement: A
-                                  PsiElement(identifier)('A')
-                              PsiElement(])(']')
-                      ScTemplateBody
-                        PsiElement(:)(':')
-                        PsiWhiteSpace('\n        ')
-                        ScPatternDefinition: codec
-                          AnnotationsList
-                            <empty list>
-                          Modifiers
-                            <empty list>
-                          PsiElement(val)('val')
-                          PsiWhiteSpace(' ')
-                          ListOfPatterns
-                            ReferencePattern: codec
-                              PsiElement(identifier)('codec')
-                          PsiWhiteSpace(' ')
-                          PsiElement(=)('=')
-                          PsiWhiteSpace(' ')
-                          GenericCall
-                            ReferenceExpression: summonInline
-                              PsiElement(identifier)('summonInline')
-                            TypeArgumentsList
-                              PsiElement([)('[')
-                              ParametrizedType: Codec[URI]
-                                SimpleType: Codec
-                                  CodeReferenceElement: Codec
-                                    PsiElement(identifier)('Codec')
-                                TypeArgumentsList
-                                  PsiElement([)('[')
-                                  SimpleType: URI
-                                    CodeReferenceElement: URI
-                                      PsiElement(identifier)('URI')
-                                  PsiElement(])(']')
-                              PsiElement(])(']')
+                PsiWhiteSpace('\n      ')
+                ScNewTemplateDefinition: <anonymous>
+                  PsiElement(new)('new')
                   PsiWhiteSpace(' ')
-                  PsiComment(comment)('// simplification')
-                  PsiWhiteSpace('\n      ')
-                  ScNewTemplateDefinition: <anonymous>
-                    PsiElement(new)('new')
-                    PsiWhiteSpace(' ')
-                    ExtendsBlock
-                      TemplateParents
-                        ConstructorInvocation
-                          SimpleType: InlinedConfiguredCodec
-                            CodeReferenceElement: InlinedConfiguredCodec
-                              PsiElement(identifier)('InlinedConfiguredCodec')
+                  ExtendsBlock
+                    TemplateParents
+                      ConstructorInvocation
+                        ParametrizedType: ConfiguredCodec[A]
+                          SimpleType: ConfiguredCodec
+                            CodeReferenceElement: ConfiguredCodec
+                              PsiElement(identifier)('ConfiguredCodec')
+                          TypeArgumentsList
+                            PsiElement([)('[')
+                            SimpleType: A
+                              CodeReferenceElement: A
+                                PsiElement(identifier)('A')
+                            PsiElement(])(']')
+                    ScTemplateBody
+                      PsiElement(:)(':')
+                      PsiWhiteSpace('\n        ')
+                      ScPatternDefinition: codec
+                        AnnotationsList
+                          <empty list>
+                        Modifiers
+                          <empty list>
+                        PsiElement(val)('val')
+                        PsiWhiteSpace(' ')
+                        ListOfPatterns
+                          ReferencePattern: codec
+                            PsiElement(identifier)('codec')
+                        PsiWhiteSpace(' ')
+                        PsiElement(=)('=')
+                        PsiWhiteSpace(' ')
+                        GenericCall
+                          ReferenceExpression: summonInline
+                            PsiElement(identifier)('summonInline')
+                          TypeArgumentsList
+                            PsiElement([)('[')
+                            ParametrizedType: Codec[URI]
+                              SimpleType: Codec
+                                CodeReferenceElement: Codec
+                                  PsiElement(identifier)('Codec')
+                              TypeArgumentsList
+                                PsiElement([)('[')
+                                SimpleType: URI
+                                  CodeReferenceElement: URI
+                                    PsiElement(identifier)('URI')
+                                PsiElement(])(']')
+                            PsiElement(])(']')
+        PsiWhiteSpace(' ')
+        PsiComment(comment)('// simplification')
         PsiWhiteSpace('\n')
         PsiElement(})('}')
   PsiWhiteSpace('\n\n')

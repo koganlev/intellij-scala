@@ -7,8 +7,7 @@ object Test {
   implicit val ba: Bar[Int] = ???
 
   def test: Unit = {
-    val x = summon[Foo[Int]]
-    val _: Bar[Int] = x
+    implicitly[Foo[Int]]
   }
 }
 -----
@@ -153,63 +152,22 @@ ScalaFile
           BlockExpression
             PsiElement({)('{')
             PsiWhiteSpace('\n    ')
-            ScPatternDefinition: x
-              AnnotationsList
-                <empty list>
-              Modifiers
-                <empty list>
-              PsiElement(val)('val')
-              PsiWhiteSpace(' ')
-              ListOfPatterns
-                ReferencePattern: x
-                  PsiElement(identifier)('x')
-              PsiWhiteSpace(' ')
-              PsiElement(=)('=')
-              PsiWhiteSpace(' ')
-              GenericCall
-                ReferenceExpression: summon
-                  PsiElement(identifier)('summon')
-                TypeArgumentsList
-                  PsiElement([)('[')
-                  ParametrizedType: Foo[Int]
-                    SimpleType: Foo
-                      CodeReferenceElement: Foo
-                        PsiElement(identifier)('Foo')
-                    TypeArgumentsList
-                      PsiElement([)('[')
-                      SimpleType: Int
-                        CodeReferenceElement: Int
-                          PsiElement(identifier)('Int')
-                      PsiElement(])(']')
-                  PsiElement(])(']')
-            PsiWhiteSpace('\n    ')
-            ScPatternDefinition
-              AnnotationsList
-                <empty list>
-              Modifiers
-                <empty list>
-              PsiElement(val)('val')
-              PsiWhiteSpace(' ')
-              ListOfPatterns
-                WildcardPattern
-                  PsiElement(_)('_')
-              PsiElement(:)(':')
-              PsiWhiteSpace(' ')
-              ParametrizedType: Bar[Int]
-                SimpleType: Bar
-                  CodeReferenceElement: Bar
-                    PsiElement(identifier)('Bar')
-                TypeArgumentsList
-                  PsiElement([)('[')
-                  SimpleType: Int
-                    CodeReferenceElement: Int
-                      PsiElement(identifier)('Int')
-                  PsiElement(])(']')
-              PsiWhiteSpace(' ')
-              PsiElement(=)('=')
-              PsiWhiteSpace(' ')
-              ReferenceExpression: x
-                PsiElement(identifier)('x')
+            GenericCall
+              ReferenceExpression: implicitly
+                PsiElement(identifier)('implicitly')
+              TypeArgumentsList
+                PsiElement([)('[')
+                ParametrizedType: Foo[Int]
+                  SimpleType: Foo
+                    CodeReferenceElement: Foo
+                      PsiElement(identifier)('Foo')
+                  TypeArgumentsList
+                    PsiElement([)('[')
+                    SimpleType: Int
+                      CodeReferenceElement: Int
+                        PsiElement(identifier)('Int')
+                    PsiElement(])(']')
+                PsiElement(])(']')
             PsiWhiteSpace('\n  ')
             PsiElement(})('}')
         PsiWhiteSpace('\n')

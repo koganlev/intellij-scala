@@ -3,6 +3,7 @@ Document tests/pos/t2741/2741_1.scala
 (2:26..2:29) _empty_/Partial#Apply#[XYZ] -> 2:14
 (6:10..6:12) _empty_/MA# -> 4:7
 (6:13..6:20) _empty_/Partial# -> 1:7
+(6:21..6:26) _empty_/Partial#Apply# -> 2:8
 (9:23..9:26) _empty_/MAs# -> 5:7
 
 Document tests/pos/t2741/2741_2.scala

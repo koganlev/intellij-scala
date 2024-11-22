@@ -1,5 +1,3 @@
-//> using options -source:3.3
-
 trait Monoidal {
   type to[_] <: Tuple
 }

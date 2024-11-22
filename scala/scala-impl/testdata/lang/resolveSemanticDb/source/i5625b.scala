@@ -1,5 +1,3 @@
-//> using options -source:3.3
-
 object Test {
 
   type AV[t <: AnyVal] = t

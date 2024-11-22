@@ -1,6 +1,5 @@
 Document tests/pos/i1765.scala
 (6:17..6:19) _empty_/TC# -> 5:7
-(6:17..6:19) _empty_/TC#foo().[M] -> 6:11
 (6:28..6:29) _empty_/U# -> 3:7
 (6:30..6:31) _empty_/TC#foo().[A] -> 6:21
 (7:23..7:25) _empty_/TC# -> 5:7

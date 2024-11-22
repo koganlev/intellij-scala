@@ -4,7 +4,6 @@ Document tests/pos/i4742.scala
 (1:22..1:30) scala/reflect/ClassTag#
 (1:22..1:30) scala/reflect/ClassTag.
 (4:16..4:22) scala/Predef.String#
-(4:24..4:32) _empty_/Test#foo().[T] -> 4:11
 (4:24..4:32) scala/reflect/ClassTag#
 (4:37..4:38) _empty_/Test#foo().[T] -> 4:11
 (4:42..4:45) scala/Int#

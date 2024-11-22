@@ -165,8 +165,7 @@
 [909,909]: TypeBoundsTree
 [912,913]: TypeDef
 [912,912]: TypeBoundsTree
-[918,1332]: MatchTypeTree
-[918,923]: Ident
+[945,1332]: MatchTypeTree
 [945,954]: Tuple
 [946,947]: Ident
 [949,950]: Ident

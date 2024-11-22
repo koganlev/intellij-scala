@@ -1,4 +1,4 @@
-// https://github.com/scala/scala3/issues/15546
+// https://github.com/lampepfl/dotty/issues/15546
 
 trait Foo[F[_]]
 
@@ -14,7 +14,7 @@ object Bug {
 
 -----
 ScalaFile
-  PsiComment(comment)('// https://github.com/scala/scala3/issues/15546')
+  PsiComment(comment)('// https://github.com/lampepfl/dotty/issues/15546')
   PsiWhiteSpace('\n\n')
   ScTrait: Foo
     AnnotationsList

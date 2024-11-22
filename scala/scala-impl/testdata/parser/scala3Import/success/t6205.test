@@ -2,7 +2,7 @@
 class A[T]
 class Test1 {
   def x(backing: Map[A[_], Any]) =
-    for(case (k: A[kt], v) <- backing)
+    for( (k: A[kt], v) <- backing)
       yield (k: A[kt])
 }
 
@@ -111,10 +111,9 @@ ScalaFile
           ForStatement
             PsiElement(for)('for')
             PsiElement(()('(')
+            PsiWhiteSpace(' ')
             Enumerators
               Generator
-                PsiElement(case)('case')
-                PsiWhiteSpace(' ')
                 TuplePattern
                   PsiElement(()('(')
                   ArgumentPatterns

@@ -20,7 +20,7 @@
 [63,63]: TypeTree
 [66,75]: Select
 [66,73]: Super
-[66,68]: This
+[66,67]: This
 [101,137]: ValDef
 [108,118]: Function
 [108,111]: Ident

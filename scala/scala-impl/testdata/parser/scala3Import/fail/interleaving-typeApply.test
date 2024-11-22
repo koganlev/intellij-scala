@@ -1,3 +1,4 @@
+import scala.language.experimental.clauseInterleaving
 
 object typeApply:
 
@@ -11,6 +12,7 @@ object typeApply:
     def f7[T <: Int](using DummyImplicit)[U <: String]()[X <: Unit]: X => X = ???
 
     @main def test = {
+        import scala.language.experimental.namedTypeArguments
         f0[Int][String]
         f1[Int][String]
         f2[Int][String]()

@@ -7,7 +7,6 @@ Document tests/pos/t3498-new.scala
 (3:22..3:33) scala/specialized#
 (3:34..3:39) scala/
 (3:40..3:43) scala/Int.
-(3:49..3:57) _empty_/A#[U] -> 3:45
 (3:49..3:57) scala/reflect/ClassTag#
 (4:18..4:19) _empty_/A#[T] -> 3:18
 (4:22..4:27) scala/Array#

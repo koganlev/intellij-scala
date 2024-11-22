@@ -18,16 +18,13 @@ Document tests/pos/i5588b.scala
 (16:15..16:18) _empty_/TestMain2.Foo.
 (17:5..17:11) scala/Predef.assert(+1).
 (17:12..17:15) local0 -> 16:9
-(17:16..17:22) _empty_/TestMain2.fooExt.fooExt(). -> 10:34
 (17:23..17:25) scala/Any#`==`().
 (18:5..18:8) local0 -> 16:9
-(18:9..18:15) _empty_/TestMain2.fooExt.`fooExt_=`(). -> 11:34
 (19:5..19:11) scala/Predef.assert(+1).
 (19:12..19:15) local0 -> 16:9
 (19:16..19:19) _empty_/TestMain2.Foo#foo(). -> 6:22
 (19:20..19:22) scala/Any#`==`().
 (20:5..20:11) scala/Predef.assert(+1).
 (20:12..20:15) local0 -> 16:9
-(20:16..20:22) _empty_/TestMain2.fooExt.fooExt(). -> 10:34
 (20:23..20:25) scala/Any#`==`().
 

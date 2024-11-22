@@ -1,4 +1,4 @@
-
+//> using options -Yno-experimental
 
 // src-2/MacroImpl.scala
 trait Context {
@@ -29,6 +29,15 @@ object Macros {
 }
 -----
 ScalaFile
+  PsiElement(SCALA_DIRECTIVE)
+    ScDirectiveToken(tDIRECTIVE_PREFIX)('//>')
+    PsiWhiteSpace(' ')
+    ScDirectiveToken(tDIRECTIVE_COMMAND)('using')
+    PsiWhiteSpace(' ')
+    ScDirectiveToken(tDIRECTIVE_KEY)('options')
+    PsiWhiteSpace(' ')
+    ScDirectiveToken(tDIRECTIVE_VALUE)('-Yno-experimental')
+  PsiWhiteSpace('\n\n')
   ScTrait: Context
     PsiComment(comment)('// src-2/MacroImpl.scala')
     PsiWhiteSpace('\n')

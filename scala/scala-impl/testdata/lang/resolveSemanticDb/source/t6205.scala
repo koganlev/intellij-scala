@@ -2,7 +2,7 @@
 class A[T]
 class Test1 {
   def x(backing: Map[A[_], Any]) =
-    for(case (k: A[kt], v) <- backing)
+    for( (k: A[kt], v) <- backing)
       yield (k: A[kt])
 }
 

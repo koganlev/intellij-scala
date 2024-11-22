@@ -8,6 +8,7 @@ Document tests/pos/parents-cycle/Def_1.scala
 (10:18..10:20) _empty_/B2# -> 7:7
 (13:18..13:19) _empty_/A# -> 1:7
 (13:20..13:22) _empty_/B3# -> 13:7
+(13:23..13:25) _empty_/B3#Hi# -> 14:8
 (13:26..13:29) scala/Int#
 (14:16..14:17) _empty_/B3#Hi#[X] -> 14:11
 

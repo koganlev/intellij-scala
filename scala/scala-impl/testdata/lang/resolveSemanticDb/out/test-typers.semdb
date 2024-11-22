@@ -10,15 +10,15 @@ Document tests/pos/test-typers.scala
 (13:29..13:36) scala/collection/Iterable#lazyZip().
 (13:37..13:41) test/typers.ints. -> 9:7
 (14:7..14:14) scala/Predef.println(+1).
-(14:15..14:19) local0 -> 13:11
+(14:15..14:19) local1 -> 13:11
 (14:20..14:26) java/lang/String#length().
 (14:27..14:28) scala/Int#`+`(+4).
-(14:29..14:30) local1 -> 13:17
+(14:29..14:30) local2 -> 13:17
 (16:19..16:23) scala/Char#
 (16:26..16:32) scala/Predef.String#
-(16:35..16:36) scala/StringContext#s().
 (16:38..16:39) test/typers.Inference.double().(x) -> 16:16
 (16:40..16:41) test/typers.Inference.double().(x) -> 16:16
+(16:41..16:42) scala/StringContext#s().
 (18:11..18:18) scala/collection/StringOps#flatMap(+1).
 (18:19..18:25) test/typers.Inference.double(). -> 16:9
 (23:16..23:19) scala/Int#
@@ -41,7 +41,7 @@ Document tests/pos/test-typers.scala
 (35:12..35:14) scala/package.`::`.
 (35:24..35:25) scala/Int#`+`(+4).
 (35:26..35:29) test/typers.len(). -> 34:7
-(35:30..35:33) local6 -> 35:15
+(35:30..35:33) local7 -> 35:15
 (36:10..36:13) scala/package.Nil.
 (41:16..41:19) scala/Int#
 (41:22..41:25) scala/Int#
@@ -70,8 +70,8 @@ Document tests/pos/test-typers.scala
 (78:38..78:39) test/typers.Refinements#C#T# -> 78:20
 (78:42..78:45) scala/Int#
 (79:12..79:13) test/typers.Refinements#C# -> 78:11
-(79:33..79:34) local10 -> 79:21
-(79:51..79:52) local10 -> 79:21
+(79:33..79:34) local11 -> 79:21
+(79:51..79:52) local11 -> 79:21
 (79:55..79:58) scala/Int#
 (79:63..79:66) scala/Predef.`???`().
 (85:14..85:20) scala/Predef.String#
@@ -103,12 +103,12 @@ Document tests/pos/test-typers.scala
 (126:20..126:27) test/typers.Arrays.entries. -> 124:9
 (126:28..126:40) scala/collection/ArrayOps#zipWithIndex().
 (127:7..127:14) scala/Predef.println(+1).
-(127:15..127:16) local16 -> 126:11
+(127:15..127:16) local17 -> 126:11
 (131:13..131:18) test/typers.names. -> 8:7
 (132:12..132:16) scala/package.List.
-(132:26..132:27) local18 -> 132:17
+(132:26..132:27) local19 -> 132:17
 (133:12..133:16) scala/package.List.
-(133:23..133:24) local20 -> 133:17
+(133:23..133:24) local21 -> 133:17
 (134:12..134:16) scala/package.List.
 (136:13..136:19) scala/Predef.String#
 (136:22..136:23) test/typers.SeqExtractors.y. -> 131:9

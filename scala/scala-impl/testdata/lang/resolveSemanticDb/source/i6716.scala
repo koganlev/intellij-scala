@@ -1,8 +1,7 @@
-trait Monad[T]:
-  def id: String
+trait Monad[T]
 class Foo
 object Foo {
-  given Monad[Foo] { def id = "Foo" }
+  given Monad[Foo] with {}
 }
 
 opaque type Bar = Foo
@@ -10,7 +9,7 @@ object Bar {
   given Monad[Bar] = summon[Monad[Foo]]
 }
 
-object Test extends App {
-  println(summon[Monad[Foo]].id)
-  println(summon[Monad[Bar]].id)
+object Test {
+  val mf = summon[Monad[Foo]]
+  val mb = summon[Monad[Bar]]
 }

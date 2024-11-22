@@ -48,6 +48,6 @@
 [232,232]: TypeBoundsTree
 [242,246]: ValDef
 [245,246]: Ident
-[254,258]: ValDef
-[257,258]: Ident
-[258,258]: TypeTree
+[254,259]: ValDef
+[257,259]: Ident
+[259,259]: TypeTree

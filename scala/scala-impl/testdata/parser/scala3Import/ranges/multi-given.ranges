@@ -1,4 +1,4 @@
-[0,175]: PackageDef
+[0,155]: PackageDef
 [0,0]: Ident
 [0,7]: TypeDef
 [0,0]: Template
@@ -51,12 +51,3 @@
 [152,153]: Select
 [152,153]: New
 [152,153]: Ident
-[157,175]: ModuleDef
-[169,175]: Template
-[169,169]: DefDef
-[169,169]: TypeTree
-[169,172]: Apply
-[169,170]: Select
-[169,170]: New
-[169,170]: Ident
-[174,175]: Ident

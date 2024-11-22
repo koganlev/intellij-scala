@@ -182,7 +182,6 @@ Document tests/pos/StringContext.scala
 (324:37..324:43) scala/Predef.String#
 (324:56..324:59) scala/Int#
 (324:69..324:93) scala/package.IllegalArgumentException#
-(325:5..325:6) scala/StringContext#s(). -> 92:7
 (326:7..326:14) scala/Predef.require().
 (326:15..326:20) scala/StringContext.InvalidEscapeException#index. -> 324:49
 (326:21..326:23) scala/Int#`>=`(+3).
@@ -191,27 +190,28 @@ Document tests/pos/StringContext.scala
 (326:35..326:36) scala/Int#`<`(+3).
 (326:37..326:40) scala/StringContext.InvalidEscapeException#str. -> 324:32
 (326:41..326:47) java/lang/String#length().
-(327:16..327:17) scala/StringContext#s(). -> 92:7
+(327:72..327:73) scala/StringContext#s(). -> 92:7
 (328:11..328:16) scala/StringContext.InvalidEscapeException#index. -> 324:49
 (328:17..328:19) scala/Int#`==`(+3).
 (328:20..328:23) scala/StringContext.InvalidEscapeException#str. -> 324:32
 (328:24..328:30) java/lang/String#length().
 (328:31..328:32) scala/Int#`-`(+3).
-(328:55..328:56) scala/StringContext#s(). -> 92:7
 (328:62..328:65) scala/StringContext.InvalidEscapeException#str. -> 324:32
 (328:66..328:71) scala/StringContext.InvalidEscapeException#index. -> 324:49
 (328:72..328:73) scala/Int#`+`(+4).
 (328:91..328:93) local28 -> 327:11
+(328:96..328:97) scala/StringContext#s(). -> 92:7
 (329:14..329:19) scala/StringContext.InvalidEscapeException#index. -> 324:49
 (329:25..329:28) scala/StringContext.InvalidEscapeException#str. -> 324:32
+(329:57..329:58) scala/StringContext#s(). -> 92:7
 (332:13..332:18) scala/ -> 13:9
 (332:61..332:67) scala/Predef.String#
 (332:86..332:89) scala/Int#
 (332:102..332:105) scala/Int#
 (332:115..332:139) scala/package.IllegalArgumentException#
-(333:5..333:6) scala/StringContext#s(). -> 92:7
 (333:42..333:47) scala/StringContext.InvalidUnicodeEscapeException#index. -> 332:95
 (333:52..333:55) scala/StringContext.InvalidUnicodeEscapeException#str. -> 332:56
+(333:57..333:58) scala/StringContext#s(). -> 92:7
 (336:38..336:44) scala/Predef.String#
 (336:58..336:61) scala/Int#
 (336:65..336:69) scala/Char#

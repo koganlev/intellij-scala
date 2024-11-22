@@ -2,22 +2,22 @@
 //
 import collection.Seq
 object Test {
-  def f1(x: Any) = x.isInstanceOf[Seq[?]]
+  def f1(x: Any) = x.isInstanceOf[Seq[_]]
   def f2(x: Any) = x match {
-    case _: Seq[?]  => true
+    case _: Seq[_]  => true
     case _          => false
   }
 
   def f3(x: Any) = x match {
-    case _: Array[?]  => true
+    case _: Array[_]  => true
     case _            => false
   }
 
-  def f4(x: Any) = x.isInstanceOf[Iterable[?]]
+  def f4(x: Any) = x.isInstanceOf[Iterable[_]]
 
   def f5(x1: Any, x2: Any, x3: AnyRef) = (x1, x2, x3) match {
-    case (Some(_: Seq[?]), Nil, _)        => 1
-    case (None, List(_: List[?], _), _)   => 2
+    case (Some(_: Seq[_]), Nil, _)        => 1
+    case (None, List(_: List[_], _), _)   => 2
     case _                                => 3
   }
 
@@ -99,14 +99,14 @@ ScalaFile
               PsiElement(identifier)('isInstanceOf')
             TypeArgumentsList
               PsiElement([)('[')
-              ParametrizedType: Seq[?]
+              ParametrizedType: Seq[_]
                 SimpleType: Seq
                   CodeReferenceElement: Seq
                     PsiElement(identifier)('Seq')
                 TypeArgumentsList
                   PsiElement([)('[')
-                  WildcardType: ?
-                    PsiElement(?)('?')
+                  WildcardType: _
+                    PsiElement(_)('_')
                   PsiElement(])(']')
               PsiElement(])(']')
         PsiWhiteSpace('\n  ')
@@ -155,14 +155,14 @@ ScalaFile
                   PsiElement(:)(':')
                   PsiWhiteSpace(' ')
                   TypePattern
-                    ParametrizedType: Seq[?]
+                    ParametrizedType: Seq[_]
                       SimpleType: Seq
                         CodeReferenceElement: Seq
                           PsiElement(identifier)('Seq')
                       TypeArgumentsList
                         PsiElement([)('[')
-                        WildcardType: ?
-                          PsiElement(?)('?')
+                        TypeVariable: _
+                          PsiElement(_)('_')
                         PsiElement(])(']')
                 PsiWhiteSpace('  ')
                 PsiElement(=>)('=>')
@@ -230,14 +230,14 @@ ScalaFile
                   PsiElement(:)(':')
                   PsiWhiteSpace(' ')
                   TypePattern
-                    ParametrizedType: Array[?]
+                    ParametrizedType: Array[_]
                       SimpleType: Array
                         CodeReferenceElement: Array
                           PsiElement(identifier)('Array')
                       TypeArgumentsList
                         PsiElement([)('[')
-                        WildcardType: ?
-                          PsiElement(?)('?')
+                        TypeVariable: _
+                          PsiElement(_)('_')
                         PsiElement(])(']')
                 PsiWhiteSpace('  ')
                 PsiElement(=>)('=>')
@@ -295,14 +295,14 @@ ScalaFile
               PsiElement(identifier)('isInstanceOf')
             TypeArgumentsList
               PsiElement([)('[')
-              ParametrizedType: Iterable[?]
+              ParametrizedType: Iterable[_]
                 SimpleType: Iterable
                   CodeReferenceElement: Iterable
                     PsiElement(identifier)('Iterable')
                 TypeArgumentsList
                   PsiElement([)('[')
-                  WildcardType: ?
-                    PsiElement(?)('?')
+                  WildcardType: _
+                    PsiElement(_)('_')
                   PsiElement(])(']')
               PsiElement(])(']')
         PsiWhiteSpace('\n\n  ')
@@ -398,14 +398,14 @@ ScalaFile
                           PsiElement(:)(':')
                           PsiWhiteSpace(' ')
                           TypePattern
-                            ParametrizedType: Seq[?]
+                            ParametrizedType: Seq[_]
                               SimpleType: Seq
                                 CodeReferenceElement: Seq
                                   PsiElement(identifier)('Seq')
                               TypeArgumentsList
                                 PsiElement([)('[')
-                                WildcardType: ?
-                                  PsiElement(?)('?')
+                                TypeVariable: _
+                                  PsiElement(_)('_')
                                 PsiElement(])(']')
                         PsiElement())(')')
                     PsiElement(,)(',')
@@ -447,14 +447,14 @@ ScalaFile
                           PsiElement(:)(':')
                           PsiWhiteSpace(' ')
                           TypePattern
-                            ParametrizedType: List[?]
+                            ParametrizedType: List[_]
                               SimpleType: List
                                 CodeReferenceElement: List
                                   PsiElement(identifier)('List')
                               TypeArgumentsList
                                 PsiElement([)('[')
-                                WildcardType: ?
-                                  PsiElement(?)('?')
+                                TypeVariable: _
+                                  PsiElement(_)('_')
                                 PsiElement(])(']')
                         PsiElement(,)(',')
                         PsiWhiteSpace(' ')

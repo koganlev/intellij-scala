@@ -78,7 +78,7 @@
 [373,391]: SingletonTypeTree
 [373,386]: Select
 [373,382]: Super
-[373,377]: This
+[373,376]: This
 [395,398]: Ident
 [404,451]: DefDef
 [411,411]: TypeTree

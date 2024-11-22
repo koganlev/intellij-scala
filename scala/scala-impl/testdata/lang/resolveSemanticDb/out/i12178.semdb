@@ -7,7 +7,7 @@ Document tests/pos/i12178.scala
 (4:33..4:34) scala/`&`#
 (4:35..4:41) scala/Predef.String#
 (6:12..6:18) _empty_/i12178$package.LabelTagged.apply().[TLabel] -> 4:13
-(7:12..7:18) _empty_/i12178$package.LabelTagged.apply().[TValue] -> 4:43
+(7:12..7:19) _empty_/i12178$package.LabelTagged.apply().[TValue] -> 4:43
 (9:5..9:16) _empty_/i12178$package.LabelTagged# -> 1:13
 (9:17..9:23) _empty_/i12178$package.LabelTagged.apply().[TLabel] -> 4:13
 (9:25..9:31) _empty_/i12178$package.LabelTagged.apply().[TValue] -> 4:43

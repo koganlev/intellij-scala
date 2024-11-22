@@ -11,5 +11,6 @@ Document tests/pos/i16049.scala
 (10:62..10:63) _empty_/FirstOrderMinimizer.OptParams#iterations().[T] -> 10:20
 (10:65..10:82) _empty_/BatchDiffFunction# -> 1:7
 (10:83..10:84) _empty_/FirstOrderMinimizer.OptParams#iterations().[T] -> 10:20
+(10:87..10:92) _empty_/FirstOrderMinimizer#State# -> 4:8
 (10:96..10:99) scala/Predef.`???`().
 

@@ -38,7 +38,7 @@ Document tests/pos/scala2traits/dotty-subclass.scala
 (26:23..26:24) local1 -> 23:9
 (26:25..26:26) _empty_/A#b(). -> 12:7
 (28:5..28:6) local1 -> 23:9
-(28:7..28:9) _empty_/S2Tprivate#`xx_=`(). -> 26:7
+(28:6..28:9) _empty_/S2Tprivate#`xx_=`(). -> 26:7
 (28:7..28:9) _empty_/S2Tprivate#xx(). -> 25:7
 (28:13..28:14) local1 -> 23:9
 (28:15..28:17) _empty_/S2Tprivate#yy(). -> 27:7

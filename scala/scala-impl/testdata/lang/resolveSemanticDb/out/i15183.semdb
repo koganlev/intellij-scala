@@ -4,37 +4,35 @@ Document tests/pos/i15183/decoder_1.scala
 (5:9..5:16) _empty_/Decoder# -> 3:14
 (5:17..5:23) scala/Double#
 (5:27..5:30) scala/Predef.`???`().
-(7:41..7:46) scala/Tuple.
-(7:47..7:50) scala/Tuple.Map#
-(7:51..7:61) scala/Tuple$package.EmptyTuple.
+(7:37..7:42) scala/Tuple.
+(7:43..7:46) scala/Tuple.Map#
+(7:47..7:57) scala/Tuple$package.EmptyTuple.
 (8:5..8:15) scala/Tuple$package.EmptyTuple.
-(10:38..10:43) scala/Tuple#
+(10:36..10:41) scala/Tuple#
 (10:53..10:60) _empty_/Decoder# -> 3:14
-(10:61..10:62) _empty_/Decoder.summonTuple().[H] -> 10:30
+(10:61..10:62) _empty_/Decoder.summonTuple().[H] -> 10:28
 (10:69..10:74) scala/Tuple.
 (10:75..10:78) scala/Tuple.Map#
-(10:79..10:80) _empty_/Decoder.summonTuple().[T] -> 10:33
-(10:95..10:100) scala/Tuple.
-(10:101..10:104) scala/Tuple.Map#
-(10:105..10:106) _empty_/Decoder.summonTuple().[H] -> 10:30
-(10:107..10:109) scala/`*:`#
-(10:110..10:111) _empty_/Decoder.summonTuple().[T] -> 10:33
+(10:79..10:80) _empty_/Decoder.summonTuple().[T] -> 10:31
+(10:93..10:98) scala/Tuple.
+(10:99..10:102) scala/Tuple.Map#
+(10:103..10:104) _empty_/Decoder.summonTuple().[H] -> 10:28
+(10:105..10:107) scala/`*:`#
+(10:108..10:109) _empty_/Decoder.summonTuple().[T] -> 10:31
 (11:5..11:7) _empty_/Decoder.summonTuple().(hd) -> 10:49
 (11:11..11:13) _empty_/Decoder.summonTuple().(td) -> 10:65
 (13:36..13:42) scala/deriving/Mirror.
 (13:43..13:45) scala/deriving/Mirror.Of#
-(13:46..13:47) _empty_/Decoder.derived().[T] -> 13:26
+(13:46..13:47) _empty_/Decoder.derived().[T] -> 13:24
 (13:53..13:58) scala/Tuple.
 (13:59..13:62) scala/Tuple.Map#
 (13:63..13:64) _empty_/Decoder.derived().(m) -> 13:33
-(13:97..13:104) _empty_/Decoder# -> 3:14
-(13:105..13:106) _empty_/Decoder.derived().[T] -> 13:26
-(13:110..13:113) scala/Predef.`???`().
+(13:95..13:102) _empty_/Decoder# -> 3:14
+(13:103..13:104) _empty_/Decoder.derived().[T] -> 13:24
+(13:108..13:111) scala/Predef.`???`().
 
 Document tests/pos/i15183/test_2.scala
-(2:8..2:15) _empty_/Decoder. -> 4:8
-(2:17..2:24) _empty_/Decoder.derived(). -> 13:16
-(15:25..15:31) scala/Double#
-(15:41..15:47) scala/Double#
-(16:23..16:29) scala/Double#
+(11:25..11:31) scala/Double#
+(11:41..11:47) scala/Double#
+(12:23..12:29) scala/Double#
 

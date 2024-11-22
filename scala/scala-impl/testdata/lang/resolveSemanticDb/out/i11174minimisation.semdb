@@ -29,11 +29,11 @@ Document tests/pos/i11174minimisation.scala
 (14:65..14:68) local3 -> 14:24
 (15:23..15:33) scala/Tuple$package.EmptyTuple#
 (16:9..16:12) scala/Predef.`???`().
-(23:29..23:43) _empty_/EnumerateNames# -> 4:7
-(23:44..23:45) _empty_/MainClass#auto().[T] -> 23:23
-(23:49..23:63) _empty_/EnumerateNames. -> 6:8
-(23:64..23:71) _empty_/EnumerateNames.derived(). -> 7:14
-(23:72..23:73) _empty_/MainClass#auto().[T] -> 23:23
+(23:25..23:39) _empty_/EnumerateNames# -> 4:7
+(23:40..23:41) _empty_/MainClass#auto().[T] -> 23:21
+(23:45..23:59) _empty_/EnumerateNames. -> 6:8
+(23:60..23:67) _empty_/EnumerateNames.derived(). -> 7:14
+(23:68..23:69) _empty_/MainClass#auto().[T] -> 23:21
 (24:19..24:33) _empty_/EnumerateNames# -> 4:7
 (24:34..24:39) _empty_/MainClass#Shape# -> 21:8
 (24:43..24:57) _empty_/EnumerateNames. -> 6:8

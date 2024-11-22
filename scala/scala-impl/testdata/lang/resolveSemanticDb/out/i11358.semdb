@@ -38,15 +38,12 @@ Document tests/pos/i11358.scala
 (10:33..10:36) scala/Int#
 (10:38..10:42) scala/package.List.
 (12:17..12:24) scala/reflect/
-(12:17..12:33) _empty_/Test.`+++`().[A] -> 12:14
-(12:17..12:33) _empty_/Test.`+++`(+1).[A] -> 12:14
 (12:25..12:33) scala/reflect/ClassTag#
 (12:40..12:46) scala/IArray$package.IArray#
 (12:47..12:48) _empty_/Test.`+++`().[A] -> 12:14
 (12:47..12:48) _empty_/Test.`+++`(+1).[A] -> 12:14
 (13:18..13:19) _empty_/Test.`+++`().[A] -> 12:14
 (13:21..13:28) scala/reflect/
-(13:21..13:37) _empty_/Test.`+++`().[B] -> 13:13
 (13:29..13:37) scala/reflect/ClassTag#
 (13:47..13:53) scala/IArray$package.IArray#
 (13:54..13:55) _empty_/Test.`+++`().[B] -> 13:13
@@ -55,7 +52,6 @@ Document tests/pos/i11358.scala
 (13:71..13:74) scala/Predef.`???`().
 (14:18..14:19) _empty_/Test.`+++`(+1).[A] -> 12:14
 (14:21..14:28) scala/reflect/
-(14:21..14:37) _empty_/Test.`+++`(+1).[B] -> 14:13
 (14:29..14:37) scala/reflect/ClassTag#
 (14:47..14:59) scala/package.IterableOnce#
 (14:60..14:61) _empty_/Test.`+++`(+1).[B] -> 14:13

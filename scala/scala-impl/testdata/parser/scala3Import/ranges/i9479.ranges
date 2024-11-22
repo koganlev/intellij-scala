@@ -14,10 +14,11 @@
 [40,55]: LambdaTypeTree
 [40,41]: TypeDef
 [40,40]: TypeBoundsTree
-[44,55]: ContextBounds
-[44,44]: TypeBoundsTree
-[44,55]: ContextBoundTypeTree
+[42,55]: ContextBounds
+[42,42]: TypeBoundsTree
+[42,55]: AppliedTypeTree
 [44,55]: Ident
+[55,55]: Ident
 [57,58]: TypeDef
 [57,57]: TypeBoundsTree
 [60,61]: TypeDef

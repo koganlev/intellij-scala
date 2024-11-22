@@ -74,10 +74,11 @@
 [315,317]: Ident
 [318,319]: Ident
 [323,335]: TypeDef
-[327,335]: ContextBounds
-[327,327]: TypeBoundsTree
-[327,335]: ContextBoundTypeTree
+[325,335]: ContextBounds
+[325,325]: TypeBoundsTree
+[325,335]: AppliedTypeTree
 [327,335]: Ident
+[335,335]: Ident
 [337,346]: ValDef
 [341,346]: AppliedTypeTree
 [341,343]: Ident

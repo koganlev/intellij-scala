@@ -63,17 +63,4 @@ Document tests/pos/intersection.scala
 (41:32..41:33) _empty_/Test.B#f(). -> 31:18
 (42:15..42:18) scala/Int#
 (42:21..42:26) _empty_/Test.fooBA(). -> 41:7
-(49:19..49:22) _empty_/Test2.Row# -> 46:9
-(49:23..49:24) _empty_/Test2.A# -> 47:9
-(50:19..50:22) _empty_/Test2.Row# -> 46:9
-(50:23..50:24) _empty_/Test2.B# -> 48:9
-(51:10..51:11) _empty_/Test2.C# -> 49:9
-(51:12..51:13) scala/`&`#
-(51:14..51:15) _empty_/Test2.D# -> 50:9
-(51:18..51:21) scala/Predef.`???`().
-(52:10..52:13) _empty_/Test2.Row# -> 46:9
-(52:14..52:15) _empty_/Test2.A# -> 47:9
-(52:16..52:17) scala/`&`#
-(52:18..52:19) _empty_/Test2.B# -> 48:9
-(52:23..52:24) _empty_/Test2.x. -> 51:7
 

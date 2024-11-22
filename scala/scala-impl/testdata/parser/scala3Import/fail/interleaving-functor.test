@@ -1,3 +1,4 @@
+import scala.language.experimental.clauseInterleaving
 
 object functorInterleaving:
   //taken from https://dotty.epfl.ch/docs/reference/contextual/type-classes.html
@@ -7,7 +8,7 @@ object functorInterleaving:
     def map[A](x: F[A])[B](f: A => B): F[B]
 
 
-  given Functor[List]:
+  given Functor[List] with
     def map[A](x: List[A])[B](f: A => B): List[B] =
       x.map(f)
 

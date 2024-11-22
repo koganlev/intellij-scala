@@ -29,11 +29,12 @@
 [51,86]: ContextBounds
 [51,59]: TypeBoundsTree
 [54,59]: Ident
-[62,86]: ContextBoundTypeTree
+[60,86]: AppliedTypeTree
 [62,86]: AppliedTypeTree
 [62,78]: Select
 [62,67]: Ident
 [79,85]: Ident
+[86,86]: Ident
 [88,92]: ValDef
 [91,92]: Ident
 [94,131]: ValDef

@@ -51,10 +51,11 @@
 [283,309]: Template
 [283,309]: DefDef
 [284,298]: TypeDef
-[288,298]: ContextBounds
-[288,288]: TypeBoundsTree
-[288,298]: ContextBoundTypeTree
+[286,298]: ContextBounds
+[286,286]: TypeBoundsTree
+[286,298]: AppliedTypeTree
 [288,298]: Ident
+[298,298]: Ident
 [300,308]: ValDef
 [306,308]: Ident
 [308,308]: TypeTree

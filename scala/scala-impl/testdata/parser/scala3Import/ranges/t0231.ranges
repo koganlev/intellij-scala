@@ -26,7 +26,7 @@
 [141,142]: Ident
 [143,156]: Select
 [143,152]: Super
-[143,147]: This
+[143,146]: This
 [165,206]: ModuleDef
 [184,204]: Template
 [184,184]: DefDef

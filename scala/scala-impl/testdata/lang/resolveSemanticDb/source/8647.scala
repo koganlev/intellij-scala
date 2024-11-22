@@ -1,5 +1,3 @@
-//> using options -source:3.3
-
 final class Two[A, B]()
 
 final class Blaaa

@@ -56,8 +56,9 @@
 [200,206]: AppliedTypeTree
 [200,203]: Ident
 [204,205]: Ident
-[208,217]: ContextBoundTypeTree
+[206,217]: AppliedTypeTree
 [208,217]: Ident
+[217,217]: Ident
 [220,224]: AppliedTypeTree
 [220,221]: Ident
 [222,223]: Ident

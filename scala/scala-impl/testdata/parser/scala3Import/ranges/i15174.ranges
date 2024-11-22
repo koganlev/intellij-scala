@@ -40,10 +40,10 @@
 [263,263]: TypeBoundsTree
 [274,275]: TypeDef
 [274,274]: TypeBoundsTree
-[284,321]: ValDef
-[292,321]: Function
+[284,322]: ValDef
+[292,322]: Function
 [292,293]: Ident
-[297,321]: AppliedTypeTree
+[297,322]: AppliedTypeTree
 [297,303]: Ident
 [304,309]: Ident
 [311,320]: Ident

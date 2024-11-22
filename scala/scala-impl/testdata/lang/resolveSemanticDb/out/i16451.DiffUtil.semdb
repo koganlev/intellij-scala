@@ -15,14 +15,14 @@ Document tests/pos/i16451.DiffUtil.scala
 (11:12..11:22) _empty_/DiffUtil.Unmodified.
 (11:35..11:38) local1 -> 11:23
 (12:12..12:20) _empty_/DiffUtil.Inserted.
-(12:35..12:36) scala/StringContext#s().
 (12:39..12:42) local2 -> 12:21
+(12:42..12:43) scala/StringContext#s().
 (13:12..13:20) _empty_/DiffUtil.Modified.
-(13:35..13:36) scala/StringContext#s().
 (13:39..13:43) local3 -> 13:21
 (13:45..13:48) local4 -> 13:27
+(13:49..13:50) scala/StringContext#s().
 (14:12..14:19) _empty_/DiffUtil.Deleted.
-(14:35..14:36) scala/StringContext#s().
 (14:39..14:42) local5 -> 14:20
+(14:42..14:43) scala/StringContext#s().
 (15:7..15:15) scala/collection/IterableOnceOps#mkString(+2).
 

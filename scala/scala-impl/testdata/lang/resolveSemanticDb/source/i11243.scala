@@ -54,7 +54,7 @@ object WriterTest extends App {
 
   end Monad
 
-  given eitherMonad: [Err] => Monad[[X] =>> Either[Err,X]]:
+  given eitherMonad[Err]: Monad[[X] =>> Either[Err,X]] with
     def pure[A](a: A): Either[Err, A] = Right(a)
     extension [A,B](x: Either[Err,A]) def flatMap(f: A => Either[Err, B]) = {
       x match {
@@ -63,7 +63,7 @@ object WriterTest extends App {
       }
     }
 
-  given optionMonad: Monad[Option]:
+  given optionMonad: Monad[Option] with
     def pure[A](a: A) = Some(a)
     extension[A,B](fa: Option[A])
       def flatMap(f: A => Option[B]) = {
@@ -75,7 +75,7 @@ object WriterTest extends App {
         }
       }
 
-  given listMonad: Monad[List]:
+  given listMonad: Monad[List] with
     def pure[A](a: A): List[A] = List(a)
 
     extension[A,B](x: List[A])
@@ -88,7 +88,7 @@ object WriterTest extends App {
 
   case class Transformer[F[_]: Monad,A](val wrapped: F[A])
 
-  given transformerMonad: [F[_]: Monad] => Monad[[X] =>> Transformer[F,X]] {
+  given transformerMonad[F[_]: Monad]: Monad[[X] =>> Transformer[F,X]] with {
 
     def pure[A](a: A): Transformer[F,A] = Transformer(summon[Monad[F]].pure(a))
 

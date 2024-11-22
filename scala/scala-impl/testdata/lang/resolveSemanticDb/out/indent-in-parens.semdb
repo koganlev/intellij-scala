@@ -38,11 +38,11 @@ Document tests/pos/indent-in-parens.scala
 (41:7..41:14) scala/Predef.println(+1).
 (41:15..41:16) _empty_/`indent-in-parens$package`.f().(x) -> 14:7
 (42:7..42:8) _empty_/`indent-in-parens$package`.f().(x) -> 14:7
-(44:7..44:8) scala/StringContext#s().
 (45:12..45:13) _empty_/`indent-in-parens$package`.f().(x) -> 14:7
 (45:14..45:15) scala/Int#`>`(+3).
 (46:11..46:18) scala/Predef.println(+1).
 (46:19..46:20) _empty_/`indent-in-parens$package`.f().(x) -> 14:7
 (47:11..47:12) _empty_/`indent-in-parens$package`.f().(x) -> 14:7
 (49:12..49:13) _empty_/`indent-in-parens$package`.f().(x) -> 14:7
+(50:12..50:13) scala/StringContext#s().
 

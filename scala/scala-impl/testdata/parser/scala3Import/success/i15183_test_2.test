@@ -1,8 +1,4 @@
 // Fails in each cases below
-import Decoder.{derived as _, given}
-// NOTE Decoder.derived is already in the implicit scope
-//  but the others require an import as they depend on match type reduction
-
 enum Env derives Decoder:
   case Local,Sit,Prod
 
@@ -16,35 +12,9 @@ enum Shape derives Decoder:
   case Circle(radius: Double)
 -----
 ScalaFile
-  PsiComment(comment)('// Fails in each cases below')
-  PsiWhiteSpace('\n')
-  ScImportStatement
-    PsiElement(import)('import')
-    PsiWhiteSpace(' ')
-    ImportExpression
-      CodeReferenceElement: Decoder
-        PsiElement(identifier)('Decoder')
-      PsiElement(.)('.')
-      ImportSelectors
-        PsiElement({)('{')
-        ImportSelector
-          CodeReferenceElement: derived
-            PsiElement(identifier)('derived')
-          PsiWhiteSpace(' ')
-          PsiElement(as)('as')
-          PsiWhiteSpace(' ')
-          PsiElement(_)('_')
-        PsiElement(,)(',')
-        PsiWhiteSpace(' ')
-        ImportSelector
-          PsiElement(given)('given')
-        PsiElement(})('}')
-  PsiWhiteSpace('\n')
-  PsiComment(comment)('// NOTE Decoder.derived is already in the implicit scope')
-  PsiWhiteSpace('\n')
-  PsiComment(comment)('//  but the others require an import as they depend on match type reduction')
-  PsiWhiteSpace('\n\n')
   ScEnum: Env
+    PsiComment(comment)('// Fails in each cases below')
+    PsiWhiteSpace('\n')
     AnnotationsList
       <empty list>
     Modifiers

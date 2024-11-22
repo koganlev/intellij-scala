@@ -13,7 +13,7 @@ Document tests/pos/infer1.scala
 (15:27..15:28) _empty_/InferrenceTest.createNumberHandler().[T] -> 13:27
 (15:32..15:36) scala/Unit#
 (15:40..15:43) scala/Predef.Map.
-(15:44..15:49) scala/collection/immutable/Map.empty().
+(15:45..15:50) scala/collection/immutable/Map.empty().
 (16:6..16:7) _empty_/InferrenceTest.createNumberHandler().[T] -> 13:27
 (16:11..16:15) scala/Unit#
 (18:9..18:10) _empty_/InferrenceTest.createNumberHandler().[T] -> 13:27

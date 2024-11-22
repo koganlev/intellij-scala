@@ -1,3 +1,4 @@
+import language.experimental.relaxedExtensionImports
 
 object One:
   extension (s: String)

@@ -8,10 +8,11 @@
 [21,40]: Ident
 [49,90]: DefDef
 [66,78]: TypeDef
-[69,78]: ContextBounds
-[69,69]: TypeBoundsTree
-[69,78]: ContextBoundTypeTree
+[67,78]: ContextBounds
+[67,67]: TypeBoundsTree
+[67,78]: AppliedTypeTree
 [69,78]: Ident
+[78,78]: Ident
 [81,85]: Ident
 [88,90]: Block
 [93,102]: TypeApply

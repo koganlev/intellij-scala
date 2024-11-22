@@ -4,12 +4,13 @@
 [9,1096]: Template
 [9,54]: DefDef
 [10,53]: TypeDef
-[26,53]: ContextBounds
-[26,26]: TypeBoundsTree
-[26,53]: ContextBoundTypeTree
+[24,53]: ContextBounds
+[24,24]: TypeBoundsTree
+[24,53]: AppliedTypeTree
 [26,53]: Select
 [26,39]: Select
 [26,31]: Ident
+[53,53]: Ident
 [53,53]: TypeTree
 [241,294]: DefDef
 [248,267]: TypeDef
