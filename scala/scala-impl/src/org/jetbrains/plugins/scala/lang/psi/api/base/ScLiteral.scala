@@ -48,6 +48,12 @@ trait ScLiteral extends ScExpression
    * }}}
    */
   def isSimpleLiteral: Boolean
+
+  /**
+   * Returns the unwidened literal type of this literal or
+   * its widened type if the literal itself has errors.
+   */
+  def literalType: ScType
 }
 
 object ScLiteral {

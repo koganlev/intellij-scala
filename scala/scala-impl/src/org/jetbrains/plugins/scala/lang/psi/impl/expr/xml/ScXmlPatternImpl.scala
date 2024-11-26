@@ -12,7 +12,7 @@ import org.jetbrains.plugins.scala.lang.psi.types.api.designator.ScDesignatorTyp
 import org.jetbrains.plugins.scala.lang.psi.types.result._
 
 class ScXmlPatternImpl(node: ASTNode) extends ScalaPsiElementImpl (node) with ScPatternImpl with ScXmlPattern {
-  override def isIrrefutableFor(t: Option[ScType]): Boolean = false
+  override def isIrrefutableForImpl(t: Option[ScType]): Boolean = false
 
   override def subpatterns: Seq[ScPattern] =
     super.subpatterns ++ findChildren[ScPatterns].iterator.flatMap(_.patterns)

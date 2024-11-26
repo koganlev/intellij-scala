@@ -9,7 +9,7 @@ import org.jetbrains.plugins.scala.lang.psi.types.result._
 
 class ScWildcardPatternImpl(node: ASTNode) extends ScalaPsiElementImpl (node) with ScPatternImpl with ScWildcardPattern {
 
-  override def isIrrefutableFor(t: Option[ScType]): Boolean = true
+  override def isIrrefutableForImpl(t: Option[ScType]): Boolean = true
 
   override def toString: String = "WildcardPattern"
 

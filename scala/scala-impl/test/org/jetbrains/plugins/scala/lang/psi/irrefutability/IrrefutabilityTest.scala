@@ -1,14 +1,15 @@
 package org.jetbrains.plugins.scala.lang.psi.irrefutability
 
 import org.intellij.lang.annotations.Language
+import org.jetbrains.plugins.scala.ScalaVersion
 import org.jetbrains.plugins.scala.base.ScalaLightCodeInsightFixtureTestCase
 import org.jetbrains.plugins.scala.lang.parser.ScalaElementType
 import org.jetbrains.plugins.scala.lang.psi.api.{ScalaFile, ScalaPsiElement}
 import org.jetbrains.plugins.scala.lang.psi.api.base.patterns.ScPattern
 import org.jetbrains.plugins.scala.lang.psi.api.expr.{ScExpression, ScMatch}
+import org.jetbrains.plugins.scala.lang.psi.api.statements.ScPatternDefinition
 
-class IrrefutabilityTest extends ScalaLightCodeInsightFixtureTestCase {
-
+abstract class IrrefutabilityTestBase extends ScalaLightCodeInsightFixtureTestCase {
   private object MatchWithOneCasePatternMatch {
     def unapply(arg: ScMatch): Option[(ScPattern, ScExpression)] =
       for {
@@ -21,37 +22,62 @@ class IrrefutabilityTest extends ScalaLightCodeInsightFixtureTestCase {
   private def isIrrefutable(@Language("Scala") code: String): Boolean = {
     val testCode =
       s"""
-        |{
-        |  class Base
-        |  class A extends Base
-        |  class B extends Base
-        |  object A extends A
-        |  object B extends B
-        |  case class Fun[A, B](a: A, rest: B*)
-        |
-        |  $code
+         |{
+         |  class Base
+         |  class A extends Base
+         |  class B extends Base
+         |  object A extends A
+         |  object B extends B
+         |  case class Fun[A, B](a: A, rest: B*)
+         |
+         |  $code
          }
       """.stripMargin
     val file = configureFromFileText(testCode).asInstanceOf[ScalaFile]
     val root = file.getFirstChild.asInstanceOf[ScalaPsiElement]
 
-    val List((pattern, expr)) = root.findChildrenByType(ScalaElementType.MATCH_STMT) collect {
+    val byMatch = root.findChildrenByType(ScalaElementType.MATCH_STMT) collect {
       case MatchWithOneCasePatternMatch(p, e) => p -> e
     }
+
+    val byVal = root
+      .findChildrenByType(ScalaElementType.PATTERN_DEFINITION).flatMap {
+        case p: ScPatternDefinition if p.annotations.exists(_.textMatches("@testval")) => p.pList.patterns.map(_ -> p.expr.get)
+        case _ => Nil
+      }
+
+    val foundPatterns = if (byMatch.nonEmpty) byMatch else byVal
+    assert(foundPatterns.size == 1, s"found not exactly one pattern, patterns: $foundPatterns")
+
+    val List((pattern, expr)) = foundPatterns
 
     val exprType = expr.`type`().get
     pattern.isIrrefutableFor(Some(exprType))
   }
 
-  def assertIsIrrefutable(@Language("Scala") code: String): Unit = {
+  def assertIsIrrefutable(code: String): Unit = {
     assert(isIrrefutable(code), s"Code is not irrefutable: '$code'")
   }
 
-  def assertIsNotIrrefutable(@Language("Scala") code: String): Unit = {
+  def assertIsNotIrrefutable(code: String): Unit = {
     assert(!isIrrefutable(code), s"Code is irrefutable: '$code'")
-
   }
 
+  def testNothingIsAlwaysIrrefutable(): Unit = {
+    assertIsIrrefutable("??? match { case _ => }")
+    assertIsIrrefutable("??? match { case a => }")
+    assertIsIrrefutable("??? match { case A => }")
+    assertIsIrrefutable("??? match { case (1, _) => }")
+    assertIsIrrefutable("@testval val 1 = ???")
+    assertIsIrrefutable("??? match { case a: A => }")
+    assertIsIrrefutable("??? match { case a@(_) => }")
+    assertIsIrrefutable("??? match { case Some(a) => }")
+    assertIsIrrefutable("??? match { case (_) => }")
+    assertIsIrrefutable("??? match { case 1 => }")
+    assertIsIrrefutable("??? match { case _ :: _ => }")
+    assertIsIrrefutable("??? match { case _: Int | _: String => }")
+    assertIsIrrefutable("??? match { case Fun(_*) => }")
+  }
 
   def testWildcardPattern(): Unit = {
     assertIsIrrefutable("A match { case _ => }")
@@ -60,6 +86,30 @@ class IrrefutabilityTest extends ScalaLightCodeInsightFixtureTestCase {
   def testReferencePattern(): Unit = {
     assertIsIrrefutable("A match { case a => }")
     assertIsIrrefutable("(A, B) match { case a => }")
+  }
+
+  def testStableReferencePattern(): Unit = {
+    // TODO: fix if someone complains
+    //assertIsIrrefutable(
+    //  """
+    //    |object Test
+    //    |Test match { case Test => }
+    //    |""".stripMargin
+    //)
+//
+    //assertIsIrrefutable(
+    //  """
+    //    |val x: Int = ???
+    //    |x match { case `x` => }
+    //    |""".stripMargin
+    //)
+
+    //assertIsNotIrrefutable(
+    //  """
+    //    |val x: Any = 1
+    //    |@test val (`x`) = (x: Any)
+    //    |""".stripMargin
+    //)
   }
 
   def testTypedPattern(): Unit = {
@@ -115,14 +165,13 @@ class IrrefutabilityTest extends ScalaLightCodeInsightFixtureTestCase {
     assertIsNotIrrefutable("Option(A) match { case (Some(a)) => }")
   }
 
-
   def testLiteralPattern(): Unit = {
-    assertIsNotIrrefutable("1 match { case 1 => }")
-    assertIsNotIrrefutable("\"test\" match { case \"test\" => }")
-  }
+    // todo: make these work if someone complains
+    //assertIsIrrefutable("val 1 = 1")
+    //assertIsIrrefutable("\"test\" match { case \"test\" => }")
 
-  def testStableReferencePattern(): Unit = {
-    assertIsNotIrrefutable("A match { case `A` => }")
+    assertIsNotIrrefutable("1 match { case 2 => }")
+    assertIsNotIrrefutable("(1: Int) match { case n@(2) => }")
   }
 
   def testInfixPattern(): Unit = {
@@ -140,11 +189,6 @@ class IrrefutabilityTest extends ScalaLightCodeInsightFixtureTestCase {
     assertIsNotIrrefutable("A match { case _: B | (a, b)}")
   }
 
-  def testXmlPattern(): Unit = {
-    assertIsNotIrrefutable("<b>0</b> match { case <a>x</a> => }")
-    assertIsNotIrrefutable("<a>0</a> match { case <a>x</a> => }")
-  }
-
   def testWildcardSeqPattern(): Unit = {
     assertIsIrrefutable("Fun(A, B) match { case Fun(a, _*) => }")
     assertIsIrrefutable("Fun(A, B) match { case Fun(a, b@_*) => }")
@@ -158,5 +202,35 @@ class IrrefutabilityTest extends ScalaLightCodeInsightFixtureTestCase {
     assertIsNotIrrefutable("Fun(A, B) match { case Fun(a) => }")
     assertIsNotIrrefutable("Fun(A, B) match { case Fun(a, b, _*) => }")
     assertIsNotIrrefutable("Fun(A, B) match { case Fun(a, b, c@_*) => }")
+  }
+}
+
+class IrrefutabilityTest_Scala2 extends IrrefutabilityTestBase {
+  override protected def supportedIn(version: ScalaVersion): Boolean = version <= ScalaVersion.Latest.Scala_2
+
+  def testXmlPattern(): Unit = {
+    assertIsNotIrrefutable("<b>0</b> match { case <a>x</a> => }")
+    assertIsNotIrrefutable("<a>0</a> match { case <a>x</a> => }")
+
+    // check nothing
+    assertIsIrrefutable("??? match { case <a>x</a> => }")
+  }
+}
+
+class IrrefutabilityTest_Scala3 extends IrrefutabilityTestBase {
+  override protected def supportedIn(version: ScalaVersion): Boolean = version >= ScalaVersion.Latest.Scala_3_6
+
+  def testNamedTuplePattern(): Unit = {
+    assertIsIrrefutable("(x = A, y = B) match { case (x = a, y = b) => }")
+    assertIsIrrefutable("(x = 1) match { case (x = _) => }")
+
+    assertIsNotIrrefutable("(x = 1) match { case (y = _) => }")
+    assertIsNotIrrefutable("(x = 1) match { case (x = 2) => }")
+    assertIsNotIrrefutable("(x = 1, y = 2) match { case (x = _) => }")
+    assertIsNotIrrefutable("(x = 1, y = 2) match { case (y = _) => }")
+    assertIsNotIrrefutable("(x = 1, y = 2) match { case (y = _, v = _) => }")
+
+    // check nothing
+    assertIsIrrefutable("??? match { case (x = 1, y = 2) => }")
   }
 }

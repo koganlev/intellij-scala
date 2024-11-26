@@ -8,7 +8,8 @@ import org.jetbrains.plugins.scala.lang.psi.types.ScType
 import org.jetbrains.plugins.scala.lang.psi.types.result.TypeResult
 
 class ScLiteralPatternImpl(node: ASTNode) extends ScalaPsiElementImpl(node) with ScPatternImpl with ScLiteralPattern {
-  override def isIrrefutableFor(t: Option[ScType]): Boolean = false
+  override def isIrrefutableForImpl(t: Option[ScType]): Boolean =
+    t.exists(_.conforms(getLiteral.literalType))
 
   override def toString: String = "LiteralPattern"
 

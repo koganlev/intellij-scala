@@ -6,7 +6,7 @@ import org.jetbrains.plugins.scala.lang.psi.types.result.Typeable
 
 trait TypedPatternLikeImpl extends ScPattern { this: Typeable =>
 
-  final override def isIrrefutableFor(t: Option[ScType]): Boolean = {
+  final override def isIrrefutableForImpl(t: Option[ScType]): Boolean = {
     for {
       ty <- t
       Right(tp) <- Some(`type`())
