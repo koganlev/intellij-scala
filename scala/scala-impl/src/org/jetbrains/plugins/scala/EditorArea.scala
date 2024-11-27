@@ -8,7 +8,6 @@ import com.intellij.openapi.editor.markup.{HighlighterLayer, HighlighterTargetAr
 import com.intellij.openapi.editor.{Document, Editor, EditorFactory, LogicalPosition}
 import com.intellij.openapi.fileEditor.FileEditor
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.startup.StartupActivity
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.{Key, TextRange}
 import com.intellij.openapi.wm.WindowManager
@@ -16,12 +15,13 @@ import com.intellij.psi.{PsiDocumentManager, PsiElement, PsiManager}
 import com.intellij.ui.{Gray, JBColor}
 import org.jetbrains.plugins.scala.EditorArea._
 import org.jetbrains.plugins.scala.project.ProjectExt
+import org.jetbrains.plugins.scala.startup.ProjectActivity
 
 import java.awt.Point
 import java.util
 import javax.swing.Timer
 
-class EditorArea extends EditorFactoryListener with StartupActivity {
+class EditorArea extends EditorFactoryListener with ProjectActivity {
   private var editor: Editor = _
 
   private var previousVisibleRange: TextRange = _
@@ -82,7 +82,7 @@ class EditorArea extends EditorFactoryListener with StartupActivity {
     event.getEditor.getScrollingModel.removeVisibleAreaListener(visibleAreaListener)
   }
 
-  override def runActivity(project: Project): Unit = {
+  override def execute(project: Project): Unit = {
     val connection = project.getMessageBus.connect(project.unloadAwareDisposable)
     connection.subscribe(DaemonCodeAnalyzer.DAEMON_EVENT_TOPIC, new HighlightingListener(project))
   }
