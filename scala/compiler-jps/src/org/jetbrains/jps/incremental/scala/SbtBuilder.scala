@@ -128,10 +128,19 @@ object SbtBuilder {
     val rootIndex = context.getProjectDescriptor.getBuildRootIndex
     val excludeIndex = context.getProjectDescriptor.getModuleExcludeIndex
 
-    for (root <- rootIndex.getTargetRoots(target, context).asScala) {
+    val sourcePathSources = rootIndex.getTempTargetRoots(target, context).asScala.foldLeft(Set.empty[File]) {
+      case (acc, path) =>
+        val builder = Set.newBuilder[File]
+        FileUtil.processFilesRecursively(path.getRootFile, file => {
+          builder += file
+          true
+        })
+        acc union builder.result()
+    }
 
+    for (root <- rootIndex.getTargetRoots(target, context).asScala) {
       FileUtil.processFilesRecursively(root.getRootFile, file => {
-        if (!excludeIndex.isExcluded(file)) {
+        if (!excludeIndex.isExcluded(file) && !sourcePathSources.contains(file)) {
           val fileName = file.getName
           if (fileName.endsWith(".scala") || fileName.endsWith(".java")) {
             builder += file

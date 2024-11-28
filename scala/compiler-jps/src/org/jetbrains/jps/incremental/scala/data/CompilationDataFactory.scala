@@ -46,7 +46,8 @@ object CompilationDataFactory
 
     val classpath = ProjectPaths.getCompilationClasspathFiles(chunk, chunk.containsTests, false, true).asScala
     val compilerSettings = SettingsManager.getProjectSettings(module.getProject).getCompilerSettings(chunk)
-    val scalaOptions = CompilerDataFactory.scalaOptionsFor(compilerSettings, chunk)
+    val sourcePathOptions = sourcePathOptionsFor(context, chunk)
+    val scalaOptions = CompilerDataFactory.scalaOptionsFor(compilerSettings, chunk) ++ sourcePathOptions
     val order = compilerSettings.getCompileOrder
 
     createOutputToCacheMap(context).map { outputToCacheMap =>
@@ -94,7 +95,7 @@ object CompilationDataFactory
         withoutBooleans.toSeq
       }
 
-      val javaOptions = CompilerDataFactory.javaOptionsFor(context, chunk)
+      val javaOptions = CompilerDataFactory.javaOptionsFor(context, chunk) ++ sourcePathOptions
 
       val outputGroups = createOutputGroups(chunk)
 
@@ -117,6 +118,13 @@ object CompilationDataFactory
         zincData = ZincData(allSources, compilationStamp, isCompile)
       )
     }
+  }
+
+  private def sourcePathOptionsFor(context: CompileContext, chunk: ModuleChunk): Seq[String] = {
+    val index = context.getProjectDescriptor.getBuildRootIndex
+    val target = chunk.representativeTarget()
+    val paths = index.getTempTargetRoots(target, context).asScala.map(_.getRootFile).mkString(File.pathSeparator)
+    if (paths.isEmpty) Seq.empty else Seq("-sourcepath", paths)
   }
 
   private def checkOrCreate(output: File): Unit = {
