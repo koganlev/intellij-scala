@@ -100,7 +100,7 @@ object ScalaHighlightImplicitUsagesHandler {
       }
       def implicitParams(ml: ScMethodLike) =
         ml.effectiveParameterClauses
-          .filter(_.isImplicitOrUsing)
+          .filter(_.isImplicit)
           .flatMap(_.effectiveParameters)
 
       val implicits = methodLike.map(implicitParams).getOrElse(Seq.empty)
