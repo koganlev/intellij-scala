@@ -2,8 +2,9 @@ package org.jetbrains.plugins.scala
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer.DaemonListener
-import com.intellij.codeInsight.daemon.impl.{DaemonCodeAnalyzerEx, DaemonCodeAnalyzerImpl, FileStatusMap}
+import com.intellij.codeInsight.daemon.impl.{DaemonCodeAnalyzerEx, DaemonCodeAnalyzerImpl, FileStatusMap, HighlightInfo, HighlightInfoPostFilter}
 import com.intellij.openapi.editor.event.{EditorFactoryEvent, EditorFactoryListener, VisibleAreaEvent, VisibleAreaListener}
+import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.editor.markup.{HighlighterLayer, HighlighterTargetArea}
 import com.intellij.openapi.editor.{Document, Editor, EditorFactory, LogicalPosition}
 import com.intellij.openapi.fileEditor.FileEditor
@@ -17,17 +18,46 @@ import org.jetbrains.plugins.scala.EditorArea._
 import org.jetbrains.plugins.scala.project.ProjectExt
 import org.jetbrains.plugins.scala.startup.ProjectActivity
 
-import java.awt.Point
+import java.awt.{Color, Point}
 import java.util
 import javax.swing.Timer
 
-class EditorArea extends EditorFactoryListener with ProjectActivity {
-  private var editor: Editor = _
-
+class EditorArea extends EditorFactoryListener with ProjectActivity with HighlightInfoPostFilter {
   private var previousVisibleRange: TextRange = _
+
+  override def accept(highlightInfo: HighlightInfo): Boolean = {
+    if (!isIncrementalHighlightingEnabled) return true
+
+    if (editor == null) return true
+
+    val visibleRange = editor.getUserData(VISIBLE_RANGE_KEY)
+    if (visibleRange == null) return true
+
+    val highlightRange = TextRange.create(highlightInfo.startOffset, highlightInfo.endOffset)
+
+    highlightRange.intersects(visibleRange)
+  }
 
   private val timer = new Timer(200, _ => {
     val visibleRange = editor.getUserData(VISIBLE_RANGE_KEY)
+
+    val markupModel = editor.asInstanceOf[EditorEx].getFilteredDocumentMarkupModel
+    markupModel.processRangeHighlightersOutside(visibleRange.getStartOffset, visibleRange.getEndOffset, highlighter => {
+      val actualColor = highlighter.getErrorStripeMarkColor(editor.getColorsScheme)
+      if (!highlighter.isThinErrorStripeMark && actualColor != null) {
+        highlighter.putUserData(ErrorStripeMarkColorKey, actualColor)
+        highlighter.setErrorStripeMarkColor(null)
+      }
+      true
+    })
+    markupModel.processRangeHighlightersOverlappingWith(visibleRange.getStartOffset, visibleRange.getEndOffset, highlighter => {
+      val savedColor = highlighter.getUserData(ErrorStripeMarkColorKey)
+      if (savedColor != null) {
+        highlighter.setErrorStripeMarkColor(savedColor)
+        highlighter.putUserData(ErrorStripeMarkColorKey, null)
+      }
+      true
+    })
 
     val visibleRangeDelta: TextRange = if (previousVisibleRange == null) visibleRange else {
       // TODO optimize
@@ -89,7 +119,11 @@ class EditorArea extends EditorFactoryListener with ProjectActivity {
 }
 
 object EditorArea {
+  private var editor: Editor = _
+
   private val VISIBLE_RANGE_KEY: Key[TextRange] = Key.create[TextRange]("editor_visible_range")
+
+  private val ErrorStripeMarkColorKey = Key.create[Color]("error_stripe_mark_color")
 
   def isNativeHighlightingEnabled: Boolean = Registry.is("scala.native.highlighting")
 
