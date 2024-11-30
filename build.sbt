@@ -677,7 +677,7 @@ lazy val decompiler =
     )
 
 lazy val bsp =
-  newProject("bsp", file("bsp"))
+  newProject("bsp", file("bsp-builtin/bsp"))
     .enablePlugins(BuildInfoPlugin)
     .dependsOn(
       scalaImpl % "test->test;compile->compile",
