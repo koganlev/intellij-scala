@@ -126,6 +126,7 @@ object KindProjectorSimplifyTypeProjectionInspection {
     }
   }
 
+  // TODO Use the type lambda syntax in Scala 3
   private[this] def convertToFunctionSyntax(alias: ScTypeAliasDefinition): String = {
     val builder = new mutable.StringBuilder()
     val styleSettings = ScalaCodeStyleSettings.getInstance(alias.getProject)

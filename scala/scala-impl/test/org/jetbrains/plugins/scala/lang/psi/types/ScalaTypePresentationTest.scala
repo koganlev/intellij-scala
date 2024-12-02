@@ -11,6 +11,8 @@ import org.junit.Assert._
 class ScalaTypePresentationTest extends ScalaLightCodeInsightFixtureTestCase {
   override protected def supportedIn(version: ScalaVersion): Boolean = version >= LatestScalaVersions.Scala_3_0
 
+  override protected def additionalCompilerOptions = Seq("-Ykind-projector")
+
   def testPolymorphicFunction(): Unit = assertPresentationIs(
     "[X] => Any => Nothing")
 
@@ -39,11 +41,17 @@ class ScalaTypePresentationTest extends ScalaLightCodeInsightFixtureTestCase {
       "[X] => (A match { case Int => Char }) => Any")
   }
 
+  def testKindProjector(): Unit = assertPresentationIs(
+    header =   "class HCT[A[X]]; class TC2[A, B]; ",
+    tpe =      "HCT[TC2[Int, *]]",
+    expected = "HCT[TC2[Int, *]]"
+  )
+
   private def assertPresentationIs(tpe: String): Unit = assertPresentationIs(tpe, tpe)
 
-  private def assertPresentationIs(tpe: String, expected: String): Unit = {
+  private def assertPresentationIs(tpe: String, expected: String, header: String = ""): Unit = {
     val file =
-      ScalaPsiElementFactory.createScalaFileFromText("type T[A] = " + tpe, ScalaFeatures.onlyByVersion(version))(
+      ScalaPsiElementFactory.createScalaFileFromText(header + "type T[A] = " + tpe, ScalaFeatures.onlyByVersion(version))(
         getProject
       )
 

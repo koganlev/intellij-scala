@@ -77,7 +77,7 @@ object KindProjectorUtil {
 
   def placeholderSymbolFor(e: PsiElement): String = {
     if (e.YKindProjectorUnderscoresOptionEnabled)  "_"
-    else if (isQuestionMarkSyntaxDeprecatedFor(e)) "*"
+    else if (isQuestionMarkSyntaxDeprecatedFor(e) || e.YKindProjectorOptionEnabled) "*"
     else                                           "?"
   }
 
