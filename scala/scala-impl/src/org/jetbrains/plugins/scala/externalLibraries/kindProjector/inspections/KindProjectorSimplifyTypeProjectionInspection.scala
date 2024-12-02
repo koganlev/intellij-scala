@@ -17,6 +17,7 @@ import org.jetbrains.plugins.scala.lang.psi.impl.ScalaPsiElementFactory.createTy
 import org.jetbrains.plugins.scala.lang.psi.types.api.TypeParameterType
 import org.jetbrains.plugins.scala.lang.psi.types.result._
 import org.jetbrains.plugins.scala.lang.psi.types.{ScParameterizedType, TypePresentationContext}
+import org.jetbrains.plugins.scala.settings.ScalaApplicationSettings.{getInstance => ScalaApplicationSettings}
 
 import scala.collection.mutable
 /**
@@ -114,13 +115,18 @@ object KindProjectorSimplifyTypeProjectionInspection {
                   if (typeParamIt.hasNext) Option(typeParamIt.next())
                   else                     None
                 tpt.getText.replace(tpt.name, KindProjectorUtil.placeholderSymbolFor(alias))
-              case _ => ta.presentableText(TypePresentationContext.emptyContext)
+              case _ =>
+                if (ScalaApplicationSettings.PRECISE_TEXT) ta.canonicalText
+                else ta.presentableText(TypePresentationContext.emptyContext)
             }
           }
 
-          (!typeParamIt.hasNext && currentTypeParam.isEmpty).option(
-            s"${paramType.designator.presentableText(alias)}${newTypeArgs.mkString(start = "[", sep = ", ", end = "]")}"
-          )
+          (!typeParamIt.hasNext && currentTypeParam.isEmpty).option {
+            val designatorText =
+              if (ScalaApplicationSettings.PRECISE_TEXT) paramType.designator.canonicalText
+              else paramType.designator.presentableText(alias)
+            s"$designatorText${newTypeArgs.mkString(start = "[", sep = ", ", end = "]")}"
+          }
         } else None
       case _ => None
     }
