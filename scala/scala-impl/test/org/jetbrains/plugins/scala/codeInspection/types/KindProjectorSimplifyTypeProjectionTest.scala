@@ -47,10 +47,10 @@ class KindProjectorSimplifyTypeProjectionTest extends ScalaInspectionTestBase {
   }
 
   def testTwoParameters(): Unit = {
-    val code = s"def a: $START({type A[-Alpha, +Gamma] = Function2[Alpha, String, Gamma]})#A$END"
+    val code = s"def a: $START({type A[-Alpha, +Gamma] = (Alpha, String) => Gamma})#A$END"
     checkTextHasError(code)
-    val text = "def a: ({type A[-Alpha, +Gamma] = Function2[Alpha, String, Gamma]})#A"
-    val res = "def a: Function2[-?, String, +?]"
+    val text = "def a: ({type A[-Alpha, +Gamma] = (Alpha, String) => Gamma)})#A"
+    val res = "def a: (-?, String) => +?"
     testFix(text, res)
   }
 
@@ -123,10 +123,10 @@ class KindProjectorSimplifyTypeProjectionTest extends ScalaInspectionTestBase {
   }
 
   def testTupleInline(): Unit = {
-    val code = s"def a: $START({type R[A] = Tuple2[A, Double]})#R$END"
+    val code = s"def a: $START({type R[A] = (A, Double)})#R$END"
     checkTextHasError(code)
-    val text = "def a: ({type R[A] = Tuple2[A, Double]})#R"
-    val res = "def a: Tuple2[?, Double]"
+    val text = "def a: ({type R[A] = (A, Double)})#R"
+    val res = "def a: (?, Double)"
     testFix(text, res)
   }
 

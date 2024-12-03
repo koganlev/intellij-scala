@@ -47,6 +47,18 @@ class ScalaTypePresentationTest extends ScalaLightCodeInsightFixtureTestCase {
     expected = "HCT[TC2[Int, *]]"
   )
 
+  def testKindProjectorTuple(): Unit = assertPresentationIs(
+    header =   "class HCT[A[X]]; class TC2[A, B]; ",
+    tpe =      "HCT[(Int, *)]",
+    expected = "HCT[(Int, *)]"
+  )
+
+  def testKindProjectorFunction(): Unit = assertPresentationIs(
+    header =   "class HCT[A[X]]; class TC2[A, B]; ",
+    tpe =      "HCT[Int => *]",
+    expected = "HCT[Int => *]"
+  )
+
   private def assertPresentationIs(tpe: String): Unit = assertPresentationIs(tpe, tpe)
 
   private def assertPresentationIs(tpe: String, expected: String, header: String = ""): Unit = {

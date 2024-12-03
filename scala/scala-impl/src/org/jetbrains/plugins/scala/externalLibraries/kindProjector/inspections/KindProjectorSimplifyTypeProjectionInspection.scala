@@ -9,14 +9,15 @@ import org.jetbrains.plugins.scala.codeInspection.{AbstractFixOnPsiElement, Scal
 import org.jetbrains.plugins.scala.extensions.{PsiElementExt, _}
 import org.jetbrains.plugins.scala.externalLibraries.kindProjector.{KindProjectorUtil, TypeLambda}
 import org.jetbrains.plugins.scala.lang.formatting.settings.ScalaCodeStyleSettings
+import org.jetbrains.plugins.scala.lang.psi.ScalaPsiUtil
 import org.jetbrains.plugins.scala.lang.psi.api.base.types._
 import org.jetbrains.plugins.scala.lang.psi.api.statements.ScTypeAliasDefinition
 import org.jetbrains.plugins.scala.lang.psi.api.statements.params.ScTypeParam
 import org.jetbrains.plugins.scala.lang.psi.api.{ScalaElementVisitor, ScalaFile}
 import org.jetbrains.plugins.scala.lang.psi.impl.ScalaPsiElementFactory.createTypeElementFromText
-import org.jetbrains.plugins.scala.lang.psi.types.api.TypeParameterType
+import org.jetbrains.plugins.scala.lang.psi.types.api.{FunctionType, TupleType, TypeParameterType}
 import org.jetbrains.plugins.scala.lang.psi.types.result._
-import org.jetbrains.plugins.scala.lang.psi.types.{ScParameterizedType, TypePresentationContext}
+import org.jetbrains.plugins.scala.lang.psi.types.{ScMatchType, ScParameterizedType, TypePresentationContext}
 import org.jetbrains.plugins.scala.settings.ScalaApplicationSettings.{getInstance => ScalaApplicationSettings}
 
 import scala.collection.mutable
@@ -57,6 +58,9 @@ class KindProjectorSimplifyTypeProjectionInspection extends LocalInspectionTool 
 object KindProjectorSimplifyTypeProjectionInspection {
   private val inspectionId: String   = "KindProjectorSimplifyTypeProjection"
   private val inspectionName: String = ScalaInspectionBundle.message("displayname.in.kind.projector.simplify.type")
+
+  private val TupleN = "_root_.scala.Tuple(\\d+)".r
+  private val FunctionN = "_root_.scala.Function(\\d+)".r
 
   final class KindProjectorSimplifyTypeProjectionQuickFix(e: PsiElement, replacement: => String)
     extends AbstractFixOnPsiElement(KindProjectorSimplifyTypeProjectionInspection.inspectionName, e) {
@@ -121,11 +125,25 @@ object KindProjectorSimplifyTypeProjectionInspection {
             }
           }
 
-          (!typeParamIt.hasNext && currentTypeParam.isEmpty).option {
-            val designatorText =
-              if (ScalaApplicationSettings.PRECISE_TEXT) paramType.designator.canonicalText
-              else paramType.designator.presentableText(alias)
-            s"$designatorText${newTypeArgs.mkString(start = "[", sep = ", ", end = "]")}"
+          paramType.designator.canonicalText match {
+            case TupleN(n) if n != "1" =>
+              Some(newTypeArgs.mkString("(", ", ", ")"))
+            case FunctionN(n) if n != "0" =>
+              val needsParentheses = n != "1" || paramType.typeArguments.headOption.exists {
+                case FunctionType(_, _) => true
+                case TupleType(_) => true
+                case _: ScMatchType => true
+                case _ => false
+              }
+              val args = if (needsParentheses) newTypeArgs.init.mkString("(", ", ", ")") else newTypeArgs.head
+              Some(s"$args ${ScalaPsiUtil.functionArrow(alias)} ${newTypeArgs.last}")
+            case _ =>
+              (!typeParamIt.hasNext && currentTypeParam.isEmpty).option {
+                val designatorText =
+                  if (ScalaApplicationSettings.PRECISE_TEXT) paramType.designator.canonicalText
+                  else paramType.designator.presentableText(alias)
+                s"$designatorText${newTypeArgs.mkString(start = "[", sep = ", ", end = "]")}"
+              }
           }
         } else None
       case _ => None
@@ -156,6 +174,7 @@ object KindProjectorSimplifyTypeProjectionInspection {
     builder.toString()
   }
 
+  // TODO use TypePresentation's innerTypeText & NameRenderer, #SCL-23282
   def convertToKindProjectorSyntax(alias: ScTypeAliasDefinition): String =
     tryConvertToInlineSyntax(alias).getOrElse(convertToFunctionSyntax(alias))
 }
