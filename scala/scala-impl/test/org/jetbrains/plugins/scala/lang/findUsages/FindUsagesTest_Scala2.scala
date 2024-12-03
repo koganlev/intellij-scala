@@ -393,4 +393,32 @@ class FindUsagesTest_Scala2 extends FindUsagesTestBase {
       usageTexts
     )
   }
+
+  def testFindImplicitParameter(): Unit =
+    doTest(
+      s"""
+         |object Test {
+         |  def foo()(implicit ${CARET}x: Int) = {
+         |    ${start}foo()$end
+         |    foo()(${start}x$end)
+         |  }
+         |}
+         |""".stripMargin
+    )
+
+  def testFindImplicitVal(): Unit =
+    doTest(
+      s"""
+         |object Test {
+         |  def foo()(implicit x: Int) = ()
+         |
+         |  {
+         |    implicit val ${CARET}x: Int = 42
+         |
+         |    ${start}foo()$end
+         |    foo()(${start}x$end)
+         |  }
+         |}
+         |""".stripMargin
+    )
 }
