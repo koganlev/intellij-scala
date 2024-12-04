@@ -3,7 +3,7 @@ package org.jetbrains.plugins.scala.tasty.reader
 import dotty.tools.tasty.UnpickleException
 
 class TastyImpl {
-  def read(bytes: Array[Byte]): Option[(String, String)] = {
+  def read(bytes: Array[Byte]): Option[(String, String, CompilerOptions)] = {
     try {
       val treePrinter = new TreePrinter()
       val tree = TreeReader.treeFrom(bytes)

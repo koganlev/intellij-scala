@@ -143,7 +143,7 @@ class TastyReaderTest extends TestCase {
   def testEmptyPackage(): Unit = doTest("EmptyPackage")
   def testNesting(): Unit = doTest("Nesting")
 
-  private def doTest(path: String, simpleTypes: Boolean = true): Unit = {
+  private def doTest(path: String, options: CompilerOptions = CompilerOptions.Default, simpleTypes: Boolean = true): Unit = {
     val testDataPath = {
       val path = Path.of("scala/tasty-reader/testdata")
       if (Files.exists(path)) path else Path.of("community", path.toString)
@@ -163,7 +163,7 @@ class TastyReaderTest extends TestCase {
 
     val tree = TreeReader.treeFrom(readBytes(tastyFile))
 
-    val (sourceFile, actual) = try {
+    val (sourceFile, actual, actualOptions) = try {
       val treePrinter = new TreePrinter(infixTypes = true) // TODO disable
       treePrinter.fileAndTextOf(tree)
     } catch {
@@ -187,6 +187,8 @@ class TastyReaderTest extends TestCase {
       .replaceAll("\\w+\\.(?=this.type)", "")
 
     assertEquals(s"Content for $path", expected, adjusted)
+
+    assertEquals(options, actualOptions)
   }
 
   private def readBytes(file: Path): Array[Byte] = Files.readAllBytes(file)

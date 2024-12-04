@@ -5,6 +5,7 @@ import com.intellij.openapi.vfs.{VirtualFile, VirtualFileWithId, newvfs}
 import org.jetbrains.plugins.scala.decompiler.Decompiler
 import org.jetbrains.plugins.scala.extensions.ObjectExt
 import org.jetbrains.plugins.scala.lang.psi.compiled.ScClassFileDecompiler.ScClsStubBuilder.getStubVersion
+import org.jetbrains.plugins.scala.tasty.reader.CompilerOptions
 import org.jetbrains.plugins.scala.tasty.{TastyFileType, TastyReader}
 
 import java.io.{DataInputStream, DataOutputStream, IOException}
@@ -20,7 +21,7 @@ private sealed trait DecompilationResult {
 private sealed trait ScalaDecompilationResult extends DecompilationResult {
   override val isScala = true
   override val sourceName: String
-  def sourceText: String
+  def sourceText: (String, CompilerOptions)
 }
 
 private object DecompilationResult {
@@ -42,10 +43,10 @@ private object DecompilationResult {
     override val isScala: Boolean = true
   }
 
-  private case class Full(override val sourceName: String, override val sourceText: String, override val timeStamp: Long) extends ScalaDecompilationResult
+  private case class Full(override val sourceName: String, override val sourceText: (String, CompilerOptions), override val timeStamp: Long) extends ScalaDecompilationResult
 
-  private case class Lazy(override val sourceName: String, override val timeStamp: Long, sourceTextComputation: () => String) extends ScalaDecompilationResult {
-    override lazy val sourceText: String = sourceTextComputation()
+  private case class Lazy(override val sourceName: String, override val timeStamp: Long, sourceTextComputation: () => (String, CompilerOptions)) extends ScalaDecompilationResult {
+    override lazy val sourceText: (String, CompilerOptions) = sourceTextComputation()
   }
 
   private def toWritable(decompilationResult: DecompilationResult): WritableResult = decompilationResult match {
@@ -72,7 +73,7 @@ private object DecompilationResult {
 
   private[compiled] def sourceNameAndText(file: VirtualFile, bytes: Array[Byte] = null): Option[(String, String)] =
     tryDecompile(file, bytes).map { result =>
-      (result.sourceName, result.sourceText)
+      (result.sourceName, result.sourceText._1)
     }
 
   private[compiled] def tryDecompile(file: VirtualFile, bytes: Array[Byte] = null): Option[ScalaDecompilationResult] = {
@@ -100,10 +101,10 @@ private object DecompilationResult {
     val result: DecompilationResult = getFromFileAttribute(file) match {
       case Some(nonScala: NonScala) => nonScala
       case Some(PartialScala(sourceName, _)) =>
-        Lazy(sourceName, timeStamp, () => sourceNameAndText(file, content).map(_._2).getOrElse(""))
+        Lazy(sourceName, timeStamp, () => sourceNameAndText(file, content).map(t => (t._2, t._3)).getOrElse(("", CompilerOptions.Default)))
       case None =>
         val recomputedResult = sourceNameAndText(file, content) match {
-          case Some((sourceName, sourceText)) => Full(sourceName, sourceText, timeStamp)
+          case Some((sourceName, sourceText, compilerOptions)) => Full(sourceName, (sourceText, compilerOptions), timeStamp)
           case None                           => NonScala(timeStamp)
         }
 
@@ -117,7 +118,7 @@ private object DecompilationResult {
     result.asOptionOf[ScalaDecompilationResult]
   }
 
-  private def sourceNameAndText(file: VirtualFile, content: () => Array[Byte]): Option[(String, String)] = {
+  private def sourceNameAndText(file: VirtualFile, content: () => Array[Byte]): Option[(String, String, CompilerOptions)] = {
     if (file.getExtension == TastyFileType.getDefaultExtension) {
       try {
         TastyReader.read(content.apply())
@@ -125,7 +126,7 @@ private object DecompilationResult {
         case NonFatal(e) => throw new RuntimeException("Error parsing " + file.getPath, e)
       }
     } else {
-      Decompiler.sourceNameAndText(file.getName, content())
+      Decompiler.sourceNameAndText(file.getName, content()).map(p => (p._1, p._2, CompilerOptions.Default))
     }
   }
 

@@ -25,6 +25,7 @@ class TreePrinter(privateMembers: Boolean = false, infixTypes: Boolean = false, 
   // TODO use parameters
   private val sharedTypes = mutable.Map[Addr, String]()
   private val sourceFiles = mutable.Buffer[String]()
+  private var compilerOptions = CompilerOptions.Default
 
   // The use of SYNTHETIC, GIVEN, and IMPLICIT modifiers in `given` and `implicit class` differs in 3.0.0+
 
@@ -73,7 +74,7 @@ class TreePrinter(privateMembers: Boolean = false, infixTypes: Boolean = false, 
       case _ => false
     })
 
-  def fileAndTextOf(node: Node): (String, String) = {
+  def fileAndTextOf(node: Node): (String, String, CompilerOptions) = {
     assert(sharedTypes.isEmpty)
     assert(sourceFiles.isEmpty)
     val sb = new StringBuilder(1024 * 8)
@@ -87,7 +88,7 @@ class TreePrinter(privateMembers: Boolean = false, infixTypes: Boolean = false, 
       else
         "Unknown.scala"
     }
-    (sourceFileName, sb.toString)
+    (sourceFileName, sb.toString, compilerOptions)
   }
 
   /** @return true for scala/annotation/internal/SourceFile.tasty */

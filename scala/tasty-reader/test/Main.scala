@@ -96,7 +96,7 @@ object Main {
           val fileAndText = try {
             treePrinter.fileAndTextOf(tree)
           } catch {
-            case _: StackOverflowError => (file, "TODO")
+            case _: StackOverflowError => (file, "TODO", CompilerOptions.Default)
           }
           mode match {
             case Mode.Parse =>
@@ -105,7 +105,7 @@ object Main {
               Files.write(path, fileAndText._2.getBytes)
             case Mode.Test =>
               val expected = new String(Files.readAllBytes(path))
-              val (_, actual) = fileAndText
+              val (_, actual, _) = fileAndText
               val actualPath = Path.of(path.toString.replaceFirst("\\.scala$", ".actual.scala"))
               if (expected != actual) {
                 System.err.println(path.toString.substring(OutputDir.length + 1))
