@@ -545,7 +545,14 @@ class TreePrinter(privateMembers: Boolean = false, infixTypes: Boolean = false, 
         qualifier.split('.').last + ".this" // Simplify Foo.this in Foo?
       case Node3(TYPEREFsymbol | TYPEREFdirect | TERMREFsymbol | TERMREFdirect, _, tail) =>
         val prefix = if (node.refTag.contains(TYPEPARAM)) "" else tail.headOption.map(textOfType(_)).getOrElse("")
-        val name = node.refName.getOrElse("")
+        val name = {
+          val s = node.refName.getOrElse("")
+          val isSynthetic = node.refTag.contains(TYPEPARAM) && s.startsWith("_$")
+          if (isSynthetic) {
+            compilerOptions = compilerOptions.copy(kindProjector = true)
+          }
+          if (isSynthetic) "*" else s
+        }
         if (name == ScalaBytecodeConstants.PackageObjectClassName || name.endsWith(ScalaBytecodeConstants.TopLevelDefinitionsClassNameSuffix))
           prefix
         else {
@@ -622,8 +629,12 @@ class TreePrinter(privateMembers: Boolean = false, infixTypes: Boolean = false, 
 
       case Node3(LAMBDAtpt, _, children) =>
         val sb1 = new StringBuilder() // TODO reuse
-        parametersIn(sb1, node, uniqueNames = true) // We might use the built-in kind projector syntactic sugar, but there's no way to known whether the code has been compiled with -Ykind-projector
-        sb1.toString + " =>> " + children.lastOption.map(textOfType(_)).getOrElse("") // TODO check tree
+        parametersIn(sb1, node, withSynthetic = false)
+        if (sb1.nonEmpty) {
+          sb1 ++= " =>> "
+        }
+        sb1 ++= children.lastOption.map(textOfType(_)).getOrElse("") // TODO check tree
+        sb1.toString
 
       case Node3(TYPELAMBDAtype, _, Seq(Node3(APPLIEDtype, _, Seq(tail, _: _*)), _: _*)) => textOfType(tail)
 
@@ -741,7 +752,7 @@ class TreePrinter(privateMembers: Boolean = false, infixTypes: Boolean = false, 
     buffer.toSeq
   }
 
-  private def parametersIn(sb: StringBuilder, node: Node, template: Option[Node] = None, definition: Option[Node] = None, target: Target = Target.Definition, modifiers: StringBuilder => Unit = _ => (), uniqueNames: Boolean = false, resultType: Option[String] = None): Unit = {
+  private def parametersIn(sb: StringBuilder, node: Node, template: Option[Node] = None, definition: Option[Node] = None, target: Target = Target.Definition, modifiers: StringBuilder => Unit = _ => (), withSynthetic: Boolean = true, resultType: Option[String] = None): Unit = {
     val tps = target match {
       case Target.This => Seq.empty
       case Target.Definition => node.children
@@ -763,7 +774,7 @@ class TreePrinter(privateMembers: Boolean = false, infixTypes: Boolean = false, 
     var next = false
 
     tps.foreach {
-      case node @ Node2(TYPEPARAM, Seq(name)) =>
+      case node @ Node2(TYPEPARAM, Seq(name)) if withSynthetic || !name.startsWith("_$") =>
         if (!open) {
           sb ++= "["
           open = true
@@ -790,7 +801,7 @@ class TreePrinter(privateMembers: Boolean = false, infixTypes: Boolean = false, 
             sb ++= "-"
           }
         }
-        val nameId = if (!uniqueNames && name.startsWith("_$")) "_" else id(name)
+        val nameId = if (name.startsWith("_$")) "_" else id(name)
         sb ++= nameId // TODO detect Unique name
         node.children match {
           case Seq(lambda @ Node1(LAMBDAtpt), _: _*) =>
