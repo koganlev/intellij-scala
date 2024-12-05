@@ -344,58 +344,80 @@ object Expr1 extends ParsingRule {
   }
 
   private def parseIf(exprMarker: PsiBuilder.Marker)(implicit builder: ScalaPsiBuilder): Unit = {
-    builder.advanceLexer() //Ate if
-    lazy val condIndent = builder.findPrecedingIndentation
-    builder.getTokenType match {
-      case InScala3(_) if condIndent.forall(builder.isIndent) && parseParenlessIfCondition(condIndent.isDefined) =>
-        // already parsed everything till after 'then'
-      case ScalaTokenTypes.tLPARENTHESIS =>
-        builder.advanceLexer() //Ate (
-        builder.disableNewlines()
-        if (!Expr()) builder.wrongExpressionError()
+    def parseInLoop(): List[PsiBuilder.Marker] = {
+      var outerMarkers = List(exprMarker)
+      while (true) {
+        builder.advanceLexer() //Ate if
+        lazy val condIndent = builder.findPrecedingIndentation
         builder.getTokenType match {
-          case ScalaTokenTypes.tRPARENTHESIS =>
-            builder.advanceLexer() //Ate )
+          case InScala3(_) if condIndent.forall(builder.isIndent) && parseParenlessIfCondition(condIndent.isDefined) =>
+          // already parsed everything till after 'then'
+          case ScalaTokenTypes.tLPARENTHESIS =>
+            builder.advanceLexer() //Ate (
+            builder.disableNewlines()
+            if (!Expr()) builder.wrongExpressionError()
+            builder.getTokenType match {
+              case ScalaTokenTypes.tRPARENTHESIS =>
+                builder.advanceLexer() //Ate )
+              case _ =>
+                builder error ErrMsg("rparenthesis.expected")
+            }
+            builder.restoreNewlinesState()
           case _ =>
-            builder error ErrMsg("rparenthesis.expected")
+            builder error ErrMsg("condition.expected")
+
+            if (builder.findPrecedingIndentation.exists(iw => !builder.isIndent(iw))) {
+              return outerMarkers
+            }
         }
-        builder.restoreNewlinesState()
-      case _ =>
-        builder error ErrMsg("condition.expected")
 
-        if (builder.findPrecedingIndentation.exists(iw => !builder.isIndent(iw))) {
-          exprMarker.done(ScalaElementType.IF_STMT)
-          End()
-          return
+        builder.skipExternalToken()
+
+        if (!ExprInIndentationRegion()) {
+          builder.wrongExpressionError()
         }
+        val rollbackMarker = builder.mark()
+        builder.getTokenType match {
+          case ScalaTokenTypes.tSEMICOLON =>
+            builder.advanceLexer() //Ate semi
+          case _ =>
+        }
+        builder.getTokenType match {
+          case ScalaTokenTypes.kELSE if !(
+            // if `else` is indented more to the left in Scala 3 indentation based syntax
+            // detach else branch from the current if statement
+            builder.isScala3IndentationBasedSyntaxEnabled &&
+              builder.isOutdentHere
+            ) =>
+            builder.advanceLexer() // ate else
+
+            val nextExprCanOnlyBeIf =
+              builder.getTokenType == ScalaTokenTypes.kIF &&
+                (!builder.isScala3IndentationBasedSyntaxEnabled ||
+                  !builder.hasPrecedingIndentation)
+            if (nextExprCanOnlyBeIf) {
+              rollbackMarker.drop()
+              outerMarkers ::= builder.mark()
+            } else {
+              if (!ExprInIndentationRegion()) builder.wrongExpressionError()
+              rollbackMarker.drop()
+              return outerMarkers
+            }
+
+          case _ =>
+            rollbackMarker.rollbackTo()
+            return outerMarkers
+        }
+      }
+      throw new IllegalStateException("unreachable")
     }
 
-    builder.skipExternalToken()
+    val recursiveMarkers = parseInLoop()
 
-    if (!ExprInIndentationRegion()) {
-      builder.wrongExpressionError()
+    for (marker <- recursiveMarkers) {
+      End()
+      marker.done(ScalaElementType.IF_STMT)
     }
-    val rollbackMarker = builder.mark()
-    builder.getTokenType match {
-      case ScalaTokenTypes.tSEMICOLON =>
-        builder.advanceLexer() //Ate semi
-      case _ =>
-    }
-    builder.getTokenType match {
-      case ScalaTokenTypes.kELSE if !(
-          // if `else` is indented more to the left in Scala 3 indentation based syntax
-          // detach else branch from the current if statement
-          builder.isScala3IndentationBasedSyntaxEnabled &&
-            builder.isOutdentHere
-          ) =>
-        builder.advanceLexer()
-        if (!ExprInIndentationRegion()) builder.wrongExpressionError()
-        rollbackMarker.drop()
-      case _ =>
-        rollbackMarker.rollbackTo()
-    }
-    End()
-    exprMarker.done(ScalaElementType.IF_STMT)
   }
 
   def parseParenlessIfCondition(hasIndent: Boolean)(implicit builder: ScalaPsiBuilder): Boolean = {
