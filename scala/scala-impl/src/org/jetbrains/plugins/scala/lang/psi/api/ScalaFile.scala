@@ -6,11 +6,15 @@ import org.jetbrains.plugins.scala.lang.psi.api.statements.ScExtension
 import org.jetbrains.plugins.scala.lang.psi.api.toplevel.ScPackaging
 import org.jetbrains.plugins.scala.lang.psi.api.toplevel.typedef.{ScMember, ScTypeDefinition}
 import org.jetbrains.plugins.scala.lang.psi.{ScExportsHolder, ScImportsHolder}
+import org.jetbrains.plugins.scala.tasty.reader.CompilerOptions
 
 trait ScalaFile extends ScalaPsiElement
   with ScFile
   with ScImportsHolder
   with ScExportsHolder {
+
+  /** @return Scala compiler options inferred from the compiled file. */
+  def compilerOptions: Option[CompilerOptions]
 
   def firstPackaging: Option[ScPackaging]
 

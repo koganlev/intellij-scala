@@ -53,7 +53,7 @@ trait FileDeclarationsHolder
     if (this.context != null)
       return true
 
-    if (place.kindProjectorEnabled) {
+    if (place.kindProjectorPluginEnabled) {
       KindProjectorUtil(place.getProject)
         .syntheticDeclarations(place)
         .foreach(processor.execute(_, state))

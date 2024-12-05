@@ -21,11 +21,13 @@ import org.jetbrains.plugins.scala.compiler.data.CompileOrder
 import org.jetbrains.plugins.scala.extensions._
 import org.jetbrains.plugins.scala.lang.formatting.settings.ScalaCodeStyleSettings
 import org.jetbrains.plugins.scala.lang.psi.api.ScalaFile
+import org.jetbrains.plugins.scala.lang.psi.compiled.ScClsFileViewProvider.ScClsFileImpl
 import org.jetbrains.plugins.scala.lang.psi.stubs.elements.ScStubElementType
 import org.jetbrains.plugins.scala.lang.resolve.processor.precedence.PrecedenceTypes
 import org.jetbrains.plugins.scala.project.ScalaFeatures.SerializableScalaFeatures
 import org.jetbrains.plugins.scala.project.settings.{ScalaCompilerConfiguration, ScalaCompilerSettings, ScalaCompilerSettingsProfile}
 import org.jetbrains.plugins.scala.settings.ScalaProjectSettings
+import org.jetbrains.plugins.scala.tasty.reader.CompilerOptions
 import org.jetbrains.plugins.scala.util.{ScalaPluginJars, UnloadAwareDisposable}
 import org.jetbrains.sbt.language.SbtFile
 import org.jetbrains.sbt.project.module.SbtModuleType
@@ -609,7 +611,15 @@ package object project {
 
     def kindProjectorUnderscorePlaceholdersEnabled: Boolean = isDefinedInModuleOrProject(_.kindProjectorUnderscorePlaceholdersEnabled)
 
-    def YKindProjectorOptionEnabled: Boolean = isDefinedInModuleOrProject(_.YKindProjectorOptionEnabled)
+    def YKindProjectorOptionEnabled: Boolean =
+      compilerOptionsFor(element).exists(_.kindProjector) ||
+        isDefinedInModuleOrProject(_.YKindProjectorOptionEnabled)
+
+    private def compilerOptionsFor(element: PsiElement): Option[CompilerOptions] =
+      containingFileOf(element).filterByType[ScClsFileImpl].flatMap(_.compilerOptions)
+
+    private def containingFileOf(element: PsiElement): Option[PsiFile] =
+      element.containingFile.map(file => Option(file.getContext).flatMap(containingFileOf).getOrElse(file))
 
     def YKindProjectorUnderscoresOptionEnabled: Boolean = isDefinedInModuleOrProject(_.YKindProjectorUnderscoresOptionEnabled)
 

@@ -16,6 +16,7 @@ import org.jetbrains.plugins.scala.lang.psi.api.ScalaFile
 import org.jetbrains.plugins.scala.lang.psi.api.toplevel.ScPackaging
 import org.jetbrains.plugins.scala.lang.psi.api.toplevel.typedef.ScTypeDefinition
 import org.jetbrains.plugins.scala.lang.psi.impl.ScalaFileImpl
+import org.jetbrains.plugins.scala.tasty.reader.CompilerOptions
 
 import java.{util => ju}
 import scala.annotation.tailrec
@@ -27,7 +28,9 @@ final class ScClsFileViewProvider(decompilationResult: ScalaDecompilationResult)
 
   private def sourceName: String = decompilationResult.sourceName
 
-  override def getContents: String = decompilationResult.sourceText
+  override def getContents: String = decompilationResult.sourceText._1
+
+  private def compilerOptions: CompilerOptions = decompilationResult.sourceText._2
 
   override def createFile(project: Project,
                           file: VirtualFile,
@@ -46,6 +49,8 @@ object ScClsFileViewProvider {
     private implicit def manager: PsiManager = getManager
 
     override def isCompiled: Boolean = true
+
+    override def compilerOptions: Option[CompilerOptions] = Some(getViewProvider.compilerOptions)
 
     override def getVirtualFile: VirtualFile = getViewProvider.getVirtualFile
 
