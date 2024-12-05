@@ -2,8 +2,8 @@ package org.jetbrains.scalaCli.actions
 
 import com.intellij.openapi.actionSystem.{CommonDataKeys, DataContext}
 import com.intellij.openapi.project.Project
+import org.jetbrains.bsp.BspUtil
 import org.jetbrains.plugins.scala.actions.NewScalaFileActionExtension
-import org.jetbrains.scalaCli.ScalaCliUtils
 
 class ScalaCliNewScalaFileActionExtension extends NewScalaFileActionExtension {
 
@@ -17,6 +17,6 @@ class ScalaCliNewScalaFileActionExtension extends NewScalaFileActionExtension {
 
   private def isScalaCliProject(project: Project): Boolean = {
     //for now, we don't have a dedicated Scala CLI project system id and BSP is used under the hood
-    ScalaCliUtils.isBspScalaCliProject(project)
+    BspUtil.isBspScalaCliProject(project)
   }
 }

@@ -2,20 +2,11 @@ package org.jetbrains.scalaCli
 
 import com.intellij.execution.configurations.GeneralCommandLine
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.project.Project
-import org.jetbrains.bsp.project.BspExternalSystemUtil
 
 import java.io.File
 import scala.util.Try
 
 object ScalaCliUtils {
-
-  private val BspServerName = "scala-cli"
-
-  def isBspScalaCliProject(project: Project): Boolean = {
-    val projectData = BspExternalSystemUtil.getBspProjectData(project)
-    projectData.exists(_.serverDisplayName == BspServerName)
-  }
 
   def isScalaCliInstalled(workspace: File): Boolean =
     Try {

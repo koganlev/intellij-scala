@@ -13,6 +13,7 @@ import com.intellij.openapi.vfs.VirtualFileManager
 import org.eclipse.lsp4j.jsonrpc.ResponseErrorException
 import org.eclipse.lsp4j.jsonrpc.messages.ResponseErrorCode
 import org.jetbrains.annotations.Nls
+import org.jetbrains.bsp.project.BspExternalSystemUtil
 import org.jetbrains.bsp.settings.BspSettings
 import org.jetbrains.plugins.scala.build.BuildMessages.EventId
 import org.jetbrains.plugins.scala.build.BuildReporter
@@ -121,4 +122,8 @@ object BspUtil {
       .getOrElse(Array.empty)
       .find(x => x.getName == name && !x.isDirectory)
 
+  def isBspScalaCliProject(project: Project): Boolean = {
+    val projectData = BspExternalSystemUtil.getBspProjectData(project)
+    projectData.exists(_.serverDisplayName == "scala-cli")
+  }
 }
