@@ -81,6 +81,7 @@ abstract class ScalaMavenImporterTest
     val pomVFile = VirtualFileManager.getInstance().findFileByNioPath(pomFile.toPath)
     Assert.assertNotNull("can't find 'pom.xml' file", pomVFile)
 
+    runWithoutStaticSync()
     importProjects(pomVFile)
     assertProjectsEqual(expected, getProject)
   }

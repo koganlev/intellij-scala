@@ -208,6 +208,7 @@ class PolyglotMavenCompilationTest extends MavenImportingTestCase {
       """object HelloWorldGreeter extends AbstractGreeter("Hello, world!")
         |""".stripMargin)
 
+    runWithoutStaticSync()
     importProject()
 
     val modules = ModuleManager.getInstance(getProject).getModules
