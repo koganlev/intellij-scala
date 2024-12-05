@@ -24,9 +24,8 @@ private object WorksheetModuleUtil {
   }
 
   def isStale(module: Module): Boolean = {
-    val name = module.getName
     val separate = SbtUtil.isBuiltWithSeparateModulesForProdTest(module.getProject)
-    val isMainOrTest = name.endsWith(".main") || name.endsWith(".test")
+    val isMainOrTest = module.isMain || module.isTest
     if (separate) !isMainOrTest else isMainOrTest
   }
 }
