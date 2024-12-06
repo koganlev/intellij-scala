@@ -9,8 +9,10 @@ import com.intellij.util.Processor
 import org.jetbrains.plugins.scala.ScalaFileType
 import org.jetbrains.plugins.scala.extensions._
 import org.jetbrains.plugins.scala.findUsages.ExternalInheritorsSearcher
+import org.jetbrains.plugins.scala.lang.psi.ScalaPsiUtil
 import org.jetbrains.plugins.scala.lang.psi.ScalaPsiUtil._
 import org.jetbrains.plugins.scala.lang.psi.api.PropertyMethods._
+import org.jetbrains.plugins.scala.lang.psi.api.expr.ScBlock
 import org.jetbrains.plugins.scala.lang.psi.api.statements._
 import org.jetbrains.plugins.scala.lang.psi.api.toplevel.typedef._
 import org.jetbrains.plugins.scala.lang.psi.api.toplevel.{ScNamedElement, ScTypedDefinition}
@@ -84,8 +86,9 @@ class ScalaFindUsagesHandler(
             processMemberUsages(element, processor, typeDefOptions) &&
               processCompanionUsages(element, processor, typeDefOptions) &&
               processSamUsagesWithCompilerReferences(element, processor, typeDefOptions) &&
-              processImplementingTypeDefinitionsUsages(element, processor, typeDefOptions) &&
-              processOverridingMembers(element, processor, scalaOptions) //TODO: Where to do it? Here or later? (see 4 lines below)
+              processImplementingTypeDefinitionsUsages(element, processor, typeDefOptions)
+          case localOptions: ScalaLocalFindUsagesOptions =>
+            processLocalImplicitUsages(element, processor, localOptions)
           case _ => true
         }
 
@@ -150,6 +153,25 @@ class ScalaFindUsagesHandler(
         }
         members.forall(super.processElementUsages(_, processor, options))
       case _ => true
+    }
+  }
+
+  private def processLocalImplicitUsages(element: PsiElement, processor: Processor[_ >: UsageInfo], options: ScalaLocalFindUsagesOptions): Boolean = {
+    import org.jetbrains.plugins.scala.util.ImplicitUtil.ImplicitTargetExt
+
+    inReadAction {
+      def findScope(element: PsiElement): Option[PsiElement] =
+        element.parentsInFile.find(_.is[ScFunction, ScBlock])
+
+      element
+        .asOptionOf[PsiNamedElement]
+        .filter(ScalaPsiUtil.isImplicit)
+        .flatMap(findScope)
+        .forall { scope =>
+            scope.depthFirst()
+              .flatMap(element.refOrImplicitRefIn)
+              .forall(ref => processor.process(new UsageInfo(ref)))
+        }
     }
   }
 

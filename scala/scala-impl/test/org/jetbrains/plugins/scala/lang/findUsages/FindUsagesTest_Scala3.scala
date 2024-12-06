@@ -156,4 +156,32 @@ class FindUsagesTest_Scala3 extends FindUsagesTest_Scala2 {
          |}
       """.stripMargin)
   }
+
+  def testFindUsingParameter(): Unit =
+    doTest(
+      s"""
+         |object Test {
+         |  def foo()(using ${CARET}x: Int) = {
+         |    ${start}foo()$end
+         |    foo()(${start}x$end)
+         |  }
+         |}
+         |""".stripMargin
+    )
+
+  def testFindGiven(): Unit =
+    doTest(
+      s"""
+         |object Test {
+         |  def foo()(implicit x: Int) = ()
+         |
+         |  {
+         |    given ${CARET}x: Int = 42
+         |
+         |    ${start}foo()$end
+         |    foo()(${start}x$end)
+         |  }
+         |}
+         |""".stripMargin
+    )
 }
