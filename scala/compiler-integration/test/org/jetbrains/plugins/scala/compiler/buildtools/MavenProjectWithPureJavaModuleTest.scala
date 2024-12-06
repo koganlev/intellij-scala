@@ -159,6 +159,7 @@ abstract class MavenProjectWithPureJavaModuleTestBase(incrementality: Incrementa
   }
 
   def testImportAndCompile(): Unit = {
+    runWithoutStaticSync()
     importProject()
 
     ScalaCompilerConfiguration.instanceIn(getProject).incrementalityType = incrementality
