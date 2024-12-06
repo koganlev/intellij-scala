@@ -113,6 +113,8 @@ class PolyglotGradleCompilationTest extends ExternalSystemImportingTestCase {
 
     importProject()
 
+    KotlinDaemonUtil.disableKotlinDaemon(getProject)
+
     val modules = ModuleManager.getInstance(getProject).getModules
     modules.foreach(ModuleRootModificationUtil.setModuleSdk(_, sdk))
 

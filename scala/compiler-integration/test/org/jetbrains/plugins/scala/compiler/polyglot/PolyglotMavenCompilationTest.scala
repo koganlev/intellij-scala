@@ -211,6 +211,8 @@ class PolyglotMavenCompilationTest extends MavenImportingTestCase {
     runWithoutStaticSync()
     importProject()
 
+    KotlinDaemonUtil.disableKotlinDaemon(getProject)
+
     val modules = ModuleManager.getInstance(getProject).getModules
     modules.foreach(ModuleRootModificationUtil.setModuleSdk(_, sdk))
 
