@@ -1245,16 +1245,16 @@ object ScalaPsiElementFactory {
         val name = param.name
         val tpe = param.`type`().map(substitutor).getOrAny
 
-        if (param.isAnonymousContextParameter)
+        if (param.isAnonymous)
           s"$arrow${tpe.canonicalText}"
         else
           s"$name${colon(name)} $arrow${tpe.canonicalText}$asterisk"
       }
 
       builder.append("(")
-      if (paramClause.isImplicit)
+      if (paramClause.hasImplicitKeyword)
         builder.append("implicit ")
-      else if (paramClause.isUsing)
+      else if (paramClause.hasUsingKeyword)
         builder.append("using ")
       builder.append(parameters.mkString(", "))
       builder.append(")")

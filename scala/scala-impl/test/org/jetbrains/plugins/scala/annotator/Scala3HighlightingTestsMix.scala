@@ -4,6 +4,7 @@ import com.intellij.lang.annotation.HighlightSeverity
 import com.intellij.psi.PsiFile
 import org.intellij.lang.annotations.Language
 import org.jetbrains.plugins.scala.ScalaVersion
+import org.jetbrains.plugins.scala.annotator.Message.Error
 
 import scala.jdk.CollectionConverters.ListHasAsScala
 
@@ -71,6 +72,35 @@ class Scala3HighlightingTestsMix extends ScalaHighlightingTestBase {
         |  given SalesRep = SalesRep("John")
         |  println(Invoice("Peter LTD"))
         |""".stripMargin
+    )
+  }
+
+  // SCL-21795
+  def testSetterWithUsingParameters(): Unit = {
+    val code =
+      """
+        |class Foo {
+        |  private var _x = 1
+        |  def x(using String): Int = _x
+        |  def x_=(y: Int)(using String): Unit = _x = y
+        |}
+        |
+        |object Foo {
+        |  def main(args: Array[String]): Unit = {
+        |    val foo = Foo()
+        |    given String = "foo"
+        |    foo.x = 5
+        |  }
+        |}
+        |""".stripMargin
+
+    assertNothing(errorsFromScalaCode(code))
+  }
+
+
+  def testTypeMismatchUnappliedMethod(): Unit = {
+    assertMessages(errorsFromScalaCode("given Int = 3; def f(int: Int)(using Int): Boolean = true; val v: Int = f(1)"))(
+      Error("f(1)", "Expression of type Boolean doesn't conform to expected type Int")
     )
   }
 }

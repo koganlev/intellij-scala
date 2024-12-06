@@ -20,16 +20,29 @@ trait ScParameterClause extends ScalaPsiElement {
 
   def paramTypes: Seq[ScType] = parameters.map(_.`type`().getOrAny)
 
-  // TODO: a lot of places that depend on isImplicit should also be triggered when `isUsing` is true.
-  //  Review all `isImplicit` method usages and see if it actually should be something like `isImplicitOrUsing`
-  //  Also, maybe method names should be reviewed or even split to several methods:
-  //  `isImplicit` could express the semantics (parameter clause with `using` is also kinda implicit, just with a different keyword
-  //  In those places, where the semantics is important and the keyword is not, we could use `isImplicit`
-  //  In those places, whether the keyword is important we could use `hasImplicitKeyword` / `hasUsingKeyword`
-  //  Or we could create some method `def implicitKind: Option[ImplicitKeyword | UsingKeyword]`
-  def isImplicit: Boolean
-  def isUsing: Boolean
-  def isImplicitOrUsing: Boolean = isImplicit || isUsing
+  /**
+   * Whether the parameters of this clause take contextual arguments and provide contextual values.
+   * It's the case if the clause is either marked with using or implicit.
+   */
+  def isImplicit: Boolean = hasImplicitKeyword || hasUsingKeyword
+
+  /**
+   * Checks whether this parameter clause has an implicit keyword.
+   *
+   * @note Do not use this to check whether this parameter clause takes contextual arguments or provide contextual values.
+   *       Use [[isImplicit]] instead.
+   * @return true if this parameter clause has an implicit keyword
+   */
+  def hasImplicitKeyword: Boolean
+
+  /**
+   * Checks whether this parameter clause has a using keyword.
+   *
+   * @note Do not use this to check whether this parameter clause takes contextual arguments or provide contextual values.
+   *       Use [[isImplicit]] instead.
+   * @return true if this parameter clause has a using keyword
+   */
+  def hasUsingKeyword: Boolean
 
   def hasRepeatedParam: Boolean = parameters.lastOption.exists(_.isRepeatedParameter)
 

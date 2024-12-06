@@ -85,19 +85,35 @@ trait ScParameter extends ScTypedDefinition
       classOf[ScDependentFunctionTypeElement]
     )
 
-  //TODO: Review all usages of `isImplicitParameter` and replace with `isImplicitOrContextParameter` if needed
-  // This is basically the same comment as for `ScParameterClause.isImplicit`
-  def isImplicitParameter: Boolean
+  /**
+   * Returns whether this parameter provides its value implicitly.
+   * Use [[isInClauseWithImplicit]], [[isInClauseWithUsing]], [[isInContextFunction]], and/or [[isGivenConditional]]
+   * to determine exactly how this parameter became implicit.
+   *
+   * @note This method returning true does not necessarily mean that this parameter summons an implicit value on the
+   *       usage site.
+   *       In the very special case `class Foo(val a: Int, implicit val b: Int)` b is provided implicitly within
+   *       Foo, but a call to the constructor will not summon an Int to provide b!
+   */
+  def isImplicit: Boolean
 
-  def isContextParameter: Boolean
+  /// As in `def test(implicit int: Int): Unit`
+  def isInClauseWithImplicit: Boolean
 
-  def isImplicitOrContextParameter: Boolean = isImplicitParameter || isContextParameter
+  /// As in `def test(using int: Int): Unit`
+  def isInClauseWithUsing: Boolean
+
+  /// As in `Int ?=> Unit`
+  def isInContextFunction: Boolean
+
+  /// As in `given (a: Int) => String = a.toString`
+  def isGivenConditional: Boolean
 
   /**
-   * @return true - for `String` in `def foo(using String): Unit = ()`<br>
+   * @return true - for `String` in `def foo(using String): Unit = ()` and `String ?=> Unit`<br>
    *         false - for `p: String` in `def foo(p: String): Unit = ()`
    */
-  def isAnonymousContextParameter: Boolean
+  def isAnonymous: Boolean
 
   def index: Int = getParent.getParent match {
     case parameters: ScParameters => parameters.params.indexOf(this)

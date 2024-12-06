@@ -86,31 +86,36 @@ class ScParameterImpl protected(
     }
   }
 
-  override def isImplicitParameter: Boolean = {
+  override def isImplicit: Boolean = {
     val clause = PsiTreeUtil.getParentOfType(this, classOf[ScParameterClause])
-    if (clause == null) return false
-    clause.isImplicit
+    clause != null && clause.isImplicit || (owner match {
+      case _: ScGiven          => true
+      case fun: ScFunctionExpr => fun.isContext
+      case _                   => false
+    })
   }
 
-  override def isContextParameter: Boolean = {
+  override def isInClauseWithImplicit: Boolean = {
     val clause = PsiTreeUtil.getParentOfType(this, classOf[ScParameterClause])
     if (clause == null) return false
-
-    clause.isUsing || isInsideContextFunctionOrGiven
+    clause.hasImplicitKeyword
   }
 
-  //Example: `param` in `val init: Int ?=> Unit = param ?=> { summon[Int] }`
-  private def isInsideContextFunctionOrGiven = owner match {
-    case _: ScGiven          => true
+  override def isInClauseWithUsing: Boolean = {
+    val clause = PsiTreeUtil.getParentOfType(this, classOf[ScParameterClause])
+    if (clause == null) return false
+    clause.hasUsingKeyword
+  }
+
+  override def isInContextFunction: Boolean = owner match {
     case fun: ScFunctionExpr => fun.isContext
     case _                   => false
   }
 
-  override def isAnonymousContextParameter: Boolean =
-    isContextParameter && isAnonimous
+  override def isGivenConditional: Boolean = owner.is[ScGiven]
 
-  private def isAnonimous: Boolean =
-    byPsiOrStub(nameId == null)(_.isAnonimous)
+  override def isAnonymous: Boolean =
+    byPsiOrStub(nameId == null)(_.isAnonymous)
 
   override def getTypeElement: PsiTypeElement = null
 

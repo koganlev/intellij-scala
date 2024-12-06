@@ -163,7 +163,7 @@ object ScTemplateDefinitionAnnotator extends ElementAnnotator[ScTemplateDefiniti
 
     if (!tdef.is[ScTrait]) {
       def hasOnlyImplicitOrDefaultParameters(cons: ScPrimaryConstructor): Boolean =
-        cons.parameters.forall(p => p.isImplicitOrContextParameter || p.isDefaultParam)
+        cons.parameters.forall(p => p.isImplicit || p.isDefaultParam)
 
       val resolvedDirectSupers = directSupersBuilder.result()
       supers.collect {
