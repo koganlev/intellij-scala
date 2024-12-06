@@ -8,6 +8,7 @@ import com.intellij.openapi.externalSystem.model.task.{ExternalSystemTaskId, Ext
 import com.intellij.openapi.externalSystem.model.{DataNode, ExternalSystemException}
 import com.intellij.openapi.externalSystem.service.project.ExternalSystemProjectResolver
 import org.jetbrains.bsp.BspUtil._
+import org.jetbrains.bsp.project.BspExternalSystemManager.ScalaCliAffectedProjectFiles
 import org.jetbrains.bsp.project.BspProjectInstallProvider
 import org.jetbrains.bsp.project.importing.BspProjectResolver._
 import org.jetbrains.bsp.project.importing.BspResolverDescriptors._
@@ -62,8 +63,11 @@ class BspProjectResolver extends ExternalSystemProjectResolver[BspExecutionSetti
 
     importState = Inactive
 
-    result
+    // It's necessary to nullify this key after the reload
+    // because the number of affected external project files for Scala CLI may change afterward.
+    result.putUserData(ScalaCliAffectedProjectFiles, null)
 
+    result
   }
 
   private def requests(workspace: File)

@@ -27,6 +27,8 @@
     </extensions>
     
     <extensions defaultExtensionNs="com.intellij">
+        <externalSystemCrcCalculator implementation="org.jetbrains.bsp.project.BspScalaFilesCrcCalculator"/>
+
         <bspEnvironmentRunnerExtension implementation="org.jetbrains.bsp.project.test.environment.BspEnvironmentApplicationRunnerExtension"/>
 
         <moduleType id="BSP_SYNTHETIC_MODULE" implementationClass="org.jetbrains.bsp.project.BspSyntheticModuleType"/>

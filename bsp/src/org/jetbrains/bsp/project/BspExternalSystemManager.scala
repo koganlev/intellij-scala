@@ -6,7 +6,9 @@ import java.util.{Collections, List => JList, Map => JMap}
 import com.google.gson.Gson
 import com.intellij.execution.configurations.SimpleJavaParameters
 import com.intellij.openapi
-import com.intellij.openapi.externalSystem.model.ProjectSystemId
+import com.intellij.openapi.externalSystem.model.{DataNode, ProjectKeys, ProjectSystemId}
+import com.intellij.openapi.externalSystem.model.project.{ExternalSystemSourceType, ProjectData}
+import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil
 import com.intellij.openapi.externalSystem.{ExternalSystemAutoImportAware, ExternalSystemConfigurableAware, ExternalSystemManager}
 import com.intellij.openapi.fileChooser.FileChooserDescriptor
 import com.intellij.openapi.options.Configurable
@@ -18,7 +20,7 @@ import com.intellij.util.Function
 import org.jetbrains.bsp._
 import org.jetbrains.bsp.project.importing.BspProjectResolver
 import org.jetbrains.bsp.settings._
-import org.jetbrains.bsp.project.BspExternalSystemManager.DetectExternalProjectFiles
+import org.jetbrains.bsp.project.BspExternalSystemManager.{DetectExternalProjectFiles, ScalaCliAffectedProjectFiles}
 import org.jetbrains.bsp.protocol.BspConnectionConfig
 
 import scala.jdk.CollectionConverters._
@@ -66,10 +68,44 @@ class BspExternalSystemManager extends ExternalSystemManager[BspProjectSettings,
       val bloopConfigs = BspUtil.bloopConfigDir(workspace).toList
         .flatMap(_.listFiles(file => file.getName.endsWith(".json")).toList)
 
-      (bspConfigs ++ bloopConfigs).asJava
+      /* !!! ATTENTION !!!
+      Files in `bspConfigs` and `bloopConfigs` are .json files so they won't be proceed by
+      org.jetbrains.bsp.project.BspScalaFilesCrcCalculator (see BspScalaFilesCrcCalculator.isApplicable).
+      `scalaCliConfigs are the only scala files that are returned for a BSP system, and they will be processed by `BspScalaFilesCrcCalculator`.
+      In these files, only changes to using directives are considered when calculating the CRC value,
+      which in turn determines whether to display an icon to reload the project.
+
+      If other `.scala` files were required, and changes to the entire file (not just the using directives) needed to be considered
+      when deciding whether to display the refresh icon, the existing mechanism, particularly `BspScalaFilesCrcCalculator`, would need to be adjusted.
+       */
+      val scalaCliConfigs =
+        if (BspUtil.isBspScalaCliProject(project)) getScalaCliAffectedFiles(project, projectPath)
+        else List.empty
+      (bspConfigs ++ bloopConfigs ++ scalaCliConfigs).asJava
     } else {
       Collections.emptyList()
     }
+  }
+
+  private def getScalaCliAffectedFiles(project: Project, projectPath: String): List[File] = {
+    val projectNode = ExternalSystemApiUtil.findProjectNode(project, BSP.ProjectSystemId, projectPath)
+    if (projectNode == null) return List.empty
+    cached(ScalaCliAffectedProjectFiles, projectNode) {
+      getSourceRootFiles(projectNode)
+    }
+  }
+
+  private def getSourceRootFiles(structure: DataNode[ProjectData]): List[File] = {
+    val affectedExternalSystemSourceTypes = Seq(
+      ExternalSystemSourceType.SOURCE, ExternalSystemSourceType.TEST,
+      ExternalSystemSourceType.SOURCE_GENERATED, ExternalSystemSourceType.TEST_GENERATED
+    )
+    for {
+      moduleDataNode <- ExternalSystemApiUtil.findAll(structure, ProjectKeys.MODULE).asScala.toList
+      contentRootNode <- ExternalSystemApiUtil.findAll(moduleDataNode, ProjectKeys.CONTENT_ROOT).asScala.toSeq
+      data = contentRootNode.getData
+      sourceRoot <- affectedExternalSystemSourceTypes.flatMap(data.getPaths(_).asScala)
+    } yield new File(sourceRoot.getPath)
   }
 
   private def detectExternalProjectFiles(project: Project): Boolean = {
@@ -106,6 +142,7 @@ class BspExternalSystemManager extends ExternalSystemManager[BspProjectSettings,
 
 object BspExternalSystemManager {
   val DetectExternalProjectFiles: Key[Boolean] = Key.create[Boolean]("BSP.detectExternalProjectFiles")
+  val ScalaCliAffectedProjectFiles: Key[List[File]] = Key.create[List[File]]("BSP.scalaCliAffectedProjectFiles")
 
   def parseAsMap(file: File): Map[String, Any] = {
     val virtualFile = LocalFileSystem.getInstance.findFileByIoFile(file)
