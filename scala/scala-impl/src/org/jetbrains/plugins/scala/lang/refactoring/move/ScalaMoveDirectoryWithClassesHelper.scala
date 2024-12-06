@@ -11,6 +11,7 @@ import com.intellij.refactoring.util.MoveRenameUsageInfo
 import com.intellij.usageView.UsageInfo
 import com.intellij.util.Function
 import com.intellij.util.containers.ContainerUtil
+import org.jetbrains.annotations.{NotNull, Unmodifiable}
 import org.jetbrains.plugins.scala.extensions.{ObjectExt, PsiElementExt}
 import org.jetbrains.plugins.scala.lang.psi.api.ScalaFile
 import org.jetbrains.plugins.scala.lang.psi.api.toplevel.imports.ScImportExpr
@@ -81,7 +82,10 @@ class ScalaMoveDirectoryWithClassesHelper extends MoveDirectoryWithClassesHelper
     case _ =>
   }
 
-  override def retargetUsages(usages: ju.List[UsageInfo], oldToNewMap: ju.Map[PsiElement, PsiElement]): Unit = {
+  @NotNull
+  @Unmodifiable
+  override def retargetUsages(@NotNull @Unmodifiable usages: ju.List[UsageInfo],
+                              @NotNull oldToNewMap: ju.Map[PsiElement, PsiElement]): ju.List[UsageInfo] = {
     val usageInfosToProcess = ContainerUtil.filter[UsageInfo](usages, {
       case usageInfo: MoveRenameUsageInfo =>
         val referencedElement = usageInfo.getUpToDateReferencedElement
@@ -89,7 +93,7 @@ class ScalaMoveDirectoryWithClassesHelper extends MoveDirectoryWithClassesHelper
       case _ => false
     })
     CommonMoveUtil.retargetUsages(usageInfosToProcess.toArray(UsageInfo.EMPTY_ARRAY), oldToNewMap)
-    usages.removeAll(usageInfosToProcess)
+    ContainerUtil.filter(usages, usageInfosToProcess.contains)
   }
 
   private def isUnderRefactoring(element: PsiElement, directoriesToMove: Array[PsiDirectory]): Boolean =

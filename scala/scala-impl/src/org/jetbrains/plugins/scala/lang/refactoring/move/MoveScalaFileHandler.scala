@@ -7,6 +7,7 @@ import com.intellij.refactoring.move.moveFilesOrDirectories.MoveFileHandler
 import com.intellij.refactoring.util.MoveRenameUsageInfo
 import com.intellij.usageView.UsageInfo
 import com.intellij.util.IncorrectOperationException
+import org.jetbrains.annotations.{NotNull, Unmodifiable}
 import org.jetbrains.plugins.scala.editor.importOptimizer.ScalaImportOptimizer
 import org.jetbrains.plugins.scala.extensions.ObjectExt
 import org.jetbrains.plugins.scala.lang.psi.api.ScalaFile
@@ -46,7 +47,8 @@ class MoveScalaFileHandler extends MoveFileHandler {
       case _ => null
     }
 
-  override def retargetUsages(usageInfos: util.List[UsageInfo], oldToNewMap: util.Map[PsiElement, PsiElement]): Unit = {
+  override def retargetUsages(@NotNull @Unmodifiable usageInfos: util.List[_ <: UsageInfo],
+                              @NotNull oldToNewMap: util.Map[PsiElement, PsiElement]): Unit = {
     for (usage <- usageInfos.asScala) {
       usage match {
         case moveRenameUsage: MoveRenameUsageInfo =>
