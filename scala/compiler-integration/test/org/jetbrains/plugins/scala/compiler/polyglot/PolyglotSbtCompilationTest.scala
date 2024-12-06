@@ -96,6 +96,8 @@ abstract class PolyglotSbtCompilationTestBase(separateModules: Boolean) extends 
 
     importProject()
 
+    KotlinDaemonUtil.disableKotlinDaemon(getProject)
+
     val modules = ModuleManager.getInstance(getProject).getModules
     modules.foreach(ModuleRootModificationUtil.setModuleSdk(_, sdk))
 
