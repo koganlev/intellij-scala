@@ -7,6 +7,8 @@ import org.jetbrains.plugins.scala.project.template.ScalaSdkDescriptor
 import org.jetbrains.plugins.scala.project.template.sdk_browse.ScalaSdkFilesChooserDescriptor._
 import org.jetbrains.plugins.scala.{NlsString, ScalaBundle}
 
+import scala.annotation.nowarn
+
 private class ScalaSdkFilesChooserDescriptor extends FileChooserDescriptor(true, true, true, true, false, true) {
   setTitle(ScalaBundle.message("title.scala.sdk.files"))
   setDescription(ScalaBundle.message("choose.either.a.scala.sdk.directory.or.scala.jar.files"))
@@ -15,7 +17,7 @@ private class ScalaSdkFilesChooserDescriptor extends FileChooserDescriptor(true,
   def resultSdkDescriptor: Option[ScalaSdkDescriptor] = _resultSdkDescriptor
 
   override def isFileSelectable(file: VirtualFile): Boolean = {
-    super.isFileSelectable(file) && file.isDirectory || file.getExtension == "jar"
+    (super.isFileSelectable(file): @nowarn("cat=deprecation")) && file.isDirectory || file.getExtension == "jar"
   }
 
   override def validateSelectedFiles(virtualFiles: Array[VirtualFile]): Unit = {
