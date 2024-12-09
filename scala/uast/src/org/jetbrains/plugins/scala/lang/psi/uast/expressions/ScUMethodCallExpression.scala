@@ -111,11 +111,13 @@ final class ScUMethodCallExpression(
   override def getValueArguments: ju.List[UExpression] =
     scExpression match {
       case blockArguments if blockArguments.args.isBlockArgs =>
-        scExpression.args.exprs.collect {
+        scExpression.args.exprs.map {
           case ScBlock(statement) =>
             statement.convertToUExpressionOrEmpty(parent = this)
           case partialLambda: ScBlock if partialLambda.isPartialFunction =>
             partialLambda.convertToUExpressionOrEmpty(parent = this)
+          case _ =>
+            createUEmptyExpression(parent = this)
         }.asJava
       case parensArguments =>
         parensArguments.argumentExpressions
