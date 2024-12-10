@@ -44,12 +44,14 @@ class TypeLambdaParserTest extends SimpleScala3ParserTestBase {
       |    PsiWhiteSpace(' ')
       |    PsiElement(=)('=')
       |    PsiWhiteSpace(' ')
-      |    PsiErrorElement:'=>>' expected
+      |    PolymorhicFunctionType: [T]
       |      TypeParameterClause
       |        PsiElement([)('[')
       |        TypeParameter: T
       |          PsiElement(identifier)('T')
       |        PsiElement(])(']')
+      |      PsiErrorElement:'=>>' expected
+      |        <empty list>
       |""".stripMargin
   )
 }

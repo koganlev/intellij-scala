@@ -36,7 +36,12 @@ object PolyFunOrTypeLambda {
             marker.done(ScalaElementType.TYPE_LAMBDA)
             true
           case _ =>
-            marker.error(ScalaBundle.message("type.lambda.expected"))
+            builder.error(ScalaBundle.message("type.lambda.expected"))
+            // Even though we couldn't even parse the => or =>>,
+            // we still create a PolyFunctionType.
+            // We do that to give the parsed TypeParams a valid parent node
+            // instead of discarding the TypeParams.
+            marker.done(ScalaElementType.POLY_FUNCTION_TYPE)
             true
         }
       }
