@@ -7,11 +7,11 @@ import com.intellij.openapi.application.{ModalityState, ReadAction}
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.editor.{Document, Editor, EditorFactory}
-import com.intellij.openapi.fileEditor.{FileDocumentManager, FileEditorManager}
+import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.{DumbService, Project}
 import com.intellij.openapi.util.TextRange
-import com.intellij.openapi.vfs.{VirtualFile, VirtualFileManager}
+import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.problems.WolfTheProblemSolver
 import com.intellij.psi._
 import com.intellij.psi.util.PsiTreeUtil
@@ -27,7 +27,7 @@ import org.jetbrains.plugins.scala.codeInspection.declarationRedundancy.ScalaOpt
 import org.jetbrains.plugins.scala.compiler.diagnostics.Action
 import org.jetbrains.plugins.scala.compiler.highlighting.ExternalHighlighting.RangeInfo
 import org.jetbrains.plugins.scala.editor.DocumentExt
-import org.jetbrains.plugins.scala.extensions.{IteratorExt, ObjectExt, PsiElementExt, executeOnPooledThread, invokeLater}
+import org.jetbrains.plugins.scala.extensions.{ObjectExt, PsiElementExt, executeOnPooledThread, invokeLater}
 import org.jetbrains.plugins.scala.lang.psi.api.base.{ScReference, ScStableCodeReference}
 import org.jetbrains.plugins.scala.lang.psi.api.expr.ScMethodCall
 import org.jetbrains.plugins.scala.lang.psi.api.toplevel.imports.usages.ImportUsed
@@ -35,11 +35,8 @@ import org.jetbrains.plugins.scala.lang.psi.api.toplevel.imports.usages.ImportUs
 import org.jetbrains.plugins.scala.lang.psi.api.toplevel.imports.{ScImportExpr, ScImportOrExportStmt, ScImportSelector}
 import org.jetbrains.plugins.scala.lang.psi.impl.{CompilerType, ScalaPsiManager}
 import org.jetbrains.plugins.scala.settings.{ProblemSolverUtils, ScalaHighlightingMode, ScalaProjectSettings}
-import org.jetbrains.plugins.scala.util.{CanonicalPath, CompilationId, DocumentVersion}
+import org.jetbrains.plugins.scala.util.CompilationId
 
-import java.net.URLDecoder
-import java.nio.charset.StandardCharsets
-import java.nio.file.Path
 import java.util.Collections
 import java.util.concurrent.Callable
 import java.util.function.Consumer
@@ -210,13 +207,18 @@ private final class ExternalHighlightersService(project: Project) { self =>
     highlightType: HighlightInfoType,
     highlightRange: TextRange,
     @Nls description: String,
-    diagnostics: List[Action]
+    diagnostics: List[Action],
+    fileLevel: Boolean
   ): HighlightInfo.Builder = {
     val builder = HighlightInfo.newHighlightInfo(highlightType)
       .range(highlightRange)
       .description(description)
       .escapedToolTip(escapeHtmlWithNewLines(description))
       .group(ScalaCompilerPassId)
+
+    if (fileLevel) {
+      builder.fileLevelAnnotation()
+    }
 
     diagnostics
       .map(CompilerDiagnosticIntentionAction.create(document, _))
@@ -238,8 +240,9 @@ private final class ExternalHighlightersService(project: Project) { self =>
 
   @RequiresReadLock
   private def toHighlightInfo(highlighting: ExternalHighlighting, document: Document, psiFile: PsiFile): Option[HighlightInfo] = {
-    //NOTE: in case there is no location in the file, do not ignore/loose messages
-    //instead report them in the beginning of the file
+    // NOTE: in case there is no location in the file, do not ignore/lose messages
+    // instead report them as file level errors/warnings
+    val fileLevel = highlighting.rangeInfo.isEmpty
     val range = highlighting.rangeInfo.getOrElse {
       // Our PosInfo data structure expects 1-based line and column information.
       val start = PosInfo(1, 1)
@@ -252,7 +255,7 @@ private final class ExternalHighlightersService(project: Project) { self =>
       val description = CompilerMessages.description(highlighting.message)
 
       def standardBuilder =
-        highlightInfoBuilder(document, highlighting.highlightType, highlightRange, description, highlighting.diagnostics)
+        highlightInfoBuilder(document, highlighting.highlightType, highlightRange, description, highlighting.diagnostics, fileLevel)
 
       val highlightInfo =
         if (CompilerMessages.isUnusedImport(description)) {
@@ -260,7 +263,7 @@ private final class ExternalHighlightersService(project: Project) { self =>
           val unusedImportRange = unusedImportElementRange(leaf)
           if (unusedImportRange != null) {
             // modify highlighting info to mimic Scala 2 unused import highlighting in Scala 3
-            highlightInfoBuilder(document, HighlightInfoType.UNUSED_SYMBOL, unusedImportRange, ScalaInspectionBundle.message("unused.import.statement"), Nil)
+            highlightInfoBuilder(document, HighlightInfoType.UNUSED_SYMBOL, unusedImportRange, ScalaInspectionBundle.message("unused.import.statement"), Nil, fileLevel = false)
               .registerFix(new ScalaOptimizeImportsFix, null, null, unusedImportRange, null)
           } else standardBuilder
         } else standardBuilder
