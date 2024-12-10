@@ -209,8 +209,12 @@ abstract class DependencyManagerBase {
 
   protected def artifactReportToResolvedDependency(artifactReport: ArtifactDownloadReport): ResolvedDependency = {
     val id = artifactReport.getArtifact.getModuleRevisionId
+    val kind = artifactReport.getArtifact.getType match {
+      case "src" | "source" | "sources" => Types.SRC
+      case _ => Types.JAR
+    }
     val file = artifactReport.getLocalFile
-    ResolvedDependency(DependencyDescription.fromId(id), file)
+    ResolvedDependency(DependencyDescription.fromId(id, kind), file)
   }
 
   @throws[DependencyManagerBase.ResolveException]
@@ -338,8 +342,8 @@ object DependencyManagerBase {
     }
   }
   object DependencyDescription {
-    def fromId(id: ModuleRevisionId): DependencyDescription =
-      DependencyDescription(id.getOrganisation, id.getName, id.getRevision)
+    def fromId(id: ModuleRevisionId, kind: Type = JAR): DependencyDescription =
+      DependencyDescription(id.getOrganisation, id.getName, id.getRevision, kind = kind)
 
 
     /**
