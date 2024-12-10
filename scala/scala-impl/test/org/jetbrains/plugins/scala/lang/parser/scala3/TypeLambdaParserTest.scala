@@ -28,5 +28,29 @@ class TypeLambdaParserTest extends SimpleScala3ParserTestBase {
   def testAllTogether(): Unit = checkParseErrors(
     "type TL = [A, F[A] >: Option[A] <: List[A]] =>> F[A] => A"
   )
+
+  def testIncompleteParameterList(): Unit = checkTree(
+    "type TL = [T]",
+    """
+      |ScalaFile
+      |  ScTypeAliasDefinition: TL
+      |    AnnotationsList
+      |      <empty list>
+      |    Modifiers
+      |      <empty list>
+      |    PsiElement(type)('type')
+      |    PsiWhiteSpace(' ')
+      |    PsiElement(identifier)('TL')
+      |    PsiWhiteSpace(' ')
+      |    PsiElement(=)('=')
+      |    PsiWhiteSpace(' ')
+      |    PsiErrorElement:'=>>' expected
+      |      TypeParameterClause
+      |        PsiElement([)('[')
+      |        TypeParameter: T
+      |          PsiElement(identifier)('T')
+      |        PsiElement(])(']')
+      |""".stripMargin
+  )
 }
 
