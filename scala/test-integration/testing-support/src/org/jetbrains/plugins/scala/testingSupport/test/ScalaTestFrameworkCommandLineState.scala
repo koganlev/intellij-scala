@@ -23,11 +23,11 @@ import org.jetbrains.plugins.scala.testingSupport.test.exceptions.executionExcep
 import org.jetbrains.plugins.scala.testingSupport.test.testdata.TestConfigurationData
 import org.jetbrains.plugins.scala.testingSupport.test.utils.{JavaParametersModified, RawProcessOutputDebugLogger}
 
-import java.io.{File, IOException, PrintStream}
+import java.io.IOException
 import java.nio.charset.StandardCharsets
+import java.nio.file.{Files, Path}
 import java.{util => ju}
 import scala.jdk.CollectionConverters._
-import scala.util.Using
 
 /**
  * For ScalaTest, Spec2, uTest
@@ -104,7 +104,7 @@ class ScalaTestFrameworkCommandLineState(
     }
     if (useTestsArgsFile) {
       val argsFile = prepareTempArgsFile(programParameters.testsArgs)
-      params.getProgramParametersList.add(s"@${argsFile.getAbsolutePath}")
+      params.getProgramParametersList.add(s"@${argsFile.toAbsolutePath.toString}")
       params.getProgramParametersList.addAll(programParameters.otherArgs: _*)
     } else {
       params.getProgramParametersList.addAll(programParameters.allArgs: _*)
@@ -127,11 +127,9 @@ class ScalaTestFrameworkCommandLineState(
    */
   private def prepareTempArgsFile(
     programParameters: Seq[String]
-  ): File = try {
-    val tempFile: File = File.createTempFile("idea_scala_test_runner", ".tmp")
-    Using.resource(new PrintStream(tempFile, StandardCharsets.UTF_8.toString)) { printer =>
-      programParameters.foreach(printer.println)
-    }
+  ): Path = try {
+    val tempFile = Files.createTempFile("idea_scala_test_runner", ".tmp")
+    Files.write(tempFile, programParameters.asJava, StandardCharsets.UTF_8)
     tempFile
   } catch {
     case e: IOException =>
