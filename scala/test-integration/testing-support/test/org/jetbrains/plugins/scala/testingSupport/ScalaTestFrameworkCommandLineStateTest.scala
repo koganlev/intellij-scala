@@ -20,9 +20,8 @@ import org.jetbrains.sbt.project.data.service.ProjectDataServiceTestCase
 import org.junit.Assert.{assertEquals, assertNotNull}
 import org.junit.experimental.categories.Category
 
-import java.io.File
 import java.net.URI
-import java.nio.file.Files
+import java.nio.file.{Files, Path}
 import java.util
 import scala.jdk.CollectionConverters.{CollectionHasAsScala, MapHasAsJava}
 
@@ -218,7 +217,7 @@ class ScalaTestFrameworkCommandLineStateTest extends HeavyPlatformTestCase {
       linkedProjectPath := projectBasePath
 
       modules ++= Seq(new javaModule {
-        val uri: URI = new File(projectBasePath).toURI
+        val uri: URI = Path.of(projectBasePath).toUri
         val id: String = ModuleNode.combinedId(myCustomModuleName, Option(uri))
 
         projectId := id
@@ -236,9 +235,13 @@ class ScalaTestFrameworkCommandLineStateTest extends HeavyPlatformTestCase {
   }
 
   private def ensureProjectRootExists(): Unit = {
-    val file = new File(getProject.getBasePath)
-    file.mkdirs()
-    LocalFileSystem.getInstance().refreshAndFindFileByIoFile(file)
+    val basePath = getProject.getBasePath
+    if (basePath eq null) return
+    val path = Path.of(basePath)
+    if (!Files.exists(path)) {
+      Files.createDirectories(path)
+    }
+    LocalFileSystem.getInstance().refreshAndFindFileByNioFile(path)
   }
 
   private def buildCommandLineState(project: Project, configuration: ScalaTestRunConfiguration): ScalaTestFrameworkCommandLineState = {

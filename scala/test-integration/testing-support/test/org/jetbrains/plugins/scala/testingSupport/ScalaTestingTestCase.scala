@@ -32,7 +32,7 @@ import org.jetbrains.plugins.scala.util.assertions.failWithCause
 import org.junit.Assert._
 import org.junit.experimental.categories.Category
 
-import java.io.File
+import java.nio.file.{Files, Path}
 import java.util.concurrent.atomic.AtomicReference
 import scala.concurrent.Await
 import scala.concurrent.duration.FiniteDuration
@@ -243,9 +243,9 @@ abstract class ScalaTestingTestCase
       case state: JavaCommandLineState =>
         Try {
           val workingDir = state.getJavaParameters.getWorkingDirectory
-          val dir = new File(workingDir)
-          if (!dir.exists()) {
-            dir.mkdirs()
+          val path = Path.of(workingDir)
+          if (!Files.exists(path)) {
+            Files.createDirectories(path)
           }
         }
 
