@@ -3,10 +3,14 @@ package org.jetbrains.plugins.scala.testingSupport;
 import org.specs2.execute.Details;
 import org.specs2.execute.FailureDetails;
 
-import java.io.*;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.lang.reflect.Field;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.List;
@@ -121,14 +125,14 @@ public class TestRunnerUtil {
     @SuppressWarnings("UnnecessaryLocalVariable")
     List<String> result = args
             .flatMap(arg -> arg.startsWith("@")
-                    ? readLinesUnchecked(arg.substring(1))
+                    ? readLinesUnchecked(arg.substring(1)).stream()
                     : Stream.of(arg)
             )
             .collect(Collectors.toList());
     return result;
   }
 
-  private static Stream<String> readLinesUnchecked(String fileName) throws UncheckedIOException {
+  private static List<String> readLinesUnchecked(String fileName) throws UncheckedIOException {
     try {
       return readLines(fileName);
     } catch (IOException e) {
@@ -136,12 +140,13 @@ public class TestRunnerUtil {
     }
   }
 
-  private static Stream<String> readLines(String fileName) throws IOException {
-    File file = new File(fileName);
-    if (!file.exists())
-      throw new FileNotFoundException(String.format("argument file %s could not be found", file.getName()));
-    else
-      return Files.lines(file.toPath(), StandardCharsets.UTF_8).map(String::trim).filter(x -> !x.isEmpty());
+  private static List<String> readLines(String fileName) throws IOException {
+    Path path = Paths.get(fileName);
+    if (!Files.exists(path))
+      throw new FileNotFoundException(String.format("argument file %s could not be found", fileName));
+    try (Stream<String> lines = Files.lines(path, StandardCharsets.UTF_8)) {
+      return lines.map(String::trim).filter(x -> !x.isEmpty()).collect(Collectors.toList());
+    }
   }
 
   public static String unescapeTestName(String testName) {
