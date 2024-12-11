@@ -375,7 +375,6 @@ lazy val scalaImpl: sbt.Project =
         Dependencies.intellijIdeMetricsBenchmark % Test,
         Dependencies.intellijIdeMetricsCollector % Test,
         Dependencies.intellijIdeUtilCommon % Test,
-        Dependencies.scalaMetaCore % Test,
       ),
       // for dependency version completion/inspections
       libraryDependencies += Dependencies.coursierApi,
@@ -440,6 +439,7 @@ lazy val compilerIntegration =
       scalaImpl % "test->test;compile->compile",
       codeInsight % "test->test;compile->compile",
       sbtImpl % "test->test;compile->compile",
+      scalaMetaImpl % "test->test;compile->compile",
       jps,
       bsp,
       gradleIntegration % "test->test"

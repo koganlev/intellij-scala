@@ -3,6 +3,8 @@ package org.jetbrains.plugins.scala.lang.resolveSemanticDb
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.pom.java.LanguageLevel
 import com.intellij.psi.PsiNamedElement
+import com.intellij.testFramework.{ErrorLog, TestLoggerKt}
+import com.jetbrains.rd.util.threading.CompoundThrowable
 import org.jetbrains.plugins.scala.base.libraryLoaders.SmartJDKLoader
 import org.jetbrains.plugins.scala.extensions._
 import org.jetbrains.plugins.scala.lang.psi.api.base.patterns.ScReferencePattern
@@ -23,9 +25,10 @@ import org.jetbrains.plugins.scala.util.AliasExports._
 import org.jetbrains.plugins.scala.{LatestScalaVersions, ScalaVersion}
 
 import scala.collection.mutable.ArrayBuffer
+import scala.jdk.CollectionConverters.CollectionHasAsScala
 
 abstract class ReferenceComparisonTestBase_Scala3 extends ReferenceComparisonTestBase {
-  override protected def supportedIn(version: ScalaVersion): Boolean = version >= LatestScalaVersions.Scala_3_0
+  override protected def supportedIn(version: ScalaVersion): Boolean = version >= LatestScalaVersions.Scala_3_6
   // do not spam on in output in failed tests, we have too much of them currently
   override protected def reportFailedTestContextDetails: Boolean = false
 }
@@ -129,6 +132,12 @@ abstract class ReferenceComparisonTestBase extends ComparisonTestBase {
           }
         }
       }
+    }
+
+
+    val errors = TestLoggerKt.getErrorLog.takeLoggedErrors()
+    if (!errors.isEmpty) {
+      throw new CompoundThrowable(errors)
     }
 
     val tags = files.filterByType[ScalaFile].flatMap(collectFeaturesIn).distinct

@@ -7,7 +7,7 @@ import junit.framework.{TestCase, TestFailure, TestResult, TestSuite}
 import org.jetbrains.plugins.scala.compiler.ScalaCompilerTestBase
 import org.jetbrains.plugins.scala.extensions.PathExt
 import org.jetbrains.plugins.scala.lang.parser.scala3.imported.{Scala3ImportedParserTest, Scala3ImportedParserTest_Move_Fixed_Tests}
-import org.jetbrains.plugins.scala.lang.resolveSemanticDb.{ComparisonTestBase, ReferenceComparisonTestsGenerator_Scala3, SemanticDbStore}
+import org.jetbrains.plugins.scala.lang.resolveSemanticDb.{ComparisonTestBase, ReferenceComparisonTestsGenerator_Scala3, SemanticDbFromScalaMeta, SemanticDbStore}
 import org.jetbrains.plugins.scala.project.VirtualFileExt
 import org.jetbrains.plugins.scala.util.TestUtils
 import org.jetbrains.plugins.scala.{LatestScalaVersions, ScalaVersion}
@@ -428,7 +428,7 @@ object AfterUpdateDottyVersionScript {
         val dirName = testOutPath.getFileName.toString
         val storePath = ComparisonTestBase.outPath.resolve(dirName + ".semdb")
 
-        val store = SemanticDbStore.fromSemanticDbPath(testOutPath)
+        val store = SemanticDbFromScalaMeta.fromSemanticDbPath(testOutPath)
 
         if (store.files.nonEmpty)
           Files.writeString(storePath, store.serialized)

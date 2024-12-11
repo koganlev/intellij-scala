@@ -4,8 +4,6 @@ import com.intellij.psi.{PsiElement, PsiFile}
 import org.jetbrains.plugins.scala.extensions._
 import org.jetbrains.plugins.scala.lang.psi.api.base.types.ScRefinement
 
-import scala.meta.internal.semanticdb
-
 package object resolveSemanticDb {
 
   implicit class RangeOps(private val range: (TextPos, TextPos)) extends AnyVal {
@@ -28,10 +26,6 @@ package object resolveSemanticDb {
   object TextPos {
     def fromZeroBased(line: Int, col: Int): TextPos =
       TextPos(line + 1, col + 1)
-    def ofStart(range: semanticdb.Range): TextPos =
-      fromZeroBased(range.startLine, range.startCharacter)
-    def ofEnd(range: semanticdb.Range): TextPos =
-      fromZeroBased(range.endLine, range.endCharacter)
     def of(e: PsiElement): TextPos = at(e.getTextOffset, e.getContainingFile)
     def at(offset: Int, file: PsiFile): TextPos = {
       if (offset < 0) {
