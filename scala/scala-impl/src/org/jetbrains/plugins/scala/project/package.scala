@@ -21,7 +21,9 @@ import org.jetbrains.plugins.scala.compiler.data.CompileOrder
 import org.jetbrains.plugins.scala.extensions._
 import org.jetbrains.plugins.scala.lang.formatting.settings.ScalaCodeStyleSettings
 import org.jetbrains.plugins.scala.lang.psi.api.ScalaFile
+import org.jetbrains.plugins.scala.lang.psi.api.toplevel.typedef.ScTypeDefinition
 import org.jetbrains.plugins.scala.lang.psi.compiled.ScClsFileViewProvider.ScClsFileImpl
+import org.jetbrains.plugins.scala.lang.psi.impl.ScalaPsiManager
 import org.jetbrains.plugins.scala.lang.psi.stubs.elements.ScStubElementType
 import org.jetbrains.plugins.scala.lang.resolve.processor.precedence.PrecedenceTypes
 import org.jetbrains.plugins.scala.project.ScalaFeatures.SerializableScalaFeatures
@@ -615,8 +617,21 @@ package object project {
       compilerOptionsFor(element).exists(_.kindProjector) ||
         isDefinedInModuleOrProject(_.YKindProjectorOptionEnabled)
 
-    private def compilerOptionsFor(element: PsiElement): Option[CompilerOptions] =
-      containingFileOf(element).filterByType[ScClsFileImpl].flatMap(_.compilerOptions)
+    private def compilerOptionsFor(element: PsiElement): Option[CompilerOptions] = containingFileOf(element) match {
+      case Some(file: ScClsFileImpl) =>
+        file.compilerOptions
+      case Some(file: ScalaFile) if file.getVirtualFile != null =>
+        if (ProjectFileIndex.getInstance(file.getProject).isInLibrarySource(file.getVirtualFile)) {
+          val containingClass = element.contexts.findByType[ScTypeDefinition]
+          val fqn = containingClass.map(_.qualifiedName)
+          val compiledClass = fqn.flatMap(name => ScalaPsiManager.instance(element.getProject).getCachedClass(element.getResolveScope, name))
+          val options = compiledClass.flatMap(compilerOptionsFor)
+          options
+        } else {
+          None
+        }
+      case _ => None
+    }
 
     private def containingFileOf(element: PsiElement): Option[PsiFile] =
       element.containingFile.map(file => Option(file.getContext).flatMap(containingFileOf).getOrElse(file))
