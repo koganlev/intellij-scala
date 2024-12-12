@@ -656,18 +656,24 @@ class TreePrinter(privateMembers: Boolean = false, infixTypes: Boolean = false, 
     text
   }
 
-  private def textOfConstant(node: Node): String = node.tag match {
-    case UNITconst => "()"
-    case TRUEconst => "true"
-    case FALSEconst => "false"
-    case BYTEconst | SHORTconst | INTconst => node.value.toString
-    case LONGconst => s"${node.value}L"
-    case FLOATconst => s"${intBitsToFloat(node.value.toInt)}F"
-    case DOUBLEconst => s"${longBitsToDouble(node.value)}D"
-    case CHARconst => "'" + escape(node.value.toChar.toString) + "'"
-    case STRINGconst => "\"" + escape(node.name) + "\""
-    case NULLconst => "null"
-    case _ => ""
+  private def textOfConstant(node: Node): String = node match {
+    case Node3(APPLY, _, Seq(Node3(SELECTin, Seq("+[...]"), Seq(left, _)), right)) =>
+      val l = textOfConstant(left)
+      val r = textOfConstant(right)
+      if (l.nonEmpty && r.nonEmpty) l + " + " + r else ""
+    case n => n.tag match {
+      case UNITconst => "()"
+      case TRUEconst => "true"
+      case FALSEconst => "false"
+      case BYTEconst | SHORTconst | INTconst => node.value.toString
+      case LONGconst => s"${node.value}L"
+      case FLOATconst => s"${intBitsToFloat(node.value.toInt)}F"
+      case DOUBLEconst => s"${longBitsToDouble(node.value)}D"
+      case CHARconst => "'" + escape(node.value.toChar.toString) + "'"
+      case STRINGconst => "\"" + escape(node.name) + "\""
+      case NULLconst => "null"
+      case _ => ""
+    }
   }
 
   // TODO Complete

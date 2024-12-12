@@ -150,31 +150,43 @@ object KindProjectorSimplifyTypeProjectionInspection {
     }
   }
 
-  // TODO Use the type lambda syntax in Scala 3
   private[this] def convertToFunctionSyntax(alias: ScTypeAliasDefinition): String = {
     val builder = new mutable.StringBuilder()
-    val styleSettings = ScalaCodeStyleSettings.getInstance(alias.getProject)
 
-    if (styleSettings.REPLACE_LAMBDA_WITH_GREEK_LETTER) builder ++= "λ"
-    else                                                builder ++= "Lambda"
+    // TODO Use standard type lambda presentation (as without -Ykind-projector), SCL-23275
+    if (alias.isInScala3File) {
+      builder ++= alias.typeParameters.map(_.getText).mkString("[", ", ", "]")
+      builder ++= " =>> "
+      builder ++= {
+        val tpe = alias.aliasedType.getOrAny
+        if (ScalaApplicationSettings.PRECISE_TEXT) tpe.canonicalText
+        else tpe.presentableText(alias)
+      }
+    } else {
+      val styleSettings = ScalaCodeStyleSettings.getInstance(alias.getProject)
 
-    builder.append("[")
-    val parameters = alias.typeParameters.map(param =>
-      if (param.isCovariant || param.isContravariant || boundsDefined(param))
-        s"`${param.getText}`"
-      else param.getText
-    )
+      if (styleSettings.REPLACE_LAMBDA_WITH_GREEK_LETTER) builder ++= "λ"
+      else builder ++= "Lambda"
 
-    if (parameters.length > 1) builder ++= parameters.mkString(start = "(", sep = ", ", end = ")")
-    else                       builder ++= parameters.mkString(start = "", sep = "", end = "")
+      builder.append("[")
+      val parameters = alias.typeParameters.map(param =>
+        if (param.isCovariant || param.isContravariant || boundsDefined(param))
+          s"`${param.getText}`"
+        else param.getText
+      )
 
-    builder ++= " => "
-    builder ++= alias.aliasedType.getOrAny.presentableText(alias)
-    builder ++= "]"
+      if (parameters.length > 1) builder ++= parameters.mkString(start = "(", sep = ", ", end = ")")
+      else builder ++= parameters.mkString(start = "", sep = "", end = "")
+
+      builder ++= " => "
+      builder ++= alias.aliasedType.getOrAny.presentableText(alias)
+      builder ++= "]"
+    }
+
     builder.toString()
   }
 
-  // TODO use TypePresentation's innerTypeText & NameRenderer, #SCL-23282
+  // TODO use TypePresentation's innerTypeText & NameRenderer, SCL-23282
   def convertToKindProjectorSyntax(alias: ScTypeAliasDefinition): String =
     tryConvertToInlineSyntax(alias).getOrElse(convertToFunctionSyntax(alias))
 }

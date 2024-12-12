@@ -5,7 +5,7 @@ package libraryLoaders
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.vfs.newvfs.impl.VfsRootAccess
 import com.intellij.testFramework.PsiTestUtil
-import org.jetbrains.plugins.scala.DependencyManagerBase.{DependencyDescription, ResolvedDependency}
+import org.jetbrains.plugins.scala.DependencyManagerBase.{DependencyDescription, ResolvedDependency, Types}
 import org.jetbrains.plugins.scala.util.dependencymanager.TestDependencyManager
 
 import scala.collection.mutable
@@ -30,6 +30,10 @@ final class IvyManagedLoader private(
   override protected val dependencyManager: DependencyManagerBase,
   private val _dependencies: DependencyDescription*
 ) extends IvyManagedLoaderBase {
+
+  _dependencies.foreach { it =>
+    require(!(it.kind == Types.SRC && it.isTransitive), "Transitive source dependencies are not supported in Ivy") // https://issues.apache.org/jira/browse/IVY-1003
+  }
 
   override protected def cache: mutable.Map[Seq[DependencyDescription], Seq[ResolvedDependency]] =
     IvyManagedLoader.cache
