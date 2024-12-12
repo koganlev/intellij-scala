@@ -10,14 +10,11 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.diagnostic.Logger
-import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil
 import com.intellij.openapi.fileEditor.FileDocumentManager
-import com.intellij.openapi.module.ModuleManager
-import com.intellij.openapi.options.ShowSettingsUtil
 import com.intellij.openapi.options.ex.SingleConfigurableEditor
 import com.intellij.openapi.options.newEditor.SettingsDialog
 import com.intellij.openapi.progress.ProgressManager
-import com.intellij.openapi.project.{Project, ProjectManager, ProjectManagerListener, ProjectUtil}
+import com.intellij.openapi.project.{Project, ProjectManager, ProjectManagerListener}
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.roots.ui.configuration.ProjectStructureConfigurable
@@ -221,30 +218,6 @@ final class SbtProcessManager(project: Project) extends Disposable {
       globalPluginsDir.mkdirs()
       new File(globalPluginsDir, "idea.sbt")
     }
-
-  private def getWorkingDirPath(project: Project): String = {
-    //Fist try to calculate root path based on `getExternalRootProjectPath`
-    //When sbt project reference another sbt project via `RootProject` this will correctly find the root project path (see SCL-21143)
-    //However, if user manually linked multiple SBT projects via external system tool window (sbt tool window)
-    //using "Link sbt Project" button (the one with "plus" icon), it  will randomly choose one of the projects
-    // TODO - think about some possibility to allow the user to choose in which project the shell should be fired
-    val externalRootProjectPath: Option[String] = {
-      val modules = ModuleManager.getInstance(project).getModules.toSeq
-      modules.iterator.map(ExternalSystemApiUtil.getExternalRootProjectPath).find(_ != null)
-    }
-    externalRootProjectPath
-      .orElse {
-        //Not sure when externalRootProjectPath can be empty in SBT projects
-        //But just in case fallback to ProjectUtil.guessProjectDir, but notice that it's not reliable in some cases (see SCL-21143)
-        val message = s"Can't calculate external root project path for project `${project.getName}`, fallback to `ProjectUtil.guessProjectDir`"
-        if (ApplicationManager.getApplication.isInternal)
-          log.error(message)
-        else
-          log.warn(message)
-        Option(ProjectUtil.guessProjectDir(project)).map(_.getCanonicalPath)
-      }
-      .getOrElse(throw new IllegalStateException(s"no project directory found for project ${project.getName}"))
-  }
 
   // on Windows the terminal defaults to 80 columns which wraps and breaks highlighting.
   // Use a wider value that should be reasonable in most cases. Has no effect on Unix.

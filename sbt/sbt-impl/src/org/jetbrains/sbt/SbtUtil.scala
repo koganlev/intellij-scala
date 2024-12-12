@@ -2,11 +2,12 @@ package org.jetbrains.sbt
 
 import com.intellij.execution.configurations.ParametersList
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.externalSystem.model.project.ModuleData
 import com.intellij.openapi.externalSystem.model.{DataNode, Key}
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil
-import com.intellij.openapi.module.Module
-import com.intellij.openapi.project.Project
+import com.intellij.openapi.module.{Module, ModuleManager}
+import com.intellij.openapi.project.{Project, ProjectUtil}
 import com.intellij.platform.workspace.storage.{EntityStorage, SymbolicEntityId, WorkspaceEntityWithSymbolicId}
 import com.intellij.util.net.{ProxyConfiguration, ProxyCredentialStore, ProxyCredentialStoreKt, ProxySettings, ProxyUtils}
 import com.intellij.util.{EnvironmentUtil, SystemProperties}
@@ -31,6 +32,7 @@ import scala.jdk.CollectionConverters.MapHasAsScala
 import scala.util.Using
 
 object SbtUtil {
+  private lazy val log: Logger = Logger.getInstance(getClass)
 
   object CommandLineOptions {
     val globalPlugins = "sbt.global.plugins"
@@ -394,5 +396,29 @@ object SbtUtil {
       case _ =>
         Map.empty
     }
+  }
+
+  def getWorkingDirPath(project: Project): String = {
+    //Fist try to calculate root path based on `getExternalRootProjectPath`
+    //When sbt project reference another sbt project via `RootProject` this will correctly find the root project path (see SCL-21143)
+    //However, if user manually linked multiple SBT projects via external system tool window (sbt tool window)
+    //using "Link sbt Project" button (the one with "plus" icon), it  will randomly choose one of the projects
+    // TODO - think about some possibility to allow the user to choose in which project the shell should be fired
+    val externalRootProjectPath: Option[String] = {
+      val modules = ModuleManager.getInstance(project).getModules.toSeq
+      modules.iterator.map(ExternalSystemApiUtil.getExternalRootProjectPath).find(_ != null)
+    }
+    externalRootProjectPath
+      .orElse {
+        //Not sure when externalRootProjectPath can be empty in SBT projects
+        //But just in case fallback to ProjectUtil.guessProjectDir, but notice that it's not reliable in some cases (see SCL-21143)
+        val message = s"Can't calculate external root project path for project `${project.getName}`, fallback to `ProjectUtil.guessProjectDir`"
+        if (ApplicationManager.getApplication.isInternal)
+          log.error(message)
+        else
+          log.warn(message)
+        Option(ProjectUtil.guessProjectDir(project)).map(_.getCanonicalPath)
+      }
+      .getOrElse(throw new IllegalStateException(s"no project directory found for project ${project.getName}"))
   }
 }
