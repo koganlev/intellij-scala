@@ -4,15 +4,14 @@ import com.intellij.execution.configuration.EnvironmentVariablesComponent;
 import com.intellij.execution.ui.DefaultJreSelector;
 import com.intellij.execution.ui.JrePathEditor;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.externalSystem.service.execution.ExternalSystemJdkUtil;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.projectRoots.JavaSdk;
 import com.intellij.openapi.projectRoots.ProjectJdkTable;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.ui.distribution.DistributionComboBox;
 import com.intellij.openapi.roots.ui.distribution.DistributionInfo;
 import com.intellij.openapi.roots.ui.distribution.LocalDistributionInfo;
 import com.intellij.openapi.ui.DialogWrapper;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.RawCommandLineEditor;
 import com.intellij.uiDesigner.core.GridConstraints;
@@ -143,13 +142,8 @@ public class SbtSettingsPane {
     @SuppressWarnings("unused")
     public void setCustomVMPath(String path, boolean useCustomVM) {
         // determine name or path based on available sdk's to maintain compatibility with old form data model
-        String pathOrName = ProjectJdkTable.getInstance()
-                .getSdksOfType(JavaSdk.getInstance())
-                .stream()
-                .filter(sdk -> StringUtil.equals(sdk.getHomePath(), path))
-                .findFirst()
-                .map(Sdk::getName)
-                .orElse(path);
+        Optional<Sdk> maybeSdk = Optional.ofNullable(ExternalSystemJdkUtil.findJdkInSdkTableByPath(path));
+        String pathOrName = maybeSdk.map(Sdk::getName).orElse(path);
         jrePathEditor.setPathOrName(pathOrName, useCustomVM);
     }
 
