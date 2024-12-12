@@ -166,7 +166,7 @@ final class SbtProcessManager(project: Project) extends Disposable {
       vmParams.add("-Dsbt.log.noformat=true")
 
     val commandLine: GeneralCommandLine = javaParameters.toCommandLine
-    getCustomVMExecutableOrWarn(sbtSettings).foreach(exe => commandLine.setExePath(exe.getAbsolutePath))
+    sbtSettings.getCustomVMExecutableOrWarn(project).foreach(exe => commandLine.setExePath(exe.getAbsolutePath))
 
     if (autoPluginsSupported) {
       val sbtBinVersion = binaryVersion(projectSbtVersion)
@@ -254,29 +254,6 @@ final class SbtProcessManager(project: Project) extends Disposable {
       case _: UnixPtyProcess => // don't need to do stuff
       case proc: PtyProcess  => proc.setWinSize(new WinSize(2000, 100))
       case _                 =>
-    }
-  }
-
-  /** If a custom VM executable is configured, return it. If it's not a valid path, warn user. */
-  private def getCustomVMExecutableOrWarn(sbtSettings: SbtExecutionSettings): Option[File] =
-    Option(sbtSettings.vmExecutable).filter { path =>
-      if (path.isFile) true
-      else {
-        val badCustomVMNotification =
-          ScalaNotificationGroups.sbtShell
-            .createNotification(SbtBundle.message("sbt.shell.no.jre.found.at.path", sbtSettings.vmExecutable), NotificationType.WARNING)
-        badCustomVMNotification.addAction(ConfigureSbtAction)
-        badCustomVMNotification.notify(project)
-        false
-      }
-    }
-
-  private object ConfigureSbtAction extends NotificationAction(SbtBundle.message("sbt.shell.configure.sbt.jvm")) {
-
-    override def actionPerformed(e: AnActionEvent, notification: Notification): Unit = {
-      // External system handles the Configurable name for sbt settings
-      ShowSettingsUtil.getInstance().showSettingsDialog(project, SbtProjectSystem.Id.getReadableName)
-      notification.expire()
     }
   }
 
