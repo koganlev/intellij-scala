@@ -7,10 +7,11 @@ import com.intellij.execution.runners.{ExecutionEnvironment, ProgramRunner}
 import com.intellij.execution.util.EnvFilesUtilKt.configureEnvsFromFiles
 import com.intellij.execution.util.JavaParametersUtil
 import com.intellij.execution.{EnvFilesOptions, ExecutionResult, Executor, OutputListener}
+import com.intellij.openapi.externalSystem.service.execution.ExternalSystemJdkUtil
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.options.SettingsEditor
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.projectRoots.Sdk
+import org.jetbrains.plugins.scala.extensions.RichFile
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.util.execution.ParametersListUtil
@@ -20,6 +21,7 @@ import org.jdom.Element
 import org.jetbrains.plugins.scala.project.ProjectExt
 import org.jetbrains.plugins.scala.util.JdomExternalizerMigrationHelper
 import org.jetbrains.sbt.SbtUtil
+import org.jetbrains.sbt.project.SbtExternalSystemManager
 import org.jetbrains.sbt.settings.SbtSettings
 
 import java.io.File
@@ -127,7 +129,18 @@ class SbtCommandLineState(val processedCommands: String, val configuration: SbtR
 
     params.setWorkingDirectory(configuration.workingDir)
 
-    val jdk: Sdk = JavaParametersUtil.createProjectJdk(project, null)
+    val sbtExecutionSettings = SbtExternalSystemManager.executionSettingsFor(project)
+
+    val customJdk = for {
+      vmExecutablePath <- sbtExecutionSettings.getCustomVMExecutableOrWarn(project)
+      // The java installation directory is two levels up.
+      // See org.jetbrains.sbt.project.SbtExternalSystemManager.getVmExecutable
+      javaHome = vmExecutablePath << 2
+      if javaHome != null
+      jdk  <- Option(ExternalSystemJdkUtil.findJdkInSdkTableByPath(javaHome.getAbsolutePath))
+    } yield jdk
+
+    val jdk = customJdk.getOrElse(JavaParametersUtil.createProjectJdk(project, null))
     params.configureByProject(project, JavaParameters.JDK_ONLY, jdk)
 
     val environmentVariables = new util.HashMap(configuration.environmentVariables)
