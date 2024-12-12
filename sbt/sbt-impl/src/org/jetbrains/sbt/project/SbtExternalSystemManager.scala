@@ -65,6 +65,11 @@ object SbtExternalSystemManager {
 
   private val Log = Logger.getInstance(classOf[SbtExternalSystemManager])
 
+  def executionSettingsFor(project: Project): SbtExecutionSettings = {
+    val workingDirPath = SbtUtil.getWorkingDirPath(project)
+    executionSettingsFor(project, workingDirPath)
+  }
+
   def executionSettingsFor(project: Project, path: String): SbtExecutionSettings = {
     import scala.jdk.CollectionConverters._
 
