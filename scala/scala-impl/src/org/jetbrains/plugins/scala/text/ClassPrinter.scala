@@ -225,7 +225,7 @@ class ClassPrinter(isScala3: Boolean, extendsSeparator: String = " ") {
   private def textOf(annotation: ScAnnotation, emptyParens: Boolean): String = {
     val invocation = annotation.constructorInvocation
     val prefix = invocation.simpleTypeElement.map(e => textOf(e.`type`())).getOrElse("")
-    val args = invocation.arguments.map(_.exprs.map(_.getText).mkString(", ")).map("(" + _ + ")").mkString
+    val args = invocation.arguments.map(_.exprs.map(_.getText.replaceAll("\r?\n\\s*", " ")).mkString(", ")).map("(" + _ + ")").mkString
     "@" + prefix + (if (!emptyParens && args == "()") "" else args)
   }
 

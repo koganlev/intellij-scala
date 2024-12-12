@@ -21,4 +21,7 @@ trait Text {
 
   @SuppressWarnings(Array("one", "two"))
   def f7: Int = ???
+
+  @deprecated("one" + "two")
+  def f8: Int = ???
 }
