@@ -41,6 +41,12 @@ final class IvyManagedLoader private(
   override protected def dependencies(unused: ScalaVersion): Seq[DependencyDescription] =
     _dependencies
 
+  // TODO Support transitive sources directly, via LibraryLoader.init(..., sources: DependencyDescription => Boolean)
+  def resolve(version: ScalaVersion): Seq[ResolvedDependency] = {
+    val deps = dependencies(version)
+    cache.getOrElseUpdate(deps, dependencyManager.resolve(deps: _*))
+  }
+
   /**
    * NOTE: equals & hashCode are needed for test execution time optimization,
    * in order [[org.jetbrains.plugins.scala.base.SharedTestProjectToken.ByTestClassAndScalaSdkAndProjectLibraries]]

@@ -1,9 +1,11 @@
 package org.jetbrains.plugins.scala.text
 
+import com.intellij.openapi.module.Module
 import com.intellij.openapi.projectRoots.Sdk
+import com.intellij.openapi.vfs.{JarFileSystem, VirtualFile}
 import com.intellij.pom.java.LanguageLevel
 import com.intellij.psi.PsiPackage
-import com.intellij.testFramework.TestLoggerKt
+import com.intellij.testFramework.{PsiTestUtil, TestLoggerKt}
 import com.intellij.util.AstLoadingFilter
 import org.jetbrains.plugins.scala.DependencyManagerBase.DependencyDescription
 import org.jetbrains.plugins.scala.ScalaVersion
@@ -14,14 +16,21 @@ import org.jetbrains.plugins.scala.lang.psi.api.statements.ScTypeAlias
 import org.jetbrains.plugins.scala.lang.psi.api.toplevel.typedef.{ScObject, ScTypeDefinition}
 import org.jetbrains.plugins.scala.lang.psi.impl.ScalaPsiManager
 import org.jetbrains.plugins.scala.settings.ScalaApplicationSettings.{getInstance => ScalaApplicationSettings}
+import org.jetbrains.plugins.scala.settings.ScalaProjectSettings
+import org.jetbrains.plugins.scala.settings.ScalaProjectSettings.AliasExportSemantics
+import org.jetbrains.plugins.scala.text.TextToTextTestBase._
 import org.junit.Assert
 
-import scala.jdk.CollectionConverters.ListHasAsScala
+import java.io.File
+import java.util.Collections
+import scala.jdk.CollectionConverters.{ListHasAsScala, SeqHasAsJava}
 
 // SCL-21078
 abstract class TextToTextTestBase(dependencies: Seq[DependencyDescription],
                                   packages: Seq[String], packageExceptions: Set[String], minClassCount: Int,
                                   classExceptions: Set[String],
+                                  withSources: Boolean = false,
+                                  sourceExceptions: Set[String] = Set.empty,
                                   includeScalaReflect: Boolean = false,
                                   includeScalaCompiler: Boolean = false,
                                   astLoadingFilter: Boolean = true)(implicit scalaVersion: ScalaVersion) extends ScalaFixtureTestCase {
@@ -33,22 +42,45 @@ abstract class TextToTextTestBase(dependencies: Seq[DependencyDescription],
   override protected lazy val jdk: Sdk = SmartJDKLoader.createJdk(LanguageLevel.JDK_17)
 
   override def librariesLoaders =
-    super.librariesLoaders :+
-      IvyManagedLoader(dependencies.map(_.transitive()): _*) :++
+    super.librariesLoaders :++
       (if (includeScalaReflect) Seq(ScalaReflectLibraryLoader) else Seq.empty)
 
+  override protected def setUpLibraries(implicit module: Module): Unit = {
+    super.setUpLibraries(module)
+
+    val classes = IvyManagedLoader(dependencies.map(_.transitive()): _*).resolve(scalaVersion)
+    val sources = IvyManagedLoader(classes.filter(it => !ArtifactsWithoutSources(it.info.org, it.info.artId)).map(_.info.sources()): _*).resolve(scalaVersion)
+    classes.foreach { cls =>
+      val source = sources.find(_.info == cls.info.sources())
+      val classRoots = Collections.singletonList(findJarFile(cls.file))
+      val sourceRoots = source.map(it => findJarFile(it.file)).toSeq.asJava
+      PsiTestUtil.addProjectLibrary(module, cls.info.toString, classRoots, sourceRoots)
+    }
+  }
+
+  private def findJarFile(file: File): VirtualFile =
+    JarFileSystem.getInstance.refreshAndFindFileByPath(file.getCanonicalPath + "!/")
+
   def testTextToText(): Unit = {
+    val scalaProjectSettings = ScalaProjectSettings.getInstance(getProject)
+
+    scalaProjectSettings.setAliasSemantics(AliasExportSemantics.Definition)
+    ScalaApplicationSettings.PRECISE_TEXT = true
     try {
-      ScalaApplicationSettings.PRECISE_TEXT = true
-      if (astLoadingFilter) {
-        AstLoadingFilter.disallowTreeLoading { () =>
-          doTestTextToText()
-        }
-      } else {
-        doTestTextToText()
-      }
+      doTestTextToText()
     } finally {
+      scalaProjectSettings.setAliasSemantics(AliasExportSemantics.Export)
       ScalaApplicationSettings.PRECISE_TEXT = false
+    }
+  }
+
+  private def withAstLoadingFilter[A](block: => A): A = {
+    if (astLoadingFilter) {
+      AstLoadingFilter.disallowTreeLoading { () =>
+        return block
+      }
+    } else {
+      block
     }
   }
 
@@ -73,8 +105,10 @@ abstract class TextToTextTestBase(dependencies: Seq[DependencyDescription],
     classes.zipWithIndex.foreach { case (cls, i) =>
       println(f"$i%04d/$total%s: ${cls.qualifiedName}")
 
+      Assert.assertTrue("Must be in a compiled file: ${cls.qualifiedName}", cls.isInCompiledFile)
+
       val actual = {
-        val text = textOfCompilationUnit(cls)
+        val text = withAstLoadingFilter(textOfCompilationUnit(cls, withPrivate = true))
         val errors = TestLoggerKt.getErrorLog.takeLoggedErrors()
         if (errors.isEmpty) text else errors.asScala.map(_.toString).mkString("\n")
       }
@@ -89,7 +123,21 @@ abstract class TextToTextTestBase(dependencies: Seq[DependencyDescription],
       if (classExceptions(cls.qualifiedName)) {
         Assert.assertNotEquals(expected, actual, s"Expected to contain errors: ${cls.qualifiedName}")
       } else {
-        Assert.assertEquals(cls.qualifiedName, expected, actual)
+        Assert.assertEquals(s"${cls.qualifiedName} [decompiled | outlines]", expected, actual)
+
+        if (withSources && !ClassesWithoutSource(cls.name)) {
+          val sourceCls = cls.getSourceMirrorClass.asInstanceOf[ScTypeDefinition]
+          Assert.assertTrue(s"Must have a source: ${cls.qualifiedName}", sourceCls != cls)
+          Assert.assertFalse(s"Must be in a source file: ${cls.qualifiedName}", sourceCls.isInCompiledFile)
+
+          val actualSource = textOfCompilationUnit(sourceCls, withPrivate = false)
+
+          if (sourceExceptions(cls.qualifiedName)) {
+            Assert.assertNotEquals(expected, actualSource, s"Expected to contain errors: ${cls.qualifiedName}")
+          } else {
+            Assert.assertEquals(s"${cls.qualifiedName} [decompiled | source outlines]", expected, actualSource)
+          }
+        }
       }
     }
 
@@ -109,7 +157,7 @@ abstract class TextToTextTestBase(dependencies: Seq[DependencyDescription],
     packageClasses.toSeq ++ subpackageClasses.toSeq
   }
 
-  private def textOfCompilationUnit(cls: ScTypeDefinition): String = {
+  private def textOfCompilationUnit(cls: ScTypeDefinition, withPrivate: Boolean): String = {
     val packageName = cls.qualifiedName.substring(0, cls.qualifiedName.lastIndexOf('.'))
 
     val companionTypeAlias = ScalaPsiManager.instance(cls.getProject).getTopLevelDefinitionsByPackage(packageName, cls.getResolveScope).collect {
@@ -120,7 +168,7 @@ abstract class TextToTextTestBase(dependencies: Seq[DependencyDescription],
 
     sb ++= "package " + packageName + "\n"
 
-    val printer = new ClassPrinter(scalaVersion.isScala3)
+    val printer = new ClassPrinter(scalaVersion.isScala3, withPrivate = withPrivate)
     companionTypeAlias.foreach(printer.printTo(sb, _))
     printer.printTo(sb, cls)
     cls.baseCompanion.foreach(printer.printTo(sb, _))
@@ -129,4 +177,10 @@ abstract class TextToTextTestBase(dependencies: Seq[DependencyDescription],
 
     sb.toString
   }
+}
+
+private object TextToTextTestBase {
+  private val ArtifactsWithoutSources = Set(("com.google.guava", "listenablefuture"))
+
+  private val ClassesWithoutSource = Set("BuildInfo")
 }

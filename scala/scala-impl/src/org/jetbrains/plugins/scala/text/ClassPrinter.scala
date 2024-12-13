@@ -1,19 +1,21 @@
 package org.jetbrains.plugins.scala.text
 
-import com.intellij.psi.PsiElement
+import com.intellij.psi.{PsiClass, PsiElement}
 import org.jetbrains.plugins.scala.extensions.{IterableOnceExt, PsiClassExt}
 import org.jetbrains.plugins.scala.lang.psi.api.base.patterns.ScBindingPattern
 import org.jetbrains.plugins.scala.lang.psi.api.base.{ScAnnotation, ScModifierList, ScPrimaryConstructor}
+import org.jetbrains.plugins.scala.lang.psi.api.expr.ScExpression
 import org.jetbrains.plugins.scala.lang.psi.api.statements.params.{ScParameter, ScParameterClause, ScTypeParam}
 import org.jetbrains.plugins.scala.lang.psi.api.statements.{ScEnumCase, ScExtension, ScFunction, ScFunctionDefinition, ScTypeAlias, ScTypeAliasDefinition, ScValue, ScValueOrVariable, ScValueOrVariableDefinition}
-import org.jetbrains.plugins.scala.lang.psi.api.toplevel.{ScTypeBoundsOwner, ScTypedDefinition}
 import org.jetbrains.plugins.scala.lang.psi.api.toplevel.typedef.{ScClass, ScEnum, ScGiven, ScGivenDefinition, ScObject, ScTemplateDefinition, ScTrait, ScTypeDefinition}
+import org.jetbrains.plugins.scala.lang.psi.api.toplevel.{ScModifierListOwner, ScTypeBoundsOwner, ScTypedDefinition}
 import org.jetbrains.plugins.scala.lang.psi.types.api.FunctionType
+import org.jetbrains.plugins.scala.lang.psi.types.api.designator.ScDesignatorType
 import org.jetbrains.plugins.scala.lang.psi.types.result.TypeResult
-import org.jetbrains.plugins.scala.lang.psi.types.{ScType, TypePresentationContext}
+import org.jetbrains.plugins.scala.lang.psi.types.{ScLiteralType, ScType, TypePresentationContext}
 import org.jetbrains.plugins.scala.project.ScalaFeatures.forPsiOrDefault
 
-class ClassPrinter(isScala3: Boolean, extendsSeparator: String = " ") {
+class ClassPrinter(isScala3: Boolean, extendsSeparator: String = " ", withPrivate: Boolean = true) {
   def textOf(e: PsiElement): String = e match {
     case cls: ScTypeDefinition =>
       val sb = new StringBuilder()
@@ -55,7 +57,7 @@ class ClassPrinter(isScala3: Boolean, extendsSeparator: String = " ") {
 
     val tps = if (cls.typeParameters.isEmpty) "" else cls.typeParameters.map(textOf).mkString("[", ", ", "]")
 
-    val ps = cls.constructors.filterByType[ScPrimaryConstructor].map(textOf).mkString
+    val ps = cls.constructors.filterByType[ScPrimaryConstructor].map(textOf(_, inCaseClass = modifiers.contains("case"))).mkString
 
     val parents = {
       val superTypes = cls.extendsBlock.templateParents.map(_.superTypes).getOrElse(Seq.empty)
@@ -71,7 +73,7 @@ class ClassPrinter(isScala3: Boolean, extendsSeparator: String = " ") {
     val selfType = cls.selfType.map(t => s" ${cls.selfTypeElement.map(_.name).getOrElse("this")}: " + textOf(t) + " =>").mkString
 
     val givenClauses = cls match {
-      case g: ScGivenDefinition => g.clauses.map(_.clauses).getOrElse(Seq.empty).map(textOf).mkString
+      case g: ScGivenDefinition => g.clauses.map(_.clauses).getOrElse(Seq.empty).map(textOf(_, inPrivateConstructor = false, inCaseClass = false)).mkString
       case _ => ""
     }
 
@@ -79,7 +81,7 @@ class ClassPrinter(isScala3: Boolean, extendsSeparator: String = " ") {
 
     val previousLength = sb.length
 
-    cls.extendsBlock.members.foreach {
+    cls.extendsBlock.members.filter(m => withPrivate || !isPrivate(m)).foreach {
       case f: ScFunction =>
         sb ++= textOf(f, indent)
       case v: ScValueOrVariable =>
@@ -115,9 +117,16 @@ class ClassPrinter(isScala3: Boolean, extendsSeparator: String = " ") {
     sb ++= "\n"
   }
 
-  private def textOf(pc: ScPrimaryConstructor): String = {
+  private def isPrivate(e: ScModifierListOwner): Boolean =
+    e.getModifierList.accessModifier.exists(_.isUnqualifiedPrivateOrThis)
+
+  private def textOf(pc: ScPrimaryConstructor, inCaseClass: Boolean): String = {
     val modifiers = textOf(pc.getModifierList)
-    val clauses = pc.clauses.map(_.clauses).getOrElse(Seq.empty).map(textOf).mkString
+    val inPrivateConstructor = isPrivate(pc)
+    val clauses = {
+      val cs = pc.clauses.map(_.clauses).getOrElse(Seq.empty)
+      (cs.take(1).map(textOf(_, inPrivateConstructor, inCaseClass)) ++ cs.drop(1).map(textOf(_, inPrivateConstructor, inCaseClass = false))).mkString
+    }
     val annotations = pc.annotations.map(textOf(_, emptyParens = clauses.nonEmpty && modifiers.isEmpty)).mkString(" ")
     (if (annotations.isEmpty) "" else " " + annotations) +
       (if (modifiers.isEmpty) "" else " " + modifiers) +
@@ -127,7 +136,7 @@ class ClassPrinter(isScala3: Boolean, extendsSeparator: String = " ") {
 
   private def textOf(c: ScEnumCase, indent: String): String = {
     val tps = if (c.typeParameters.isEmpty) "" else c.typeParameters.map(textOf).mkString("[", ", ", "]")
-    val ps = c.constructors.filterByType[ScPrimaryConstructor].map(textOf).mkString
+    val ps = c.constructors.filterByType[ScPrimaryConstructor].map(textOf(_, inCaseClass = true)).mkString
     "\n" + indent + "  " + "case " + c.name + tps + ps + "\n"
   }
 
@@ -139,7 +148,7 @@ class ClassPrinter(isScala3: Boolean, extendsSeparator: String = " ") {
     val keyword = if (isGiven) "given " else "def "
     val name = if (isAnonymous) "" else f.name
     val tps = if (f.typeParameters.isEmpty) "" else f.typeParameters.map(textOf).mkString("[", ", ", "]")
-    val clauses = f.paramClauses.clauses.map(textOf).mkString
+    val clauses = f.paramClauses.clauses.map(textOf(_, inPrivateConstructor = false, inCaseClass = false)).mkString
     val tpe = if (f.isConstructor) "" else (if (tps.isEmpty && clauses.isEmpty) spaceAfter(name) else "") + (if (isAnonymous && clauses.isEmpty && tps.isEmpty) "" else ": ") + textOf(f.returnType)
     val rhs = if (f.isInstanceOf[ScFunctionDefinition]) " = ???" else ""
     annotations + "\n" + indent + "  " + modifiers + keyword + name + tps + clauses + tpe + rhs + "\n"
@@ -147,7 +156,7 @@ class ClassPrinter(isScala3: Boolean, extendsSeparator: String = " ") {
 
   private def textOf(e: ScExtension, indent: String): String = {
     val tps = if (e.typeParameters.isEmpty) "" else e.typeParameters.map(textOf).mkString("[", ", ", "]")
-    val clauses = e.clauses.toSeq.flatMap(_.clauses).map(textOf).mkString
+    val clauses = e.clauses.toSeq.flatMap(_.clauses).map(textOf(_, inPrivateConstructor = false, inCaseClass = false)).mkString
     val methods = e.extensionMethods.map(textOf(_, indent + "  ")).mkString
     "\n" + indent + "  " + "extension " + tps + clauses + methods
   }
@@ -156,11 +165,20 @@ class ClassPrinter(isScala3: Boolean, extendsSeparator: String = " ") {
     val annotations = v.annotations.map(a => "\n" + indent + "  " + textOf(a)).mkString
     val modifiers = textOf(v.getModifierList)
     val keyword = if (v.isInstanceOf[ScValue]) "val " else "var "
-    val isConstant = (v.hasModifierPropertyScala("final") || v.hasModifierPropertyScala("inline")) && !v.hasExplicitType && !v.isAbstract
+    val symbolType = symbol.`type`()
+    val isConstant = (v.hasModifierPropertyScala("final") || v.hasModifierPropertyScala("inline")) && !v.hasExplicitType && !v.isAbstract && symbolType.exists(canBeTypeOfConstant)
     val name = symbol.name
-    val tpe = if (isConstant) "" else (spaceAfter(name) + ": " + textOf(symbol.`type`()))
+    val tpe = if (isConstant) "" else (spaceAfter(name) + ": " + textOf(symbolType))
     val rhs = if (isConstant) (" = " + v.asInstanceOf[ScValueOrVariableDefinition].expr.map(_.getText).getOrElse("")) else if (!v.isAbstract) " = ???" else ""
     annotations + "\n" + indent + "  " + modifiers + keyword + name + tpe + rhs + "\n"
+  }
+
+  private def canBeTypeOfConstant(tpe: ScType): Boolean = tpe match {
+    case _: ScLiteralType => true
+    case t if t.isPrimitive => true
+    case t if t.isNull => true
+    case ScDesignatorType(cls: PsiClass) if cls.getQualifiedName == "java.lang.String" => true
+    case _ => false
   }
 
   def printTo(sb: StringBuilder, alias: ScTypeAlias): Unit = {
@@ -203,13 +221,20 @@ class ClassPrinter(isScala3: Boolean, extendsSeparator: String = " ") {
     lower + upper
   }
 
-  private def textOf(clause: ScParameterClause): String =
-    clause.parameters.map(textOf).mkString(if (clause.hasImplicitKeyword) "(implicit " else if (clause.hasUsingKeyword) "(using " else "(", ", ", ")")
+  private def textOf(clause: ScParameterClause, inPrivateConstructor: Boolean, inCaseClass: Boolean): String = {
+    val ps = clause.parameters.filter(p => withPrivate || !inPrivateConstructor || ((inCaseClass || p.isVal || p.isVar) && !isPrivate(p)))
+    ps.map(textOf).mkString(if (ps.nonEmpty) (if (clause.hasImplicitKeyword) "(implicit " else if (clause.hasUsingKeyword) "(using " else "(") else "(", ", ", ")")
+  }
 
   private def textOf(p: ScParameter): String = {
     val annotations = p.annotations.map(textOf).mkString(" ")
-    val modifiers = textOf(p.getModifierList)
-    val keyword = if (p.isVal) "val " else if (p.isVar) "var " else ""
+    val modifiers = {
+      val s = textOf(p.getModifierList)
+      if (withPrivate) s else s.replace("private ", "")
+    }
+    val keyword =
+      if (withPrivate || !isPrivate(p)) if (p.isVal) "val " else if (p.isVar) "var " else ""
+      else ""
     val name = p.name
     val byName = if (p.isCallByNameParameter) "=> " else ""
     val tpe = textOf(p.`type`())
@@ -225,9 +250,12 @@ class ClassPrinter(isScala3: Boolean, extendsSeparator: String = " ") {
   private def textOf(annotation: ScAnnotation, emptyParens: Boolean): String = {
     val invocation = annotation.constructorInvocation
     val prefix = invocation.simpleTypeElement.map(e => textOf(e.`type`())).getOrElse("")
-    val args = invocation.arguments.map(_.exprs.map(_.getText.replaceAll("\r?\n\\s*", " ")).mkString(", ")).map("(" + _ + ")").mkString
+    val args = invocation.arguments.map(_.exprs.map(e => textWithQualifiers(e).replaceAll("\r?\n\\s*", " ")).mkString(", ")).map("(" + _ + ")").mkString
     "@" + prefix + (if (!emptyParens && args == "()") "" else args)
   }
+
+  private def textWithQualifiers(expr: ScExpression): String =
+    expr.getText.replaceAll("""(?<!\.|\w)Array\(""", "_root_.scala.Array(") // TODO Resolve references
 
   private def textOf(ml: ScModifierList): String = {
     def scope = ml.accessModifier.flatMap(m => if (m.isThis) Some("this") else m.idText).map("[" + _ + "]").getOrElse("")
