@@ -573,7 +573,11 @@ class TreePrinter(privateMembers: Boolean = false, infixTypes: Boolean = false, 
         val isInfix = infixTypes && simpleBase.forall(!_.isLetterOrDigit) && arguments.length == 2
         val isWith = (legacySyntax || !constructor.is(IDENTtpt)) && base == "_root_.scala.&"
         if (isInfix || isWith) {
-          val s = arguments.map(it => simple(textOfType(it, parens = if (isWith) 0 else 1))).mkString(" " + (if (isWith) "with" else simpleBase) + " ")
+          val components = {
+            val cs = arguments.map(it => simple(textOfType(it, parens = if (isWith) 0 else 1)))
+            if (base == "_root_.scala.&" || base == "_root_.scala.|") cs.distinct else cs
+          }
+          val s = components.mkString(" " + (if (isWith) "with" else simpleBase) + " ")
           if (parens > 0) "(" + s + ")" else s
         } else if (base == "_root_.scala.`<repeated>`") {
           textOfType(arguments.head, parens = 1) + "*" // TODO why repeated parameters in aliases are encoded differently?
@@ -587,12 +591,18 @@ class TreePrinter(privateMembers: Boolean = false, infixTypes: Boolean = false, 
         } else {
           simpleBase + "[" + arguments.map(it => simple(textOfType(it))).mkString(", ") + "]"
         }
-      case Node3(ANDtype | ORtype, _, Seq(l, r)) =>
-        if (infixTypes) {
-          val s = simple(textOfType(l)) + (if (node.is(ANDtype)) " & " else " | ") + simple(textOfType(r))
-          if (parens > 0) "(" + s + ")" else s
+      case Node3(ANDtype | ORtype, _, Seq(left, right)) =>
+        val l = simple(textOfType(left))
+        val r = simple(textOfType(right))
+        if (l != r) {
+          if (infixTypes) {
+            val s = l + (if (node.is(ANDtype)) " & " else " | ") + r
+            if (parens > 0) "(" + s + ")" else s
+          } else {
+            "_root_.scala." + (if (node.is(ANDtype)) "&" else "|") + "[" + l + ", " + r + "]"
+          }
         } else {
-          "_root_.scala." + (if (node.is(ANDtype)) "&" else "|") + "[" + simple(textOfType(l)) + ", " + simple(textOfType(r)) + "]"
+          l
         }
       case Node3(ANNOTATEDtpt | ANNOTATEDtype, _, Seq(tpe, annotation)) =>
         annotation match {

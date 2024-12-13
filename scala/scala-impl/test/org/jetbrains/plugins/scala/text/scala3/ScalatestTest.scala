@@ -58,22 +58,22 @@ class ScalatestTest extends TextToTextTestBase(
     "org.scalatest.matchers.BePropertyMatchResult", // val parameter in case class
     "org.scalatest.matchers.CompileMacro", // with Product & Serializable
     "org.scalatest.matchers.HavePropertyMatchResult", // val parameter in case class
-    "org.scalatest.matchers.Matcher", // T & T
+    "org.scalatest.matchers.Matcher", // T with T, T with Any, Expr[...]
     "org.scalatest.matchers.TypeMatcherMacro", // Cannot resolve x$1.reflect.Term
     "org.scalatest.matchers.LazyArg", // val parameter in case class
     "org.scalatest.matchers.dsl.EndWithWord", // with Object { toString }
     "org.scalatest.matchers.dsl.FullyMatchWord", // with Object { toString }
     "org.scalatest.matchers.dsl.IncludeWord", // with Object { toString }
     "org.scalatest.matchers.dsl.MatchPatternWord", // Expr[...]
-    "org.scalatest.matchers.dsl.MatcherFactory1", // T & T
-    "org.scalatest.matchers.dsl.MatcherFactory2", // T & T
-    "org.scalatest.matchers.dsl.MatcherFactory3", // T & T
-    "org.scalatest.matchers.dsl.MatcherFactory4", // T & T
-    "org.scalatest.matchers.dsl.MatcherFactory5", // T & T
-    "org.scalatest.matchers.dsl.MatcherFactory6", // T & T
-    "org.scalatest.matchers.dsl.MatcherFactory7", // T & T
-    "org.scalatest.matchers.dsl.MatcherFactory8", // T & T
-    "org.scalatest.matchers.dsl.MatcherFactory9", // T & T
+    "org.scalatest.matchers.dsl.MatcherFactory1", // SC with SC, TC1 vs Nothing, Expr[...]
+    "org.scalatest.matchers.dsl.MatcherFactory2", // SC with SC, TC1 vs Nothing, Expr[...]
+    "org.scalatest.matchers.dsl.MatcherFactory3", // SC with SC, TC1 vs Nothing, Expr[...]
+    "org.scalatest.matchers.dsl.MatcherFactory4", // SC with SC, TC1 vs Nothing, Expr[...]
+    "org.scalatest.matchers.dsl.MatcherFactory5", // SC with SC, TC1 vs Nothing, Expr[...]
+    "org.scalatest.matchers.dsl.MatcherFactory6", // SC with SC, TC1 vs Nothing, Expr[...]
+    "org.scalatest.matchers.dsl.MatcherFactory7", // SC with SC, TC1 vs Nothing, Expr[...]
+    "org.scalatest.matchers.dsl.MatcherFactory8", // SC with SC, TC1 vs Nothing, Expr[...]
+    "org.scalatest.matchers.dsl.MatcherFactory9", // SC with SC, TC1 vs Nothing, Expr[...]
     "org.scalatest.matchers.dsl.NotWord", // Expr[...]
     "org.scalatest.matchers.dsl.ResultOfNotWordForAny", // Expr[...]
     "org.scalatest.matchers.dsl.StartWithWord", // with Object { toString }

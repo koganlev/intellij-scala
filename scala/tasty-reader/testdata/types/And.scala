@@ -5,5 +5,7 @@ trait And {
 
   type T2 = (Int & Long) & Float
 
+  type T3 = Int/**/ & Int/**/
+
   val v1/**//*: IllegalStateException & scala.util.control.NoStackTrace*/ = /**/new IllegalStateException with scala.util.control.NoStackTrace/*???*/
 }
