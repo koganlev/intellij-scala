@@ -1811,12 +1811,9 @@ package object extensions {
 
   implicit class LockExtensions(private val lock: java.util.concurrent.locks.Lock) extends AnyVal {
     def withLock[A](body: => A): A = {
-      try {
-        lock.lock()
-        body
-      } finally {
-        lock.unlock()
-      }
+      lock.lock()
+      try body
+      finally lock.unlock()
     }
   }
 
