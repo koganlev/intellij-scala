@@ -141,18 +141,18 @@ class TreePrinter(privateMembers: Boolean = false, infixTypes: Boolean = false, 
               readSourceFileAnnotationIn(tpe)
               template.children.filter(it => it.is(DEFDEF, VALDEF, TYPEDEF) && it.names != Seq("<init>")).foreach { definition =>
                 val previousLength = sb.length
-                textOfMember(sb, indent, definition, None, if (delimiterRequired) "\n\n" else "")
+                textOfMember(sb, indent, definition, Some(node), if (delimiterRequired) "\n\n" else "")
                 delimiterRequired = delimiterRequired || sb.length > previousLength
               }
             case _ =>
               children match {
                 case Seq(Node2(VALDEF, Seq(name1)), cobj @ Node3(TYPEDEF, Seq(name2), _), ctpe @ Node3(TYPEDEF, Seq(name3), _)) if name2 == name1 + "$" && name3 == name1 =>
-                  textOfMember(sb, indent, ctpe, if (containsPackageObject) Some(node) else None, "")
-                  textOfMember(sb, indent, cobj, if (containsPackageObject) Some(node) else None, "\n\n")
+                  textOfMember(sb, indent, ctpe, Some(node), "")
+                  textOfMember(sb, indent, cobj, Some(node), "\n\n")
                 case _ =>
                   children.foreach { child =>
                     val previousLength = sb.length
-                    textOfMember(sb, indent, child, if (containsPackageObject) Some(node) else None, if (delimiterRequired) "\n\n" else "")
+                    textOfMember(sb, indent, child, Some(node), if (delimiterRequired) "\n\n" else "")
                     delimiterRequired = delimiterRequired || sb.length > previousLength
                   }
               }
@@ -170,7 +170,7 @@ class TreePrinter(privateMembers: Boolean = false, infixTypes: Boolean = false, 
 
     case node @ Node2(DEFDEF, Seq(name)) if (privateMembers || !node.contains(PRIVATE)) && !node.contains(SYNTHETIC) && !node.contains(FIELDaccessor) && !node.contains(ARTIFACT) && !name.contains("$default$") && !isGivenConversion(node) && !isImplicitConversion(node) =>
       sb ++= prefix
-      textOfDefDef(sb, indent: String, node)
+      textOfDefDef(sb, indent: String, node, definition)
 
     case node @ Node1(VALDEF) if (privateMembers || !node.contains(PRIVATE)) && !node.contains(SYNTHETIC) && !node.contains(OBJECT) && (!node.contains(CASE) || definition.exists(_.contains(ENUM))) && !node.name.startsWith("derived$") =>
       sb ++= prefix
@@ -189,12 +189,12 @@ class TreePrinter(privateMembers: Boolean = false, infixTypes: Boolean = false, 
     val isImplicitClass = isImplicitClass0(node)
     val isTypeMember = !template.is(TEMPLATE)
     val isAnonymousGiven = (isGivenObject || isGivenClass) && name.startsWith("given_") // TODO common method
-    val isPackageObject = isObject && definition.exists(_.is(PACKAGE))
+    val isPackageObject = isObject && name == ScalaBytecodeConstants.PackageObjectSingletonClassName
     readSourceFileAnnotationIn(node)
     textOfAnnotationIn(sb, indent, node, "\n")
     sb ++= indent
     modifiersIn(sb, if (isObject) node.prevSibling.getOrElse(node) else node,
-      if (isGivenClass) Set(GIVEN) else (if (isEnum) Set(ABSTRACT, SEALED, CASE, FINAL) else (if (isTypeMember) Set.empty else Set(OPAQUE))), isParameter = false)
+      if (isGivenClass) Set(GIVEN) else (if (isEnum) Set(ABSTRACT, SEALED, CASE, FINAL) else (if (isTypeMember) Set.empty else Set(OPAQUE))), isParameter = false, definition)
     if (isImplicitClass) {
       sb ++= "implicit "
     }
@@ -375,14 +375,14 @@ class TreePrinter(privateMembers: Boolean = false, infixTypes: Boolean = false, 
     }
   }
 
-  private def textOfDefDef(sb: StringBuilder, indent: String, node: Node): Unit = {
+  private def textOfDefDef(sb: StringBuilder, indent: String, node: Node, definition: Option[Node] = None): Unit = {
     if (!node.contains(EXTENSION)) {
       textOfAnnotationIn(sb, indent, node, "\n")
     }
     sb ++= indent
     val name = node.name
     if (name == "<init>") {
-      modifiersIn(sb, node)
+      modifiersIn(sb, node, definition = definition)
       sb ++= "def this"
       parametersIn(sb, node, target = Target.This)
       sb ++= " = "
@@ -397,7 +397,7 @@ class TreePrinter(privateMembers: Boolean = false, infixTypes: Boolean = false, 
         sb ++= Indent
       }
       val isAbstractGiven = node.contains(GIVEN)
-      modifiersIn(sb, node, (if (isAbstractGiven) Set(GIVEN, FINAL) else Set.empty), isParameter = false)
+      modifiersIn(sb, node, (if (isAbstractGiven) Set(GIVEN, FINAL) else Set.empty), isParameter = false, definition)
       if (isAbstractGiven) {
         sb ++= "given "
       } else {
@@ -432,7 +432,7 @@ class TreePrinter(privateMembers: Boolean = false, infixTypes: Boolean = false, 
     val name = node.name
     val children = node.children
     val isGivenAlias = node.contains(GIVEN)
-    modifiersIn(sb, node, (if (isGivenAlias) Set(FINAL, LAZY) else Set.empty), isParameter = false)
+    modifiersIn(sb, node, (if (isGivenAlias) Set(FINAL, LAZY) else Set.empty), isParameter = false, definition)
     val isCase = node.contains(CASE)
     if (isCase) {
       sb ++= id(name)
@@ -990,7 +990,7 @@ class TreePrinter(privateMembers: Boolean = false, infixTypes: Boolean = false, 
     case _ => false
   }
 
-  private def modifiersIn(sb: StringBuilder, node: Node, excluding: Set[Int] = Set.empty, isParameter: Boolean = true): Unit = { // TODO Optimize
+  private def modifiersIn(sb: StringBuilder, node: Node, excluding: Set[Int] = Set.empty, isParameter: Boolean = true, definition: Option[Node] = None): Unit = { // TODO Optimize
     if (node.contains(ABSTRACT) && !excluding(ABSTRACT) && node.contains(OVERRIDE)) {
       sb ++= "abstract override "
     } else {
@@ -1009,10 +1009,15 @@ class TreePrinter(privateMembers: Boolean = false, infixTypes: Boolean = false, 
       sb ++= "protected "
     } else {
       node.children.foreach {
-        case Node3(PRIVATEqualified, _, Seq(qualifier)) =>
-          sb ++= "private[" + asQualifier(textOfType(qualifier)) + "] "
-        case Node3(PROTECTEDqualified, _, Seq(qualifier)) =>
-          sb ++= "protected[" + asQualifier(textOfType(qualifier)) + "] "
+        case Node3(tag @ (PRIVATEqualified | PROTECTEDqualified), _, Seq(qualifier)) =>
+          val keyword = if (tag == PRIVATEqualified) "private" else "protected"
+          val qualifierName = asQualifier(textOfType(qualifier))
+          val scopeName = definition.map(it => asQualifier(nameOf(it))).mkString
+          if (qualifierName == scopeName) {
+            sb ++= keyword + " "
+          } else {
+            sb ++= keyword + "[" + qualifierName + "] "
+          }
         case _ =>
       }
     }
@@ -1062,6 +1067,11 @@ class TreePrinter(privateMembers: Boolean = false, infixTypes: Boolean = false, 
         sb ++= " <: " + simple(u)
       }
     case _ => // TODO exhaustive match
+  }
+
+  private def nameOf(scope: Node): String = scope match {
+    case Node3(PACKAGE, _, Seq(Node3(TERMREFpkg, Seq(name), _), children: _*)) => name
+    case n => n.name
   }
 
   private def asQualifier(tpe: String): String = {

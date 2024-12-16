@@ -1,3 +1,3 @@
 package typeDefinition
 
-private/**//*[typeDefinition]*/ class PackagePrivate
+private class PackagePrivate

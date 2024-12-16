@@ -108,7 +108,7 @@ abstract class TextToTextTestBase(dependencies: Seq[DependencyDescription],
       Assert.assertTrue("Must be in a compiled file: ${cls.qualifiedName}", cls.isInCompiledFile)
 
       val actual = {
-        val text = withAstLoadingFilter(textOfCompilationUnit(cls, withPrivate = true))
+        val text = withAstLoadingFilter(textOfCompilationUnit(cls, withPrivate = true, simplify = false))
         val errors = TestLoggerKt.getErrorLog.takeLoggedErrors()
         if (errors.isEmpty) text else errors.asScala.map(_.toString).mkString("\n")
       }
@@ -130,7 +130,7 @@ abstract class TextToTextTestBase(dependencies: Seq[DependencyDescription],
           Assert.assertTrue(s"Must have a source: ${cls.qualifiedName}", sourceCls != cls)
           Assert.assertFalse(s"Must be in a source file: ${cls.qualifiedName}", sourceCls.isInCompiledFile)
 
-          val actualSource = textOfCompilationUnit(sourceCls, withPrivate = false)
+          val actualSource = textOfCompilationUnit(sourceCls, withPrivate = false, simplify = true)
 
           if (sourceExceptions(cls.qualifiedName)) {
             Assert.assertNotEquals(expected, actualSource, s"Expected to contain errors: ${cls.qualifiedName}")
@@ -157,7 +157,7 @@ abstract class TextToTextTestBase(dependencies: Seq[DependencyDescription],
     packageClasses.toSeq ++ subpackageClasses.toSeq
   }
 
-  private def textOfCompilationUnit(cls: ScTypeDefinition, withPrivate: Boolean): String = {
+  private def textOfCompilationUnit(cls: ScTypeDefinition, withPrivate: Boolean, simplify: Boolean): String = {
     val packageName = cls.qualifiedName.substring(0, cls.qualifiedName.lastIndexOf('.'))
 
     val companionTypeAlias = ScalaPsiManager.instance(cls.getProject).getTopLevelDefinitionsByPackage(packageName, cls.getResolveScope).collect {
@@ -168,7 +168,7 @@ abstract class TextToTextTestBase(dependencies: Seq[DependencyDescription],
 
     sb ++= "package " + packageName + "\n"
 
-    val printer = new ClassPrinter(scalaVersion.isScala3, withPrivate = withPrivate)
+    val printer = new ClassPrinter(scalaVersion.isScala3, withPrivate = withPrivate, simplify = simplify)
     companionTypeAlias.foreach(printer.printTo(sb, _))
     printer.printTo(sb, cls)
     cls.baseCompanion.foreach(printer.printTo(sb, _))

@@ -24,7 +24,6 @@ class ScalatestTest extends TextToTextTestBase(
     "org.scalatest.PathEngine", // scala.List
     "org.scalatest.Suite", // Predef.String
     "org.scalatest.SuperEngine", // Predef.Set
-    "org.scalatest.concurrent.AbstractPatienceConfiguration", // private[concurrent]
     "org.scalatest.concurrent.PimpedThreadGroup", // scala.List
     "org.scalatest.diagrams.DiagramsMacro", // Cannot resolve x$1.reflect.Term
     "org.scalatest.events.AlertProvided", // extends Event, NotificationEvent
@@ -81,20 +80,12 @@ class ScalatestTest extends TextToTextTestBase(
     "org.scalatest.matchers.should.TypeMatcherMacro", // Cannot resolve x$1.reflect.Term
     "org.scalatest.tools.ArgsParser", // Predef.String
     "org.scalatest.tools.DiscoverySuite", // Predef.String
-    "org.scalatest.tools.JvmArg", // private[tools]
-    "org.scalatest.tools.NameValuePair", // private[tools]
     "org.scalatest.tools.NestedSuiteElement", // Predef.String
-    "org.scalatest.tools.PackageElement", // private[tools]
     "org.scalatest.tools.PrettyPrinter", // class BrokenException()
-    "org.scalatest.tools.ProgressBarPanel", // private[scalatest]
+    "org.scalatest.tools.ProgressBarPanel", // empty () constructor
     "org.scalatest.tools.ReporterConfigurations", // val parameter in case class
-    "org.scalatest.tools.ReporterElement", // private[tools]
-    "org.scalatest.tools.RunpathUrl", // private[tools]
     "org.scalatest.tools.StringReporter", // Unicode \u001b char
-    "org.scalatest.tools.StyleElement", // private[tools]
-    "org.scalatest.tools.SuiteElement", // private[tools], Predef.String
-    "org.scalatest.tools.TestsfileElement", // private[tools]
-    "org.scalatest.tools.TextElement", // private[tools]
+    "org.scalatest.tools.SuiteElement", // Predef.String
     "org.scalatest.wordspec.AsyncWordSpecLike", // Expr[...]
   )
 )

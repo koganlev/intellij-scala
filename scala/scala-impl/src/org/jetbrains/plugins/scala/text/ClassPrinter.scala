@@ -1,21 +1,21 @@
 package org.jetbrains.plugins.scala.text
 
 import com.intellij.psi.{PsiClass, PsiElement}
-import org.jetbrains.plugins.scala.extensions.{IterableOnceExt, PsiClassExt}
+import org.jetbrains.plugins.scala.extensions.{IterableOnceExt, Parent, PsiClassExt}
 import org.jetbrains.plugins.scala.lang.psi.api.base.patterns.ScBindingPattern
 import org.jetbrains.plugins.scala.lang.psi.api.base.{ScAnnotation, ScModifierList, ScPrimaryConstructor}
 import org.jetbrains.plugins.scala.lang.psi.api.expr.ScExpression
 import org.jetbrains.plugins.scala.lang.psi.api.statements.params.{ScParameter, ScParameterClause, ScTypeParam}
 import org.jetbrains.plugins.scala.lang.psi.api.statements.{ScEnumCase, ScExtension, ScFunction, ScFunctionDefinition, ScTypeAlias, ScTypeAliasDefinition, ScValue, ScValueOrVariable, ScValueOrVariableDefinition}
 import org.jetbrains.plugins.scala.lang.psi.api.toplevel.typedef.{ScClass, ScEnum, ScGiven, ScGivenDefinition, ScObject, ScTemplateDefinition, ScTrait, ScTypeDefinition}
-import org.jetbrains.plugins.scala.lang.psi.api.toplevel.{ScModifierListOwner, ScTypeBoundsOwner, ScTypedDefinition}
+import org.jetbrains.plugins.scala.lang.psi.api.toplevel.{ScModifierListOwner, ScNamedElement, ScPackaging, ScTypeBoundsOwner, ScTypedDefinition}
 import org.jetbrains.plugins.scala.lang.psi.types.api.FunctionType
 import org.jetbrains.plugins.scala.lang.psi.types.api.designator.ScDesignatorType
 import org.jetbrains.plugins.scala.lang.psi.types.result.TypeResult
 import org.jetbrains.plugins.scala.lang.psi.types.{ScLiteralType, ScType, TypePresentationContext}
 import org.jetbrains.plugins.scala.project.ScalaFeatures.forPsiOrDefault
 
-class ClassPrinter(isScala3: Boolean, extendsSeparator: String = " ", withPrivate: Boolean = true) {
+class ClassPrinter(isScala3: Boolean, extendsSeparator: String = " ", withPrivate: Boolean = true, simplify: Boolean = false) {
   def textOf(e: PsiElement): String = e match {
     case cls: ScTypeDefinition =>
       val sb = new StringBuilder()
@@ -258,11 +258,16 @@ class ClassPrinter(isScala3: Boolean, extendsSeparator: String = " ", withPrivat
     expr.getText.replaceAll("""(?<!\.|\w)Array\(""", "_root_.scala.Array(") // TODO Resolve references
 
   private def textOf(ml: ScModifierList): String = {
-    def scope = ml.accessModifier.flatMap(m => if (m.isThis) Some("this") else m.idText).map("[" + _ + "]").getOrElse("")
+    def scope = ml.getParent match {
+      case Parent(p: ScPackaging) => p.packageName.split('.').lastOption.getOrElse("")
+      case Parent(c: ScNamedElement) => c.name
+      case _ => ""
+    }
+    def qualifier = ml.accessModifier.flatMap(m => if (m.isThis) Some("this") else m.idText).filter(q => !simplify || q != scope).map("[" + _ + "]").getOrElse("")
     (if (ml.isAbstract && ml.isOverride) "abstract " else "") +
       (if (ml.isOverride) "override " else "") +
-      (if (ml.isPrivate) "private" + scope + " " else "") +
-      (if (ml.isProtected) "protected" + scope + " " else "") +
+      (if (ml.isPrivate) "private" + qualifier + " " else "") +
+      (if (ml.isProtected) "protected" + qualifier + " " else "") +
       (if (ml.isImplicit) "implicit " else "") +
       (if (ml.isFinal) "final " else "") +
       (if (ml.isSealed) "sealed " else "") +
