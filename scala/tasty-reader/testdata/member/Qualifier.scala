@@ -56,6 +56,6 @@ trait Qualifier {
   private[member] given T2 with {}
 
   object Object {
-    private[Object] def method: Int = ???
+    private/**/[Object]/**/ def method: Int = ???
   }
 }

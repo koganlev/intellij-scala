@@ -22,24 +22,17 @@ class ZioTest extends TextToTextTestBase(
   Set(
     "zio.Config", // extends Exception, Error
     "zio.Fiber", // case class extends Product & Serializable
-    "zio.IsReloadableMacros", // private[zio]
     "zio.RuntimeFlag", // reference constants
     "zio.Scope", // private type alias
-    "zio.TagMacros", // private[zio]
     "zio.ZEnvironment", // izumi.reflect.macrortti
     "zio.ZIO", // implicit conversion for implicit class
     "zio.ZLayer", // implicit conversion for implicit class
     "zio.ZLogger", // izumi.reflect.macrortti
-    "zio.internal.BoundedHubArb", // private[internal]
-    "zio.internal.BoundedHubPow2", // private[internal]
-    "zio.internal.BoundedHubSingle", // private[internal]
     "zio.internal.FastList", // implicit conversion for implicit class
     "zio.internal.FiberRuntime", // x * y constant
     "zio.internal.LinkedQueue", // Int.MaxValue constant
     "zio.internal.Stack", // empty () constructor
     "zio.internal.TerminalRendering", // implicit conversion for implicit class
-    "zio.internal.UnboundedHub", // private[internal]
-    "zio.internal.ZScheduler", // private[internal]
     "zio.internal.ansi", // no final, implicit conversion for implicit class
     "zio.internal.macros.LayerBuilder", // scala.List
     "zio.internal.macros.LayerTree", // implicit conversion for implicit class
@@ -48,10 +41,6 @@ class ZioTest extends TextToTextTestBase(
     "zio.metrics.MetricPair", // private type alias
     "zio.stm.STM", // zio.BuildFrom vs BuildFromCompat.this.BuildFrom
     "zio.stm.ZSTM", // protected vs private[this]
-    "zio.stream.Deflate", // private[stream]
-    "zio.stream.Gunzip", // private[stream]
-    "zio.stream.Gzip", // private[stream]
-    "zio.stream.Inflate", // private[stream]
     "zio.stream.Take", // no final for case class
     "zio.stream.ZChannel", // zio.EnvironmentTag vs VersionSpecific.this.EnvironmentTag
     "zio.stream.ZStream", // R is Nothing

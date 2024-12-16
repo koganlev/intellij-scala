@@ -38,6 +38,6 @@ trait Qualifier {
   }
 
   object Object {
-    private[Object] class Class
+    private/**/[Object]/**/ class Class
   }
 }

@@ -24,7 +24,6 @@ class ScalatestTest extends TextToTextTestBase(
     "org.scalatest.PathEngine", // scala.List
     "org.scalatest.Suite", // Predef.String
     "org.scalatest.SuperEngine", // Predef.Set
-    "org.scalatest.concurrent.AbstractPatienceConfiguration", // private[concurrent]
     "org.scalatest.concurrent.PimpedThreadGroup", // scala.List
     "org.scalatest.diagrams.DiagramsMacro", // Cannot resolve x$1.reflect.Term
     "org.scalatest.events.AlertProvided", // extends Event, NotificationEvent
@@ -55,25 +54,22 @@ class ScalatestTest extends TextToTextTestBase(
     "org.scalatest.exceptions.NotSerializableWrapperException", // case class with Serializable
     "org.scalatest.matchers.AMatcher", // with Object { toString }
     "org.scalatest.matchers.AnMatcher", // with Object { toString }
-    "org.scalatest.matchers.BePropertyMatchResult", // val parameter in case class
     "org.scalatest.matchers.CompileMacro", // with Product & Serializable
-    "org.scalatest.matchers.HavePropertyMatchResult", // val parameter in case class
-    "org.scalatest.matchers.Matcher", // T & T
+    "org.scalatest.matchers.Matcher", // T with T, T with Any, Expr[...]
     "org.scalatest.matchers.TypeMatcherMacro", // Cannot resolve x$1.reflect.Term
-    "org.scalatest.matchers.LazyArg", // val parameter in case class
     "org.scalatest.matchers.dsl.EndWithWord", // with Object { toString }
     "org.scalatest.matchers.dsl.FullyMatchWord", // with Object { toString }
     "org.scalatest.matchers.dsl.IncludeWord", // with Object { toString }
     "org.scalatest.matchers.dsl.MatchPatternWord", // Expr[...]
-    "org.scalatest.matchers.dsl.MatcherFactory1", // T & T
-    "org.scalatest.matchers.dsl.MatcherFactory2", // T & T
-    "org.scalatest.matchers.dsl.MatcherFactory3", // T & T
-    "org.scalatest.matchers.dsl.MatcherFactory4", // T & T
-    "org.scalatest.matchers.dsl.MatcherFactory5", // T & T
-    "org.scalatest.matchers.dsl.MatcherFactory6", // T & T
-    "org.scalatest.matchers.dsl.MatcherFactory7", // T & T
-    "org.scalatest.matchers.dsl.MatcherFactory8", // T & T
-    "org.scalatest.matchers.dsl.MatcherFactory9", // T & T
+    "org.scalatest.matchers.dsl.MatcherFactory1", // SC with SC, TC1 vs Nothing, Expr[...]
+    "org.scalatest.matchers.dsl.MatcherFactory2", // SC with SC, TC1 vs Nothing, Expr[...]
+    "org.scalatest.matchers.dsl.MatcherFactory3", // SC with SC, TC1 vs Nothing, Expr[...]
+    "org.scalatest.matchers.dsl.MatcherFactory4", // SC with SC, TC1 vs Nothing, Expr[...]
+    "org.scalatest.matchers.dsl.MatcherFactory5", // SC with SC, TC1 vs Nothing, Expr[...]
+    "org.scalatest.matchers.dsl.MatcherFactory6", // SC with SC, TC1 vs Nothing, Expr[...]
+    "org.scalatest.matchers.dsl.MatcherFactory7", // SC with SC, TC1 vs Nothing, Expr[...]
+    "org.scalatest.matchers.dsl.MatcherFactory8", // SC with SC, TC1 vs Nothing, Expr[...]
+    "org.scalatest.matchers.dsl.MatcherFactory9", // SC with SC, TC1 vs Nothing, Expr[...]
     "org.scalatest.matchers.dsl.NotWord", // Expr[...]
     "org.scalatest.matchers.dsl.ResultOfNotWordForAny", // Expr[...]
     "org.scalatest.matchers.dsl.StartWithWord", // with Object { toString }
@@ -81,20 +77,11 @@ class ScalatestTest extends TextToTextTestBase(
     "org.scalatest.matchers.should.TypeMatcherMacro", // Cannot resolve x$1.reflect.Term
     "org.scalatest.tools.ArgsParser", // Predef.String
     "org.scalatest.tools.DiscoverySuite", // Predef.String
-    "org.scalatest.tools.JvmArg", // private[tools]
-    "org.scalatest.tools.NameValuePair", // private[tools]
     "org.scalatest.tools.NestedSuiteElement", // Predef.String
-    "org.scalatest.tools.PackageElement", // private[tools]
     "org.scalatest.tools.PrettyPrinter", // class BrokenException()
-    "org.scalatest.tools.ProgressBarPanel", // private[scalatest]
-    "org.scalatest.tools.ReporterConfigurations", // val parameter in case class
-    "org.scalatest.tools.ReporterElement", // private[tools]
-    "org.scalatest.tools.RunpathUrl", // private[tools]
+    "org.scalatest.tools.ProgressBarPanel", // empty () constructor
     "org.scalatest.tools.StringReporter", // Unicode \u001b char
-    "org.scalatest.tools.StyleElement", // private[tools]
-    "org.scalatest.tools.SuiteElement", // private[tools], Predef.String
-    "org.scalatest.tools.TestsfileElement", // private[tools]
-    "org.scalatest.tools.TextElement", // private[tools]
+    "org.scalatest.tools.SuiteElement", // Predef.String
     "org.scalatest.wordspec.AsyncWordSpecLike", // Expr[...]
   )
 )
