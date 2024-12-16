@@ -1,7 +1,7 @@
 package org.jetbrains.plugins.scala.debugger.breakpoints
 
 import com.intellij.debugger.engine.DebugProcessImpl
-import com.intellij.debugger.impl.{DebuggerUtilsImpl, JvmSteppingCommandProvider}
+import com.intellij.debugger.impl.{DebugUtilsKt, JvmSteppingCommandProvider}
 import com.intellij.psi.JavaPsiFacade
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.xdebugger.XDebuggerUtil
@@ -19,7 +19,7 @@ abstract class RunToCursorTestBase extends ScalaDebuggerTestCase {
       inReadAction {
         val psiClass = JavaPsiFacade.getInstance(myProject).findClass(className, GlobalSearchScope.projectScope(myProject))
         val pos = XDebuggerUtil.getInstance().createPositionByOffset(psiClass.getContainingFile.getVirtualFile, offset)
-        var runToCursorCommand = DebuggerUtilsImpl
+        var runToCursorCommand = DebugUtilsKt
           .computeSafeIfAny[JvmSteppingCommandProvider, DebugProcessImpl#ResumeCommand](JvmSteppingCommandProvider.EP_NAME, _.getRunToCursorCommand(suspendContext, pos, false))
         if (runToCursorCommand == null) runToCursorCommand = myDebugProcess.createRunToCursorCommand(suspendContext, pos, false)
         getDebugProcess.getManagerThread.schedule(runToCursorCommand)

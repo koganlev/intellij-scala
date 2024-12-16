@@ -1,9 +1,14 @@
 package org.jetbrains.plugins.scala.debugger
 
-import com.intellij.debugger.PositionManager
-import com.intellij.debugger.engine.{CompoundPositionManager, DebuggerManagerThreadImpl, JavaValue, PositionManagerImpl, SourcePositionProvider}
+import com.intellij.debugger.engine.{DebuggerManagerThreadImplKt, JavaValue, SourcePositionProvider}
+import com.intellij.debugger.impl.{DebuggerContextImpl, PrioritizedTask}
+import com.intellij.debugger.ui.impl.watch.ValueDescriptorImpl
+import com.intellij.debugger.{PositionManager, SourcePosition}
+import com.intellij.openapi.project.Project
 import com.intellij.xdebugger.XDebuggerTestUtil
 import junit.framework.TestCase.assertNotNull
+import kotlin.coroutines.Continuation
+import kotlinx.coroutines.{BuildersKt, Dispatchers}
 import org.jetbrains.plugins.scala.ScalaVersion
 import org.jetbrains.plugins.scala.extensions.{PsiNamedElementExt, inReadAction}
 
@@ -52,8 +57,8 @@ abstract class ScalaSourcePositionProviderTestBase extends ScalaDebuggerTestCase
     createLocalProcess("ClassParameters")
 
     doWhenXSessionPausedThenResume { () =>
-      val project = getProject
-      val context = getDebugProcess.getDebuggerContext
+      implicit val project: Project = getProject
+      implicit val context: DebuggerContextImpl = getDebugProcess.getDebuggerContext
       val session = getDebuggerSession.getXDebugSession
       val stackFrameVariables = XDebuggerTestUtil.collectChildren(session.getCurrentStackFrame)
       val thisVariable = XDebuggerTestUtil.findVar(stackFrameVariables, "this")
@@ -61,27 +66,27 @@ abstract class ScalaSourcePositionProviderTestBase extends ScalaDebuggerTestCase
       val children = XDebuggerTestUtil.collectChildren(thisVariable)
 
       val xxx = XDebuggerTestUtil.findVar(children, "xxx").asInstanceOf[JavaValue]
-      val sourcePositionXXX = inReadAction(SourcePositionProvider.getSourcePosition(xxx.getDescriptor, project, context))
+      val sourcePositionXXX = getSourcePosition(xxx.getDescriptor)
       assertEquals(6, sourcePositionXXX.getLine)
       assertEquals(133, sourcePositionXXX.getOffset)
 
       val yyy = XDebuggerTestUtil.findVar(children, "yyy").asInstanceOf[JavaValue]
-      val sourcePositionYYY = inReadAction(SourcePositionProvider.getSourcePosition(yyy.getDescriptor, project, context))
+      val sourcePositionYYY = getSourcePosition(yyy.getDescriptor)
       assertEquals(7, sourcePositionYYY.getLine)
       assertEquals(149, sourcePositionYYY.getOffset)
 
       val zzz = XDebuggerTestUtil.findVar(children, "zzz").asInstanceOf[JavaValue]
-      val sourcePositionZZZ = inReadAction(SourcePositionProvider.getSourcePosition(zzz.getDescriptor, project, context))
+      val sourcePositionZZZ = getSourcePosition(zzz.getDescriptor)
       assertEquals(8, sourcePositionZZZ.getLine)
       assertEquals(173, sourcePositionZZZ.getOffset)
 
       val value = XDebuggerTestUtil.findVar(stackFrameVariables, "value").asInstanceOf[JavaValue]
-      val sourcePositionValue = inReadAction(SourcePositionProvider.getSourcePosition(value.getDescriptor, project, context))
+      val sourcePositionValue = getSourcePosition(value.getDescriptor)
       assertEquals(11, sourcePositionValue.getLine)
       assertEquals(226, sourcePositionValue.getOffset)
 
       val param = XDebuggerTestUtil.findVar(stackFrameVariables, "param").asInstanceOf[JavaValue]
-      val sourcePositionParam = inReadAction(SourcePositionProvider.getSourcePosition(param.getDescriptor, project, context))
+      val sourcePositionParam = getSourcePosition(param.getDescriptor)
       assertEquals(10, sourcePositionParam.getLine)
       assertEquals(196, sourcePositionParam.getOffset)
 
@@ -92,6 +97,19 @@ abstract class ScalaSourcePositionProviderTestBase extends ScalaDebuggerTestCase
       //       as soon as I get some advice.
     }
   }
+
+  //noinspection ApiStatus
+  private def getSourcePosition(descriptor: ValueDescriptorImpl)(implicit project: Project, context: DebuggerContextImpl): SourcePosition =
+    BuildersKt.runBlocking(
+      Dispatchers.getDefault,
+      (_, continuation: Continuation[_ >: SourcePosition]) =>
+        DebuggerManagerThreadImplKt.withDebugContext(
+          context.getSuspendContext,
+          PrioritizedTask.Priority.LOW,
+          SourcePositionProvider.getSourcePosition(descriptor, project, context, _: Continuation[_ >: SourcePosition]),
+          continuation
+        )
+    )
 }
 
 class ScalaSourcePositionProviderTest_2_11 extends ScalaSourcePositionProviderTestBase {

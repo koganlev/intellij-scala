@@ -63,7 +63,7 @@ package object buildSystem {
         .zipWithIndex // TODO: This is a hack to install onboarding tips in main.scala only; remove it when the platform allows for tips in multiple files
         .map { case (Sample(templateName, fileName, breakpoint), index) =>
           val sourceCode = manager.getInternalTemplate(templateName).getText(variables)
-          if (withOnboardingTips && index == samples.size - 1) installOnboardingTips(project, sourceCode, fileName, breakpoint)
+          if (withOnboardingTips && index == samples.size - 1) installOnboardingTips(project, fileName, breakpoint)
           (sourceCode, fileName)
         }
 
@@ -155,8 +155,8 @@ package object buildSystem {
     } else Map.empty[String, String]
   } ++ packagePrefix.map(prefix => Map("PACKAGE_NAME" -> prefix, "advancedTipsEnabled" -> advancedTipsEnabled.toString)).getOrElse(Map.empty)
 
-  private def installOnboardingTips(project: Project, sourceCode: String, fileName: String, breakpoint: Function1[_ >: CharSequence, JInt]): Unit = {
-    val onboardingInfo = new OnboardingTipsInstallationInfo(sourceCode, fileName, breakpoint)
+  private def installOnboardingTips(project: Project, fileName: String, breakpoint: Function1[_ >: CharSequence, JInt]): Unit = {
+    val onboardingInfo = new OnboardingTipsInstallationInfo(fileName, breakpoint)
     NewProjectOnboardingTips
       .EP_NAME
       .getExtensionList
