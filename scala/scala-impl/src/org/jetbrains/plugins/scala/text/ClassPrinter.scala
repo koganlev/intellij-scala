@@ -223,17 +223,17 @@ class ClassPrinter(isScala3: Boolean, extendsSeparator: String = " ", withPrivat
 
   private def textOf(clause: ScParameterClause, inPrivateConstructor: Boolean, inCaseClass: Boolean): String = {
     val ps = clause.parameters.filter(p => withPrivate || !inPrivateConstructor || ((inCaseClass || p.isVal || p.isVar) && !isPrivate(p)))
-    ps.map(textOf).mkString(if (ps.nonEmpty) (if (clause.hasImplicitKeyword) "(implicit " else if (clause.hasUsingKeyword) "(using " else "(") else "(", ", ", ")")
+    ps.map(textOf(_, inCaseClass)).mkString(if (ps.nonEmpty) (if (clause.hasImplicitKeyword) "(implicit " else if (clause.hasUsingKeyword) "(using " else "(") else "(", ", ", ")")
   }
 
-  private def textOf(p: ScParameter): String = {
+  private def textOf(p: ScParameter, inCaseClass: Boolean): String = {
     val annotations = p.annotations.map(textOf).mkString(" ")
     val modifiers = {
       val s = textOf(p.getModifierList)
       if (withPrivate) s else s.replace("private ", "")
     }
     val keyword =
-      if (withPrivate || !isPrivate(p)) if (p.isVal) "val " else if (p.isVar) "var " else ""
+      if (withPrivate || !isPrivate(p)) if (p.isVal) (if (!simplify || !(inCaseClass && modifiers.isEmpty)) "val " else "") else if (p.isVar) "var " else ""
       else ""
     val name = p.name
     val byName = if (p.isCallByNameParameter) "=> " else ""

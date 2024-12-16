@@ -54,12 +54,9 @@ class ScalatestTest extends TextToTextTestBase(
     "org.scalatest.exceptions.NotSerializableWrapperException", // case class with Serializable
     "org.scalatest.matchers.AMatcher", // with Object { toString }
     "org.scalatest.matchers.AnMatcher", // with Object { toString }
-    "org.scalatest.matchers.BePropertyMatchResult", // val parameter in case class
     "org.scalatest.matchers.CompileMacro", // with Product & Serializable
-    "org.scalatest.matchers.HavePropertyMatchResult", // val parameter in case class
     "org.scalatest.matchers.Matcher", // T with T, T with Any, Expr[...]
     "org.scalatest.matchers.TypeMatcherMacro", // Cannot resolve x$1.reflect.Term
-    "org.scalatest.matchers.LazyArg", // val parameter in case class
     "org.scalatest.matchers.dsl.EndWithWord", // with Object { toString }
     "org.scalatest.matchers.dsl.FullyMatchWord", // with Object { toString }
     "org.scalatest.matchers.dsl.IncludeWord", // with Object { toString }
@@ -83,7 +80,6 @@ class ScalatestTest extends TextToTextTestBase(
     "org.scalatest.tools.NestedSuiteElement", // Predef.String
     "org.scalatest.tools.PrettyPrinter", // class BrokenException()
     "org.scalatest.tools.ProgressBarPanel", // empty () constructor
-    "org.scalatest.tools.ReporterConfigurations", // val parameter in case class
     "org.scalatest.tools.StringReporter", // Unicode \u001b char
     "org.scalatest.tools.SuiteElement", // Predef.String
     "org.scalatest.wordspec.AsyncWordSpecLike", // Expr[...]
