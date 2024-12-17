@@ -16,7 +16,6 @@ import org.jetbrains.sbt.project.data.service.ExternalSystemDataDsl._
 import org.jetbrains.sbt.project.data.service.ProjectDataServiceTestCase
 import org.junit.Assert._
 
-import java.io.File
 import java.net.URI
 import java.nio.file.Path
 import java.util
@@ -25,8 +24,8 @@ import scala.jdk.CollectionConverters._
 class ScalaGradleDataServiceTest extends ProjectDataServiceTestCase {
 
   private def generateProject(scalaVersion: Option[String] = None,
-                              scalaCompilerClasspath: Set[File] = Set.empty,
-                              scalaCompilerPlugins: Set[File] = Set.empty,
+                              scalaCompilerClasspath: Set[Path] = Set.empty,
+                              scalaCompilerPlugins: Set[Path] = Set.empty,
                               compilerOptions: Option[ScalaCompileOptionsData] = None,
                               separateModules: Boolean = true): DataNode[ProjectData] =
     new project {
@@ -40,7 +39,7 @@ class ScalaGradleDataServiceTest extends ProjectDataServiceTestCase {
 
       scalaLibrary.foreach(libraries += _)
 
-      val myProjectURI: URI = new File(getProject.getBasePath).getCanonicalFile.toURI
+      val myProjectURI: URI = Path.of(getProject.getBasePath).toAbsolutePath.toUri
 
       modules += new javaModule {
         val moduleName = "module"
@@ -60,8 +59,8 @@ class ScalaGradleDataServiceTest extends ProjectDataServiceTestCase {
             classpath
           }
 
-          data.setScalaClasspath(asSerializableJavaSet(scalaCompilerClasspath))
-          data.setScalaCompilerPlugins(asSerializableJavaSet(scalaCompilerPlugins))
+          data.setScalaClasspath(asSerializableJavaSet(scalaCompilerClasspath.map(_.toFile)))
+          data.setScalaCompilerPlugins(asSerializableJavaSet(scalaCompilerPlugins.map(_.toFile)))
           data.setScalaCompileOptions(compilerOptions.getOrElse(new ScalaCompileOptionsData))
         }
 
@@ -104,7 +103,7 @@ class ScalaGradleDataServiceTest extends ProjectDataServiceTestCase {
 
   def testScalaCompilerClasspathWithoutScala(): Unit = {
     importProjectData(
-      generateProject(scalaCompilerClasspath = Set(new File("/tmp/test/not-a-scala-library.jar")))
+      generateProject(scalaCompilerClasspath = Set(Path.of("/", "tmp", "test", "not-a-scala-library.jar")))
     )
     assertScalaLibraryWarningNotificationShown(getProject)
   }
@@ -209,7 +208,7 @@ class ScalaGradleDataServiceTest extends ProjectDataServiceTestCase {
     }
 
     def toProjectAbsolutePath(relativePath: String): String =
-      new File(getProject.getBasePath).getAbsolutePath + File.separator + relativePath
+      Path.of(getProject.getBasePath).toAbsolutePath.resolve(relativePath).toString
 
     assertEquals("debugging info level", DebuggingInfoLevel.Source, compilerConfiguration.debuggingInfoLevel)
     assertCollectionEquals("plugins", Seq("test-plugin1.jar", "test-plugin2.jar").map(toProjectAbsolutePath), compilerConfiguration.plugins)
@@ -246,8 +245,8 @@ class ScalaGradleDataServiceTest extends ProjectDataServiceTestCase {
     importProjectData(
       generateProject(
         Some("2.13.14"),
-        Set(scalaLibraryPath.toFile),
-        Set(scalacPluginPath.toFile)
+        Set(scalaLibraryPath),
+        Set(scalacPluginPath)
       )
     )
 
@@ -274,7 +273,7 @@ class ScalaGradleDataServiceTest extends ProjectDataServiceTestCase {
     importProjectData(testProject)
   }
 
-  private def defaultCompilerClasspath = Set(new File("/tmp/test/scala-library-2.10.4.jar"))
+  private def defaultCompilerClasspath = Set(Path.of("/", "tmp", "test", "scala-library-2.10.4.jar"))
 
   private def assertHasScalaSdk(): Unit = {
     val libraries = getProject

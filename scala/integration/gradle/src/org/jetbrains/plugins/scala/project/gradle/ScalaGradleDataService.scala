@@ -13,7 +13,7 @@ import org.jetbrains.plugins.gradle.util.GradleConstants
 import org.jetbrains.plugins.scala.project._
 import org.jetbrains.plugins.scala.project.external.{ScalaAbstractProjectDataService, ScalaSdkUtils}
 
-import java.io.File
+import java.nio.file.Path
 import java.util
 import scala.jdk.CollectionConverters._
 
@@ -56,17 +56,17 @@ class ScalaGradleDataService extends ScalaAbstractProjectDataService[ScalaModelD
       module.configureScalaCompilerSettingsFrom("Gradle", compilerOptionsFrom(data))
       module match {
         case `mainModule` =>
-          configureScalaSdk(mainModule.getName, data.getScalaClasspath.asScala.toSeq)
+          configureScalaSdk(mainModule.getName, data.getScalaClasspath.asScala.toSeq.map(_.toPath))
         case _ =>
       }
     }
 
   private def configureScalaSdk(
     moduleName: String,
-    compilerClasspath: Seq[File]
+    compilerClasspath: Seq[Path]
   )(implicit project: Project, modelsProvider: IdeModifiableModelsProvider): Unit = {
     import LibraryExt._
-    val scalaLibrariesInCompilerClasspath = compilerClasspath.map(_.getName).filter(isRuntimeLibrary)
+    val scalaLibrariesInCompilerClasspath = compilerClasspath.map(_.getFileName.toString).filter(isRuntimeLibrary)
     val compilerVersion = scalaLibrariesInCompilerClasspath.flatMap(runtimeVersion).headOption
     compilerVersion match {
       case Some(version) =>
@@ -79,7 +79,7 @@ class ScalaGradleDataService extends ScalaAbstractProjectDataService[ScalaModelD
   private def configureScalaSdk(
     moduleName: String,
     compilerVersion: String,
-    compilerClasspath: Seq[File]
+    compilerClasspath: Seq[Path]
   )(implicit project: Project, modelsProvider: IdeModifiableModelsProvider): Unit = {
     val scalaLibrariesInProject = modelsProvider.getAllLibraries.filter(_.hasRuntimeLibrary).toSet
     if (scalaLibrariesInProject.nonEmpty) {
@@ -90,7 +90,7 @@ class ScalaGradleDataService extends ScalaAbstractProjectDataService[ScalaModelD
           // the Scala 2.13.12+ compiler bridges, due to clashes.
           val compilerBridgeBinaryJar = library.libraryVersion.filter(_.startsWith("3.")).flatMap { version =>
             ScalaSdkUtils.compilerBridgeJarName(version).flatMap { bridgeJarName =>
-              compilerClasspath.find(_.getName == bridgeJarName).orElse(ScalaSdkUtils.resolveCompilerBridgeJar(version))
+              compilerClasspath.find(_.getFileName.toString == bridgeJarName).orElse(ScalaSdkUtils.resolveCompilerBridgeJar(version).map(_.toPath))
             }
           }
 
@@ -98,9 +98,9 @@ class ScalaGradleDataService extends ScalaAbstractProjectDataService[ScalaModelD
             modelsProvider,
             library,
             library.libraryVersion,
-            compilerClasspath,
+            compilerClasspath.map(_.toFile),
             scaladocExtraClasspath = Nil, // TODO SCL-17219
-            compilerBridgeBinaryJar
+            compilerBridgeBinaryJar.map(_.toFile)
           )
         case None =>
           showScalaLibraryNotFoundWarning(compilerVersion, moduleName)
