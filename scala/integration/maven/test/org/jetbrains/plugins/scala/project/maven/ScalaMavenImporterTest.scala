@@ -1,6 +1,6 @@
 package org.jetbrains.plugins.scala.project.maven
 
-import com.intellij.maven.testFramework.MavenImportingTestCase
+import com.intellij.maven.testFramework.MavenNioImportingTestCase
 import com.intellij.openapi.module.{ModuleTypeManager, StdModuleTypes}
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.projectRoots.impl.JavaAwareProjectJdkTableImpl
@@ -11,9 +11,9 @@ import com.intellij.pom.java.LanguageLevel
 import org.jetbrains.plugins.scala.SlowTests
 import org.jetbrains.plugins.scala.base.libraryLoaders.SmartJDKLoader
 import org.jetbrains.plugins.scala.compiler.data.CompileOrder
-import org.jetbrains.plugins.scala.extensions.{RichFile, inWriteAction}
-import org.jetbrains.plugins.scala.project.{LibraryExExt, LibraryExt, ProjectExt}
+import org.jetbrains.plugins.scala.extensions.inWriteAction
 import org.jetbrains.plugins.scala.project.maven.MavenProjectStructureTestUtils._
+import org.jetbrains.plugins.scala.project.{LibraryExExt, LibraryExt, ProjectExt}
 import org.jetbrains.plugins.scala.util.TestUtils
 import org.jetbrains.sbt.project.ProjectStructureDsl._
 import org.jetbrains.sbt.project.{ExactMatch, ProjectStructureMatcher}
@@ -21,12 +21,12 @@ import org.junit.Assert
 import org.junit.Assert.assertNotNull
 import org.junit.experimental.categories.Category
 
-import java.io.File
+import java.nio.file.{Files, Path}
 
 //noinspection ApiStatus
 @Category(Array(classOf[SlowTests]))
 abstract class ScalaMavenImporterTest
-  extends MavenImportingTestCase
+  extends MavenNioImportingTestCase
     with ProjectStructureMatcher
     with ExactMatch {
 
@@ -65,20 +65,22 @@ abstract class ScalaMavenImporterTest
     super.tearDown()
   }
 
-  private def getTestProjectDir: File = {
-    val testDataPath = TestUtils.getTestDataPath + "/../../integration/maven/testdata/maven/projects"
-    val file = new File(testDataPath, getTestName(true))
-    assert(file.exists(), s"testdata folder not found: $file")
-    file
+  private def getTestProjectDir: Path = {
+    val testDataPath = Path.of(TestUtils.getTestDataPath)
+      .getParent.getParent
+      .resolve("integration").resolve("maven").resolve("testdata").resolve("maven").resolve("projects")
+      .resolve(getTestName(true))
+    assert(Files.exists(testDataPath), s"testdata directory not found: $testDataPath")
+    testDataPath
   }
 
   private def getTestProjectDirVFile: VirtualFile =
-    VirtualFileManager.getInstance().findFileByNioPath(getTestProjectDir.toPath)
+    VirtualFileManager.getInstance().findFileByNioPath(getTestProjectDir)
 
   private def runImportingTest(expected: project): Unit = {
-    val pomFile = getTestProjectDir / "pom.xml"
+    val pomFile = getTestProjectDir.resolve("pom.xml")
 
-    val pomVFile = VirtualFileManager.getInstance().findFileByNioPath(pomFile.toPath)
+    val pomVFile = VirtualFileManager.getInstance().findFileByNioPath(pomFile)
     Assert.assertNotNull("can't find 'pom.xml' file", pomVFile)
 
     runWithoutStaticSync()
