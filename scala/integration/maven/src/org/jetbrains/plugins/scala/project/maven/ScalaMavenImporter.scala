@@ -19,7 +19,7 @@ import org.jetbrains.plugins.scala.project._
 import org.jetbrains.plugins.scala.project.external.ScalaSdkUtils
 import org.jetbrains.plugins.scala.project.maven.ScalaMavenImporter._
 
-import java.io.File
+import java.nio.file.Path
 import java.util
 import scala.annotation.nowarn
 import scala.jdk.CollectionConverters._
@@ -82,8 +82,8 @@ final class ScalaMavenImporter extends MavenImporter("org.scala-tools", "maven-s
       // TODO configuration.vmOptions
 
       val compilerOptions = {
-        val plugins = configuration.plugins.map(id => mavenProject.localPathTo(id).getPath)
-        configuration.compilerOptions ++ plugins.map(path => "-Xplugin:" + path)
+        val plugins = configuration.plugins.map(id => mavenProject.localPathTo(id))
+        configuration.compilerOptions ++ plugins.map(path => "-Xplugin:" + path.toString)
       }
 
       val compileOrder = configuration.compileOrder.getOrElse(CompileOrder.Mixed)
@@ -116,7 +116,7 @@ final class ScalaMavenImporter extends MavenImporter("org.scala-tools", "maven-s
     val compilerClasspathFull = mavenProject.getCachedValue(MavenFullCompilerClasspathKey)
 
     val compilerBridgeBinaryJar = ScalaSdkUtils.compilerBridgeJarName(compilerVersion).flatMap { bridgeJarName =>
-        compilerClasspathFull.find(_.getName == bridgeJarName)
+      compilerClasspathFull.find(_.getFileName.toString == bridgeJarName)
     }
 
     val classpath = compilerClasspathFull.diff(compilerBridgeBinaryJar.toSeq)
@@ -124,9 +124,9 @@ final class ScalaMavenImporter extends MavenImporter("org.scala-tools", "maven-s
     ScalaSdkUtils.configureScalaSdk(
       module,
       compilerVersion,
-      classpath,
+      classpath.map(_.toFile),
       scaladocExtraClasspath = Nil,
-      compilerBridgeBinaryJar,
+      compilerBridgeBinaryJar.map(_.toFile),
       sdkPrefix = "Maven",
       modelsProvider
     )
@@ -173,11 +173,11 @@ final class ScalaMavenImporter extends MavenImporter("org.scala-tools", "maven-s
       val implicitScalaLibrary = implicitScalaLibraryIfNeeded(configuration)
       implicitScalaLibrary.map(resolveJar).foreach(mavenProject.addDependency)
 
-      val compilerBridgeJar = configuration.compilerBridgeArtifact.map(resolveJar).map(_.getFile)
+      val compilerBridgeJar = configuration.compilerBridgeArtifact.map(resolveJar).map(a => Path.of(a.getPath))
 
       // compiler classpath should be resolved transitively, e.g. Scala3 compiler contains quite a lot of jar files in the classpath
-      val compilerClasspathWithTransitives: Seq[File] =
-        resolveTransitively(configuration.compilerArtifact).map(_.getFile) ++ compilerBridgeJar
+      val compilerClasspathWithTransitives: Seq[Path] =
+        resolveTransitively(configuration.compilerArtifact).map(a => Path.of(a.getPath)) ++ compilerBridgeJar
 
       mavenProject.putCachedValue(MavenFullCompilerClasspathKey, compilerClasspathWithTransitives)
 
@@ -243,16 +243,19 @@ private object ScalaMavenImporter {
    * This key is used for each Maven project/module (not the IntelliJ IDEA project),
    * so in a multi-module project, each module can have a different compiler classpath.
    */
-  private val MavenFullCompilerClasspathKey = Key.create[Seq[File]]("MavenFullCompilerClasspathKey")
+  private val MavenFullCompilerClasspathKey = Key.create[Seq[Path]]("MavenFullCompilerClasspathKey")
 
   private final val OrgScalaLang = "org.scala-lang"
 
   implicit class RichMavenProject(private val project: MavenProject) extends AnyVal {
-    def localPathTo(id: MavenId): File = {
+    def localPathTo(id: MavenId): Path = {
       val suffix = id.classifier.map("-" + _).getOrElse("")
       val jarName = s"${id.artifactId}-${id.version}$suffix.jar"
-      project.getLocalRepositoryPath.toFile / id.groupId.replaceAll("\\.", "/") /
-        id.artifactId / id.version / jarName
+      project.getLocalRepositoryPath
+        .resolve(id.groupId.replaceAll("\\.", "/"))
+        .resolve(id.artifactId)
+        .resolve(id.version)
+        .resolve(jarName)
     }
   }
 

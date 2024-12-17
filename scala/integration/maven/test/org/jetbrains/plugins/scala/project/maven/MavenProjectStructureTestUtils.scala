@@ -2,12 +2,11 @@ package org.jetbrains.plugins.scala.project.maven
 
 import com.intellij.util.SystemProperties
 import org.jetbrains.idea.maven.utils.MavenUtil
-import org.jetbrains.plugins.scala.extensions.RichFile
 import org.jetbrains.plugins.scala.{DependencyManagerBase, ScalaVersion}
 import org.jetbrains.sbt.project.ProjectStructureDsl.{ScalaSdkAttributes, libClasses, library, scalaSdkSettings}
 import org.junit.Assert
 
-import java.io.File
+import java.nio.file.{Files, Path}
 
 /**
  * See also [[org.jetbrains.sbt.project.ProjectStructureTestUtils]]
@@ -38,10 +37,10 @@ object MavenProjectStructureTestUtils {
     val userHome = SystemProperties.getUserHome
     Assert.assertNotNull("user.home property is not set", userHome)
 
-    val userHomeDir = new File(userHome)
-    Assert.assertTrue("user home dir doesn't exist", userHomeDir.exists())
+    val userHomeDir = Path.of(userHome)
+    Assert.assertTrue("user home dir doesn't exist", Files.exists(userHomeDir))
 
-    (userHomeDir / ".m2").getAbsolutePath
+    userHomeDir.resolve(".m2").toAbsolutePath.toString
   }
 
   private def mavenLocalArtifact(relativePath: String): String =
