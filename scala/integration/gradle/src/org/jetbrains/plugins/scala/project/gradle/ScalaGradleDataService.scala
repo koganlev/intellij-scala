@@ -97,7 +97,6 @@ class ScalaGradleDataService extends ScalaAbstractProjectDataService[ScalaModelD
           ScalaSdkUtils.ensureScalaLibraryIsConvertedToScalaSdk(
             modelsProvider,
             library,
-            library.libraryVersion,
             compilerClasspath.map(_.toFile),
             scaladocExtraClasspath = Nil, // TODO SCL-17219
             compilerBridgeBinaryJar.map(_.toFile)
