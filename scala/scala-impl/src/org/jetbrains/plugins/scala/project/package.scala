@@ -13,9 +13,14 @@ import com.intellij.openapi.roots.impl.libraries.LibraryEx
 import com.intellij.openapi.roots.libraries.{Library, LibraryTablesRegistrar}
 import com.intellij.openapi.util.{Key, UserDataHolder, UserDataHolderEx}
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.platform.workspace.jps.entities.DependenciesKt.setLibraryProperties
+import com.intellij.platform.workspace.jps.entities.{DependenciesKt, DependencyScope, LibraryDependency, LibraryEntity, LibraryId, LibraryPropertiesEntity, LibraryTypeId, Library_extensionsKt, ModuleEntity, ModuleEntityAndExtensions, ModuleExtensions}
+import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.psi.{LanguageSubstitutors, PsiElement, PsiFile}
 import com.intellij.util.PathsList
+import kotlin.Unit.{INSTANCE => KUnit}
 import org.jetbrains.annotations.TestOnly
+import org.jetbrains.jps.model.serialization.library.JpsLibraryTableSerializer
 import org.jetbrains.plugins.scala.caches.cachedInUserData
 import org.jetbrains.plugins.scala.compiler.data.CompileOrder
 import org.jetbrains.plugins.scala.extensions._
@@ -26,7 +31,9 @@ import org.jetbrains.plugins.scala.lang.psi.compiled.ScClsFileViewProvider.ScCls
 import org.jetbrains.plugins.scala.lang.psi.impl.ScalaPsiManager
 import org.jetbrains.plugins.scala.lang.psi.stubs.elements.ScStubElementType
 import org.jetbrains.plugins.scala.lang.resolve.processor.precedence.PrecedenceTypes
+import org.jetbrains.plugins.scala.project.LibraryExt.guessLibraryVersionFromName
 import org.jetbrains.plugins.scala.project.ScalaFeatures.SerializableScalaFeatures
+import org.jetbrains.plugins.scala.project.external.CompanionProxyUtils.LegacyBridgeModifiableBaseCompanion
 import org.jetbrains.plugins.scala.project.settings.{ScalaCompilerConfiguration, ScalaCompilerSettings, ScalaCompilerSettingsProfile}
 import org.jetbrains.plugins.scala.settings.ScalaProjectSettings
 import org.jetbrains.plugins.scala.tasty.reader.CompilerOptions
@@ -58,20 +65,18 @@ package object project {
     val LightTestScalaVersion: Key[ScalaVersion] = Key.create("light-test-scala-version")
   }
 
-  implicit class LibraryExt(private val library: Library) extends AnyVal {
+  implicit class LibraryExt(private val library: Library) extends AnyVal with LibraryBase {
 
     import LibraryExt._
 
-    def isScalaSdk: Boolean = library match {
+    override def isScalaSdk: Boolean = library match {
       case libraryEx: LibraryEx => libraryEx.isScalaSdk
       case _ => false
     }
 
-    def libraryVersion: Option[String] = name.flatMap(guessLibraryVersionFromName)
+    override def name: Option[String] = Option(library.getName)
 
     def hasRuntimeLibrary: Boolean = name.exists(isRuntimeLibrary)
-
-    private def name: Option[String] = Option(library.getName)
 
     def jarUrls: Set[URL] =
       library
@@ -113,6 +118,59 @@ package object project {
       case properties: ScalaLibraryProperties => properties
       case _ => throw new IllegalStateException("Library is not a Scala SDK: " + library.getName)
     }
+  }
+
+  implicit class LibraryEntityExt(private val libraryEntity: LibraryEntity) extends AnyVal with LibraryBase {
+    override def isScalaSdk: Boolean = {
+      val typeId = libraryEntity.getTypeId
+      typeId != null && typeId.getName == ScalaLibraryType.Kind.getKindId
+    }
+
+    override def name: Option[String] = Option(libraryEntity.getName)
+
+    /**
+     * Written based on [[com.intellij.workspaceModel.ide.impl.legacyBridge.library.LibraryModifiableModelBridgeImpl#setProperties(com.intellij.openapi.roots.libraries.LibraryProperties)]] and
+     * [[com.intellij.workspaceModel.ide.impl.legacyBridge.library.LibraryModifiableModelBridgeImpl#updateProperties(java.lang.String, java.lang.String)]].
+     * At the moment, there is no equivalent of these methods in the Workspace model.
+     * Remove it when it's implemented on the platform side.
+     */
+    def setScalaProperties(
+      scalaLibraryProperties: ScalaLibraryProperties,
+      storage: MutableEntityStorage
+    ): Unit = {
+      val kind = libraryEntity.getTypeId
+      if (kind == null) return
+
+      val scalaLibraryPropertiesXmlTag = LegacyBridgeModifiableBaseCompanion.serializeComponentAsString(JpsLibraryTableSerializer.PROPERTIES_TAG, scalaLibraryProperties)
+      val libraryProperties = Library_extensionsKt.getLibraryProperties(libraryEntity)
+
+      if (libraryProperties == null) {
+        DependenciesKt.modifyLibraryEntity(storage, libraryEntity, builder => {
+          val entity = LibraryPropertiesEntity.create(libraryEntity.getEntitySource)
+          entity.setPropertiesXmlTag(scalaLibraryPropertiesXmlTag)
+          setLibraryProperties(builder, entity)
+          KUnit
+        })
+      } else {
+        Library_extensionsKt.modifyLibraryPropertiesEntity(storage, libraryProperties, builder => {
+          builder.setPropertiesXmlTag(scalaLibraryPropertiesXmlTag)
+          KUnit
+        })
+      }
+    }
+
+    def setScalaKind(storage: MutableEntityStorage): Unit =
+      storage.modifyEntity[LibraryEntity.Builder, LibraryEntity](classOf[LibraryEntity.Builder], libraryEntity, { builder =>
+        val libraryTypeId = new LibraryTypeId(ScalaLibraryType.Kind.getKindId)
+        builder.setTypeId(libraryTypeId)
+        KUnit
+      })
+  }
+
+  trait LibraryBase extends Any {
+    def isScalaSdk: Boolean
+    def name: Option[String]
+    def libraryVersion: Option[String] = name.flatMap(guessLibraryVersionFromName)
   }
 
   implicit class ModuleExt(private val module: Module) extends AnyVal {
@@ -277,34 +335,6 @@ package object project {
       compilerConfiguration.configureSettingsForModule(module, source, compilerSettings)
     }
 
-    private def withPathsRelativeTo(baseDirectory: String, options: Seq[String]): Seq[String] = options.map { option =>
-      if (option.startsWith("-Xplugin:")) {
-        val compoundPath = option.substring(9)
-        val compoundPathAbsolute = toAbsoluteCompoundPath(baseDirectory, compoundPath)
-        "-Xplugin:" + compoundPathAbsolute
-      } else {
-        option
-      }
-    }
-
-    // SCL-11861, SCL-18534
-    private def toAbsoluteCompoundPath(baseDirectory: String, compoundPath: String): String = {
-      // according to https://docs.scala-lang.org/overviews/compiler-options/index.html
-      // `,` is used as plugins separator: `-Xplugin PATHS1,PATHS2`
-      // but in SCL-11861 `;` is used
-      val pluginSeparator = if (compoundPath.contains(";")) ';' else ','
-
-      val paths = compoundPath.split(pluginSeparator)
-      val pathsAbsolute = paths.map(toAbsolutePath(baseDirectory, _))
-      pathsAbsolute.mkString(pluginSeparator.toString)
-    }
-
-    private def toAbsolutePath(baseDirectory: String, path: String): String = {
-      val file = new File(path).isAbsolute
-      if (file) path
-      else new File(baseDirectory, path).getPath
-    }
-
     private def compilerConfiguration =
       ScalaCompilerConfiguration.instanceIn(module.getProject)
 
@@ -384,6 +414,34 @@ package object project {
 
     def externalSystemId: Option[String] =
       scalaModuleSettings.flatMap(_.externalSystemId)
+  }
+
+  implicit class ModuleEntityExt(private val moduleEntity: ModuleEntity) extends AnyVal {
+    def configureScalaCompilerSettingsFrom(
+      project: Project,
+      source: String,
+      options: collection.Seq[String],
+      compileOrder: CompileOrder = CompileOrder.Mixed
+    ): Unit = {
+      val moduleOptions = ModuleExtensions.getExModuleOptions(moduleEntity)
+      val baseDirectory =
+        if (moduleOptions != null && moduleOptions.getRootProjectPath != null) {
+          moduleOptions.getRootProjectPath
+        } else {
+          project.getBasePath
+        }
+      val compilerSettings = ScalaCompilerSettings.fromOptions(withPathsRelativeTo(baseDirectory, options.toSeq), compileOrder)
+      val compilerConfiguration = ScalaCompilerConfiguration.instanceIn(project)
+      compilerConfiguration.configureSettingsForModule(moduleEntity.getName, source, compilerSettings)
+    }
+
+    def addLibraryDependency(storage: MutableEntityStorage, libraryEntity: LibraryEntity): Unit =
+      ModuleEntityAndExtensions.modifyModuleEntity(storage, moduleEntity, builder => {
+        val libraryId = new LibraryId(libraryEntity.getName, libraryEntity.getTableId)
+        val libraryDependency = new LibraryDependency(libraryId, false, DependencyScope.COMPILE)
+        builder.getDependencies.add(libraryDependency)
+        KUnit
+      })
   }
 
   class ScalaSdkNotConfiguredException(module: Module) extends IllegalArgumentException(s"No Scala SDK configured for module: ${module.getName}")
@@ -706,5 +764,33 @@ package object project {
       }
 
     def addRunners(): Unit = list.add(ScalaPluginJars.runnersJar)
+  }
+
+  private def withPathsRelativeTo(baseDirectory: String, options: Seq[String]): Seq[String] = options.map { option =>
+    if (option.startsWith("-Xplugin:")) {
+      val compoundPath = option.substring(9)
+      val compoundPathAbsolute = toAbsoluteCompoundPath(baseDirectory, compoundPath)
+      "-Xplugin:" + compoundPathAbsolute
+    } else {
+      option
+    }
+  }
+
+  // SCL-11861, SCL-18534
+  private def toAbsoluteCompoundPath(baseDirectory: String, compoundPath: String): String = {
+    // according to https://docs.scala-lang.org/overviews/compiler-options/index.html
+    // `,` is used as plugins separator: `-Xplugin PATHS1,PATHS2`
+    // but in SCL-11861 `;` is used
+    val pluginSeparator = if (compoundPath.contains(";")) ';' else ','
+
+    val paths = compoundPath.split(pluginSeparator)
+    val pathsAbsolute = paths.map(toAbsolutePath(baseDirectory, _))
+    pathsAbsolute.mkString(pluginSeparator.toString)
+  }
+
+  private def toAbsolutePath(baseDirectory: String, path: String): String = {
+    val file = new File(path).isAbsolute
+    if (file) path
+    else new File(baseDirectory, path).getPath
   }
 }

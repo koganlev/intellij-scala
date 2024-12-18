@@ -73,15 +73,18 @@ class ScalaCompilerConfiguration(project: Project) extends PersistentStateCompon
     modules.iterator.map(getSettingsForModule).toSeq
   }
 
-  def configureSettingsForModule(module: Module, source: String, settings: ScalaCompilerSettings): Unit = {
+  def configureSettingsForModule(module: Module, source: String, settings: ScalaCompilerSettings): Unit =
+    configureSettingsForModule(module.getName, source, settings)
+
+  def configureSettingsForModule(moduleName: String, source: String, settings: ScalaCompilerSettings): Unit = {
     customProfiles.foreach { profile =>
-      profile.removeModuleName(module.getName)
+      profile.removeModuleName(moduleName)
       if (profile.getName.startsWith(source) && profile.moduleNames.isEmpty) {
         customProfiles = customProfiles.filterNot(_ == profile)
       }
     }
     customProfiles.find(_.getSettings.toState == settings.toState) match {
-      case Some(profile) => profile.addModuleName(module.getName)
+      case Some(profile) => profile.addModuleName(moduleName)
       case None =>
         val profileNames = customProfiles.iterator.map(_.getName).filter(_.startsWith(source)).toSet
         @tailrec def firstFreeName(i: Int): String = {
@@ -90,7 +93,7 @@ class ScalaCompilerConfiguration(project: Project) extends PersistentStateCompon
         }
         val profile = new ScalaCompilerSettingsProfile(firstFreeName(1))
         profile.setSettings(settings)
-        profile.addModuleName(module.getName)
+        profile.addModuleName(moduleName)
         customProfiles = (customProfiles :+ profile).sortBy(_.getName)
     }
   }

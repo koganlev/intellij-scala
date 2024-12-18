@@ -2,13 +2,21 @@ package org.jetbrains.plugins.scala.project.external
 
 import com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsProvider
 import com.intellij.openapi.module.Module
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.roots.ExternalProjectSystemRegistry
 import com.intellij.openapi.roots.impl.libraries.LibraryEx
 import com.intellij.openapi.roots.libraries.Library
+import org.jetbrains.plugins.scala.project.{LibraryBase, LibraryEntityExt, LibraryExt, ModuleEntityExt, ScalaLibraryProperties, ScalaLibraryType, Version}
+import com.intellij.platform.workspace.jps.entities.{LibraryEntity, LibraryTableId, ModuleEntity}
+import com.intellij.platform.workspace.storage.MutableEntityStorage
+import org.jetbrains.jps.model.serialization.SerializationConstants
 import org.jetbrains.plugins.scala.DependencyManager
 import org.jetbrains.plugins.scala.DependencyManagerBase.RichStr
-import org.jetbrains.plugins.scala.project.{LibraryExt, ScalaLibraryProperties, ScalaLibraryType, Version}
 
 import java.io.File
+import java.util.Collections.emptyList
+import scala.jdk.CollectionConverters.IteratorHasAsScala
+import scala.language.implicitConversions
 
 object ScalaSdkUtils {
 
@@ -21,43 +29,125 @@ object ScalaSdkUtils {
     sdkPrefix: String,
     modelsProvider: IdeModifiableModelsProvider
   ): Unit = {
-    val scalaSDKLibraryName = s"$sdkPrefix: scala-sdk-$compilerVersion"
+    val scalaSDKLibraryName = scalaSdkLibraryName(sdkPrefix, compilerVersion)
     val projectLibrariesModel = modelsProvider.getModifiableProjectLibrariesModel
-    val libraries = projectLibrariesModel.getLibraries
-    val existingScalaSDKForSpecificVersion = libraries.find { lib =>
-      lib.getName == scalaSDKLibraryName && lib.isScalaSdk
-    }
-    val scalaSdkLibrary = existingScalaSDKForSpecificVersion.getOrElse {
-      projectLibrariesModel.createLibrary(scalaSDKLibraryName)
-    }
-    ScalaSdkUtils.ensureScalaLibraryIsConvertedToScalaSdk(
-      modelsProvider,
-      scalaSdkLibrary,
-      scalaSdkLibrary.libraryVersion,
-      scalacClasspath,
-      scaladocExtraClasspath,
-      compilerBridgeBinaryJar
+    doConfigureScalaSdk(
+      libraries = projectLibrariesModel.getLibraries.toSeq,
+      isApplicable = (library: Library) => isApplicableScalaSdk(library, scalaSDKLibraryName),
+      createLibrary = projectLibrariesModel.createLibrary(scalaSDKLibraryName),
+      ensureConvertedToScalaSdk = (library: Library) => ScalaSdkUtils.ensureScalaLibraryIsConvertedToScalaSdk(
+        modelsProvider,
+        library,
+        scalacClasspath,
+        scaladocExtraClasspath,
+        compilerBridgeBinaryJar
+      ),
+      addToModule = (library: Library) => modelsProvider.getModifiableRootModel(module).addLibraryEntry(library)
     )
+  }
 
-    val rootModel = modelsProvider.getModifiableRootModel(module)
-    rootModel.addLibraryEntry(scalaSdkLibrary)
+  def configureScalaSdk(
+    module: ModuleEntity,
+    compilerVersion: String,
+    scalacClasspath: Seq[File],
+    scaladocExtraClasspath: Seq[File],
+    compilerBridgeBinaryJar: Option[File],
+    sdkPrefix: String,
+    storage: MutableEntityStorage,
+    project: Project,
+  ): Unit = {
+    val scalaSDKLibraryName = scalaSdkLibraryName(sdkPrefix, compilerVersion)
+    doConfigureScalaSdk(
+      libraries = storage.entities(classOf[LibraryEntity]).iterator().asScala.toSeq,
+      isApplicable = (library: LibraryEntity) => isApplicableScalaSdk(library, scalaSDKLibraryName),
+      createLibrary = addLibraryEntity(scalaSDKLibraryName, project, storage),
+      ensureConvertedToScalaSdk = (library: LibraryEntity) => ScalaSdkUtils.ensureScalaLibraryIsConvertedToScalaSdk(
+        library,
+        storage,
+        scalacClasspath,
+        scaladocExtraClasspath,
+        compilerBridgeBinaryJar
+      ),
+      addToModule = (library: LibraryEntity) => module.addLibraryDependency(storage, library)
+    )
+  }
+
+  def addLibraryEntity(libraryName: String, project: Project, storage: MutableEntityStorage): LibraryEntity = {
+    val externalSource = ExternalProjectSystemRegistry.getInstance().getSourceById(SerializationConstants.MAVEN_EXTERNAL_SOURCE_ID)
+    val legacyBridgeModifiableBase = CompanionProxyUtils.LegacyBridgeJpsEntitySourceFactoryCompanion.getInstance(project)
+    val librarySource = legacyBridgeModifiableBase.createEntitySourceForProjectLibrary(externalSource)
+    val libraryEntity = LibraryEntity.create(libraryName, LibraryTableId.ProjectLibraryTableId.INSTANCE, emptyList(), librarySource)
+    storage.addEntity[LibraryEntity.Builder, LibraryEntity](libraryEntity)
+  }
+
+  private def isApplicableScalaSdk(library: LibraryBase, scalaSDKLibraryName: String): Boolean =
+    library.isScalaSdk && library.name.orNull == scalaSDKLibraryName
+
+  private def scalaSdkLibraryName(sdkPrefix: String, compilerVersion: String): String =
+    s"$sdkPrefix: scala-sdk-$compilerVersion"
+
+  private def doConfigureScalaSdk[T] (
+    libraries: => Seq[T],
+    isApplicable: T => Boolean,
+    createLibrary: => T,
+    ensureConvertedToScalaSdk: T => Unit,
+    addToModule: T => Unit
+  ): Unit = {
+    val existingScalaSDKForSpecificVersion = libraries.find(isApplicable)
+    val scalaSdkLibrary = existingScalaSDKForSpecificVersion.getOrElse(createLibrary)
+
+    ensureConvertedToScalaSdk(scalaSdkLibrary)
+    addToModule(scalaSdkLibrary)
   }
 
   def ensureScalaLibraryIsConvertedToScalaSdk(
     modelsProvider: IdeModifiableModelsProvider,
     library: Library,
-    maybeVersion: Option[String],
     compilerClasspath: Seq[File],
     scaladocExtraClasspath: Seq[File],
     compilerBridgeBinaryJar: Option[File],
   ): Unit = {
-    val properties = ScalaLibraryProperties(maybeVersion, compilerClasspath, scaladocExtraClasspath, compilerBridgeBinaryJar)
     val modifiableModel = modelsProvider.getModifiableLibraryModel(library).asInstanceOf[LibraryEx.ModifiableModelEx]
+    doEnsureScalaLibraryIsConvertedToScalaSdk(
+      library,
+      modifiableModel.setKind(ScalaLibraryType.Kind),
+      properties => modifiableModel.setProperties(properties),
+      compilerClasspath,
+      scaladocExtraClasspath,
+      compilerBridgeBinaryJar
+    )
+  }
+
+  def ensureScalaLibraryIsConvertedToScalaSdk(
+    library: LibraryEntity,
+    storage: MutableEntityStorage,
+    compilerClasspath: Seq[File],
+    scaladocExtraClasspath: Seq[File],
+    compilerBridgeBinaryJar: Option[File],
+  ): Unit =
+    doEnsureScalaLibraryIsConvertedToScalaSdk(
+      library,
+      library.setScalaKind(storage),
+      library.setScalaProperties(_, storage),
+      compilerClasspath,
+      scaladocExtraClasspath,
+      compilerBridgeBinaryJar
+    )
+
+  private def doEnsureScalaLibraryIsConvertedToScalaSdk(
+    library: LibraryBase,
+    setScalaSdkKind: => Unit,
+    setProperties: ScalaLibraryProperties => Unit,
+    compilerClasspath: Seq[File],
+    scaladocExtraClasspath: Seq[File],
+    compilerBridgeBinaryJar: Option[File],
+  ): Unit = {
+    val properties = ScalaLibraryProperties(library.libraryVersion, compilerClasspath, scaladocExtraClasspath, compilerBridgeBinaryJar)
     if (!library.isScalaSdk) {
-      modifiableModel.setKind(ScalaLibraryType.Kind)
+      setScalaSdkKind
     }
     //NOTE: must be called after `setKind` because later resets the properties
-    modifiableModel.setProperties(properties)
+    setProperties(properties)
   }
 
   def resolveCompilerBridgeJar(scalaVersion: String): Option[File] =
