@@ -3,7 +3,7 @@ package org.jetbrains.plugins.scala.conversion
 import com.intellij.openapi.command.{CommandProcessor, UndoConfirmationPolicy}
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.text.StringUtil
-import com.intellij.openapi.vfs.{CharsetToolkit, LocalFileSystem, VirtualFile}
+import com.intellij.openapi.vfs.{LocalFileSystem, VirtualFile}
 import com.intellij.psi._
 import com.intellij.psi.codeStyle.CodeStyleManager
 import org.intellij.lang.annotations.Language
@@ -15,7 +15,8 @@ import org.jetbrains.plugins.scala.lang.formatting.settings.ScalaCodeStyleSettin
 import org.jetbrains.plugins.scala.util.TypeAnnotationSettings
 import org.junit.Assert._
 
-import java.io.File
+import java.nio.charset.StandardCharsets
+import java.nio.file.{Files, Path}
 
 //noinspection InstanceOf
 abstract class JavaToScalaConversionTestBase extends ScalaLightCodeInsightFixtureTestCase {
@@ -51,7 +52,7 @@ abstract class JavaToScalaConversionTestBase extends ScalaLightCodeInsightFixtur
   ): Unit = {
     val oldSettings: Any = getDefaultSettings.clone
     set(getProject, typeAnnotationSettings)
-    val filePath = (folderPath + testFileName).replace(File.separatorChar, '/')
+    val filePath = FileUtil.toSystemIndependentName(folderPath + testFileName)
 
     try {
       doTestForFilePath(testFileName, filePath)
@@ -65,7 +66,7 @@ abstract class JavaToScalaConversionTestBase extends ScalaLightCodeInsightFixtur
   }
 
   private def readFileContent(file: VirtualFile) : String = {
-    val content = FileUtil.loadFile(new File(file.getCanonicalPath), CharsetToolkit.UTF8)
+    val content = Files.readString(file.toNioPath, StandardCharsets.UTF_8)
     StringUtil.convertLineSeparators(content)
   }
 
@@ -101,7 +102,7 @@ abstract class JavaToScalaConversionTestBase extends ScalaLightCodeInsightFixtur
           fail(
             s"""No expected Scala content found.
                |It should be located in the last element in ${testFile.getName}
-               |Or placed in a separate file ${new File(expectedScalaFileName).getName}""".stripMargin
+               |Or placed in a separate file ${Path.of(expectedScalaFileName).getFileName}""".stripMargin
           ).asInstanceOf[Nothing]
         }
     }

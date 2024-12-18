@@ -23,8 +23,7 @@ import org.jetbrains.plugins.scala.lang.psi.api.expr.MethodInvocation
 import org.jetbrains.plugins.scala.project.ModuleExt
 
 import java.awt.datatransfer.DataFlavor
-import java.io.File
-import java.{util => ju}
+import java.nio.file.Path
 import scala.jdk.CollectionConverters._
 import scala.util.Try
 import scala.util.control.NonFatal
@@ -207,7 +206,7 @@ object ScalaFilePasteProvider {
     def copiedText: Option[String] =
       Option(manager.getContents[String](DataFlavor.stringFlavor))
 
-    def copiedFiles: Option[collection.Seq[File]] =
-      Option(manager.getContents[ju.List[File]](DataFlavor.javaFileListFlavor)).map(_.asScala)
+    def copiedFiles: Option[Seq[Path]] =
+      Option(manager.getContents[java.util.List[java.io.File]](DataFlavor.javaFileListFlavor)).map(_.asScala.map(_.toPath).toSeq)
   }
 }
