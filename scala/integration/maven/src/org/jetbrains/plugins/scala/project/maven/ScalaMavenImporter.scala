@@ -1,18 +1,18 @@
 package org.jetbrains.plugins.scala.project.maven
 
-import com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsProvider
-import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
-import com.intellij.util.{JavaCoroutines, PairConsumer}
+import com.intellij.platform.workspace.jps.entities.ModuleEntity
+import com.intellij.platform.workspace.storage.MutableEntityStorage
+import com.intellij.util.JavaCoroutines
 import kotlin.coroutines.Continuation
 import org.jdom.Element
-import org.jetbrains.idea.maven.importing.{MavenImporter, MavenRootModelAdapter}
+import org.jetbrains.idea.maven.importing.MavenWorkspaceConfigurator.{AdditionalFolder, FolderType, FoldersContext, MutableMavenProjectContext}
+import org.jetbrains.idea.maven.importing.{MavenApplicableConfigurator, MavenWorkspaceConfigurator}
 import org.jetbrains.idea.maven.model.{MavenArtifact, MavenArtifactInfo, MavenPlugin}
 import org.jetbrains.idea.maven.project._
-import org.jetbrains.idea.maven.server.{MavenArtifactResolutionRequest, MavenEmbedderWrapper, NativeMavenProjectHolder}
-import org.jetbrains.jps.model.java.JavaSourceRootType
-import org.jetbrains.jps.model.module.JpsModuleSourceRootType
+import org.jetbrains.idea.maven.server.{MavenArtifactResolutionRequest, MavenEmbedderWrapper}
+import org.jetbrains.idea.maven.utils.MavenJDOMUtil
 import org.jetbrains.plugins.scala.compiler.data.CompileOrder
 import org.jetbrains.plugins.scala.extensions._
 import org.jetbrains.plugins.scala.project._
@@ -21,23 +21,29 @@ import org.jetbrains.plugins.scala.project.maven.ScalaMavenImporter._
 
 import java.nio.file.Path
 import java.util
+import java.util.stream.Stream
 import scala.annotation.nowarn
 import scala.jdk.CollectionConverters._
 import scala.util.Try
 
-@nowarn("cat=deprecation") // TODO(SCL-23074): migrate to new API
-final class ScalaMavenImporter extends MavenImporter("org.scala-tools", "maven-scala-plugin")
-  with MavenProjectResolutionContributor {
+final class ScalaMavenImporter extends MavenApplicableConfigurator("org.scala-tools", "maven-scala-plugin")
+  with MavenProjectResolutionContributor with MavenWorkspaceConfigurator {
 
-  override def collectSourceRoots(
-    mavenProject: MavenProject,
-    result: PairConsumer[String, JpsModuleSourceRootType[_]]
-  ): Unit = {
-    val sourceFolders = getSourceFolders(mavenProject)
-    val testFolders = getTestFolders(mavenProject)
+  override def getAdditionalFolders(
+    context: FoldersContext
+  ): Stream[AdditionalFolder] = {
+    def createAdditionalFolders(folder: String, folderType: FolderType): AdditionalFolder =
+      new AdditionalFolder(folder, folderType)
 
-    sourceFolders.foreach(result.consume(_, JavaSourceRootType.SOURCE))
-    testFolders.foreach(result.consume(_, JavaSourceRootType.TEST_SOURCE))
+    val scalaConfiguration = validConfigurationIn(context.getMavenProject)
+    val folders = scalaConfiguration match {
+      case Some(_) =>
+        val sourceFolders = getSourceFolders(context.getMavenProject).map(createAdditionalFolders(_, FolderType.SOURCE))
+        val testFolders = getTestFolders(context.getMavenProject).map(createAdditionalFolders(_, FolderType.TEST_SOURCE))
+        sourceFolders ++ testFolders
+      case _ => Seq.empty
+    }
+    folders.asJava.stream()
   }
 
   private def getSourceFolders(mavenProject: MavenProject): Seq[String] =
@@ -57,43 +63,38 @@ final class ScalaMavenImporter extends MavenImporter("org.scala-tools", "maven-s
     Seq(result)
   }
 
+  //TODO remove it, when it's implemented on the platform side
+  private def findGoalConfigValue(mavenProject: MavenProject, goal: String, goalPath: String): String = {
+    val goalConfig = mavenProject.getPluginGoalConfiguration("org.scala-tools", "maven-scala-plugin", goal)
+    MavenJDOMUtil.findChildValueByPath(goalConfig, goalPath)
+  }
+
   // exclude "default" plugins, should be done inside IDEA's MavenImporter itself
   override def isApplicable(mavenProject: MavenProject): Boolean = validConfigurationIn(mavenProject).isDefined
 
-  override def preProcess(
-    module: Module,
-    mavenProject: MavenProject,
-    changes: MavenProjectChanges,
-    modelsProvider: IdeModifiableModelsProvider
-  ): Unit = {}
+  override def configureMavenProject(context: MutableMavenProjectContext): Unit = {
+    val mavenProjectWithModules = context.getMavenProjectWithModules
 
-  // called after `resolve`
-  override def process(
-    modelsProvider: IdeModifiableModelsProvider,
-    module: Module,
-    rootModel: MavenRootModelAdapter,
-    mavenModel: MavenProjectsTree,
-    mavenProject: MavenProject,
-    changes: MavenProjectChanges,
-    mavenProjectToModuleName: util.Map[MavenProject, String],
-    postTasks: util.List[MavenProjectsProcessorTask]
-  ): Unit = {
+    val mavenProject = mavenProjectWithModules.getMavenProject
     validConfigurationIn(mavenProject).foreach { configuration =>
       // TODO configuration.vmOptions
-
       val compilerOptions = {
         val plugins = configuration.plugins.map(id => mavenProject.localPathTo(id))
         configuration.compilerOptions ++ plugins.map(path => "-Xplugin:" + path.toString)
       }
 
       val compileOrder = configuration.compileOrder.getOrElse(CompileOrder.Mixed)
+      val project = context.getProject
+      val moduleEntityTypes = mavenProjectWithModules.getModules.asScala
+      moduleEntityTypes.foreach { moduleEntityType =>
+        val moduleEntity = moduleEntityType.getModule
+        moduleEntity.configureScalaCompilerSettingsFrom(project, "Maven", compilerOptions, compileOrder)
 
-      module.configureScalaCompilerSettingsFrom("Maven", compilerOptions, compileOrder)
-
-      configuration.compilerVersion match {
-        case Some(compilerVersion) =>
-          configureScalaSdk(module, modelsProvider, compilerVersion, mavenProject)
-        case _ =>
+        configuration.compilerVersion match {
+          case Some(compilerVersion) =>
+            configureScalaSdk(moduleEntity, context.getStorage, project, compilerVersion, mavenProject)
+          case _ =>
+        }
       }
     }
   }
@@ -108,8 +109,9 @@ final class ScalaMavenImporter extends MavenImporter("org.scala-tools", "maven-s
    * see [[implicitScalaLibraryIfNeeded]]
    */
   private def configureScalaSdk(
-    module: Module,
-    modelsProvider: IdeModifiableModelsProvider,
+    module: ModuleEntity,
+    storage: MutableEntityStorage,
+    project: Project,
     compilerVersion: String,
     mavenProject: MavenProject
   ): Unit = {
@@ -128,17 +130,13 @@ final class ScalaMavenImporter extends MavenImporter("org.scala-tools", "maven-s
       scaladocExtraClasspath = Nil,
       compilerBridgeBinaryJar.map(_.toFile),
       sdkPrefix = "Maven",
-      modelsProvider
+      storage,
+      project
     )
   }
 
-  // called before `process`
-  def resolve(
-    project: Project,
-    mavenProject: MavenProject,
-    nativeMavenProject: NativeMavenProjectHolder,
-    embedder: MavenEmbedderWrapper,
-  ): Unit = {
+  // called before `configureMavenProject`
+  def resolve(mavenProject: MavenProject, embedder: MavenEmbedderWrapper): Unit = {
     val configuration = validConfigurationIn(mavenProject)
     configuration.foreach { configuration =>
       val repositories = mavenProject.getRemoteRepositories
@@ -171,7 +169,7 @@ final class ScalaMavenImporter extends MavenImporter("org.scala-tools", "maven-s
       // Such an approach is probably incorrect, but we have to support that behaviour "as is".
       // TODO check if it's still true (it was created in 2017)
       val implicitScalaLibrary = implicitScalaLibraryIfNeeded(configuration)
-      implicitScalaLibrary.map(resolveJar).foreach(mavenProject.addDependency)
+      implicitScalaLibrary.map(resolveJar).foreach(mavenProject.addDependency): @nowarn("cat=deprecation") //TODO SCL-23050
 
       val compilerBridgeJar = configuration.compilerBridgeArtifact.map(resolveJar).map(a => Path.of(a.getPath))
 
@@ -189,12 +187,11 @@ final class ScalaMavenImporter extends MavenImporter("org.scala-tools", "maven-s
   override def onMavenProjectResolved(
     project: Project,
     mavenProject: MavenProject,
-    nativeMavenProjectHolder: NativeMavenProjectHolder,
     mavenEmbedderWrapper: MavenEmbedderWrapper,
     continuation: Continuation[_ >: kotlin.Unit]
   ): AnyRef = JavaCoroutines.suspendJava[kotlin.Unit](
     javaContinuation => {
-      resolve(project, mavenProject, nativeMavenProjectHolder, mavenEmbedderWrapper)
+      resolve(mavenProject, mavenEmbedderWrapper)
       javaContinuation.resume(kotlin.Unit.INSTANCE)
     },
     continuation
