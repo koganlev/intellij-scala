@@ -10,7 +10,7 @@ import org.jetbrains.java.decompiler.main.extern.{IBytecodeProvider, IFernflower
 import org.jetbrains.plugins.scala.extensions.inReadAction
 import org.jetbrains.plugins.scala.lang.psi.api.ScFile
 
-import java.io.File
+import java.nio.file.Path
 import java.util.jar.Manifest
 import scala.collection.mutable
 import scala.jdk.CollectionConverters.MapHasAsJava
@@ -28,12 +28,12 @@ private class ScalaDecompilerServiceImpl extends ScalaDecompilerService {
       val saver = new ScalaResultSaver
 
       val provider: IBytecodeProvider = (externalPath, _) => {
-        val path = new File(FileUtil.toSystemIndependentName(externalPath))
+        val path = Path.of(FileUtil.toSystemIndependentName(externalPath))
         mappings.get(path).map(_.apply()).orNull
       }
       val options: Map[String, AnyRef] = getFernflowerDecompilerOptions
       val decompiler = new BaseDecompiler(provider, saver, options.asJava, new IdeaLogger())
-      mappings.foreach { case (path, _) => decompiler.addSource(path) }
+      mappings.foreach { case (path, _) => decompiler.addSource(path.toFile) }
       decompiler.decompileContext()
       Success(saver.result)
     } catch {
@@ -49,10 +49,10 @@ private class ScalaDecompilerServiceImpl extends ScalaDecompilerService {
       name == sourceName || name.startsWith(sourceName + "$")
     }
 
-  private[this] def mappingsForClassfile(file: VirtualFile): Map[File, FileContents] =
+  private[this] def mappingsForClassfile(file: VirtualFile): Map[Path, FileContents] =
     file.getParent.getChildren.iterator.collect {
       case child if isClassGeneratedFrom(file.getNameWithoutExtension, child) =>
-        new File(child.getPath) -> getFileContents(child)
+        child.toNioPath -> getFileContents(child)
     }.toMap
 }
 
