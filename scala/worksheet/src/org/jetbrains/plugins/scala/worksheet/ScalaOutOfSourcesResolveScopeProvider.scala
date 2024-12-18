@@ -12,6 +12,7 @@ import org.jetbrains.plugins.scala.ScalaLanguage
 import org.jetbrains.plugins.scala.project._
 import org.jetbrains.plugins.scala.worksheet.ScalaOutOfSourcesResolveScopeProvider._
 import org.jetbrains.plugins.scala.worksheet.actions.WorksheetSyntheticModule
+import org.jetbrains.sbt.SbtSourceSetUtil.SbtSourceSetModuleExt
 import org.jetbrains.sbt.SbtUtil
 
 /**
@@ -33,7 +34,7 @@ private final class ScalaOutOfSourcesResolveScopeProvider extends ResolveScopePr
             case m => m
           }
           val separate = SbtUtil.isBuiltWithSeparateModulesForProdTest(project)
-          val needsTests = separate && underlying.getName.endsWith(".test")
+          val needsTests = separate && underlying.isTest
           GlobalSearchScope.moduleWithDependenciesAndLibrariesScope(module, /*includeTests=*/ needsTests)
         case _ =>
           scalaFileScope(file, project)
