@@ -7,8 +7,7 @@ import org.jetbrains.sbt.SbtSourceSetUtil.SbtSourceSetModuleExt
 import org.jetbrains.sbt.SbtUtil
 
 private object WorksheetModuleUtil {
-  def allProductionModulesWithScalaSdk(project: Project): Seq[Module] = {
-    val separate = SbtUtil.isBuiltWithSeparateModulesForProdTest(project)
+  def allModulesWithScalaSdk(project: Project): Seq[Module] = {
     val allScalaModules = project.modulesWithScala
     val modulesWithScalaLibrary = allScalaModules.filter { module =>
       val libraries = module.libraries
@@ -18,7 +17,12 @@ private object WorksheetModuleUtil {
       }
     }
     // In case there are no modules left, just use the non-filtered list. Some tests also start to fail in this case.
-    val modules = if (modulesWithScalaLibrary.nonEmpty) modulesWithScalaLibrary else allScalaModules
+    if (modulesWithScalaLibrary.nonEmpty) modulesWithScalaLibrary else allScalaModules
+  }
+
+  def allProductionModulesWithScalaSdk(project: Project): Seq[Module] = {
+    val separate = SbtUtil.isBuiltWithSeparateModulesForProdTest(project)
+    val modules = allModulesWithScalaSdk(project)
     // If the project has separate production and test modules enabled, only offer the production modules as a choice.
     if (separate) modules.filter(_.isMain) else modules
   }
