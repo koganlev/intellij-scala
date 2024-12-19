@@ -1,8 +1,5 @@
 package org.jetbrains.plugins.scala.compiler.polyglot
 
-import com.intellij.compiler.server.BuildManager
-import com.intellij.compiler.server.impl.BuildProcessClasspathManager
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.externalSystem.model.ProjectSystemId
 import com.intellij.openapi.module.{Module, ModuleManager, ModuleTypeManager, StdModuleTypes}
 import com.intellij.openapi.projectRoots.{ProjectJdkTable, Sdk}
@@ -23,7 +20,6 @@ import org.jetbrains.plugins.scala.project.settings.ScalaCompilerConfiguration
 import org.jetbrains.plugins.scala.settings.ScalaCompileServerSettings
 import org.junit.experimental.categories.Category
 
-import java.nio.file.Path
 import scala.jdk.CollectionConverters._
 
 @Category(Array(classOf[CompilationTests]))
@@ -50,25 +46,6 @@ class GroovyMixedGradleCompilationTest extends ExternalSystemImportingTestCase {
 
   override def setUp(): Unit = {
     super.setUp()
-
-    locally {
-      val buildManager = ApplicationManager.getApplication.getService(classOf[BuildManager])
-      val classpathManagerField = buildManager.getClass.getDeclaredField("myClasspathManager")
-      classpathManagerField.setAccessible(true)
-      val classpathManager = classpathManagerField.get(buildManager).asInstanceOf[BuildProcessClasspathManager]
-      //noinspection ApiStatus
-      classpathManager.getBuildProcessPluginsClasspath(getProject)
-      val field = classpathManager.getClass.getDeclaredField("compileServerPluginsClasspath")
-      field.setAccessible(true)
-      val originalClasspath = field.get(classpathManager).asInstanceOf[java.util.List[String]].asScala
-      val groovyPlugin = originalClasspath.find(_.contains(Path.of("plugins", "Groovy", "lib", "Groovy.jar").toString)).orNull
-      val index = originalClasspath.indexOf(groovyPlugin)
-      originalClasspath.remove(index)
-      val groovyPluginPath = groovyPlugin.stripSuffix("Groovy.jar")
-      val groovyBuilders = Seq("groovy-jps.jar", "groovy-constants-rt.jar").map(groovyPluginPath ++ _)
-      val newClasspath = originalClasspath ++ groovyBuilders
-      field.set(classpathManager, newClasspath.asJava)
-    }
 
     GradleTestUtil.setupGradleHome(getProject)
 
