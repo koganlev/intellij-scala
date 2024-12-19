@@ -14,12 +14,12 @@ import java.io.{File, IOException}
 import java.util
 import scala.annotation.tailrec
 
-private[references] class ScalaCompilerReferenceReader private[references] (
+private[references] class ScalaCompilerReferenceReader private[references](
   buildDir: File
 ) extends CompilerReferenceReader[ScalaCompilerReferenceIndex](
-      buildDir,
-      new ScalaCompilerReferenceIndex(buildDir, true)
-    ) {
+  buildDir,
+  new ScalaCompilerReferenceIndex(buildDir, true)
+) {
 
   private def rethrowStorageExceptionIn[T](body: => T): T =
     try body
@@ -50,13 +50,12 @@ private[references] class ScalaCompilerReferenceReader private[references] (
     rethrowStorageExceptionIn {
       val usages = Set.newBuilder[UsagesInFile]
 
-      myIndex.get(ScalaCompilerIndices.backwardHierarchy).getData(classRef).forEach {
-        case (fileId, inheritors) =>
-          val lines = inheritors.iterator.collect { case funExpr: ScFunExprCompilerRef => funExpr.line }.toSeq
-          val file  = findFileByEnumeratorId(fileId)
-          file.foreach(usages += UsagesInFile(_, lines))
-          true
-      }
+      myIndex.get(ScalaCompilerIndices.backwardHierarchy).withData(classRef, _.forEach { (fileId, inheritors) =>
+        val lines = inheritors.iterator.collect { case funExpr: ScFunExprCompilerRef => funExpr.line }.toSeq
+        val file  = findFileByEnumeratorId(fileId)
+        file.foreach(usages += UsagesInFile(_, lines))
+        true
+      })
 
       usages.result()
     }
@@ -88,7 +87,7 @@ private[references] class ScalaCompilerReferenceReader private[references] (
 
     hierarchy.foreach { owner =>
       val overridden = ref.`override`(owner.getName)
-      myIndex.get(ScalaCompilerIndices.backwardUsages).getData(overridden).forEach(action)
+      myIndex.get(ScalaCompilerIndices.backwardUsages).withData(overridden, _.forEach(action))
     }
   }
 
@@ -111,17 +110,16 @@ private[references] class ScalaCompilerReferenceReader private[references] (
             ProgressManager.checkCanceled()
           }
 
-          myIndex.get(ScalaCompilerIndices.backwardHierarchy).getData(currentClass).forEach {
-            case (_, children) =>
-              children.foreach {
-                case anon: CompilerRef.CompilerAnonymousClassDef if includeAnonymous => res.add(anon)
-                case _: ScFunExprCompilerRef                                         => ()
-                case aClass: CompilerRef.CompilerClassHierarchyElementDef            => queue.addLast(aClass)
-                case other =>
-                  throw new AssertionError(s"Expected class ref in hierarchy index, but got $other.")
-              }
-              true
-          }
+          myIndex.get(ScalaCompilerIndices.backwardHierarchy).withData(currentClass, _.forEach { (_, children) =>
+            children.foreach {
+              case anon: CompilerRef.CompilerAnonymousClassDef if includeAnonymous => res.add(anon)
+              case _: ScFunExprCompilerRef => ()
+              case aClass: CompilerRef.CompilerClassHierarchyElementDef => queue.addLast(aClass)
+              case other =>
+                throw new AssertionError(s"Expected class ref in hierarchy index, but got $other.")
+            }
+            true
+          })
         }
         drain(q)
       }

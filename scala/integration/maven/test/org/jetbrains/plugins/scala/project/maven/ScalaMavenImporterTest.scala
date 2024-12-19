@@ -1,6 +1,6 @@
 package org.jetbrains.plugins.scala.project.maven
 
-import com.intellij.maven.testFramework.MavenNioImportingTestCase
+import com.intellij.maven.testFramework.MavenImportingTestCase
 import com.intellij.openapi.module.{ModuleTypeManager, StdModuleTypes}
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.projectRoots.impl.JavaAwareProjectJdkTableImpl
@@ -26,7 +26,7 @@ import java.nio.file.{Files, Path}
 //noinspection ApiStatus
 @Category(Array(classOf[SlowTests]))
 abstract class ScalaMavenImporterTest
-  extends MavenNioImportingTestCase
+  extends MavenImportingTestCase
     with ProjectStructureMatcher
     with ExactMatch {
 

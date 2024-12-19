@@ -1,6 +1,6 @@
 package org.jetbrains.plugins.scala.compiler.buildtools
 
-import com.intellij.maven.testFramework.MavenNioImportingTestCase
+import com.intellij.maven.testFramework.MavenImportingTestCase
 import com.intellij.openapi.compiler.CompilerMessageCategory
 import com.intellij.openapi.module.{ModuleManager, ModuleTypeManager, StdModuleTypes}
 import com.intellij.openapi.projectRoots.{ProjectJdkTable, Sdk}
@@ -19,7 +19,7 @@ import org.junit.experimental.categories.Category
 import scala.jdk.CollectionConverters._
 
 @Category(Array(classOf[CompilationTests]))
-abstract class MavenProjectWithPureJavaModuleTestBase(incrementality: IncrementalityType) extends MavenNioImportingTestCase {
+abstract class MavenProjectWithPureJavaModuleTestBase(incrementality: IncrementalityType) extends MavenImportingTestCase {
 
   private var sdk: Sdk = _
 

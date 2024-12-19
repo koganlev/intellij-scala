@@ -1,6 +1,6 @@
 package org.jetbrains.plugins.scala.compiler.polyglot
 
-import com.intellij.maven.testFramework.MavenNioImportingTestCase
+import com.intellij.maven.testFramework.MavenImportingTestCase
 import com.intellij.openapi.module.{Module, ModuleManager, ModuleTypeManager, StdModuleTypes}
 import com.intellij.openapi.projectRoots.{ProjectJdkTable, Sdk}
 import com.intellij.openapi.roots.ModuleRootModificationUtil
@@ -16,7 +16,7 @@ import org.jetbrains.plugins.scala.settings.ScalaCompileServerSettings
 import org.junit.experimental.categories.Category
 
 @Category(Array(classOf[CompilationTests]))
-class PolyglotMavenCompilationTest extends MavenNioImportingTestCase {
+class PolyglotMavenCompilationTest extends MavenImportingTestCase {
 
   private var sdk: Sdk = _
 
