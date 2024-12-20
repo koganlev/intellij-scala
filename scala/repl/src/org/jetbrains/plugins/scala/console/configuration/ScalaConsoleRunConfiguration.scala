@@ -19,7 +19,7 @@ import org.jetbrains.plugins.scala.console.{ScalaLanguageConsole, ScalaReplBundl
 import org.jetbrains.plugins.scala.project.*
 import org.jetbrains.plugins.scala.util.JdomExternalizerMigrationHelper
 
-import java.io.File
+import java.nio.file.Path
 import scala.beans.BeanProperty
 import scala.jdk.CollectionConverters.*
 import scala.util.chaining.scalaUtilChainingOps
@@ -148,13 +148,13 @@ class ScalaConsoleRunConfiguration(
     }
 
     private def ensureJLineInClassPathOrShowErrorNotification(classPathList: PathsList, module: Module, @Nls subsystemName: String): Boolean = {
-      val classPath = classPathList.getPathList.asScala.map(new File(_)).toSeq
+      val classPath = classPathList.getPathList.asScala.map(Path.of(_)).toSeq
       val result = ScalaSdkJLineFixer.validateJLineInClassPath(classPath, module)
       result match {
         case JlineResolveResult.NotRequired =>
           true
         case JlineResolveResult.RequiredFound(file) =>
-          classPathList.add(file)
+          classPathList.add(file.toFile)
           true
         case JlineResolveResult.RequiredNotFound =>
           showJLineMissingNotification(module, subsystemName)

@@ -107,7 +107,7 @@ final class RemoteServerConnector(
     ScalaSdkJLineFixer.validateJLineInCompilerClassPath(module) match {
       case JlineResolveResult.NotRequired =>
       case JlineResolveResult.RequiredFound(file) =>
-        additionalCompilerClasspath = Seq(file)
+        additionalCompilerClasspath = Seq(file.toFile)
       case JlineResolveResult.RequiredNotFound =>
         callback(RemoteServerConnectorResult.RequiredJLineIsMissingFromClasspathError(module))
         return

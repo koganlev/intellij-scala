@@ -9,11 +9,11 @@ import com.intellij.openapi.roots.ui.configuration.ProjectStructureConfigurable
 import com.intellij.openapi.ui.DialogWrapper.DialogStyle
 import org.jetbrains.annotations.Nls
 import org.jetbrains.plugins.scala.console.ScalaReplBundle
-import org.jetbrains.plugins.scala.extensions.RichFile
 import org.jetbrains.plugins.scala.project.*
 import org.jetbrains.plugins.scala.util.ScalaNotificationGroups
 
-import java.io.File
+import java.nio.file.{Files, Path}
+import scala.annotation.{tailrec, targetName}
 
 //TODO: Fix Scala SDK setup in order that it includes jline jar as a dependency of scala-compiler
 /**
@@ -27,7 +27,7 @@ object ScalaSdkJLineFixer {
   object JlineResolveResult {
     case object NotRequired extends JlineResolveResult
     case object RequiredNotFound extends JlineResolveResult
-    case class RequiredFound(file: File) extends JlineResolveResult
+    case class RequiredFound(file: Path) extends JlineResolveResult
   }
 
   import JlineResolveResult.*
@@ -36,7 +36,7 @@ object ScalaSdkJLineFixer {
    * @return false - if jline jar could not be found and it is required to run scala console in current scala version<br>
    *         true - otherwise
    */
-  def validateJLineInClassPath(classPath: Seq[File], module: Module): JlineResolveResult =
+  def validateJLineInClassPath(classPath: Seq[Path], module: Module): JlineResolveResult =
     if (isJLineNeeded(module) && !isJLinePresentIn(classPath))
       jLineFor(classPath) match {
         case Some(jline) => RequiredFound(jline)
@@ -45,7 +45,7 @@ object ScalaSdkJLineFixer {
     else NotRequired
 
   def validateJLineInCompilerClassPath(module: Module): JlineResolveResult = {
-    val classPath = module.scalaCompilerClasspath
+    val classPath = module.scalaCompilerClasspath.map(_.toPath)
     validateJLineInClassPath(classPath, module)
   }
 
@@ -84,11 +84,11 @@ object ScalaSdkJLineFixer {
       module.scalaMinorVersion.map(_.minor).exists(v => v == "2.13.0" || v == "2.13.1")
     }
 
-  private def isJLinePresentIn(classPath: Seq[File]): Boolean =
-    classPath.exists(_.getName == JLineFinder.JLineJarName)
+  private def isJLinePresentIn(classPath: Seq[Path]): Boolean =
+    classPath.exists(_.getFileName.toString == JLineFinder.JLineJarName)
 
-  private def jLineFor(classPath: Seq[File]): Option[File] = {
-    val compilerJar = classPath.find(_.getName.startsWith("scala-compiler"))
+  private def jLineFor(classPath: Seq[Path]): Option[Path] = {
+    val compilerJar = classPath.find(_.getFileName.toString.startsWith("scala-compiler"))
     compilerJar.flatMap(JLineFinder.findJline)
   }
 
@@ -101,19 +101,19 @@ object ScalaSdkJLineFixer {
     private val JLineVersionInScala213 = "2.14.6"
     val JLineJarName = s"jline-$JLineVersionInScala213.jar"
 
-    def findJline(compilerJar: File): Option[File] =
+    def findJline(compilerJar: Path): Option[Path] =
       findInSameFolder(compilerJar)
         .orElse(findInIvy(compilerJar))
         .orElse(findInMaven(compilerJar))
 
-    private def findInSameFolder(compilerJar: File): Option[File] = for {
+    private def findInSameFolder(compilerJar: Path): Option[Path] = for {
       parent <- compilerJar.parent
       jLineJar <- (parent / JLineJarName).maybeFile
     } yield jLineJar
 
     //location of `scala-compiler-x.x.x.jar` : .ivy2/cache/org.scala-lang/scala-compiler/jars
     //location of `jline-x.x.x.jar`          : .ivy2/cache/jline/jline/jars
-    private def findInIvy(compilerJar: File): Option[File] = for {
+    private def findInIvy(compilerJar: Path): Option[Path] = for {
       cacheFolder <- compilerJar.parent(level = 4)
       jLineFolder <- (cacheFolder / "jline" / "jline" / "jars").maybeDir
       jLineJar <- (jLineFolder / JLineJarName).maybeFile
@@ -121,10 +121,30 @@ object ScalaSdkJLineFixer {
 
     //location of `scala-compiler-x.x.x.jar` : .m2/repository/org/scala-lang/scala-compiler/x.x.x
     //location of `jline-x.x.x.jar`          : .m2/repository/jline/jline/x.x.x
-    private def findInMaven(compilerJar: File): Option[File] = for {
+    private def findInMaven(compilerJar: Path): Option[Path] = for {
       repositoryFolder <- compilerJar.parent(level = 5)
       jLineFolder <- (repositoryFolder / "jline" / "jline" / JLineVersionInScala213).maybeDir
       jLineJar <- (jLineFolder / JLineJarName).maybeFile
     } yield jLineJar
+
+    extension (path: Path)
+      private def parent: Option[Path] = Option(path.getParent)
+
+      private def parent(level: Int): Option[Path] =
+        @tailrec
+        def loop(file: Path | Null, level: Int): Path | Null =
+          if level > 0 && (file ne null) then loop(file.getParent, level - 1)
+          else file
+
+        path match
+          case null => None
+          case f => Option(loop(f, level))
+
+      @targetName("separator")
+      private def /(child: String): Path = path.resolve(child)
+
+      private def maybeDir: Option[Path] = Option(path).filter(Files.isDirectory(_))
+
+      private def maybeFile: Option[Path] = Option(path).filter(Files.isRegularFile(_))
   }
 }
