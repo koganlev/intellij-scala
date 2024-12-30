@@ -173,6 +173,8 @@ lazy val worksheet =
       compilerIntegration % "test->test;compile->compile",
       worksheetReplInterface % "test->test;compile->compile",
       repl % "test->test;compile->compile", //do we indeed need this dependency on Scala REPL? can we get rid of it?
+    ).settings(
+      packageMethod := PackagingMethod.PluginModule("scalaCommunity.worksheet")
     )
 
 lazy val worksheetReplInterface =
@@ -462,6 +464,8 @@ lazy val debugger =
     .dependsOn(
       scalaImpl % "test->test;compile->compile",
       compilerIntegration % "test->test;compile->compile"
+    ).settings(
+      packageMethod := PackagingMethod.PluginModule("scalaCommunity.debugger")
     )
 
 
@@ -569,11 +573,13 @@ lazy val testingSupport =
       scalaImpl % "test->test;compile->compile",
       sbtImpl % "test->test;compile->compile",
       bsp,
+      bspJUnit,
       structureView % "test->test;compile->compile",
       compilerIntegration % "test->test;compile->compile"
     )
     .settings(
-      intellijPlugins += "JUnit".toPlugin
+      intellijPlugins += "JUnit".toPlugin,
+      packageMethod := PackagingMethod.PluginModule("scalaCommunity.testing-support")
     )
 
 lazy val testRunners: Project =
@@ -719,6 +725,8 @@ lazy val scalaCli =
     .dependsOn(
       scalaImpl % "test->test;compile->compile",
       bsp % "test->test;compile->compile",
+    ).settings(
+      packageMethod := PackagingMethod.PluginModule("scalaCommunity.scala-cli")
     )
 
 // Integration with other IDEA plugins

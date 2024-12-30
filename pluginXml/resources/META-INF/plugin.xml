@@ -55,6 +55,11 @@
         <module name="scalaCommunity.bsp" />
         <module name="scalaCommunity.bsp-junit" />
         <module name="scalaCommunity.bsp-terminal" />
+
+        <module name="scalaCommunity.testing-support" />
+        <module name="scalaCommunity.scala-cli" />
+        <module name="scalaCommunity.worksheet" />
+        <module name="scalaCommunity.debugger" />
     </content>
 
     <xi:include href="/META-INF/sbt-api.xml"/>
