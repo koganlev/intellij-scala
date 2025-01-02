@@ -1685,10 +1685,10 @@ package object extensions {
       }
 
       element match {
-        case st: StubBasedPsiElementBase[_] => Option(st.getStubOrPsiChild(elementType))
+        case st: StubBasedPsiElementBase[_] => Option(st.getStubOrPsiChild(elementType)): @nowarn("cat=deprecation") // IJPL-562
         case file: PsiFileImpl =>
           file.withGreenStubOrAst(
-            (stub: StubElement[_]) => Option(stub.findChildStubByType(elementType)).map(_.getPsi),
+            (stub: StubElement[_]) => Option(stub.findChildStubByType(elementType)).map(_.getPsi): @nowarn("cat=deprecation"), // IJPL-562
             (_: FileElement) => findWithNode()
           )
         case _ => findWithNode()

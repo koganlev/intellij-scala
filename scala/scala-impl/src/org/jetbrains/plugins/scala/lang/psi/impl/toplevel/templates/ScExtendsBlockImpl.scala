@@ -23,6 +23,7 @@ import org.jetbrains.plugins.scala.lang.resolve.ScalaResolveResult
 import org.jetbrains.plugins.scala.project.{ProjectContext, ScalaLanguageLevel}
 import org.jetbrains.plugins.scala.util.CommonQualifiedNames
 
+import scala.annotation.nowarn
 import scala.collection.mutable.ArrayBuffer
 
 class ScExtendsBlockImpl private(stub: ScExtendsBlockStub, node: ASTNode)
@@ -39,7 +40,7 @@ class ScExtendsBlockImpl private(stub: ScExtendsBlockStub, node: ASTNode)
   private val _templateBody = cached("templateBody", ModTracker.anyScalaPsiChange, () => {
     def childStubTemplate(stub: ScExtendsBlockStub) =
       Option(stub.findChildStubByType(TEMPLATE_BODY))
-        .map(_.getPsi)
+        .map(_.getPsi): @nowarn("cat=deprecation") // IJPL-562
 
     def lastChildTemplateBody = getLastChild match {
       case tb: ScTemplateBody => Some(tb)

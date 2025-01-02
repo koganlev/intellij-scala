@@ -21,6 +21,8 @@ import org.jetbrains.plugins.scala.lang.psi.impl.ScalaStubBasedElementImpl
 import org.jetbrains.plugins.scala.lang.psi.impl.toplevel.typedef.ScTemplateDefinitionImpl
 import org.jetbrains.plugins.scala.lang.psi.stubs.ScTemplateBodyStub
 
+import scala.annotation.nowarn
+
 class ScTemplateBodyImpl private(stub: ScTemplateBodyStub, node: ASTNode)
   extends ScalaStubBasedElementImpl(stub, TEMPLATE_BODY, node)
     with ScTemplateBody {
@@ -68,7 +70,7 @@ class ScTemplateBodyImpl private(stub: ScTemplateBodyStub, node: ASTNode)
   override def selfTypeElement: Option[ScSelfTypeElement] = _selfTypeElement()
 
   private val _selfTypeElement = cached("selfTypeElement", ModTracker.anyScalaPsiChange, () => {
-    Option(getStubOrPsiChild(SELF_TYPE))
+    Option(getStubOrPsiChild(SELF_TYPE)): @nowarn("cat=deprecation") // IJPL-562
   })
 
   override def processDeclarations(processor: PsiScopeProcessor,

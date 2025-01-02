@@ -16,6 +16,7 @@ import org.jetbrains.plugins.scala.lang.psi.types.api.PsiTypeConstants
 
 import java.util
 import javax.swing.Icon
+import scala.annotation.nowarn
 
 class ScPrimaryConstructorImpl private(stub: ScPrimaryConstructorStub, node: ASTNode)
   extends ScalaStubBasedElementImpl(stub, ScalaElementType.PRIMARY_CONSTRUCTOR, node) with ScPrimaryConstructor {
@@ -36,7 +37,7 @@ class ScPrimaryConstructorImpl private(stub: ScPrimaryConstructorStub, node: AST
   override def toString: String = "PrimaryConstructor"
 
   override def parameterList: ScParameters = {
-    getStubOrPsiChild(ScalaElementType.PARAM_CLAUSES)
+    getStubOrPsiChild(ScalaElementType.PARAM_CLAUSES): @nowarn("cat=deprecation") // IJPL-562
   }
 
   override def getName: String = this.containingClass.name

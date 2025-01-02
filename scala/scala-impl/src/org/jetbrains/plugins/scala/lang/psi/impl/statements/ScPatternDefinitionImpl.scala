@@ -19,6 +19,8 @@ import org.jetbrains.plugins.scala.lang.psi.stubs.elements.ScPropertyElementType
 import org.jetbrains.plugins.scala.lang.psi.types.ScLiteralType
 import org.jetbrains.plugins.scala.lang.psi.types.result._
 
+import scala.annotation.nowarn
+
 final class ScPatternDefinitionImpl private[psi](stub: ScPropertyStub[ScPatternDefinition],
                                                  nodeType: ScPropertyElementType[ScPatternDefinition],
                                                  node: ASTNode)
@@ -65,7 +67,7 @@ final class ScPatternDefinitionImpl private[psi](stub: ScPropertyStub[ScPatternD
       case _                   => None
     })
 
-  override def pList: ScPatternList = getStubOrPsiChild(ScalaElementType.PATTERN_LIST)
+  override def pList: ScPatternList = getStubOrPsiChild(ScalaElementType.PATTERN_LIST): @nowarn("cat=deprecation") // IJPL-562
 
   override protected def keywordTokenType: IElementType = ScalaTokenTypes.kVAL
 

@@ -20,6 +20,7 @@ import org.jetbrains.plugins.scala.lang.psi.impl.ScalaStubBasedElementImpl
 import org.jetbrains.plugins.scala.lang.psi.stubs.ScExtensionStub
 
 import javax.swing.Icon
+import scala.annotation.nowarn
 
 class ScExtensionImpl(@Nullable stub: ScExtensionStub, @Nullable node: ASTNode)
     extends ScalaStubBasedElementImpl(stub, ScalaElementType.EXTENSION, node)
@@ -47,8 +48,8 @@ class ScExtensionImpl(@Nullable stub: ScExtensionStub, @Nullable node: ASTNode)
   override def parameters: Seq[ScParameter] =
     clauses.toSeq.flatMap(_.clauses.flatMap(_.parameters))
 
-  override def clauses: Option[ScParameters]          = getStubOrPsiChild(PARAM_CLAUSES).toOption
-  override def extensionBody: Option[ScExtensionBody] = getStubOrPsiChild(EXTENSION_BODY).toOption
+  override def clauses: Option[ScParameters]          = getStubOrPsiChild(PARAM_CLAUSES).toOption: @nowarn("cat=deprecation") // IJPL-562
+  override def extensionBody: Option[ScExtensionBody] = getStubOrPsiChild(EXTENSION_BODY).toOption: @nowarn("cat=deprecation") // IJPL-562
 
   override def getContainingClass: PsiClass = null
 
@@ -72,4 +73,3 @@ class ScExtensionImpl(@Nullable stub: ScExtensionStub, @Nullable node: ASTNode)
 
   override final def isEffectivelyFinal: Boolean = Option(containingClass).forall(_.isEffectivelyFinal)
 }
-

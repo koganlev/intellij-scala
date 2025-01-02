@@ -20,6 +20,8 @@ import org.jetbrains.plugins.scala.lang.psi.api.toplevel.ScTypedDefinition
 import org.jetbrains.plugins.scala.lang.psi.light.PsiTypedDefinitionWrapper
 import org.jetbrains.plugins.scala.lang.psi.stubs.elements.ScStubElementType
 
+import scala.annotation.nowarn
+
 abstract class ScalaPsiElementImpl(node: ASTNode) extends ASTWrapperPsiElement(node)
   with ScalaPsiElement {
 
@@ -77,6 +79,7 @@ abstract class ScalaStubBasedElementImpl[T <: PsiElement, S <: StubElement[T]](@
     with StubBasedPsiElement[S]
     with ScalaPsiElement {
 
+  @nowarn("cat=deprecation") // IJPL-562
   override final def getElementType: IStubElementType[_ <: StubElement[_ <: PsiElement], _ <: PsiElement] = super.getElementType
 
   override def getStartOffsetInParent: Int = this.child match {

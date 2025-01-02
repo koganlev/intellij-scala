@@ -24,6 +24,7 @@ import org.jetbrains.plugins.scala.lang.psi.stubs.elements.ScTemplateDefinitionE
 import org.jetbrains.plugins.scala.lang.psi.types.result.TypeResult
 
 import javax.swing.Icon
+import scala.annotation.nowarn
 
 class ScGivenDefinitionImpl(
   stub:      ScTemplateDefinitionStub[ScGivenDefinition],
@@ -65,7 +66,7 @@ class ScGivenDefinitionImpl(
   override def clauses: Option[ScParameters] = _clauses()
 
   private val _clauses = cached("clauses", ModTracker.anyScalaPsiChange, () => {
-    getStubOrPsiChild(PARAM_CLAUSES).toOption
+    getStubOrPsiChild(PARAM_CLAUSES).toOption: @nowarn("cat=deprecation") // IJPL-562
   })
 
   override def parameters: Seq[ScParameter] =

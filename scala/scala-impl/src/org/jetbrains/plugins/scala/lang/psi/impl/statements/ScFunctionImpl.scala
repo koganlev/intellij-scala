@@ -43,7 +43,7 @@ import org.jetbrains.plugins.scala.lang.psi.types.result.{Failure, TypeResult}
 import org.jetbrains.plugins.scala.lang.psi.types.{PhysicalMethodSignature, ScType, TermSignature}
 
 import javax.swing.Icon
-import scala.annotation.tailrec
+import scala.annotation.{nowarn, tailrec}
 
 abstract class ScFunctionImpl[F <: ScFunction](stub: ScFunctionStub[F],
                                                nodeType: ScFunctionElementType[F],
@@ -82,7 +82,7 @@ abstract class ScFunctionImpl[F <: ScFunction](stub: ScFunctionStub[F],
   override def paramClauses: ScParameters = _paramClauses()
 
   private val _paramClauses = cached("paramClauses", ModTracker.anyScalaPsiChange, () => {
-    getStubOrPsiChild(ScalaElementType.PARAM_CLAUSES)
+    getStubOrPsiChild(ScalaElementType.PARAM_CLAUSES): @nowarn("cat=deprecation") // IJPL-562
   })
 
   override def syntheticContextAppliedDefs: Seq[ScalaPsiElement] = cachedInUserData("syntheticContextAppliedDefs", this, BlockModificationTracker(this)) {

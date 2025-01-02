@@ -8,6 +8,8 @@ import org.jetbrains.plugins.scala.lang.psi.api.ScalaPsiElement
 import org.jetbrains.plugins.scala.lang.psi.api.statements.params._
 import org.jetbrains.plugins.scala.lang.psi.impl.ScalaStubBasedElementImpl
 
+import scala.annotation.nowarn
+
 trait ScTypeParametersOwner extends ScalaPsiElement {
 
   def typeParameters: Seq[ScTypeParam] = _typeParameters()
@@ -22,7 +24,7 @@ trait ScTypeParametersOwner extends ScalaPsiElement {
   def typeParametersClause: Option[ScTypeParamClause] = {
     this match {
       case st: ScalaStubBasedElementImpl[_, _] =>
-        Option(st.getStubOrPsiChild(ScalaElementType.TYPE_PARAM_CLAUSE))
+        Option(st.getStubOrPsiChild(ScalaElementType.TYPE_PARAM_CLAUSE)): @nowarn("cat=deprecation") // IJPL-562
       case _ =>
         findChild[ScTypeParamClause]
     }
