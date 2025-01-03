@@ -40,5 +40,6 @@
 
     <dependencies>
         <module name="scalaCommunity.bsp"/>
+        <module name="scalaCommunity.compiler-integration"/>
     </dependencies>
 </idea-plugin>
