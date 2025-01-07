@@ -15,7 +15,7 @@ import org.jetbrains.plugins.scala.lang.psi.types.result.TypeResult
 import org.jetbrains.plugins.scala.lang.psi.types.{ScLiteralType, ScType, TypePresentationContext}
 import org.jetbrains.plugins.scala.project.ScalaFeatures.forPsiOrDefault
 
-class ClassPrinter(isScala3: Boolean, extendsSeparator: String = " ", withPrivate: Boolean = true, simplify: Boolean = false) {
+class ClassPrinter(isScala3: Boolean, extendsSeparator: String = " ", withPrivate: Boolean = true, normalize: Boolean = false) {
   def textOf(e: PsiElement): String = e match {
     case cls: ScTypeDefinition =>
       val sb = new StringBuilder()
@@ -233,7 +233,7 @@ class ClassPrinter(isScala3: Boolean, extendsSeparator: String = " ", withPrivat
       if (withPrivate) s else s.replace("private ", "")
     }
     val keyword =
-      if (withPrivate || !isPrivate(p)) if (p.isVal) (if (!simplify || !(inCaseClass && modifiers.isEmpty)) "val " else "") else if (p.isVar) "var " else ""
+      if (withPrivate || !isPrivate(p)) if (p.isVal) (if (!normalize || !(inCaseClass && modifiers.isEmpty)) "val " else "") else if (p.isVar) "var " else ""
       else ""
     val name = p.name
     val byName = if (p.isCallByNameParameter) "=> " else ""
@@ -263,7 +263,7 @@ class ClassPrinter(isScala3: Boolean, extendsSeparator: String = " ", withPrivat
       case Parent(c: ScNamedElement) => c.name
       case _ => ""
     }
-    def qualifier = ml.accessModifier.flatMap(m => if (m.isThis) Some("this") else m.idText).filter(q => !simplify || q != scope).map("[" + _ + "]").getOrElse("")
+    def qualifier = ml.accessModifier.flatMap(m => if (m.isThis) Some("this") else m.idText).filter(q => !normalize || q != scope).map("[" + _ + "]").getOrElse("")
     (if (ml.isAbstract && ml.isOverride) "abstract " else "") +
       (if (ml.isOverride) "override " else "") +
       (if (ml.isPrivate) "private" + qualifier + " " else "") +
