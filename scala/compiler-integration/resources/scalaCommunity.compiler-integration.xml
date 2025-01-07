@@ -118,7 +118,5 @@
 
     <dependencies>
         <module name="scalaCommunity.bsp"/>
-        <plugin id="com.intellij.gradle"/>
-        <plugin id="org.jetbrains.idea.maven"/>
     </dependencies>
 </idea-plugin>

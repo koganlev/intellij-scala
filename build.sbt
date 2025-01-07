@@ -574,7 +574,6 @@ lazy val testingSupport =
       scalaImpl % "test->test;compile->compile",
       sbtImpl % "test->test;compile->compile",
       bsp,
-      bspJUnit,
       structureView % "test->test;compile->compile",
       compilerIntegration % "test->test;compile->compile"
     )
