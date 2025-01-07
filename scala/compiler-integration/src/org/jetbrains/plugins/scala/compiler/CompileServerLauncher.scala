@@ -500,6 +500,7 @@ object CompileServerLauncher {
           Path.of(PathUtil.getJarPathForClass(getClass))
             .getParent
             .getParent
+            .getParent
             .resolve(java9rtExportString)
             .resolve(s"$java9rtExportString.jar")
 
