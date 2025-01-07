@@ -1,6 +1,6 @@
 import CompilationCache.compilationCacheSettings
 import com.github.sbt.junit.jupiter.sbt.Import.JupiterKeys.junitJupiterVersion
-import kotlin.Keys.{kotlinRuntimeProvided, kotlinVersion, kotlincJvmTarget, kotlincPluginOptions}
+import kotlin.Keys.{kotlinRuntimeProvided, kotlinVersion, kotlincJvmTarget}
 import kotlin.KotlinPlugin
 import org.jetbrains.sbtidea.Keys.*
 import org.jetbrains.sbtidea.packaging.PackagingKeys.*
@@ -175,8 +175,6 @@ object Common {
         kotlincJvmTarget := "17",
         kotlinRuntimeProvided := true,
         resolvers += DependencyResolvers.IntelliJDependencies,
-        // NOTE: this looks like a workaround for Kotlin compilation (IJPL-166396)
-        kotlincPluginOptions += "plugin:poko-compiler-plugin:pokoAnnotation=org/jetbrains/jewel/foundation/GenerateDataFunctions",
       )
 
   /**

@@ -15,7 +15,7 @@ object Versions {
   val zincVersion = "1.10.7"
 
   // ATTENTION: check the comment in `Common.newProjectWithKotlin` when updating this version
-  val intellijVersion = "251.14493"
+  val intellijVersion = "251.14649"
 
   def isNightlyIntellijVersion: Boolean = intellijVersion.count(_ == '.') == 1
 
