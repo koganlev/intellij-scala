@@ -4,7 +4,6 @@ package evaluation
 package evaluator
 package compiling
 
-import com.intellij.openapi.util.io.FileUtil.loadFile
 import com.intellij.psi.{PsiElement, PsiFile}
 import org.jetbrains.plugins.scala.base.ScalaLightCodeInsightFixtureTestCase
 import org.jetbrains.plugins.scala.extensions.PsiElementExt
@@ -13,8 +12,8 @@ import org.jetbrains.plugins.scala.util.TestUtils
 import org.junit.Assert.{assertEquals, fail}
 import org.junit.experimental.categories.Category
 
-import java.io.File
 import java.nio.charset.StandardCharsets
+import java.nio.file.{Files, Path}
 
 @Category(Array(classOf[DebuggerTests]))
 abstract class GeneratedClassTestBase extends ScalaLightCodeInsightFixtureTestCase {
@@ -28,7 +27,7 @@ abstract class GeneratedClassTestBase extends ScalaLightCodeInsightFixtureTestCa
 
   private def loadFileText(): String = {
     val path = testDataBasePath + getTestName(true) + ".test"
-    loadFile(new File(path), StandardCharsets.UTF_8)
+    Files.readString(Path.of(path), StandardCharsets.UTF_8)
   }
 
   private def parseTestData(): TestData =

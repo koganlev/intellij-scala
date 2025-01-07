@@ -11,7 +11,7 @@ import org.jetbrains.jps.incremental.scala.{Client, DummyClient, MessageKind}
 import org.jetbrains.plugins.scala.compiler.{CompileServerLauncher, RemoteServerConnectorBase, RemoteServerRunner}
 import org.jetbrains.plugins.scala.settings.ScalaCompileServerSettings
 
-import java.io.File
+import java.nio.file.{Files, Path}
 import scala.annotation.tailrec
 import scala.collection.mutable
 import scala.concurrent.duration.Duration
@@ -19,30 +19,30 @@ import scala.concurrent.duration.Duration
 //noinspection ApiStatus
 class ScalaEvaluatorCompileHelper(project: Project) extends EvaluatorCompileHelper {
 
-  private val tempFiles = mutable.Set[File]()
+  private val tempFiles = mutable.Set[Path]()
 
   private def clearTempFiles(): Unit = {
     tempFiles.foreach(FileUtil.delete)
     tempFiles.clear()
   }
 
-  def tempDir(): File = {
-    val dir = FileUtil.createTempDirectory("classfilesForDebugger", null, true)
+  private def tempDir(): Path = {
+    val dir = FileUtil.createTempDirectory("classfilesForDebugger", null, true).toPath
     tempFiles += dir
     dir
   }
 
-  def tempFile(): File = {
-    val file = FileUtil.createTempFile("FileToCompile", ".scala", true)
+  private def tempFile(): Path = {
+    val file = FileUtil.createTempFile("FileToCompile", ".scala", true).toPath
     tempFiles += file
     file
   }
 
-  override def compile(fileText: String, module: Module): Array[(File, String)] = {
+  override def compile(fileText: String, module: Module): Array[(Path, String)] = {
     compile(fileText, module, tempDir())
   }
 
-  def compile(files: Seq[File], module: Module, outputDir: File): Array[(File, String)] = {
+  def compile(files: Seq[Path], module: Module, outputDir: Path): Array[(Path, String)] = {
     if (EvaluatorCompileHelper.needCompileServer) {
       CompileServerLauncher.ensureServerRunning(project)
     }
@@ -58,13 +58,13 @@ class ScalaEvaluatorCompileHelper(project: Project) extends EvaluatorCompileHelp
     }
   }
 
-  def compile(fileText: String, module: Module, outputDir: File): Array[(File, String)] = {
+  def compile(fileText: String, module: Module, outputDir: Path): Array[(Path, String)] = {
     compile(Seq(writeToTempFile(fileText)), module, outputDir)
   }
 
-  def writeToTempFile(text: String): File = {
+  private def writeToTempFile(text: String): Path = {
     val file = tempFile()
-    FileUtil.writeToFile(file, text)
+    Files.writeString(file, text)
     file
   }
 }
@@ -86,8 +86,8 @@ object ScalaEvaluatorCompileHelper {
 }
 
 
-private class ServerConnector(module: Module, filesToCompile: Seq[File], outputDir: File)
-  extends RemoteServerConnectorBase(module, Some(filesToCompile), outputDir) {
+private class ServerConnector(module: Module, filesToCompile: Seq[Path], outputDir: Path)
+  extends RemoteServerConnectorBase(module, Some(filesToCompile.map(_.toFile)), outputDir.toFile) {
 
   private val errors = Seq.newBuilder[NlsString]
 
@@ -97,12 +97,12 @@ private class ServerConnector(module: Module, filesToCompile: Seq[File], outputD
   }
 
   @tailrec
-  private def classfiles(dir: File, namePrefix: String = ""): Array[(File, String)] = dir.listFiles() match {
-    case Array(d) if d.isDirectory => classfiles(d, s"$namePrefix${d.getName}.")
-    case files => files.map(f => (f, s"$namePrefix${f.getName}".stripSuffix(".class")))
+  private def classfiles(dir: Path, namePrefix: String = ""): Array[(Path, String)] = Files.list(dir).toArray(new Array[Path](_)) match {
+    case Array(d) if Files.isDirectory(d) => classfiles(d, s"$namePrefix${d.getFileName}.")
+    case files => files.map(f => (f, s"$namePrefix${f.getFileName}".stripSuffix(".class")))
   }
 
-  type CompileResult = Either[Seq[NlsString], Array[(File, String)]]
+  type CompileResult = Either[Seq[NlsString], Array[(Path, String)]]
   def compile(): CompileResult = {
     val compilationProcess = new RemoteServerRunner().buildProcess(CommandIds.Compile, arguments.asStrings, client)
     var result: CompileResult = Left(Seq(NlsString(DebuggerBundle.message("compilation.failed"))))

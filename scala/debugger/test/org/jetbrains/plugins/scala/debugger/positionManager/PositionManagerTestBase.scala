@@ -11,7 +11,6 @@ import org.jetbrains.plugins.scala.extensions.inReadAction
 import org.junit.Assert
 import org.junit.Assert.fail
 
-import java.io.File
 import java.util.concurrent.atomic.AtomicBoolean
 import javax.swing.SwingUtilities
 import scala.collection.mutable
@@ -39,7 +38,7 @@ abstract class PositionManagerTestBase extends ScalaDebuggerTestCase {
 
   protected def checkGetAllClasses(mainClass: String = getTestName(false))
                                   (expectedClassNames: String*): Unit = {
-    checkGetAllClassesInFile(mainClass)(s"${mainClass.split('.').mkString(File.separator)}.scala")(expectedClassNames: _*)
+    checkGetAllClassesInFile(mainClass)(sourcePathForClass(mainClass))(expectedClassNames: _*)
   }
 
   protected def checkGetAllClassesInFile(mainClass: String = getTestName(false))
@@ -105,9 +104,12 @@ abstract class PositionManagerTestBase extends ScalaDebuggerTestCase {
     }
   }
 
+  private def sourcePathForClass(mainClass: String): String =
+    s"${mainClass.split('.').mkString(java.io.File.separator)}.scala"
+
   protected def checkLocationsOfLine(mainClass: String = getTestName(false))
                                     (expectedLocations: Set[Loc]*): Unit = {
-    val filePath = s"${mainClass.split('.').mkString(File.separator)}.scala"
+    val filePath = sourcePathForClass(mainClass)
     createOffsetsForFile(filePath)
     createLocalProcess(mainClass)
 

@@ -18,7 +18,6 @@ import org.jetbrains.plugins.scala.project._
 import org.junit.Assert.assertTrue
 import org.junit.experimental.categories.Category
 
-import java.io._
 import javax.swing.SwingUtilities
 import scala.collection.mutable
 import scala.util.chaining.scalaUtilChainingOps
@@ -59,7 +58,7 @@ abstract class ScalaDebuggerTestCase extends DebuggerTestCase with ScalaExecutio
       return
     }
 
-    val classFilePath = s"${className.split('.').mkString(File.separator)}.class"
+    val classFilePath = s"${className.split('.').mkString(java.io.File.separator)}.class"
     if (!classFilesOutputPath.resolve(classFilePath).toFile.exists()) {
       org.junit.Assert.fail(s"Could not find compiled class $className")
     }
