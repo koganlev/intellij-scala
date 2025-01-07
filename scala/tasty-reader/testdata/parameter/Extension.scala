@@ -25,6 +25,5 @@ trait Extension {
   extension [A](i: Int)(using x: Int)
     def combinedTypeParametersAndUsingClauses[B](using y: Int): Unit = ???
 
-  extension [A](i: Int)(using x: Int)
     def combinedValueParametersTypeParametersAndUsingClauses[B](y: Int)(using z: Int): Unit = ???
 }

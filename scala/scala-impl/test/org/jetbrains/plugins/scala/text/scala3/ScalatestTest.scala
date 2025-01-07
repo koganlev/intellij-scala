@@ -18,6 +18,7 @@ class ScalatestTest extends TextToTextTestBase(
   ),
   withSources = true,
   Set(
+    "org.scalatest.Assertions", // Multiple `extension`
     "org.scalatest.AsyncSuperEngine", // Predef.Set
     "org.scalatest.CompileMacro", // with Product & Serializable
     "org.scalatest.FixtureTestSuite", // Predef.Set

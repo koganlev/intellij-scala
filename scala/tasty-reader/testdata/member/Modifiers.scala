@@ -151,7 +151,6 @@ trait Modifiers {
   extension (i: Int)
     protected def protectedExtensionMethod: Unit = ???
 
-  extension (i: Int)
     final def finalExtensionMethod: Unit = ???
 
   trait T1

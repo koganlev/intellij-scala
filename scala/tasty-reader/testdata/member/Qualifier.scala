@@ -40,7 +40,6 @@ trait Qualifier {
   extension (i: Int)
     private[member] def privateExtensionMethod: Unit = ???
 
-  extension (i: Int)
     protected[member] def protectedExtensionMethod: Unit = ???
 
   trait T1

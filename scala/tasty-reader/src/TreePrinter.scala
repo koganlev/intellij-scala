@@ -26,6 +26,7 @@ class TreePrinter(privateMembers: Boolean = false, infixTypes: Boolean = false, 
   private val sharedTypes = mutable.Map[Addr, String]()
   private val sourceFiles = mutable.Buffer[String]()
   private var compilerOptions = CompilerOptions.Default
+  private var currentExtension = Option.empty[String]
 
   // The use of SYNTHETIC, GIVEN, and IMPLICIT modifiers in `given` and `implicit class` differs in 3.0.0+
 
@@ -354,6 +355,7 @@ class TreePrinter(privateMembers: Boolean = false, infixTypes: Boolean = false, 
       sb ++= "\n"
       val previousLength = sb.length
       var delimiterRequired = false
+      currentExtension = None
       members.foreach { member =>
         val previousLength = sb.length
         textOfMember(sb, indent + Indent, member, definition, if (delimiterRequired) "\n\n" else "")
@@ -378,8 +380,8 @@ class TreePrinter(privateMembers: Boolean = false, infixTypes: Boolean = false, 
   private def textOfDefDef(sb: StringBuilder, indent: String, node: Node, definition: Option[Node] = None): Unit = {
     if (!node.contains(EXTENSION)) {
       textOfAnnotationIn(sb, indent, node, "\n")
+      sb ++= indent
     }
-    sb ++= indent
     val name = node.name
     if (name == "<init>") {
       modifiersIn(sb, node, definition = definition)
@@ -389,12 +391,22 @@ class TreePrinter(privateMembers: Boolean = false, infixTypes: Boolean = false, 
       sb ++= CompiledCode
     } else {
       if (node.contains(EXTENSION)) {
-        sb ++= "extension "
-        parametersIn(sb, node, target = Target.Extension)
-        sb ++= "\n"
+        val sb1 = new StringBuilder()
+        parametersIn(sb1, node, target = Target.Extension)
+        val params = sb1.toString
+        val withHeader = !currentExtension.contains(params)
+        if (withHeader) {
+          sb ++= indent
+          sb ++= "extension "
+          sb ++= params
+          sb ++= "\n"
+        }
         textOfAnnotationIn(sb, indent + Indent, node, "\n")
         sb ++= indent
         sb ++= Indent
+        currentExtension = Some(params)
+      } else {
+        currentExtension = None
       }
       val isAbstractGiven = node.contains(GIVEN)
       modifiersIn(sb, node, (if (isAbstractGiven) Set(GIVEN, FINAL) else Set.empty), isParameter = false, definition)

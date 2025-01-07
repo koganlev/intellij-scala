@@ -67,10 +67,8 @@ trait Bounds {
   extension (i: Int)
     def extensionMethodLowerBound[A >: Int]: Unit = ???
 
-  extension (i: Int)
     def extensionMethodUpperBound[A <: Int]: Unit = ???
 
-  extension (i: Int)
     def extensionMethodLowerAndUpperBounds[A >: Int <: AnyVal]: Unit = ???
 
   trait T

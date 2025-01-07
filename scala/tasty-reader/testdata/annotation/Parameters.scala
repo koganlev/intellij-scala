@@ -23,7 +23,6 @@ trait Parameters {
   extension (i: Int)
     def extensionMethodType[@inline A]: Unit = ???
 
-  extension (i: Int)
     def extensionMethodValue(@inline x: Int): Unit
 
   class ClassType[@inline A]
