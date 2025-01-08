@@ -25,7 +25,7 @@ import org.jetbrains.plugins.scala.worksheet.settings.WorksheetFileSettings
 import org.jetbrains.sbt.SbtSourceSetUtil.SbtSourceSetModuleExt
 import org.jetbrains.sbt.SbtUtil
 
-import java.io._
+import java.nio.file.Path
 
 // TODO: split to REPL and PLAIN args, change serialization format
 // TODO: clean up this shit with arguments, half in constructor, half in method call
@@ -37,8 +37,8 @@ final class RemoteServerConnector(
   makeType: WorksheetMakeType
 ) extends RemoteServerConnectorBase(
   module,
-  filesToCompile = args.compiledFile.map(Seq(_)),
-  outputDir = args.compilationOutputDir.getOrElse(new File(""))
+  filesToCompile = args.compiledFile.map(_.toFile).map(Seq(_)),
+  outputDir = args.compilationOutputDir.getOrElse(Path.of("")).toFile
 ) {
 
   override protected def compilerSettings: ScalaCompilerSettings =
@@ -53,9 +53,9 @@ final class RemoteServerConnector(
             Some(WorksheetArgs.RunPlain(
               className,
               ScalaPluginJars.runnersJar,
-              sourceFile,
-              sourceFile.getName,
-              outputDir +: outputDirs,
+              sourceFile.toFile,
+              sourceFile.getFileName.toString,
+              (outputDir +: outputDirs).map(_.toFile),
             ))
           case Args.ReplModeArgs(path, dropCachedReplInstance, codeChunk) =>
             Some(WorksheetArgs.RunRepl(
@@ -63,7 +63,7 @@ final class RemoteServerConnector(
               codeChunk,
               dropCachedReplInstance,
               continueOnChunkError = WorksheetUtils.continueWorksheetEvaluationOnExpressionFailure,
-              outputDirs
+              outputDirs.map(_.toFile)
             ))
           case Args.CompileOnly(_, _) =>
             None // just compile (data is taken from CompilationData)
@@ -149,7 +149,7 @@ final class RemoteServerConnector(
     process.run()
   }
 
-  private def outputDirs: Seq[File] = {
+  private def outputDirs: Seq[Path] = {
     def isTestModule(module: Module): Boolean = {
       val cpModule = module match {
         case s: WorksheetSyntheticModule => s.cpModule
@@ -165,11 +165,11 @@ final class RemoteServerConnector(
       CompilerPaths.getModuleOutputPath(module, isTest)
     }
 
-    paths.map(new File(_)).toSeq
+    paths.map(Path.of(_)).toSeq
   }
 
-  override protected def assemblyRuntimeClasspath(): Seq[File] = {
-    val extensionCp = BspWorksheetCompilerExtension.worksheetClasspath(module)
+  override protected def assemblyRuntimeClasspath(): Seq[java.io.File] = {
+    val extensionCp = BspWorksheetCompilerExtension.worksheetClasspath(module).map(_.map(_.toFile))
     extensionCp.getOrElse {
       // This workaround specifically covers the following edge case.
       // `super.assemblyRuntimeClasspath()` uses platform APIs (OrderEnumerator) to obtain the compilation classpath.
@@ -178,7 +178,7 @@ final class RemoteServerConnector(
       // already been produced. I currently do not have time before the release to dig into it more.
       // External implementations of the `WorksheetCompilerExtension` extension point are not affected by this.
       // TODO: Explore a more elegant solution to this problem.
-      (super.assemblyRuntimeClasspath() ++ outputDirs).distinct
+      (super.assemblyRuntimeClasspath() ++ outputDirs.map(_.toFile)).distinct
     }
   }
 }
@@ -189,21 +189,21 @@ object RemoteServerConnector {
   private val Log = Logger.getInstance(this.getClass)
 
   sealed trait Args {
-    final def compiledFile: Option[File] = this match {
+    final def compiledFile: Option[Path] = this match {
       case Args.PlainModeArgs(sourceFile, _, _) => Some(sourceFile)
       case Args.CompileOnly(sourceFile, _)      => Some(sourceFile)
-      case Args.ReplModeArgs(_, _, _)              => None
+      case Args.ReplModeArgs(_, _, _)           => None
     }
-    final def compilationOutputDir: Option[File] = this match {
+    final def compilationOutputDir: Option[Path] = this match {
       case Args.PlainModeArgs(_, outputDir, _) => Some(outputDir)
       case Args.CompileOnly(_, outputDir)      => Some(outputDir)
       case _                                   => None
     }
   }
   object Args {
-    final case class PlainModeArgs(sourceFile: File, outputDir: File, className: String) extends Args
+    final case class PlainModeArgs(sourceFile: Path, outputDir: Path, className: String) extends Args
     final case class ReplModeArgs(path: String, dropCachedReplInstance: Boolean, codeChunk: String) extends Args
-    final case class CompileOnly(sourceFile: File, outputDir: File) extends Args
+    final case class CompileOnly(sourceFile: Path, outputDir: Path) extends Args
   }
 
   sealed trait RemoteServerConnectorResult

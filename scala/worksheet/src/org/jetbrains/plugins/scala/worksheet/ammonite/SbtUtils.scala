@@ -6,7 +6,8 @@ import com.intellij.util.PathUtil
 import org.jetbrains.plugins.scala.project.template._
 import org.jetbrains.sbt.SbtUtil
 
-import java.io.{File, FileNotFoundException}
+import java.io.FileNotFoundException
+import java.nio.file.{Files, Path}
 import scala.collection.{immutable, mutable}
 
 // moved from org.jetbrains.plugins.scala.project.template
@@ -68,13 +69,13 @@ private object SbtUtils {
 
   private def launcherOptions(path: String): Seq[String] = {
     val scalaPluginJar = PathUtil.getJarPathForClass(getClass)
-    val pluginLibFolder = new File(scalaPluginJar).getParentFile
-    val pluginRootFolder = pluginLibFolder.getParentFile
+    val pluginLibFolder = Path.of(scalaPluginJar).getParent
+    val pluginRootFolder = pluginLibFolder.getParent
     val launcher = pluginRootFolder / "launcher" / "sbt-launch.jar"
-    if (launcher.exists())
-      Seq("-jar", launcher.getAbsolutePath, "< " + path)
+    if (Files.exists(launcher))
+      Seq("-jar", launcher.toRealPath().toString, "< " + path)
     else
-      throw new FileNotFoundException("Jar file not found for class: " + launcher.getPath)
+      throw new FileNotFoundException("Jar file not found for class: " + launcher.toAbsolutePath.toString)
   }
 
   private def vmOptions: immutable.Iterable[String] = {

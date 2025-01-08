@@ -14,13 +14,13 @@ import org.jetbrains.annotations.Nls
 import org.jetbrains.plugins.scala.components.libextensions.JarPathStringExt
 import org.jetbrains.plugins.scala.extensions.{inWriteAction, invokeLater}
 import org.jetbrains.plugins.scala.lang.psi.api.ScFile
-import org.jetbrains.plugins.scala.project.template.Artifact
 import org.jetbrains.plugins.scala.project.Version
+import org.jetbrains.plugins.scala.project.template.Artifact
 import org.jetbrains.plugins.scala.util.{HttpDownloadUtil, ScalaUtil}
 import org.jetbrains.plugins.scala.worksheet.WorksheetBundle
 import org.jetbrains.plugins.scala.worksheet.utils.notifications.WorksheetNotificationsGroup
 
-import java.io.File
+import java.nio.file.{Files, Path}
 import scala.collection.mutable
 import scala.util.{Success, Try}
 
@@ -55,15 +55,15 @@ object ImportAmmoniteDependenciesFix {
 
         val sv = ScalaUtil.getScalaVersion(file)
         val (forScala, predicate) = sv
-          .fold(
+          .fold[(MyScalaVersion, Path => Boolean)](
             (
               MajorVersion('2'): MyScalaVersion,
-              Function.const(true)(_: File)
+              Function.const(true)
             )
           ) { version =>
             (
               ExactVersion(version.charAt(3), Version(version)),
-              (file: File) => !isScalaSdkFile(file)
+              path => !isScalaSdkFile(path)
             )
           }
 
@@ -71,7 +71,7 @@ object ImportAmmoniteDependenciesFix {
 
         indicator.setText(WorksheetBundle.message("ammonite.extracting.info.from.sbt"))
 
-        val files = mutable.ListBuffer.empty[File]
+        val files = mutable.ListBuffer.empty[Path]
         val e = new AmmoniteUtil.RegexExtractor
         import e._
 
@@ -81,10 +81,8 @@ object ImportAmmoniteDependenciesFix {
           Seq("""show test:dependencyClasspath""")
         ) {
           case mre"[info] * Attributed($pathname)" =>
-            new File(pathname) match {
-              case f if f.exists() => files += f
-              case _ =>
-            }
+            val path = Path.of(pathname)
+            if (Files.exists(path)) files += path
           case mre"[success]$_" =>
             indicator.setText(WorksheetBundle.message("ammonite.adding.dependencies.progress"))
 
@@ -99,10 +97,10 @@ object ImportAmmoniteDependenciesFix {
                   for {
                     file <- filesFiltered
 
-                    rootFile = jarFileSystem.findFileByPath(file.getCanonicalPath.withJarSeparator)
+                    rootFile = jarFileSystem.findFileByPath(file.toRealPath().toString.withJarSeparator)
                     if rootFile != null
 
-                    library = tableModel.createLibrary(file.getName)
+                    library = tableModel.createLibrary(file.getFileName.toString)
                     model = library.getModifiableModel
                   } {
                     model.addRoot(rootFile, OrderRootType.CLASSES)
@@ -136,8 +134,8 @@ object ImportAmmoniteDependenciesFix {
   //  ScalaCombinators,
   //  ScalaActors
   //  But what if a user wants to experiment with those libraries in ammonite script?
-  private def isScalaSdkFile(file: File): Boolean =
-    file.getName.startsWith("scala-") && Artifact.ScalaArtifacts.exists(_.versionOf(file).isDefined)
+  private def isScalaSdkFile(file: Path): Boolean =
+    file.getFileName.toString.startsWith("scala-") && Artifact.ScalaArtifacts.exists(_.versionOf(file.toFile).isDefined)
 
   // TODO: this is a bad solution:
   //  1: it's unreadable and strang

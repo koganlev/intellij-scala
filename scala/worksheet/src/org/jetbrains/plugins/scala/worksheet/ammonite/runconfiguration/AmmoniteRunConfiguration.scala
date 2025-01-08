@@ -21,7 +21,8 @@ import org.jetbrains.plugins.scala.worksheet.WorksheetBundle
 import org.jetbrains.plugins.scala.worksheet.ammonite.AmmoniteScriptWrappersHolder
 import org.jetbrains.plugins.scala.worksheet.ammonite.runconfiguration.AmmoniteRunConfiguration.{AmmNotFoundException, MyEditor}
 
-import java.io.{File, IOException}
+import java.io.IOException
+import java.nio.file.{Files, Path}
 import javax.swing.event.{HyperlinkEvent, HyperlinkListener}
 import javax.swing.{BoxLayout, JComponent, JPanel}
 import scala.annotation.nowarn
@@ -50,7 +51,7 @@ class AmmoniteRunConfiguration(project: Project, factory: ConfigurationFactory) 
     scriptParameters = Option(params).filter(_ != "")
   }
 
-  def getIOFile: Option[File] = fileName.map(new File(_)).filter(_.exists())
+  def getIOFile: Option[Path] = fileName.map(Path.of(_)).filter(Files.exists(_))
 
   override def getConfigurationEditor: SettingsEditor[_ <: RunConfiguration] = new MyEditor
 
@@ -67,22 +68,22 @@ class AmmoniteRunConfiguration(project: Project, factory: ConfigurationFactory) 
 
         execName match {
           case Some(exec) =>
-            val exFile = new File(exec)
-            if (exFile.exists()) cmd.setExePath(exFile.getAbsolutePath) else cmd.setExePath(exec)
+            val exFile = Path.of(exec)
+            if (Files.exists(exFile)) cmd.setExePath(exFile.toRealPath().toString) else cmd.setExePath(exec)
           case None =>
             cmd.setExePath("/usr/local/bin/amm")
         }
 
         if (isRepl) {
           cmd.addParameter("--predef")
-          cmd.addParameter(s"${createPredefFile(getIOFile.map(_.getName).getOrElse("AmmoniteFile.sc"))}")
+          cmd.addParameter(s"${createPredefFile(getIOFile.map(_.getFileName.toString).getOrElse("AmmoniteFile.sc"))}")
         }
 
         fileName.foreach{
           f =>
             cmd.addParameter(f)
-            val tf = new File(f)
-            if (tf.exists()) cmd.setWorkDirectory(tf.getParentFile)
+            val tf = Path.of(f)
+            if (Files.exists(tf)) cmd.setWorkDirectory(tf.getParent.toString)
         }
         scriptParameters.foreach(cmd.getParametersList.addParametersString(_))
 
@@ -114,7 +115,7 @@ class AmmoniteRunConfiguration(project: Project, factory: ConfigurationFactory) 
 
     fileName.foreach {
       fn =>
-        Option(LocalFileSystem.getInstance().findFileByIoFile(new File(fn))) foreach {
+        Option(LocalFileSystem.getInstance().findFileByNioFile(Path.of(fn))) foreach {
           vFile =>
             AmmoniteScriptWrappersHolder.getInstance(project).onAmmoniteRun(vFile)
         }
@@ -150,16 +151,16 @@ class AmmoniteRunConfiguration(project: Project, factory: ConfigurationFactory) 
   }
 
   private def createPredefFile(baseName: String): String = {
-    val tempDir = new File(FileUtil.getTempDirectory)
-    if (tempDir.exists()) tempDir.mkdir()
+    val tempDir = Path.of(FileUtil.getTempDirectory)
+    if (Files.exists(tempDir)) Files.createDirectory(tempDir)
 
-    val tempFile = new File(tempDir, s"predef$baseName")
-    if (!tempFile.exists()) {
-      tempFile.createNewFile()
-      FileUtil.writeToFile(tempFile, s"repl.frontEnd() = ammonite.repl.FrontEnd.${if (SystemInfo.isWindows) "JLineWindows" else "JLineUnix"}")
+    val tempFile = tempDir.resolve(s"predef$baseName")
+    if (!Files.exists(tempFile)) {
+      Files.createFile(tempFile)
+      Files.writeString(tempFile, s"repl.frontEnd() = ammonite.repl.FrontEnd.${if (SystemInfo.isWindows) "JLineWindows" else "JLineUnix"}")
     }
 
-    tempFile.getAbsolutePath
+    tempFile.toRealPath().toString
   }
 
   private def isRepl = fileName.isEmpty

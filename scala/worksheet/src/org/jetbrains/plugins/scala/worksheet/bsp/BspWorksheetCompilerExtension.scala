@@ -6,13 +6,13 @@ import org.jetbrains.bsp.BspUtil
 import org.jetbrains.bsp.project.test.environment.BspJvmEnvironment
 import org.jetbrains.plugins.scala.worksheet.actions.topmenu.TopComponentAction
 
-import java.io.File
+import java.nio.file.Path
 
 private[worksheet] object BspWorksheetCompilerExtension {
-  def worksheetClasspath(module: Module): Option[Seq[File]] = {
+  def worksheetClasspath(module: Module): Option[Seq[Path]] = {
     if (BspUtil.isBspModule(module)) {
       BspJvmEnvironment.resolveForWorksheet(module).toOption.map { env =>
-        env.classpath.map(_.toFile)
+        env.classpath
       }
     } else None
   }
