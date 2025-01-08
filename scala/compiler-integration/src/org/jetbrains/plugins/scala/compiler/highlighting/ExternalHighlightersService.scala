@@ -3,6 +3,7 @@ package org.jetbrains.plugins.scala.compiler.highlighting
 import com.intellij.codeInsight.daemon.impl.{ErrorStripeUpdateManager, HighlightInfo, HighlightInfoType, UpdateHighlightersUtil}
 import com.intellij.codeInsight.intention.IntentionAction
 import com.intellij.codeInsight.lookup.LookupManager
+import com.intellij.modcommand.ModCommandAction
 import com.intellij.openapi.application.{ModalityState, ReadAction}
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.diagnostic.Logger
@@ -20,6 +21,7 @@ import com.intellij.xml.util.XmlStringUtil
 import org.jetbrains.annotations.{Nls, Nullable}
 import org.jetbrains.jps.incremental.scala.Client.PosInfo
 import org.jetbrains.plugins.scala.annotator.UnresolvedReferenceFixProvider
+import org.jetbrains.plugins.scala.annotator.element.ScTemplateDefinitionAnnotator
 import org.jetbrains.plugins.scala.caches.ModTracker.anyScalaPsiChange
 import org.jetbrains.plugins.scala.codeInsight.implicits.ImplicitHints
 import org.jetbrains.plugins.scala.codeInspection.ScalaInspectionBundle
@@ -27,12 +29,13 @@ import org.jetbrains.plugins.scala.codeInspection.declarationRedundancy.ScalaOpt
 import org.jetbrains.plugins.scala.compiler.diagnostics.Action
 import org.jetbrains.plugins.scala.compiler.highlighting.ExternalHighlighting.RangeInfo
 import org.jetbrains.plugins.scala.editor.DocumentExt
-import org.jetbrains.plugins.scala.extensions.{ObjectExt, PsiElementExt, executeOnPooledThread, invokeLater}
+import org.jetbrains.plugins.scala.extensions.{ObjectExt, Parent, PsiElementExt, executeOnPooledThread, invokeLater}
 import org.jetbrains.plugins.scala.lang.psi.api.base.{ScReference, ScStableCodeReference}
 import org.jetbrains.plugins.scala.lang.psi.api.expr.ScMethodCall
 import org.jetbrains.plugins.scala.lang.psi.api.toplevel.imports.usages.ImportUsed
 import org.jetbrains.plugins.scala.lang.psi.api.toplevel.imports.usages.ImportUsed.UnusedImportReportedByCompilerKey
 import org.jetbrains.plugins.scala.lang.psi.api.toplevel.imports.{ScImportExpr, ScImportOrExportStmt, ScImportSelector}
+import org.jetbrains.plugins.scala.lang.psi.api.toplevel.typedef.ScTemplateDefinition
 import org.jetbrains.plugins.scala.lang.psi.impl.{CompilerType, ScalaPsiManager}
 import org.jetbrains.plugins.scala.settings.{ProblemSolverUtils, ScalaHighlightingMode, ScalaProjectSettings}
 import org.jetbrains.plugins.scala.util.CompilationId
@@ -266,6 +269,20 @@ private final class ExternalHighlightersService(project: Project) { self =>
             highlightInfoBuilder(document, HighlightInfoType.UNUSED_SYMBOL, unusedImportRange, ScalaInspectionBundle.message("unused.import.statement"), Nil, fileLevel = false)
               .registerFix(new ScalaOptimizeImportsFix, null, null, unusedImportRange, null)
           } else standardBuilder
+        } else if (highlighting.diagnostics.isEmpty && CompilerMessages.isNeedsToBeAbstract(description)) {
+          psiFile.findElementAt(highlightRange.getStartOffset) match {
+            case Parent(td: ScTemplateDefinition) =>
+              val fixes = ScTemplateDefinitionAnnotator.needsToBeAbstractFixes(td)
+              fixes.foldLeft(standardBuilder) {
+                case (builder, fix: ModCommandAction) =>
+                  //noinspection ApiStatus
+                  builder.registerFix(fix, null, null, highlightRange, null)
+                case (builder, fix: IntentionAction) =>
+                  builder.registerFix(fix, null, null, highlightRange, null)
+                case (builder, _) => builder
+              }
+            case _ => standardBuilder
+          }
         } else standardBuilder
 
       val fixes = findUnresolvedReferenceFixes(psiFile, highlightRange, highlighting.highlightType)
