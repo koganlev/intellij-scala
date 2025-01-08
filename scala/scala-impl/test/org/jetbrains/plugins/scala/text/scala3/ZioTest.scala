@@ -20,7 +20,6 @@ class ZioTest extends TextToTextTestBase(
   ),
   withSources = true,
   Set(
-    "zio.Config", // extends Exception, Error
     "zio.Fiber", // case class extends Product & Serializable
     "zio.RuntimeFlag", // reference constants
     "zio.Scope", // private type alias
