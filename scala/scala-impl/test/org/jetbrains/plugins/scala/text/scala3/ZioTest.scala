@@ -30,7 +30,6 @@ class ZioTest extends TextToTextTestBase(
     "zio.internal.FastList", // implicit conversion for implicit class
     "zio.internal.FiberRuntime", // x * y constant
     "zio.internal.LinkedQueue", // Int.MaxValue constant
-    "zio.internal.Stack", // empty () constructor
     "zio.internal.TerminalRendering", // implicit conversion for implicit class
     "zio.internal.ansi", // no final, implicit conversion for implicit class
     "zio.internal.macros.LayerBuilder", // scala.List

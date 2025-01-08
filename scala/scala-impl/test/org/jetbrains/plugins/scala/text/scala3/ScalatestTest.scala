@@ -70,7 +70,6 @@ class ScalatestTest extends TextToTextTestBase(
     "org.scalatest.matchers.dsl.MatcherFactory6", // SC with SC, TC1 vs Nothing, Expr[...]
     "org.scalatest.matchers.dsl.MatcherFactory7", // SC with SC, TC1 vs Nothing, Expr[...]
     "org.scalatest.matchers.dsl.MatcherFactory8", // SC with SC, TC1 vs Nothing, Expr[...]
-    "org.scalatest.matchers.dsl.MatcherFactory9", // SC with SC, TC1 vs Nothing, Expr[...]
     "org.scalatest.matchers.dsl.NotWord", // Expr[...]
     "org.scalatest.matchers.dsl.ResultOfNotWordForAny", // Expr[...]
     "org.scalatest.matchers.dsl.StartWithWord", // with Object { toString }
@@ -79,8 +78,6 @@ class ScalatestTest extends TextToTextTestBase(
     "org.scalatest.tools.ArgsParser", // Predef.String
     "org.scalatest.tools.DiscoverySuite", // Predef.String
     "org.scalatest.tools.NestedSuiteElement", // Predef.String
-    "org.scalatest.tools.PrettyPrinter", // class BrokenException()
-    "org.scalatest.tools.ProgressBarPanel", // empty () constructor
     "org.scalatest.tools.StringReporter", // Unicode \u001b char
     "org.scalatest.tools.SuiteElement", // Predef.String
     "org.scalatest.wordspec.AsyncWordSpecLike", // Expr[...]

@@ -131,10 +131,11 @@ class ClassPrinter(isScala3: Boolean, extendsSeparator: String = " ", withPrivat
       (cs.take(1).map(textOf(_, inPrivateConstructor, inCaseClass)) ++ cs.drop(1).map(textOf(_, inPrivateConstructor, inCaseClass = false))).mkString
     }
     val annotations = pc.annotations.map(textOf(_, emptyParens = clauses.nonEmpty && modifiers.isEmpty)).mkString(" ")
-    (if (annotations.isEmpty) "" else " " + annotations) +
+    val s = (if (annotations.isEmpty) "" else " " + annotations) +
       (if (modifiers.isEmpty) "" else " " + modifiers) +
       (if (annotations.nonEmpty && modifiers.isEmpty) " " else "") +
       (if ((annotations.nonEmpty || modifiers.nonEmpty) && clauses.isEmpty) "()" else clauses)
+    if (normalize && !inCaseClass && s == "()") "" else s
   }
 
   private def textOf(c: ScEnumCase, indent: String): String = {

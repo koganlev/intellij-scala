@@ -133,7 +133,7 @@ abstract class TextToTextTestBase(dependencies: Seq[DependencyDescription],
           val actualSource = textOfCompilationUnit(sourceCls, withPrivate = false, normalize = true)
 
           if (sourceExceptions(cls.qualifiedName)) {
-            Assert.assertNotEquals(expected, actualSource, s"Expected to contain errors: ${cls.qualifiedName}")
+            Assert.assertNotEquals(s"Expected to contain errors: ${cls.qualifiedName}", expected, actualSource)
           } else {
             Assert.assertEquals(s"${cls.qualifiedName} [decompiled | source outlines]", expected, actualSource)
           }
