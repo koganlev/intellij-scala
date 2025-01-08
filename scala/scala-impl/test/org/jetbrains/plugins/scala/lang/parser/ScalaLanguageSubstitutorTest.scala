@@ -74,6 +74,12 @@ class ScalaLanguageSubstitutorTest {
   }
 
   @Test
+  def looksLikeScala3LibJar_PublishLocal(): Unit = {
+    assertNotRecognised("library-name_3.jar") // The compiled library is not recognized.
+    assertIsRecognised("library-name_3-sources.jar") // The jar containing the Scala sources is recognized.
+  }
+
+  @Test
   def doesNotLookLikeScala3LibJar_No_3SuffixAfterLibraryNameMainPart(): Unit = {
     //do not have "_3" suffix after library name main part
     assertNotRecognised("scala-library-3.0.0-sources.jar")
@@ -120,7 +126,13 @@ class ScalaLanguageSubstitutorTest {
     assertNotRecognisedPath("/library-name_3.jar!/")
     assertNotRecognisedPath("/library-name_3-sources/")
     assertNotRecognisedPath("/library-name_3-sources.zip!/")
-    assertNotRecognisedPath("/library-name_3-sources.jar!/")
+    assertIsRecognised("/library-name_3-sources.jar!/")
     assertNotRecognisedPath("/library-name_3--sources.jar!/")
+  }
+
+  @Test
+  def doesNotLookLikeScala3LibJar_PublishLocal_FullPath(): Unit = {
+    assertNotRecognisedPath("/library-name_3.jar!/")
+    assertIsRecognised("/library-name_3-sources.jar!/")
   }
 }

@@ -71,8 +71,14 @@ private object ScalaLanguageSubstitutor {
     if (suffixIdx == -1)
       return false
     val start = suffixIdx + Scala3LibNameSuffix.length
-    if (start >= end)
-      return false
+    if (start >= end) {
+      // Libraries published with `sbt publishLocal` (ivy style) do not have a version suffix in the name.
+      // Their names end with _3-sources.jar.
+      //                         ^ start
+      //                        ^ end
+      // In this case, we want to correctly recognize these libraries as Scala 3 libraries.
+      return start == end + 1
+    }
 
     val libraryNameWithVersion = path.substring(start, end)
     SemVerSimplifiedRegex.matches(libraryNameWithVersion)
