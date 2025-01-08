@@ -27,11 +27,11 @@ class ScalatestTest extends TextToTextTestBase(
     "org.scalatest.SuperEngine", // Predef.Set
     "org.scalatest.concurrent.PimpedThreadGroup", // scala.List
     "org.scalatest.diagrams.DiagramsMacro", // Cannot resolve x$1.reflect.Term
-    "org.scalatest.events.AlertProvided", // extends Event, NotificationEvent
+    "org.scalatest.events.AlertProvided", // Event vs AlertProvided
     "org.scalatest.events.DiscoveryCompleted", // Event vs DiscoveryCompleted
     "org.scalatest.events.DiscoveryStarting", // Event vs DiscoveryStarting
     "org.scalatest.events.Event", // Object vs Any
-    "org.scalatest.events.InfoProvided", // extends Event, RecordableEvent
+    "org.scalatest.events.InfoProvided", // Event vs InfoProvided
     "org.scalatest.events.MarkupProvided", // Event vs MarkupProvided
     "org.scalatest.events.MotionToSuppress", // final case object
     "org.scalatest.events.NoteProvided", // Event vs NoteProvided

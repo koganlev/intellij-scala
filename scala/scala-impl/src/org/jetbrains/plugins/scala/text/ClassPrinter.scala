@@ -61,7 +61,10 @@ class ClassPrinter(isScala3: Boolean, extendsSeparator: String = " ", withPrivat
 
     val parents = {
       val superTypes = cls.extendsBlock.templateParents.map(_.superTypes).getOrElse(Seq.empty)
-      if (superTypes.isEmpty) "" else (if (isGiven) (if (isAnonymous && tps.isEmpty && ps.isEmpty) "" else ": ") else s"${extendsSeparator}extends ") + superTypes.map(textOf(_, parens = 1)).mkString(if (cls.isScala3 && !isGiven) ", " else s"${extendsSeparator}with ")
+      val classParent =
+        if (normalize && isScala3) cls.supers.takeWhile(_.isInterface).iterator.flatMap(c => c +: c.getSupers).find(!_.isInterface).filter(_.qualifiedName != "java.lang.Object").map(ScDesignatorType(_)).toList
+        else Seq.empty
+      if (superTypes.isEmpty) "" else (if (isGiven) (if (isAnonymous && tps.isEmpty && ps.isEmpty) "" else ": ") else s"${extendsSeparator}extends ") + (classParent ++ superTypes).map(textOf(_, parens = 1)).mkString(if (cls.isScala3 && !isGiven) ", " else s"${extendsSeparator}with ")
     }
 
     val derivations = {
