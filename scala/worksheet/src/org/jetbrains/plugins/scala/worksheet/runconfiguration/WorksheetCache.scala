@@ -10,7 +10,7 @@ import org.jetbrains.annotations.{ApiStatus, TestOnly}
 import org.jetbrains.plugins.scala.worksheet.processor.WorksheetCompiler.CompilerMessagesCollector
 import org.jetbrains.plugins.scala.worksheet.ui.printers.{WorksheetEditorPrinter, WorksheetEditorPrinterRepl}
 
-import java.io.File
+import java.nio.file.{Files, Path}
 import java.util
 import scala.collection.immutable.ListSet
 import scala.collection.mutable
@@ -33,23 +33,23 @@ final class WorksheetCache extends Disposable {
   private val allCompilerMessagesCollectors = new util.WeakHashMap[Editor, CompilerMessagesCollector]()
 
   // TODO: cleanup created files on application/project exit, do not pollute file system!
-  private val compilationInfo = mutable.HashMap.empty[String, (Int, File, File)]
+  private val compilationInfo = mutable.HashMap.empty[String, (Int, Path, Path)]
 
-  def updateOrCreateCompilationInfo(filePath: String, fileName: String): (Int, File, File) =
+  def updateOrCreateCompilationInfo(filePath: String, fileName: String): (Int, Path, Path) =
     updateOrCreateCompilationInfo(filePath, fileName, None)
 
-  def updateOrCreateCompilationInfo(filePath: String, fileName: String, tempDirName: Option[String]): (Int, File, File) =
+  def updateOrCreateCompilationInfo(filePath: String, fileName: String, tempDirName: Option[String]): (Int, Path, Path) =
     compilationInfo.get(filePath) match {
-      case Some(result@(it, src, out)) if src.exists() && out.exists() =>
+      case Some(result@(it, src, out)) if Files.exists(src) && Files.exists(out) =>
         compilationInfo.put(filePath, (it + 1, src, out))
         result
       case _ =>
         val tempDirAbsolute = tempDirName match {
-          case Some(tempDir) => new File(FileUtil.getTempDirectory, tempDir)
-          case _             => new File(FileUtil.getTempDirectory)
+          case Some(tempDir) => Path.of(FileUtil.getTempDirectory, tempDir)
+          case _             => Path.of(FileUtil.getTempDirectory)
         }
-        val src = FileUtil.createTempFile(tempDirAbsolute, fileName, null, true)
-        val out = FileUtil.createTempDirectory(tempDirAbsolute, fileName, null, true)
+        val src = FileUtil.createTempFile(tempDirAbsolute.toFile, fileName, null, true).toPath
+        val out = FileUtil.createTempDirectory(tempDirAbsolute.toFile, fileName, null, true).toPath
         compilationInfo.put(filePath, (1, src, out))
         (0, src, out)
     }

@@ -14,8 +14,9 @@ import org.jetbrains.plugins.scala.compiler.{CompilationProcess, CompileServerLa
 import org.jetbrains.plugins.scala.util.ScalaPluginJars
 import org.jetbrains.plugins.scala.worksheet.server.NonServerRunner.Log
 
-import java.io.{BufferedReader, File, InputStreamReader, Reader}
+import java.io.{BufferedReader, InputStreamReader, Reader}
 import java.nio.charset.StandardCharsets
+import java.nio.file.Path
 import java.util.Base64
 import java.util.concurrent.Future
 import java.util.concurrent.atomic.AtomicBoolean
@@ -28,9 +29,9 @@ class NonServerRunner(project: Project) {
 
   private val SERVER_CLASS_NAME = "org.jetbrains.plugins.scala.nailgun.MainLightRunner"
 
-  private def classPathArg(jars: Seq[File]): String = {
-    val jarPaths = jars.map(_.getPath).map(FileUtil.toCanonicalPath)
-    jarPaths.mkString(File.pathSeparator)
+  private def classPathArg(jars: Seq[Path]): String = {
+    val jarPaths = jars.map(_.toString).map(FileUtil.toCanonicalPath)
+    jarPaths.mkString(java.io.File.pathSeparator)
   }
 
   def buildProcess(args: Seq[String], client: Client): CompilationProcess = {
@@ -49,8 +50,9 @@ class NonServerRunner(project: Project) {
         }
         val commands: Seq[String] = {
           val jdkPath = FileUtil.toCanonicalPath(jdk.executable.getPath)
-          val runnerClassPath = classPathArg(jdk.tools.toSeq :+ ScalaPluginJars.scalaNailgunRunnerJar)
-          val mainClassPath = classPathArg(jdk.tools.toSeq ++ CompileServerLauncher.compileServerJars)
+          val jdkToolsPath = jdk.tools.map(_.toPath).toSeq
+          val runnerClassPath = classPathArg(jdkToolsPath :+ ScalaPluginJars.scalaNailgunRunnerJar.toPath)
+          val mainClassPath = classPathArg(jdkToolsPath ++ CompileServerLauncher.compileServerJars.map(_.toPath))
           val scalaCompileServerSystemDir = CompileServerLauncher.scalaCompileServerSystemDir
           val jvmParameters = CompileServerLauncher.jvmParameters
           val jnaParams = CompileServerLauncher.jnaVMOptions

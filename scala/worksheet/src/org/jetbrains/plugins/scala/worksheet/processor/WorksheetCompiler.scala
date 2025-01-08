@@ -31,12 +31,12 @@ import org.jetbrains.plugins.scala.worksheet.settings._
 import org.jetbrains.plugins.scala.worksheet.ui.printers.{WorksheetEditorPrinter, WorksheetEditorPrinterFactory, WorksheetEditorPrinterRepl}
 import org.jetbrains.plugins.scala.worksheet.{WorksheetBundle, WorksheetUtils}
 
-import java.io.{File, FileWriter}
+import java.nio.file.{Files, Path}
 import scala.collection.mutable
 import scala.concurrent.duration.Duration
 import scala.concurrent.{Await, Promise, TimeoutException}
 import scala.util.control.NonFatal
-import scala.util.{Success, Try, Using}
+import scala.util.{Success, Try}
 
 //noinspection ScalaWrongPlatformMethodsUsage
 // TODO 1: rename/refactor, the class has more responsibilities then to "Compile"
@@ -129,7 +129,7 @@ class WorksheetCompiler(
       )
       WorksheetWrapper.writeWrappedToFile(document.getText, tempFile)
       val connector = new RemoteServerConnector(module, worksheetFile, CompileOnly(tempFile, outputDir), InProcessServer)
-      val delegatingClient = new WrappedWorksheetCompilerMessagesFixer(new File(originalFilePath), worksheetFile, client)
+      val delegatingClient = new WrappedWorksheetCompilerMessagesFixer(Path.of(originalFilePath), worksheetFile, client)
       connector.compileAndRun(virtualFile, delegatingClient)(callback)
     } catch {
       case NonFatal(ex) =>
@@ -203,7 +203,7 @@ class WorksheetCompiler(
         ReplModeArgs(virtualFile.getCanonicalPath, dropCachedReplInstance, code)
       case RunCompile(code, className) =>
         val (_, tempFile, outputDir) = cache.updateOrCreateCompilationInfo(virtualFile.getCanonicalPath, worksheetFile.getName)
-        FileUtil.writeToFile(tempFile, code)
+        Files.writeString(tempFile, code)
         PlainModeArgs(tempFile, outputDir, className)
     }
     val afterCompileCallback: RemoteServerConnectorResult => Unit = {
@@ -214,7 +214,7 @@ class WorksheetCompiler(
           makeType match {
             case OutOfProcessServer =>
               val plainArgs = args.asInstanceOf[PlainModeArgs]
-              WorksheetCompilerLocalEvaluator.executeWorksheet(virtualFile, plainArgs.className, plainArgs.outputDir.getAbsolutePath)(callback, printer)(module)
+              WorksheetCompilerLocalEvaluator.executeWorksheet(virtualFile, plainArgs.className, plainArgs.outputDir.toRealPath().toString)(callback, printer)(module)
             case _ =>
               callback(WorksheetCompilerResult.CompiledAndEvaluated)
           }
@@ -434,12 +434,14 @@ object WorksheetCompiler {
 
     val headerLinesCount: Int = header.linesIterator.size
 
-    def writeWrappedToFile(worksheetCode: String, file: File): Unit =
-      Using.resource(new FileWriter(file)) { writer =>
-        writer.write(header)
-        writer.write(worksheetCode)
-        writer.write(footer)
-      }
+    def writeWrappedToFile(worksheetCode: String, file: Path): Unit = {
+      val contents = new StringBuilder()
+        .append(header)
+        .append(worksheetCode)
+        .append(footer)
+        .toString()
+      Files.writeString(file, contents)
+    }
   }
 
   private val Scala3NotFoundRegex = """Not found:\s+(.*?)""".r
@@ -451,7 +453,7 @@ object WorksheetCompiler {
    * 2. original file pointer
    */
   private class WrappedWorksheetCompilerMessagesFixer(
-    originalFile: File,
+    originalFile: Path,
     originalPsiFile: ScalaFile,
     client: Client
   )
@@ -516,12 +518,13 @@ object WorksheetCompiler {
           action.copy(edit = action.edit.copy(textEdits))
         }
 
+      val originalFileName = originalFile.getFileName.toString
       msg.copy(
-        source = msg.source.map(_ => originalFile),
+        source = msg.source.map(_ => originalFile.toFile),
         text = msg.text
           .replace(s"object ${WorksheetWrapper.className}.", "object ") // object WorksheetWrapper.X -> object X
-          .replace(s"object ${WorksheetWrapper.className}", originalFile.getName) // object WorksheetWrapper -> worksheet name
-          .replace(s"${WorksheetWrapper.className}", originalFile.getName) // other unknown cases
+          .replace(s"object ${WorksheetWrapper.className}", originalFileName) // object WorksheetWrapper -> worksheet name
+          .replace(s"${WorksheetWrapper.className}", originalFileName) // other unknown cases
           .trim,
         pointer = msg.pointer.map(fixPosInfo),
         problemStart = msg.problemStart.map(fixPosInfo),
@@ -530,9 +533,9 @@ object WorksheetCompiler {
       )
     }
 
-    override def compilationEnd(sources: Set[File]): Unit = {
+    override def compilationEnd(sources: Set[java.io.File]): Unit = {
       Log.assertTrue(sources.size <= 1, "expecting at most 1 source file during worksheet compilation")
-      val sourcesFixed = sources.map(_ => originalFile)
+      val sourcesFixed = sources.map(_ => originalFile.toFile)
       super.compilationEnd(sourcesFixed)
     }
   }
