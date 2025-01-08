@@ -33,7 +33,7 @@ class AmmoniteRunScriptAction extends AnAction(WorksheetBundle.message("ammonite
               ammonite.getIOFile match {
                 case Some(confFile) =>
                   val vFile = ammoniteFile.getVirtualFile
-                  if (vFile != null && LocalFileSystem.getInstance().findFileByIoFile(confFile) == vFile) {
+                  if (vFile != null && LocalFileSystem.getInstance().findFileByNioFile(confFile) == vFile) {
                     RunConsoleAction.runExisting(setting, manager, project)
                     return
                   }

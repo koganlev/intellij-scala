@@ -20,11 +20,12 @@ import org.jetbrains.plugins.scala.util.ScalaUtil
 import org.jetbrains.plugins.scala.worksheet.{WorksheetFileType, WorksheetUtils}
 import org.jetbrains.sbt.project.SbtProjectSystem
 
-import java.io.File
+import java.nio.file.{Files, Path}
 import java.util.regex.Pattern
 import scala.annotation.tailrec
 import scala.collection.mutable
 import scala.collection.mutable.ArrayBuffer
+import scala.jdk.StreamConverters._
 import scala.util.matching.Regex
 
 object AmmoniteUtil {
@@ -122,7 +123,7 @@ object AmmoniteUtil {
   def findJarRoot(refElement: ScReference): Option[VirtualFile] = {
     AmmoniteUtil.extractLibInfo(refElement).flatMap {
       case LibInfo(group, name, version, scalaVersion) =>
-        val existsPredicate = (f: File) => f.exists()
+        val existsPredicate = (p: Path) => Files.exists(p)
 
         val n = name
         val nv = s"${name}_$scalaVersion"
@@ -136,26 +137,26 @@ object AmmoniteUtil {
 
         val prefixPatterns = Seq(name, version)
 
-        def tryIvy(): Option[File] =
-          firstFileMatchingPattern(s"/$ivyPath", new File(getDefaultCachePath))
+        def tryIvy(): Option[Path] =
+          firstFileMatchingPattern(s"/$ivyPath", Path.of(getDefaultCachePath))
             .find(existsPredicate)
 
-        def tryCoursier(): Option[File] =
-          firstFileMatchingPattern(s"/https/*/*/$mavenPath", new File(getCoursierCachePath))
+        def tryCoursier(): Option[Path] =
+          firstFileMatchingPattern(s"/https/*/*/$mavenPath", Path.of(getCoursierCachePath))
             .find(existsPredicate)
 
         val fileOpt = tryIvy().orElse(tryCoursier())
         for {
           parent <- fileOpt
-          files = parent.listFiles()
+          files = Files.list(parent).toScala(List)
           jarModuleRoot <- files.find { cf =>
-            val name = cf.getName
+            val name = cf.getFileName.toString
             prefixPatterns.exists(name.startsWith) &&
               name.endsWith(".jar") &&
               !name.endsWith("-sources.jar") &&
               !name.endsWith("-javadoc.jar")
           }
-          res <-  Option(JarFileSystem.getInstance().findFileByPath(jarModuleRoot.getCanonicalPath.withJarSeparator))
+          res <- Option(JarFileSystem.getInstance().findFileByPath(jarModuleRoot.toRealPath().toString.withJarSeparator))
         } yield res
     }
   }
@@ -208,18 +209,18 @@ object AmmoniteUtil {
     pattern.split("/").filter(_.nonEmpty).foldRight[FileTree](Empty)(segment)
 
   @tailrec
-  def treeToFiles(tree: FileTree, acc: List[File]): List[File] = tree match {
+  private def treeToPaths(tree: FileTree, acc: List[Path]): List[Path] = tree match {
     case Empty => acc
     case OneSegment(segment, next) =>
-      treeToFiles(next, acc.filter(_.isDirectory).flatMap(_.listFiles().filter(_.getName == segment)))
+      treeToPaths(next, acc.filter(Files.isDirectory(_)).flatMap(Files.list(_).filter(_.getFileName.toString == segment).toScala(List)))
     case AlternativeSegments(segments, next) =>
-      treeToFiles(next, acc.filter(_.isDirectory).flatMap(_.listFiles().filter(f => segments.contains(f.getName))))
+      treeToPaths(next, acc.filter(Files.isDirectory(_)).flatMap(Files.list(_).filter(f => segments.contains(f.getFileName.toString)).toScala(List)))
     case AnySegment(next) =>
-      treeToFiles(next, acc.filter(_.isDirectory).flatMap(_.listFiles()))
+      treeToPaths(next, acc.filter(Files.isDirectory(_)).flatMap(Files.list(_).toScala(List)))
   }
 
-  def firstFileMatchingPattern(pattern: String, rootFile: File): List[File] =
-    treeToFiles(patternToTree(pattern), List(rootFile))
+  private def firstFileMatchingPattern(pattern: String, rootFile: Path): List[Path] =
+    treeToPaths(patternToTree(pattern), List(rootFile))
 
   private def getResolveItem(library: Library,
                              project: Project): Option[PsiDirectory] =
