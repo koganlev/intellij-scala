@@ -44,7 +44,15 @@ class ScGivenDefinitionImpl(
 
   override def isObject: Boolean = typeParametersClause.isEmpty && parameters.isEmpty
 
-  override def nameId: PsiElement = nameElement.getOrElse(extendsBlock)
+  override def nameId: PsiElement = {
+    def typeElement =
+      extendsBlock.templateParents
+        .flatMap(_.firstParentClause)
+        .map(_.typeElement)
+    nameElement
+      .orElse(typeElement)
+      .orNull
+  }
 
   override def givenType(): TypeResult =
     typeElements
