@@ -84,13 +84,13 @@ class EditorArea extends EditorFactoryListener with ProjectActivity with Highlig
     }
   }
 
-  private val combineDirtyScopesMethod = {
+  private lazy val combineDirtyScopesMethod = {
     val m = classOf[FileStatusMap].getDeclaredMethod("combineDirtyScopes", classOf[Document], classOf[TextRange], classOf[Object])
     m.setAccessible(true)
     m
   }
 
-  private val stopProcessMethod = {
+  private lazy val stopProcessMethod = {
     val m = classOf[DaemonCodeAnalyzerImpl].getDeclaredMethod("stopProcess", classOf[Boolean], classOf[String])
     m.setAccessible(true)
     m
