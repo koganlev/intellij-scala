@@ -261,6 +261,11 @@ class ReplaceTypeCheckWithMatchIntentionTest_Scala3 extends ScalaIntentionTestBa
   override protected def supportedIn(version: ScalaVersion): Boolean =
     version >= LatestScalaVersions.Scala_3_0
 
+  override protected def setUp(): Unit = {
+    super.setUp()
+    getScalaCodeStyleSettings.USE_SCALA3_INDENTATION_BASED_SYNTAX = true
+  }
+
   override def familyName: String = ScalaBundle.message("family.name.replace.type.check.with.pattern.matching")
 
   def test_1(): Unit = doTest(

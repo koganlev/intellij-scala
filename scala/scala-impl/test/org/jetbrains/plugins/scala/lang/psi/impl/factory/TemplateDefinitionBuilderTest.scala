@@ -75,6 +75,11 @@ class TemplateDefinitionBuilderTest_Scala3 extends TemplateDefinitionBuilderTest
   override protected def supportedIn(version: ScalaVersion): Boolean =
     version >= LatestScalaVersions.Scala_3
 
+  override protected def setUp(): Unit = {
+    super.setUp()
+    getScalaCodeStyleSettings.USE_SCALA3_INDENTATION_BASED_SYNTAX = true
+  }
+
   def testClassWithBlockGivenContext(): Unit = doTest[ScClass](
     TemplateDefinitionBuilder(kind = TemplateDefKind.Class, needsBlock = true, context = getFile),
     """class td:

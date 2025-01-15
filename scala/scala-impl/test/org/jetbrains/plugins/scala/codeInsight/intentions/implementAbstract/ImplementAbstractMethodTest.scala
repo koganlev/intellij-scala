@@ -199,6 +199,11 @@ class ImplementAbstractMethodTest extends ImplementAbstractMethodTestBase {
 final class ImplementAbstractMethodTest_Scala3 extends ImplementAbstractMethodTestBase {
   override protected def supportedIn(version: ScalaVersion): Boolean = version == LatestScalaVersions.Scala_3
 
+  override protected def setUp(): Unit = {
+    super.setUp()
+    getScalaCodeStyleSettings.USE_SCALA3_INDENTATION_BASED_SYNTAX = true
+  }
+
   def testWithPackageEmptyTemplateBody_IndentationBasedSyntax(): Unit = {
     val text =
       s"""package test

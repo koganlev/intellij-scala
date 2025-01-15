@@ -240,6 +240,11 @@ class GenerateEqualsTest_Scala3 extends ScalaGenerateTestBase {
   override protected def supportedIn(version: ScalaVersion): Boolean =
     version >= LatestScalaVersions.Scala_3_0
 
+  override protected def setUp(): Unit = {
+    super.setUp()
+    getScalaCodeStyleSettings.USE_SCALA3_INDENTATION_BASED_SYNTAX = true
+  }
+
   override protected val handler: LanguageCodeInsightActionHandler =
     new ScalaGenerateEqualsAction.Handler
 

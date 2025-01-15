@@ -14,6 +14,11 @@ class RewritersTest extends ScalaLightCodeInsightFixtureTestCase {
   override protected def supportedIn(version: ScalaVersion): Boolean =
     version >= LatestScalaVersions.Scala_3_0
 
+  override protected def setUp(): Unit = {
+    super.setUp()
+    getScalaCodeStyleSettings.USE_SCALA3_INDENTATION_BASED_SYNTAX = true
+  }
+
   private def check[E <: ScalaPsiElement : ClassTag](text: String, expectedText: String)
                                                     (operation: E => (ProjectContext, ScalaFeatures) => ScalaPsiElement): Unit = {
     val file = configureFromFileText(text)

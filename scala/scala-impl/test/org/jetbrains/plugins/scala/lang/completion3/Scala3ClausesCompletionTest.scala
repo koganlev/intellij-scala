@@ -6,6 +6,11 @@ import org.jetbrains.plugins.scala.lang.completion3.base.ScalaClausesCompletionT
 class Scala3ClausesCompletionTest extends ScalaClausesCompletionTestBase {
   override protected def supportedIn(version: ScalaVersion): Boolean = version >= ScalaVersion.Latest.Scala_3_0
 
+  override protected def setUp(): Unit = {
+    super.setUp()
+    getScalaCodeStyleSettings.USE_SCALA3_INDENTATION_BASED_SYNTAX = true
+  }
+
   def testScala3Enum(): Unit = doMatchCompletionTest(
     fileText =
       s"""enum Direction:

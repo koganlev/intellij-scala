@@ -4,8 +4,8 @@ import com.intellij.openapi.project.Project
 import com.intellij.testFramework.EditorTestUtil.{CARET_TAG, SELECTION_END_TAG, SELECTION_START_TAG}
 import org.jetbrains.plugins.scala.lang.formatting.settings.ScalaCodeStyleSettings
 import org.jetbrains.plugins.scala.overrideImplement.ScExtensionMethodMember
-import org.jetbrains.plugins.scala.util.{RevertableChange, TypeAnnotationSettings}
 import org.jetbrains.plugins.scala.util.runners.{MultipleScalaVersionsRunner, RunWithScalaVersions, TestScalaVersion}
+import org.jetbrains.plugins.scala.util.{RevertableChange, TypeAnnotationSettings}
 import org.junit.runner.RunWith
 
 @RunWith(classOf[MultipleScalaVersionsRunner])
@@ -733,7 +733,7 @@ class ScalaOverrideImplementTest_3_Latest extends ScalaOverrideImplementTestBase
          |  extension (target: String)
          |    override def myExtSimpleSingleNonAbstract: String = ${START}super.myExtSimpleSingleNonAbstract(target)$END
          |""".stripMargin
-    runTest("myExtSimpleSingleNonAbstract", before, after, isImplement = false)
+    runTest("myExtSimpleSingleNonAbstract", before, after, isImplement = false, settings = settingsWithIndentationBasedSyntax)
   }
 
   def testExtension_SimpleSingleWithParams_Override(): Unit = {
@@ -753,7 +753,7 @@ class ScalaOverrideImplementTest_3_Latest extends ScalaOverrideImplementTestBase
          |  extension (target: String)
          |    override def myExtSimpleSingleNonAbstract(param: Int): String = ${START}super.myExtSimpleSingleNonAbstract(target)(param)$END
          |""".stripMargin
-    runTest("myExtSimpleSingleNonAbstract", before, after, isImplement = false)
+    runTest("myExtSimpleSingleNonAbstract", before, after, isImplement = false, settings = settingsWithIndentationBasedSyntax)
   }
 
   def testExtension_SimpleSingle(): Unit = {
@@ -773,7 +773,7 @@ class ScalaOverrideImplementTest_3_Latest extends ScalaOverrideImplementTestBase
          |  extension (target: String)
          |    override def myExtSimpleSingleAbstract: String = ${START}???$END
          |""".stripMargin
-    runTest("myExtSimpleSingleAbstract", before, after, isImplement = true)
+    runTest("myExtSimpleSingleAbstract", before, after, isImplement = true, settings = settingsWithIndentationBasedSyntax)
   }
 
   def testExtension_MultipleMethods(): Unit = {
@@ -797,7 +797,7 @@ class ScalaOverrideImplementTest_3_Latest extends ScalaOverrideImplementTestBase
          |    override def myExt22(p: Int): String = ???
          |""".stripMargin
 
-    runImplementAllTest(before, after)
+    runImplementAllTest(before, after, settings = settingsWithIndentationBasedSyntax)
   }
 
   def testExtension_MultipleMethods_UseBraces(): Unit = {
@@ -823,8 +823,7 @@ class ScalaOverrideImplementTest_3_Latest extends ScalaOverrideImplementTestBase
          |}
          |""".stripMargin
 
-    ScalaCodeStyleSettings.getInstance(getProject).USE_SCALA3_INDENTATION_BASED_SYNTAX = false
-    runImplementAllTest(before, after)
+    runImplementAllTest(before, after, settings = settingsWithoutIndentationBasedSyntax)
   }
 
   def testExtension_WithTypeParameters(): Unit = {
@@ -861,7 +860,7 @@ class ScalaOverrideImplementTest_3_Latest extends ScalaOverrideImplementTestBase
          |    override def myExt3: String = ???
          |""".stripMargin
 
-    runImplementAllTest(before, after)
+    runImplementAllTest(before, after, settings = settingsWithIndentationBasedSyntax)
   }
 
 
@@ -886,7 +885,7 @@ class ScalaOverrideImplementTest_3_Latest extends ScalaOverrideImplementTestBase
          |    override protected def myExt42(p: Int): String = ???
          |""".stripMargin
 
-    runImplementAllTest(before, after)
+    runImplementAllTest(before, after, settings = settingsWithIndentationBasedSyntax)
   }
 
   def testExtension_WithSoftModifiers(): Unit = {
@@ -910,7 +909,7 @@ class ScalaOverrideImplementTest_3_Latest extends ScalaOverrideImplementTestBase
          |    override transparent inline def myExt52(p: Int): String = ???
          |""".stripMargin
 
-    runImplementAllTest(before, after)
+    runImplementAllTest(before, after, settings = settingsWithIndentationBasedSyntax)
   }
 
 
@@ -941,7 +940,7 @@ class ScalaOverrideImplementTest_3_Latest extends ScalaOverrideImplementTestBase
          |    override def myExt62: String = ???
          |""".stripMargin
 
-    runImplementAllTest(before, after, copyScalaDoc = true)
+    runImplementAllTest(before, after, copyScalaDoc = true, settings = settingsWithIndentationBasedSyntax)
   }
 
   def testExtension_WithUsingClauses(): Unit = {
@@ -962,7 +961,7 @@ class ScalaOverrideImplementTest_3_Latest extends ScalaOverrideImplementTestBase
          |    override def myExt7(p1: Int)(using u1: Short, u2: MyTrait)(p2: Long): String = ???
          |""".stripMargin
     addHelperClassesForExtensionTests()
-    runImplementAllTest(before, after)
+    runImplementAllTest(before, after, settings = settingsWithIndentationBasedSyntax)
   }
 
   def testExtension_WithUsingClausesInTheBeginningOfParametersClause(): Unit = {
@@ -983,7 +982,7 @@ class ScalaOverrideImplementTest_3_Latest extends ScalaOverrideImplementTestBase
          |    override def myExt8(using u1: Short, u2: MyTrait)(p1: Int)(p2: Long): String = ???
          |""".stripMargin
     addHelperClassesForExtensionTests()
-    runImplementAllTest(before, after)
+    runImplementAllTest(before, after, settings = settingsWithIndentationBasedSyntax)
   }
 
   def testExtension_CopyTargetNameAnnotation(): Unit = {
@@ -1017,7 +1016,7 @@ class ScalaOverrideImplementTest_3_Latest extends ScalaOverrideImplementTestBase
          |    override def myExtTargetNameTest2: String = ???
          |""".stripMargin
 
-    runImplementAllTest(before, after)
+    runImplementAllTest(before, after, settings = settingsWithIndentationBasedSyntax)
   }
 
   def testExtension_ComplicatedMixedExample(): Unit = {
@@ -1038,7 +1037,7 @@ class ScalaOverrideImplementTest_3_Latest extends ScalaOverrideImplementTestBase
          |    override def myExtComplex[E <: MyClass, E2 <: MyTrait](a: MyClass)(using b: MyClass, e: E)(t: T): String = ???
          |""".stripMargin
     addHelperClassesForExtensionTests()
-    runImplementAllTest(before, after)
+    runImplementAllTest(before, after, settings = settingsWithIndentationBasedSyntax)
   }
 
   def testExtension_ComplicatedMixedExample_Override(): Unit = {
@@ -1059,7 +1058,7 @@ class ScalaOverrideImplementTest_3_Latest extends ScalaOverrideImplementTestBase
          |    override def myExtComplex[E <: MyClass, E2 <: MyTrait](a: MyClass)(using b: MyClass, e: E)(t: T): String = super.myExtComplex(target)(a)(t)
          |""".stripMargin
     addHelperClassesForExtensionTests()
-    runTest("myExtComplex", before, after, isImplement = false)
+    runTest("myExtComplex", before, after, isImplement = false, settings = settingsWithIndentationBasedSyntax)
   }
 
   def testExtensionImplementedInNestedIndentationBasedSyntax(): Unit = {
@@ -1095,7 +1094,8 @@ class ScalaOverrideImplementTest_3_Latest extends ScalaOverrideImplementTestBase
         |        extension (target: String)
         |          override def myExt3(p: String): String = ???
         |          override def myExt4(p: String): String = ???
-        |""".stripMargin
+        |""".stripMargin,
+      settings = settingsWithIndentationBasedSyntax,
     )
   }
 

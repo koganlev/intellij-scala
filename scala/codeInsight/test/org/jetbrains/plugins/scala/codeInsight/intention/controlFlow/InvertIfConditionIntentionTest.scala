@@ -472,6 +472,11 @@ class InvertIfConditionIntentionTest_Scala3 extends intentions.ScalaIntentionTes
 
   override protected def supportedIn(version: ScalaVersion): Boolean = version == ScalaVersion.Latest.Scala_3
 
+  override protected def setUp(): Unit = {
+    super.setUp()
+    getScalaCodeStyleSettings.USE_SCALA3_INDENTATION_BASED_SYNTAX = true
+  }
+
   override def familyName = ScalaCodeInsightBundle.message("family.name.invert.if.condition")
 
   def testInvertIf1(): Unit = {

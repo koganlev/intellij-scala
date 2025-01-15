@@ -313,6 +313,11 @@ class ClassNameCompletionTest extends ScalaClassNameCompletionTest {
   TestScalaVersion.Scala_3_Latest
 ))
 class ClassNameCompletionTest_Scala_3 extends ClassNameCompletionTest {
+  override protected def setUp(): Unit = {
+    super.setUp()
+    getScalaCodeStyleSettings.USE_SCALA3_INDENTATION_BASED_SYNTAX = true
+  }
+
   override def testInterfaceNameImplement(): Unit = doCompletionTest(
     fileText =
       s"""

@@ -114,6 +114,11 @@ class ExpandBooleanIntentionTest_Scala3 extends intentions.ScalaIntentionTestBas
   override protected def supportedIn(version: ScalaVersion): Boolean =
     version >= LatestScalaVersions.Scala_3_0
 
+  override protected def setUp(): Unit = {
+    super.setUp()
+    getScalaCodeStyleSettings.USE_SCALA3_INDENTATION_BASED_SYNTAX = true
+  }
+
   override val familyName = ScalaCodeInsightBundle.message("family.name.expand.boolean")
 
   def testExpandBoolean1(): Unit = {

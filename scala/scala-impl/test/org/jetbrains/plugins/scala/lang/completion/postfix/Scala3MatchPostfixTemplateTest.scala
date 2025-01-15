@@ -10,6 +10,11 @@ import org.junit.runner.RunWith
 ))
 @WithIndexingMode(mode = IndexingMode.DUMB_EMPTY_INDEX)
 final class Scala3MatchPostfixTemplateTest extends PostfixTemplateTest {
+  override protected def setUp(): Unit = {
+    super.setUp()
+    getScalaCodeStyleSettings.USE_SCALA3_INDENTATION_BASED_SYNTAX = true
+  }
+
   override def testPath(): String = super.testPath() + "match3/"
 
   def testSimple(): Unit = doTest()

@@ -40,11 +40,11 @@ abstract class ScalaOverrideImplementTestBase extends ScalaLightCodeInsightFixtu
   protected def runImplementAllTest(
     fileText: String,
     expectedText: String,
-    copyScalaDoc: Boolean = false
+    copyScalaDoc: Boolean = false,
+    settings: ScalaCodeStyleSettings = TypeAnnotationSettings.alwaysAddType(ScalaCodeStyleSettings.getInstance(getProject)),
   ): Unit = {
     val isImplement = true
     val fileName: String = "dummy.scala"
-    val settings = TypeAnnotationSettings.alwaysAddType(ScalaCodeStyleSettings.getInstance(getProject))
     runTest(
       None,
       fileText,

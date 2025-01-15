@@ -9,6 +9,11 @@ class Scala3EnterTest extends DoEditorStateTestOps with Scala2AndScala3EnterActi
 
   import Scala3TestDataBracelessCode._
 
+  override protected def setUp(): Unit = {
+    super.setUp()
+    getScalaCodeStyleSettings.USE_SCALA3_INDENTATION_BASED_SYNTAX = true
+  }
+
   private def doTypingTestInWrapperContexts(
     contextCode: String,
     codeToType: CodeWithDebugName,

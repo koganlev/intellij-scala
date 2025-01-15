@@ -669,6 +669,11 @@ class ScalaKeywordCompletionTest_2_13 extends ScalaCompletionTestBase {
   TestScalaVersion.Scala_3_Latest
 ))
 class ScalaKeywordCompletionTest_3_Latest extends ScalaCompletionTestBase {
+  override protected def setUp(): Unit = {
+    super.setUp()
+    getScalaCodeStyleSettings.USE_SCALA3_INDENTATION_BASED_SYNTAX = true
+  }
+
   def testMatch(): Unit = doCompletionTest(
     fileText =
       s"42 m$CARET",

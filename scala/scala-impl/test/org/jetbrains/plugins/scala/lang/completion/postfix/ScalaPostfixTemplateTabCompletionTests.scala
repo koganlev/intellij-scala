@@ -157,6 +157,11 @@ class ScalaPostfixTemplateTabCompletionTest_2_13 extends ScalaPostfixTemplateTab
 class ScalaPostfixTemplateTabCompletionTest_3_Latest extends ScalaPostfixTemplateTabCompletionTestBase {
   override def supportedIn(version: ScalaVersion): Boolean = version == ScalaVersion.Latest.Scala_3
 
+  override protected def setUp(): Unit = {
+    super.setUp()
+    getScalaCodeStyleSettings.USE_SCALA3_INDENTATION_BASED_SYNTAX = true
+  }
+
   override def getTestDataPath: String = super.getTestDataPath + "/scala3"
 
   def testMatch(): Unit = doTest(classOf[ScalaMatchPostfixTemplate])()

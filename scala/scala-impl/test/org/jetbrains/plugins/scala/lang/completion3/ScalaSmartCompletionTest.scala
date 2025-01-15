@@ -517,6 +517,11 @@ class ScalaSmartCompletionTest_2_13 extends ScalaCompletionTestBase {
 @RunWith(classOf[MultipleScalaVersionsRunner])
 @RunWithScalaVersions(Array(TestScalaVersion.Scala_3_Latest))
 class ScalaSmartCompletionTest_3_Latest extends ScalaCompletionTestBase {
+  override protected def setUp(): Unit = {
+    super.setUp()
+    getScalaCodeStyleSettings.USE_SCALA3_INDENTATION_BASED_SYNTAX = true
+  }
+
   //Return type for inserting method is generated according to TypeAnnotations Settings
   def testNewFunction(): Unit = {
     val project = getProject

@@ -117,6 +117,11 @@ class MergeIfToAndIntentionTest_Scala3 extends intentions.ScalaIntentionTestBase
 
   override protected def supportedIn(version: ScalaVersion): Boolean = version == ScalaVersion.Latest.Scala_3
 
+  override protected def setUp(): Unit = {
+    super.setUp()
+    getScalaCodeStyleSettings.USE_SCALA3_INDENTATION_BASED_SYNTAX = true
+  }
+
   override def familyName = ScalaCodeInsightBundle.message("family.name.merge.nested.ifs.to.anded.condition")
 
   def testMergeIfToAnd1(): Unit = {
