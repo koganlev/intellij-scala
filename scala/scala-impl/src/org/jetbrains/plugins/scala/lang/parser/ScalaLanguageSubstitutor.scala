@@ -89,8 +89,12 @@ private object ScalaLanguageSubstitutor {
   /**
    * See [[https://semver.org/]] for the format of library version.<br>
    * In particular see [[https://semver.org/#is-there-a-suggested-regular-expression-regex-to-check-a-semver-string regexp part]]<br>
-   * (we use a simplified regexp)
+   * (we use a simplified regexp).
+   *
+   * The regex allows the third part of the semver version to be optional. The `sbt-typelevel` sbt plugin publishes
+   * snapshot releases with only the Major and Minor parts of the version and this allows jars published using
+   * `sbt-typelevel` to be correctly recognized by IDEA.
    */
   private val SemVerSimplifiedRegex: Regex =
-    raw"\d+\.\d+\.\d+(?:-[\w\d-]+(\.[\w\d-]+)*)?(?:\+[\w\d-]+(\.[\w\d-]+)*)?".r
+    raw"\d+\.\d+(\.\d+)?(?:-[\w\d-]+(\.[\w\d-]+)*)?(?:\+[\w\d-]+(\.[\w\d-]+)*)?".r
 }
