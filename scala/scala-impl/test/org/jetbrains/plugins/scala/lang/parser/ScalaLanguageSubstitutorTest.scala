@@ -80,6 +80,26 @@ class ScalaLanguageSubstitutorTest {
   }
 
   @Test
+  def looksLikeScala3LibJar_GitHashSnapshot(): Unit = {
+    assertNotRecognised("library-name_3-1.0.0-ecf93db.jar")
+    assertIsRecognised("library-name_3-1.0.0-ecf93db-sources.jar")
+    assertNotRecognised("library-name_3-1.0.0-ecf93db-SNAPSHOT.jar")
+    assertIsRecognised("library-name_3-1.0.0-ecf93db-SNAPSHOT-sources.jar")
+    assertNotRecognised("library-name_3-0.0.0-2dfa388.jar")
+    assertIsRecognised("library-name_3-0.0.0-2dfa388-sources.jar")
+    assertNotRecognised("library-name_3-0.0.0-2dfa388-SNAPSHOT.jar")
+    assertIsRecognised("library-name_3-0.0.0-2dfa388-SNAPSHOT-sources.jar")
+  }
+
+  @Test
+  def looksLikeScala3LibJar_TypelevelSnapshot(): Unit = {
+    assertNotRecognised("cats-effect_3-3.6-ecf93db.jar")
+    assertIsRecognised("cats-effect_3-3.6-ecf93db-sources.jar")
+    assertNotRecognised("storch_3-0.0-2dfa388-SNAPSHOT.jar")
+    assertIsRecognised("storch_3-0.0-2dfa388-SNAPSHOT-sources.jar")
+  }
+
+  @Test
   def doesNotLookLikeScala3LibJar_No_3SuffixAfterLibraryNameMainPart(): Unit = {
     //do not have "_3" suffix after library name main part
     assertNotRecognised("scala-library-3.0.0-sources.jar")
@@ -134,5 +154,25 @@ class ScalaLanguageSubstitutorTest {
   def doesNotLookLikeScala3LibJar_PublishLocal_FullPath(): Unit = {
     assertNotRecognisedPath("/library-name_3.jar!/")
     assertIsRecognised("/library-name_3-sources.jar!/")
+  }
+
+  @Test
+  def doesNotLookLikeScala3LibJar_GitHashSnapshot_FullPath(): Unit = {
+    assertNotRecognisedPath("/library-name_3-1.0.0-ecf93db.jar!/")
+    assertIsRecognised("/library-name_3-1.0.0-ecf93db-sources.jar!/")
+    assertNotRecognisedPath("/library-name_3-1.0.0-ecf93db-SNAPSHOT.jar!/")
+    assertIsRecognised("/library-name_3-1.0.0-ecf93db-SNAPSHOT-sources.jar!/")
+    assertNotRecognisedPath("/library-name_3-0.0.0-2dfa388.jar!/")
+    assertIsRecognised("/library-name_3-0.0.0-2dfa388-sources.jar!/")
+    assertNotRecognisedPath("/library-name_3-0.0.0-2dfa388-SNAPSHOT.jar!/")
+    assertIsRecognised("/library-name_3-0.0.0-2dfa388-SNAPSHOT-sources.jar!/")
+  }
+
+  @Test
+  def doesNotLookLikeScala3LibJar_TypelevelSnapshot_FullPath(): Unit = {
+    assertNotRecognisedPath("/cats-core_3-3.6-ecf93db.jar!/")
+    assertIsRecognised("/cats-effect_3-3.6-ecf93db-sources.jar!/")
+    assertNotRecognisedPath("/storch_3-0.0-2dfa388-SNAPSHOT.jar!/")
+    assertIsRecognised("/storch_3-0.0-2dfa388-SNAPSHOT-sources.jar!/")
   }
 }
