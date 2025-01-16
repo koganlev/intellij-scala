@@ -717,7 +717,6 @@ lazy val bsp =
       buildInfoKeys := Seq("bloopVersion" -> Versions.bloopVersion),
       buildInfoOptions += BuildInfoOption.ConstantValue,
       packageMethod := PackagingMethod.PluginModule("scalaCommunity.bsp"),
-      packageAssembleLibraries := true
     )
 
 lazy val scalaCli =
