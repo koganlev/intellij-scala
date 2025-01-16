@@ -12,7 +12,7 @@ import org.jetbrains.plugins.scala.project.{ModuleExt, ProjectExt}
 import org.jetbrains.plugins.scala.statistics.ScalaProjectStateCollector._
 import org.jetbrains.sbt.settings.SbtSettings
 
-import java.io.File
+import java.nio.file.{Files, Path}
 import java.util
 import java.util.zip.ZipFile
 import scala.io.Source
@@ -45,8 +45,8 @@ class ScalaProjectStateCollector extends ProjectUsagesCollector {
       .map(compilerConfiguration.getSettingsForModule)
       .flatMap(_.plugins)
       .toSet[String]
-      .map(new File(_))
-      .filterNot(_.isDirectory)
+      .map(Path.of(_))
+      .filterNot(Files.isDirectory(_))
       .flatMap(getScalacPluginInfo)
       .collect { case (name, version) if CompilerPluginsWhiteList.get.contains(name) =>
         CompilerPlugin.metric(name, version)
@@ -83,9 +83,9 @@ object ScalaProjectStateCollector {
 
   private val CompilerPluginRegex = ".+_\\d+\\.\\d+(\\.\\d+)?-(\\d+\\.\\d+(\\.\\d+)?)\\.jar".r
 
-  private def readScalacPluginName(jar: File): Option[String] =
-    if (jar.canRead)
-      Using.resource(new ZipFile(jar)) { zipFile =>
+  private def readScalacPluginName(jar: Path): Option[String] =
+    if (Files.isReadable(jar))
+      Using.resource(new ZipFile(jar.toFile)) { zipFile =>
         for {
           entry <- Option(zipFile.getEntry("scalac-plugin.xml"))
           content = Using.resource(Source.fromInputStream(zipFile.getInputStream(entry)))(_.mkString)
@@ -96,12 +96,12 @@ object ScalaProjectStateCollector {
     else
       None
 
-  private def guessScalacPluginVersion(jar: File): Option[String] = jar.getName match {
+  private def guessScalacPluginVersion(jar: Path): Option[String] = jar.getFileName.toString match {
     case CompilerPluginRegex(_, version, _) => Some(version)
     case _ => None
   }
 
-  private def getScalacPluginInfo(jar: File): Option[(String, String)] =
+  private def getScalacPluginInfo(jar: Path): Option[(String, String)] =
     for {
       name <- readScalacPluginName(jar)
       version = guessScalacPluginVersion(jar).getOrElse("Unknown")
