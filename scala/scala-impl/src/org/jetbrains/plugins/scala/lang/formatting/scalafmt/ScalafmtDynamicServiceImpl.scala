@@ -20,12 +20,11 @@ import org.jetbrains.plugins.scala.lang.formatting.scalafmt.dynamic.ScalafmtDyna
 import org.jetbrains.plugins.scala.lang.formatting.scalafmt.dynamic.ScalafmtDynamicDownloader._
 import org.scalafmt.dynamic.{ScalafmtReflect, ScalafmtVersion}
 
-import java.io.File
 import java.net.URL
+import java.nio.file.{Files, Paths}
 import java.util.concurrent.ConcurrentHashMap
 import scala.beans.BeanProperty
 import scala.collection.concurrent
-import scala.collection.mutable
 import scala.jdk.CollectionConverters._
 import scala.reflect.internal.util.ScalaClassLoader.URLClassLoader
 import scala.util.Try
@@ -83,7 +82,7 @@ final class ScalafmtDynamicServiceImpl
           if (state.containsResolvedVersion(version)) {
             val jarUrls = state.getUrlsForVersion(version)
             //user can remove `.ivy2/cache` so our resolve caches become stale
-            val missingFiles = jarUrls.map(url => new File(url.toURI)).filterNot(_.exists())
+            val missingFiles = jarUrls.map(url => Paths.get(url.toURI)).filterNot(Files.exists(_))
             if (missingFiles.isEmpty) {
               Some(resolveClassPath(version, jarUrls))
             } else {

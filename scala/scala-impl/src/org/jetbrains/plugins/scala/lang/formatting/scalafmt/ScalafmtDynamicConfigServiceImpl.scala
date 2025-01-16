@@ -10,7 +10,6 @@ import com.intellij.openapi.vfs.{LocalFileSystem, VirtualFile}
 import com.intellij.psi.PsiFile
 import com.intellij.util.concurrency.annotations.RequiresReadLock
 import com.typesafe.config._
-import org.apache.commons.io.FileUtils
 import org.apache.commons.text.StringEscapeUtils
 import org.jetbrains.plugins.scala.ScalaBundle
 import org.jetbrains.plugins.scala.extensions._
@@ -26,8 +25,8 @@ import org.jetbrains.plugins.scala.settings.ShowSettingsUtilImplExt
 import org.jetbrains.sbt.language.SbtFile
 import org.scalafmt.dynamic.{ScalafmtReflect, ScalafmtReflectConfig, ScalafmtVersion}
 
-import java.io.File
 import java.nio.charset.Charset
+import java.nio.file.{Files, Paths}
 import java.util.concurrent.ConcurrentHashMap
 import scala.collection.{concurrent, mutable}
 import scala.jdk.CollectionConverters._
@@ -313,10 +312,10 @@ object ScalafmtDynamicConfigServiceImpl {
     ScalafmtConfigUtils.projectConfigFileAbsolutePath(project, path) match {
       case Some(path) =>
         val tri = Try {
-          val file = new File(path)
+          val file = Paths.get(path)
           // TODO: implement detecting of the latest version from the Internet
-          FileUtils.writeStringToFile(file, "version = 2.7.5", Charset.forName("UTF-8"))
-          val vFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(file)
+          Files.writeString(file, "version = 2.7.5", Charset.forName("UTF-8"))
+          val vFile = LocalFileSystem.getInstance().refreshAndFindFileByNioFile(file)
           if (openInEditor)
             invokeLater {
               FileEditorManager.getInstance(project).openFile(vFile, true)
