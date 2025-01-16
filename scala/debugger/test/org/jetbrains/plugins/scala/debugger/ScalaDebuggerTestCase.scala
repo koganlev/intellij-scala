@@ -44,7 +44,7 @@ abstract class ScalaDebuggerTestCase extends DebuggerTestCase with ScalaExecutio
 
   override protected def createJavaParameters(mainClass: String): JavaParameters = {
     val params = new JavaParameters()
-    params.getClassPath.addAllFiles(getModule.scalaCompilerClasspath.toArray)
+    params.getClassPath.addAllFiles(getModule.scalaCompilerClasspath.map(_.toFile).toArray)
     params.getClassPath.add(getAppOutputPath)
     params.setJdk(getTestProjectJdk)
     params.setWorkingDirectory(getTestAppPath)

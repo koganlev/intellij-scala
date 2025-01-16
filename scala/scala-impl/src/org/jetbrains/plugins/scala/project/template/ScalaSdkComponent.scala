@@ -1,12 +1,12 @@
 package org.jetbrains.plugins.scala.project.template
 
-import java.io.File
+import java.nio.file.{Files, Path}
 import java.util.function.Predicate
 
 case class ScalaSdkComponent(artifact: Artifact,
                              kind: Kind,
                              version: Option[String],
-                             file: File)
+                             file: Path)
 
 object ScalaSdkComponent {
 
@@ -21,8 +21,8 @@ object ScalaSdkComponent {
   private val ScalaArtifactsAllKindsPatterns: Set[ArtifactPattern] =
     buildAllKindsPatterns(Artifact.ScalaArtifacts)
 
-  def fromFile(file: File, patterns: Set[ArtifactPattern] = ScalaArtifactsAllKindsPatterns): Option[ScalaSdkComponent] = {
-    val pattern = patterns.find(_.predicate.test(file.getName))
+  def fromFile(file: Path, patterns: Set[ArtifactPattern] = ScalaArtifactsAllKindsPatterns): Option[ScalaSdkComponent] = {
+    val pattern = patterns.find(_.predicate.test(file.getFileName.toString))
     pattern.map {
       case ArtifactPattern(artifact, kind, _) =>
         val version = artifact.versionOf(file)
@@ -30,12 +30,12 @@ object ScalaSdkComponent {
     }
   }
 
-  def fromFiles(files: Seq[File], patterns: Set[ArtifactPattern] = ScalaArtifactsAllKindsPatterns): Seq[ScalaSdkComponent] =
+  def fromFiles(files: Seq[Path], patterns: Set[ArtifactPattern] = ScalaArtifactsAllKindsPatterns): Seq[ScalaSdkComponent] =
     for {
       file <- files
 
-      fileName = file.getName
-      if file.isFile && fileName.endsWith(".jar")
+      fileName = file.getFileName.toString
+      if Files.isRegularFile(file) && fileName.endsWith(".jar")
 
       ArtifactPattern(artifact, kind, pattern) <- patterns
       if pattern.test(fileName)

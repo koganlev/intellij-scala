@@ -17,9 +17,8 @@ import org.jetbrains.plugins.scala.DependencyManagerBase.DependencyDescription.s
 import org.jetbrains.plugins.scala.extensions.IterableOnceExt
 import org.jetbrains.plugins.scala.project.template._
 
-import java.io.File
 import java.net.URL
-import java.nio.file.{Files, Paths}
+import java.nio.file.{Files, Path, Paths}
 import java.util.concurrent.atomic.AtomicReference
 import scala.annotation.unused
 import scala.jdk.CollectionConverters._
@@ -110,7 +109,7 @@ abstract class DependencyManagerBase {
 
     def mkIvySettings(): IvySettings = {
       val ivySettings = new IvySettings
-      ivySettings.setDefaultIvyUserDir(ivyHome)
+      ivySettings.setDefaultIvyUserDir(ivyHome.toFile)
 
       val useFileSystemOnly = useFileSystemResolversOnly
       val myResolvers = resolvers
@@ -214,7 +213,7 @@ abstract class DependencyManagerBase {
       case _ => Types.JAR
     }
     val file = artifactReport.getLocalFile
-    ResolvedDependency(DependencyDescription.fromId(id, kind), file)
+    ResolvedDependency(DependencyDescription.fromId(id, kind), file.toPath)
   }
 
   @throws[DependencyManagerBase.ResolveException]
@@ -252,9 +251,10 @@ abstract class DependencyManagerBase {
   def resolveSingleFromCaches(dependency: DependencyDescription): Either[DependencyDescription, ResolvedDependency] =
     dependency match {
       case info@DependencyDescription(org, artId, version, _, kind, false, _) if !ignoreArtifact(artId) =>
-        val relativePath = s"cache/$org/$artId/${kind}s/$artId-$version${info.classifierBare.fold("")("-" + _)}.jar"
-        val file = new File(ivyHome, relativePath)
-        if (file.exists())
+        val relativePath = Path.of("cache", org, artId, s"${kind}s", s"$artId-$version${info.classifierBare.fold("")("-" + _)}.jar")
+
+        val file = ivyHome.resolve(relativePath)
+        if (Files.exists(file))
           Right(ResolvedDependency(info, file))
         else
           Left(info)
@@ -300,10 +300,13 @@ abstract class DependencyManagerBase {
 
 object DependencyManagerBase {
 
-  private val homePrefix: File = sys.props.get("tc.idea.prefix").orElse(Some(SystemProperties.getUserHome)).map(new File(_)).get
-  val ivyHome: File = sys.props.get("sbt.ivy.home")
+  private val homePrefix: Path = sys.props.get("tc.idea.prefix")
+    .orElse(Some(SystemProperties.getUserHome))
+    .map(Path.of(_)).get
+  val ivyHome: Path = sys.props.get("sbt.ivy.home")
     .orElse(sys.env.get("TC_SBT_IVY_HOME").filter(_ => isUnitTestMode))
-    .map(new File(_)).orElse(Option(new File(homePrefix, ".ivy2"))).get
+    .map(Path.of(_))
+    .orElse(Option(homePrefix.resolve(".ivy2"))).get
 
   private val fileSystemOnlyIvySettingsURL: URL = {
     val clazz = classOf[DependencyManagerBase]
@@ -367,7 +370,7 @@ object DependencyManagerBase {
 
   sealed trait Dependency
   case class UnresolvedDependency(info: DependencyDescription) extends Dependency
-  case class ResolvedDependency(info: DependencyDescription, file: File) extends Dependency
+  case class ResolvedDependency(info: DependencyDescription, file: Path) extends Dependency
 
   sealed trait Resolver
   object Resolver {

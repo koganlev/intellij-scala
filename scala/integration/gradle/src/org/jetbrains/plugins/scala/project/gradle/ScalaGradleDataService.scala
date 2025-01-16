@@ -90,16 +90,16 @@ class ScalaGradleDataService extends ScalaAbstractProjectDataService[ScalaModelD
           // the Scala 2.13.12+ compiler bridges, due to clashes.
           val compilerBridgeBinaryJar = library.libraryVersion.filter(_.startsWith("3.")).flatMap { version =>
             ScalaSdkUtils.compilerBridgeJarName(version).flatMap { bridgeJarName =>
-              compilerClasspath.find(_.getFileName.toString == bridgeJarName).orElse(ScalaSdkUtils.resolveCompilerBridgeJar(version).map(_.toPath))
+              compilerClasspath.find(_.getFileName.toString == bridgeJarName).orElse(ScalaSdkUtils.resolveCompilerBridgeJar(version))
             }
           }
 
           ScalaSdkUtils.ensureScalaLibraryIsConvertedToScalaSdk(
             modelsProvider,
             library,
-            compilerClasspath.map(_.toFile),
+            compilerClasspath,
             scaladocExtraClasspath = Nil, // TODO SCL-17219
-            compilerBridgeBinaryJar.map(_.toFile)
+            compilerBridgeBinaryJar
           )
         case None =>
           showScalaLibraryNotFoundWarning(compilerVersion, moduleName)

@@ -45,7 +45,7 @@ object ScalaSdkJLineFixer {
     else NotRequired
 
   def validateJLineInCompilerClassPath(module: Module): JlineResolveResult = {
-    val classPath = module.scalaCompilerClasspath.map(_.toPath)
+    val classPath = module.scalaCompilerClasspath
     validateJLineInClassPath(classPath, module)
   }
 

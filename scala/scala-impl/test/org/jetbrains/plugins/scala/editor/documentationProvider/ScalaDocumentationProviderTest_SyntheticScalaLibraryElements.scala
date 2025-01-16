@@ -23,9 +23,7 @@ class ScalaDocumentationProviderTest_SyntheticScalaLibraryElements
       ScalaVersion.Latest.Scala_3
     )
 
-  import com.intellij.lang.documentation.QuickDocHighlightingHelper.{CODE_BLOCK_PREFIX, CODE_BLOCK_SUFFIX}
-
-  private val ivyHome: String = FileUtilRt.toSystemIndependentName(DependencyManagerBase.ivyHome.getCanonicalPath)
+  private val ivyHome: String = FileUtilRt.toSystemIndependentName(DependencyManagerBase.ivyHome.toFile.getCanonicalPath)
 
   def testSyntheticClass_Any(): Unit = {
     configureScalaFromFileText(s"""val x: ${CARET}Any = 0""")

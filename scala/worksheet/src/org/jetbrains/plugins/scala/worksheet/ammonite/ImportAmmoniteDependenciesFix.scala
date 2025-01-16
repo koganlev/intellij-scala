@@ -135,7 +135,7 @@ object ImportAmmoniteDependenciesFix {
   //  ScalaActors
   //  But what if a user wants to experiment with those libraries in ammonite script?
   private def isScalaSdkFile(file: Path): Boolean =
-    file.getFileName.toString.startsWith("scala-") && Artifact.ScalaArtifacts.exists(_.versionOf(file.toFile).isDefined)
+    file.getFileName.toString.startsWith("scala-") && Artifact.ScalaArtifacts.exists(_.versionOf(file).isDefined)
 
   // TODO: this is a bad solution:
   //  1: it's unreadable and strang

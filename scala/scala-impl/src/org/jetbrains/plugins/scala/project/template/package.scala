@@ -17,6 +17,7 @@ package object template {
 
   import io.FileUtil._
 
+  // TODO: SCL-23312
   def usingTempFile[T](prefix: String, suffix: String = null)(block: File => T): T = {
     val file = createTempFile(prefix, suffix, true)
     try {
@@ -26,6 +27,7 @@ package object template {
     }
   }
 
+  // TODO: SCL-23312
   def usingTempDirectory[T](prefix: String)(block: File => T): T = {
     val directory = createTempDirectory(prefix, null, true)
     try {
@@ -35,6 +37,7 @@ package object template {
     }
   }
 
+  // TODO: SCL-23312
   def writeLinesTo(file: File)
                   (lines: String*): Unit = {
     Using.resource(new PrintWriter(new FileWriter(file))) { writer =>
@@ -51,6 +54,7 @@ package object template {
     def childExists(sub: String): Boolean = Files.exists(path / sub)
     def isDir: Boolean = Files.isDirectory(path)
     def nameContains(str: String): Boolean = path.getFileName.toString.contains(str)
+    def toLibraryRootURL: String = VfsUtil.getUrlForLibraryRoot(path)
   }
 
   implicit class FileExt(private val delegate: File) extends AnyVal {
@@ -76,8 +80,6 @@ package object template {
       val (files, directories) = children.to(LazyList).span(_.isFile)
       files #::: directories.flatMap(_.allFiles)
     }
-
-    def toLibraryRootURL: String = VfsUtil.getUrlForLibraryRoot(delegate)
 
     def toVirtualFile: Option[VirtualFile] =
       Option(VirtualFileManager.getInstance().findFileByNioPath(delegate.toPath))

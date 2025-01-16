@@ -15,7 +15,7 @@ import org.jetbrains.plugins.scala.project.settings.ScalaCompilerConfiguration
 import org.jetbrains.sbt.project.data._
 import org.junit.Assert._
 
-import java.io.File
+import java.nio.file.Path
 import scala.jdk.CollectionConverters._
 
 class SbtModuleExtDataServiceTest extends SbtModuleDataServiceTestCase {
@@ -100,7 +100,7 @@ class SbtModuleExtDataServiceTest extends SbtModuleDataServiceTestCase {
 
   def testValidJdkByHome(): Unit = {
     val jdk = ProjectJdkTable.getInstance().findJdk(IdeaTestUtil.getMockJdkName(LanguageLevel.JDK_1_8.toJavaVersion))
-    doTestSdk(Some(JdkByHome(new File(jdk.getHomePath))), jdk, LanguageLevel.JDK_1_8)
+    doTestSdk(Some(JdkByHome(Path.of(jdk.getHomePath))), jdk, LanguageLevel.JDK_1_8)
   }
 
   def testJavacOptions(): Unit = {

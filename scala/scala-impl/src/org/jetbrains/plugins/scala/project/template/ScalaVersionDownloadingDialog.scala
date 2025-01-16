@@ -4,17 +4,17 @@ import com.intellij.openapi.progress.{ProcessCanceledException, ProgressIndicato
 import com.intellij.openapi.ui.Messages
 import org.apache.ivy.util.MessageLogger
 import org.jetbrains.annotations.VisibleForTesting
-import org.jetbrains.plugins.scala.{DependencyManagerBase, ScalaBundle, ScalaVersion}
 import org.jetbrains.plugins.scala.components.libextensions.ProgressIndicatorLogger
 import org.jetbrains.plugins.scala.extensions.{IterableOnceExt, withProgressSynchronouslyTry}
 import org.jetbrains.plugins.scala.project.external.ScalaSdkUtils
 import org.jetbrains.plugins.scala.project.template.Artifact.ScalaLibrary
-import org.jetbrains.plugins.scala.project.{Version, Versions}
 import org.jetbrains.plugins.scala.project.template.ScalaVersionDownloadingDialog.{ScalaVersionResolveResult, createScalaVersionResolveResult, preselectLatestScala2Version}
+import org.jetbrains.plugins.scala.project.{Version, Versions}
+import org.jetbrains.plugins.scala.{DependencyManagerBase, ScalaBundle, ScalaVersion}
 import org.jetbrains.sbt.project.template.SComboBox
 
 import java.awt.Point
-import java.io.File
+import java.nio.file.Path
 import javax.swing.{JComponent, JPopupMenu, JScrollPane}
 import scala.util.Try
 
@@ -77,7 +77,7 @@ final class ScalaVersionDownloadingDialog(parent: JComponent) extends VersionDia
 
 object ScalaVersionDownloadingDialog {
 
-  final case class ScalaVersionResolveResult(scalaVersion: String, compilerClassPathJars: Seq[File], librarySourcesJars: Seq[File], compilerBridgeJar: Option[File])
+  final case class ScalaVersionResolveResult(scalaVersion: String, compilerClassPathJars: Seq[Path], librarySourcesJars: Seq[Path], compilerBridgeJar: Option[Path])
 
   /**
    * While Scala 3 support is WIP we do not want preselect Scala 3 version
@@ -112,7 +112,7 @@ object ScalaVersionDownloadingDialog {
     val librarySourcesResolveResult = dependencyManager.resolve(librarySources)
 
     def getScala2LibrarySources: Seq[ResolvedDependency] = {
-      val scala2Library = compilerClasspathResolveResult.filter(_.file.getName.startsWith(ScalaLibrary.prefix))
+      val scala2Library = compilerClasspathResolveResult.filter(_.file.getFileName.toString.startsWith(ScalaLibrary.prefix))
       val scala2VersionOpt = scala2Library.headOption.flatMap { rd => ScalaVersion.fromString(rd.info.version) }
       scala2VersionOpt.map { scala2Version =>
         val scala2LibrarySources = DependencyDescription.scalaArtifact("library", scala2Version).sources()

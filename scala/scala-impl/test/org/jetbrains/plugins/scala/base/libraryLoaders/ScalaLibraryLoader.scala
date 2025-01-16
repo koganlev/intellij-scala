@@ -37,11 +37,11 @@ final case class ScalaLibraryLoader(
     implicit val scalaVersionImplicit: ScalaVersion = scalaVersion
 
     val scalaLibraryClasses: ju.List[VirtualFile] = {
-      val files: Seq[File] = dependencyManager.resolve(scalaLibraryDescription).map(_.file)
+      val files: Seq[File] = dependencyManager.resolve(scalaLibraryDescription).map(_.file.toFile) // TODO: SCL-23312
       files.map(findJarFile).asJava
     }
     val scalaLibrarySources: ju.List[VirtualFile] = {
-      val files = dependencyManager.resolve(scalaLibraryDescription % Types.SRC).map(_.file)
+      val files = dependencyManager.resolve(scalaLibraryDescription % Types.SRC).map(_.file.toFile) // TODO: SCL-23312
       files.map(findJarFile).asJava
     }
 

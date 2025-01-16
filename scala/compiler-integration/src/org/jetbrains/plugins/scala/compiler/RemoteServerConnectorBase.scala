@@ -40,7 +40,7 @@ abstract class RemoteServerConnectorBase(
 
   private val javaParameters = Seq.empty[String]
 
-  private val moduleCompilerClasspath: Seq[File] = module.scalaCompilerClasspath
+  private val moduleCompilerClasspath: Seq[File] = module.scalaCompilerClasspath.map(_.toFile)
   protected var additionalCompilerClasspath: Seq[File] = Nil
   def compilerClasspath: Seq[File] = moduleCompilerClasspath ++ additionalCompilerClasspath
 
@@ -63,13 +63,13 @@ abstract class RemoteServerConnectorBase(
 
   protected def assemblyRuntimeClasspath(): Seq[File] = {
     val enumerator = OrderEnumerator.orderEntries(module).compileOnly().recursively()
-    enumerator.getClassesRoots.map(_.toFile).toSeq
+    enumerator.getClassesRoots.map(_.toPath.toFile).toSeq
   }
 
   protected final def arguments: Arguments = Arguments(
     sbtData = sbtData,
     compilerData = CompilerData(
-      compilerJars = CompilerJarsFactory.fromFiles(compilerClasspath, module.customScalaCompilerBridgeJar).toOption,
+      compilerJars = CompilerJarsFactory.fromFiles(compilerClasspath, module.customScalaCompilerBridgeJar.map(_.toFile)).toOption,
       javaHome = Some(findJdk),
       incrementalType = IncrementalityType.IDEA
     ),

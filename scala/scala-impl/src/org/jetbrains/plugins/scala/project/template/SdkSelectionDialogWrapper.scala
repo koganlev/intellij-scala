@@ -17,7 +17,7 @@ import org.jetbrains.plugins.scala.{NlsString, ScalaBundle}
 
 import java.awt.Dimension
 import java.awt.event.ActionEvent
-import java.io.File
+import java.nio.file.Path
 import java.util.Collections
 import javax.swing._
 import javax.swing.event.ListSelectionEvent
@@ -107,7 +107,7 @@ class SdkSelectionDialogWrapper(contextDirectory: VirtualFile) extends DialogWra
   private def onDownload(): Unit = {
     val resolvedScalaVersion = new ScalaVersionDownloadingDialog(this.getContentPanel).showAndGetSelected()
     resolvedScalaVersion.foreach { case ScalaVersionResolveResult(version, compilerJars, librarySourcesJars, compilerBridgeJar) =>
-      val libraryJars = compilerJars.filter(f => ScalaLibraryFileNames.exists(f.getName.startsWith(_)))
+      val libraryJars = compilerJars.filter(f => ScalaLibraryFileNames.exists(f.getFileName.toString.startsWith(_)))
       val scaladocExtraClasspath = Nil // TODO SCL-17219
       val sdkDescriptor = ScalaSdkDescriptor(Some(version), None, compilerJars, scaladocExtraClasspath, libraryJars, librarySourcesJars, Nil /*docs are not downloaded*/, compilerBridgeJar)
       closeDialogGracefully(Some(sdkDescriptor))
@@ -190,7 +190,7 @@ object SdkSelectionDialogWrapper {
   private sealed trait SdkValidationError
 
   private object SdkValidationError {
-    final case class DuplicatedFiles(duplicates: Map[String, Seq[File]], componentName: NlsString) extends SdkValidationError
+    final case class DuplicatedFiles(duplicates: Map[String, Seq[Path]], componentName: NlsString) extends SdkValidationError
   }
 
   import SdkValidationError._
@@ -204,8 +204,8 @@ object SdkSelectionDialogWrapper {
     } yield ()
   }
 
-  private def assertNoDuplicates(files: Seq[File], componentName: NlsString): Either[DuplicatedFiles, Unit] = {
-    val nameToFiles = files.groupBy(_.getName)
+  private def assertNoDuplicates(files: Seq[Path], componentName: NlsString): Either[DuplicatedFiles, Unit] = {
+    val nameToFiles = files.groupBy(_.getFileName.toString)
     val duplicates = nameToFiles.filter(_._2.lengthCompare(1) > 0)
     if (duplicates.isEmpty)
       Right(())

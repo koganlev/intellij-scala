@@ -19,7 +19,7 @@ object ProjectStructureTestUtils {
       .getOrElse(withoutPathSuffix(systemHome) + "/.ivy2/cache")
   private def coursierCacheRoot(useEnv: Boolean): String =
     sys.env.get("TC_SBT_COURSIER_HOME").map(p => s"$p/cache").filter(_ => useEnv)
-      .getOrElse(withoutPathSuffix(CoursierPaths.cacheDirectory.getAbsolutePath))
+      .getOrElse(withoutPathSuffix(CoursierPaths.cacheDirectory.toAbsolutePath.toString))
 
   private def withoutPathSuffix(path: String) =
     path.stripSuffix("/").stripSuffix("\\")

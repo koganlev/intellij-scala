@@ -46,12 +46,12 @@ private final class DocumentCompiler(project: Project) {
     client: Client
   ): Unit = {
     val useInMemoryFile = Registry.is("scala.compiler.highlighting.document.use.in.memory.file")
-    val originalSourceFile = virtualFile.toFile
+    val originalSourceFile = virtualFile.toPath
     val sourceContent = document.textWithConvertedSeparators(virtualFile)
 
     if (useInMemoryFile) {
       compileInMemoryFile(
-        sourcePath = originalSourceFile.toPath,
+        sourcePath = originalSourceFile,
         sourceContent = sourceContent,
         module = module,
         sourceScope = sourceScope,
@@ -59,7 +59,7 @@ private final class DocumentCompiler(project: Project) {
       )
     } else {
       compilePhysicalFile(
-        originalSourceFile = originalSourceFile,
+        originalSourceFile = originalSourceFile.toFile,
         content = sourceContent,
         module = module,
         sourceScope = sourceScope,
@@ -151,7 +151,7 @@ private final class DocumentCompiler(project: Project) {
       val arguments = DocumentCompilationArguments(
         sbtData = sbtData,
         compilerData = CompilerData(
-          compilerJars = CompilerJarsFactory.fromFiles(compilerClasspath, module.customScalaCompilerBridgeJar).toOption,
+          compilerJars = CompilerJarsFactory.fromFiles(compilerClasspath, module.customScalaCompilerBridgeJar.map(_.toFile)).toOption,
           javaHome = Some(findJdk),
           incrementalType = IncrementalityType.IDEA
         ),

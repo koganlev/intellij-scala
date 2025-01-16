@@ -7,7 +7,6 @@ import org.jetbrains.plugins.scala.project.template.Artifact.{Scala3Compiler, Sc
 import org.jetbrains.plugins.scala.project.template.Kind.{Binaries, Docs, Sources}
 import org.jetbrains.plugins.scala.project.template.{Artifact, ScalaSdkComponent, ScalaSdkDescriptor, SdkChoice}
 
-import java.io.File
 import java.nio.file.{Files, Path}
 import java.util.stream.{Stream => JStream}
 import scala.jdk.CollectionConverters.IteratorHasAsScala
@@ -32,7 +31,7 @@ abstract class ScalaSdkDetectorBase extends ScalaSdkDetector
           indicator.checkCanceled()
           //noinspection ReferencePassedToNls
           indicator.setText2(f.toString)
-          val sdkComponent = ScalaSdkComponent.fromFile(f.toFile)
+          val sdkComponent = ScalaSdkComponent.fromFile(f)
           sdkComponent.orNull
         }
         .filter(_ != null)
@@ -46,7 +45,7 @@ abstract class ScalaSdkDetectorBase extends ScalaSdkDetector
   private[project] def buildFromComponents(
     components: Seq[ScalaSdkComponent],
     label: Option[String],
-    systemRoot: Option[File] = None,
+    systemRoot: Option[Path] = None,
     indicator: ProgressIndicator = new EmptyProgressIndicator
   ): Either[Seq[CompilerClasspathResolveFailure], ScalaSdkDescriptor] = {
     val descriptorShort = buildFromComponentsShort(components, label).map(_.copy(systemRoot = systemRoot))
@@ -143,16 +142,9 @@ object ScalaSdkDetectorBase {
     )
 
   private def files(components: Seq[ScalaSdkComponent])
-                         (predicate: Artifact => Boolean): Seq[File] =
+                   (predicate: Artifact => Boolean): Seq[Path] =
     for {
       ScalaSdkComponent(artifact, _, _, file) <- components
       if predicate(artifact)
     } yield file
 }
-
-
-
-
-
-
-

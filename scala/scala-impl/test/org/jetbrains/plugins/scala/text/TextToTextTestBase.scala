@@ -52,8 +52,8 @@ abstract class TextToTextTestBase(dependencies: Seq[DependencyDescription],
     val sources = IvyManagedLoader(classes.filter(it => !ArtifactsWithoutSources(it.info.org, it.info.artId)).map(_.info.sources()): _*).resolve(scalaVersion)
     classes.foreach { cls =>
       val source = sources.find(_.info == cls.info.sources())
-      val classRoots = Collections.singletonList(findJarFile(cls.file))
-      val sourceRoots = source.map(it => findJarFile(it.file)).toSeq.asJava
+      val classRoots = Collections.singletonList(findJarFile(cls.file.toFile)) // TODO: SCL-23312
+      val sourceRoots = source.map(it => findJarFile(it.file.toFile)).toSeq.asJava // TODO: SCL-23312
       PsiTestUtil.addProjectLibrary(module, cls.info.toString, classRoots, sourceRoots)
     }
   }

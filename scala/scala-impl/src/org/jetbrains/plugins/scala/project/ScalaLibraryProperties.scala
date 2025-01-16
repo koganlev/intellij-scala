@@ -6,7 +6,7 @@ import com.intellij.openapi.vfs.VfsUtilCore
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.scala.util.HashBuilder._
 
-import java.io.File
+import java.nio.file.Path
 
 /**
  * @param _compilerClasspath       classpath required to instantiate a compiler
@@ -20,26 +20,26 @@ import java.io.File
  */
 final class ScalaLibraryProperties private(
   private[this] var _languageLevel: ScalaLanguageLevel,
-  private[this] var _compilerClasspath: Seq[File],
-  private[this] var _scaladocExtraClasspath: Seq[File],
-  private[this] var _compilerBridgeBinaryJar: Option[File]
+  private[this] var _compilerClasspath: Seq[Path],
+  private[this] var _scaladocExtraClasspath: Seq[Path],
+  private[this] var _compilerBridgeBinaryJar: Option[Path]
 ) extends LibraryProperties[ScalaLibraryPropertiesState] {
   import ScalaLibraryProperties._
 
   @Deprecated(forRemoval = true)
   @deprecated("Use ScalaLibraryProperties.apply")
   @ApiStatus.ScheduledForRemoval(inVersion = "2024.2")
-  def this(languageLevel: ScalaLanguageLevel, compilerClasspath: Seq[File], scaladocExtraClasspath: Seq[File]) =
+  def this(languageLevel: ScalaLanguageLevel, compilerClasspath: Seq[Path], scaladocExtraClasspath: Seq[Path]) =
     this(languageLevel, compilerClasspath, scaladocExtraClasspath, _compilerBridgeBinaryJar = None)
 
   @Deprecated(forRemoval = true)
   @deprecated("Use ScalaLibraryProperties.apply")
   @ApiStatus.ScheduledForRemoval(inVersion = "2024.2")
-  def this(languageLevel: ScalaLanguageLevel, compilerClasspath: Seq[File]) =
+  def this(languageLevel: ScalaLanguageLevel, compilerClasspath: Seq[Path]) =
     this(languageLevel, compilerClasspath, scaladocExtraClasspath = Nil)
 
-  def compilerBridgeBinaryJar: Option[File] = _compilerBridgeBinaryJar
-  def compilerBridgeBinaryJar_=(value: Option[File]): Unit = _compilerBridgeBinaryJar = value
+  def compilerBridgeBinaryJar: Option[Path] = _compilerBridgeBinaryJar
+  def compilerBridgeBinaryJar_=(value: Option[Path]): Unit = _compilerBridgeBinaryJar = value
 
   def languageLevel: ScalaLanguageLevel = _languageLevel
 
@@ -49,13 +49,13 @@ final class ScalaLibraryProperties private(
     _languageLevel = languageLevel
   }
 
-  def compilerClasspath: Seq[File] = _compilerClasspath
-  def scaladocExtraClasspath: Seq[File] = _scaladocExtraClasspath
+  def compilerClasspath: Seq[Path] = _compilerClasspath
+  def scaladocExtraClasspath: Seq[Path] = _scaladocExtraClasspath
 
-  def compilerClasspath_=(classpath: Seq[File]): Unit = {
+  def compilerClasspath_=(classpath: Seq[Path]): Unit = {
     _compilerClasspath = classpath
   }
-  def scaladocExtraClasspath_=(classpath: Seq[File]): Unit = {
+  def scaladocExtraClasspath_=(classpath: Seq[Path]): Unit = {
     _scaladocExtraClasspath = classpath
   }
 
@@ -76,9 +76,9 @@ final class ScalaLibraryProperties private(
   override def equals(obj: Any): Boolean = obj match {
     case properties: ScalaLibraryProperties =>
       languageLevel == properties.languageLevel &&
-        compilerClasspath.map(_.getAbsolutePath) == properties.compilerClasspath.map(_.getAbsolutePath) &&
-        scaladocExtraClasspath.map(_.getAbsolutePath) == properties.scaladocExtraClasspath.map(_.getAbsolutePath) &&
-        compilerBridgeBinaryJar.map(_.getAbsolutePath) == properties.compilerBridgeBinaryJar.map(_.getAbsolutePath)
+        compilerClasspath.map(_.toAbsolutePath) == properties.compilerClasspath.map(_.toAbsolutePath) &&
+        scaladocExtraClasspath.map(_.toAbsolutePath) == properties.scaladocExtraClasspath.map(_.toAbsolutePath) &&
+        compilerBridgeBinaryJar.map(_.toAbsolutePath) == properties.compilerBridgeBinaryJar.map(_.toAbsolutePath)
     case _ => false
   }
 
@@ -97,8 +97,8 @@ object ScalaLibraryProperties {
   // Extra constructor added not to break compatibility with plugins using this class before version 2023.3
   def apply(
     version: Option[String],
-    compilerClasspath: Seq[File],
-    scaladocExtraClasspath: Seq[File],
+    compilerClasspath: Seq[Path],
+    scaladocExtraClasspath: Seq[Path],
   ): ScalaLibraryProperties = {
     val languageLevel = version.flatMap(findByVersion).getOrElse(getDefault)
     new ScalaLibraryProperties(
@@ -111,9 +111,9 @@ object ScalaLibraryProperties {
 
   def apply(
     version: Option[String],
-    compilerClasspath: Seq[File],
-    scaladocExtraClasspath: Seq[File],
-    compilerBridgeBinaryJar: Option[File]
+    compilerClasspath: Seq[Path],
+    scaladocExtraClasspath: Seq[Path],
+    compilerBridgeBinaryJar: Option[Path]
   ): ScalaLibraryProperties = {
     val languageLevel = version.flatMap(findByVersion).getOrElse(getDefault)
     new ScalaLibraryProperties(
@@ -124,11 +124,11 @@ object ScalaLibraryProperties {
     )
   }
 
-  private def urlToFile(url: String): File =
-    new File(VfsUtilCore.urlToPath(url))
+  private def urlToFile(url: String): Path =
+    Path.of(VfsUtilCore.urlToPath(url))
 
-  private[project] def fileToUrl(file: File): String = {
-    val canonicalPath = FileUtil.toCanonicalPath(file.getAbsolutePath)
+  private[project] def fileToUrl(file: Path): String = {
+    val canonicalPath = FileUtil.toCanonicalPath(file.toAbsolutePath.toString)
     VfsUtilCore.pathToUrl(canonicalPath)
   }
 }

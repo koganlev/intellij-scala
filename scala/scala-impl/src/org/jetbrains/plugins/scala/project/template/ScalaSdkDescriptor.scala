@@ -2,7 +2,7 @@ package org.jetbrains.plugins.scala.project.template
 
 import org.jetbrains.plugins.scala.project.Version
 
-import java.io.File
+import java.nio.file.Path
 
 /**
  * @param label extra label which allows to distinguish between several SDKs with the same Scala version.
@@ -12,20 +12,20 @@ import java.io.File
  */
 final case class ScalaSdkDescriptor(version: Option[String], // Why is it Option? Shouldn't SDK version always be known?
                                     label: Option[String],
-                                    compilerClasspath: Seq[File],
-                                    scaladocExtraClasspath: Seq[File],
-                                    libraryFiles: Seq[File],
-                                    sourceFiles: Seq[File],
-                                    docFiles: Seq[File],
-                                    compilerBridgeJar: Option[File],
-                                    systemRoot: Option[File] = None)
+                                    compilerClasspath: Seq[Path],
+                                    scaladocExtraClasspath: Seq[Path],
+                                    libraryFiles: Seq[Path],
+                                    sourceFiles: Seq[Path],
+                                    docFiles: Seq[Path],
+                                    compilerBridgeJar: Option[Path],
+                                    systemRoot: Option[Path] = None)
   extends Ordered[ScalaSdkDescriptor] {
 
   def isScala3: Boolean = version.exists(_.startsWith("3"))
 
-  def withExtraCompilerClasspath(files: Seq[File]): ScalaSdkDescriptor = copy(compilerClasspath = compilerClasspath ++ files)
-  def withExtraLibraryFiles(files: Seq[File]): ScalaSdkDescriptor = copy(libraryFiles = libraryFiles ++ files)
-  def withExtraSourcesFiles(files: Seq[File]): ScalaSdkDescriptor = copy(sourceFiles = sourceFiles ++ files)
+  def withExtraCompilerClasspath(files: Seq[Path]): ScalaSdkDescriptor = copy(compilerClasspath = compilerClasspath ++ files)
+  def withExtraLibraryFiles(files: Seq[Path]): ScalaSdkDescriptor = copy(libraryFiles = libraryFiles ++ files)
+  def withExtraSourcesFiles(files: Seq[Path]): ScalaSdkDescriptor = copy(sourceFiles = sourceFiles ++ files)
   def withLabel(label: Option[String]): ScalaSdkDescriptor = copy(label = label)
 
   private val comparableVersion = version.map(Version(_))

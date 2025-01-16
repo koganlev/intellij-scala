@@ -482,7 +482,7 @@ class SbtProjectResolver extends ExternalSystemProjectResolver[SbtExecutionSetti
    */
   private def chooseJdk(project: sbtStructure.ProjectData, defaultJdk: Option[String]): Option[SdkReference] = {
     // TODO put some of this logic elsewhere in resolving process?
-    val jdkHomeInSbtProject = project.java.flatMap(_.home).map(JdkByHome)
+    val jdkHomeInSbtProject = project.java.flatMap(_.home).map(home => JdkByHome(home.toPath))
 
     // default either from project structure or initial import settings
     val default = defaultJdk.map(JdkByName)
@@ -718,7 +718,7 @@ class SbtProjectResolver extends ExternalSystemProjectResolver[SbtExecutionSetti
       scalacClasspath        = scala.fold(Seq.empty[File])(_.allCompilerJars),
       scaladocExtraClasspath = scala.fold(Seq.empty[File])(_.extraJars),
       scalacOptions          = findCompilerOptionsInScope(scope, scala.map(_.options).getOrElse(Seq.empty)),
-      sdk                    = java.flatMap(_.home).map(JdkByHome),
+      sdk                    = java.flatMap(_.home).map(home => JdkByHome(home.toPath)),
       javacOptions           = findCompilerOptionsInScope(scope, java.map(_.options).getOrElse(Seq.empty)),
       packagePrefix          = packagePrefix,
       basePackage            = basePackages.headOption, // TODO Rename basePackages to basePackage in sbt-ide-settings?
@@ -1058,7 +1058,7 @@ class SbtProjectResolver extends ExternalSystemProjectResolver[SbtExecutionSetti
 
     val data = SbtModuleExtData(
       scalaVersion = None,
-      sdk = projectData.java.flatMap(_.home).map(JdkByHome),
+      sdk = projectData.java.flatMap(_.home).map(home => JdkByHome(home.toPath)),
     )
     moduleNode.add(new ModuleExtNode(data))
   }

@@ -145,9 +145,9 @@ final class ScalaMavenImporter extends MavenApplicableConfigurator(PluginGroupId
     ScalaSdkUtils.configureScalaSdk(
       module,
       compilerVersion,
-      classpath.map(_.toFile),
+      classpath,
       scaladocExtraClasspath = Nil,
-      compilerBridgeBinaryJar.map(_.toFile),
+      compilerBridgeBinaryJar,
       sdkPrefix = "Maven",
       storage,
       project,

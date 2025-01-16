@@ -82,6 +82,6 @@ class ResolveCompilerBridgeTest extends ExternalSystemImportingTestCase {
     val compilerBridge = properties.compilerBridgeBinaryJar.orNull
     assertNotNull("Scala 3 compiler bridge not configured", compilerBridge)
 
-    assertEquals(s"scala3-sbt-bridge-$scalaVersion.jar", compilerBridge.getName)
+    assertEquals(s"scala3-sbt-bridge-$scalaVersion.jar", compilerBridge.getFileName.toString)
   }
 }

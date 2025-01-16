@@ -329,8 +329,8 @@ trait ProjectStructureMatcher {
           assertEquals(name, expectedClassPathNorm, actualClasspathNorm)
         }
 
-        expectedScalaSdk.classpath.foreach(testClasspath("Scala SDK classpath", _, sdkProperties.compilerClasspath))
-        expectedScalaSdk.extraClasspath.foreach(testClasspath("Scala SDK extra classpath", _, sdkProperties.scaladocExtraClasspath))
+        expectedScalaSdk.classpath.foreach(testClasspath("Scala SDK classpath", _, sdkProperties.compilerClasspath.map(_.toFile)))
+        expectedScalaSdk.extraClasspath.foreach(testClasspath("Scala SDK extra classpath", _, sdkProperties.scaladocExtraClasspath.map(_.toFile)))
     }
   }
 
@@ -509,4 +509,3 @@ trait ExactMatch {
 
   override def defaultAssertMatch: AttributeMatchType = AttributeMatchType.Exact
 }
-

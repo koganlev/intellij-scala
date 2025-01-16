@@ -64,7 +64,7 @@ private[evaluation] final class ExpressionCompilerEvaluator(codeFragment: PsiEle
 
       val enumerator = OrderEnumerator.orderEntries(module).compileOnly().recursively()
       val classpath =
-        module.scalaCompilerClasspath.map(_.toPath) ++
+        module.scalaCompilerClasspath ++
           enumerator.getClassesRoots.map(_.getCanonicalPath).map(stripJarPathSuffix).map(Path.of(_)) :+
           expressionCompilerJar
       val scalacOptions = module.scalaCompilerSettings.getOptionsAsStrings(module.hasScala3)

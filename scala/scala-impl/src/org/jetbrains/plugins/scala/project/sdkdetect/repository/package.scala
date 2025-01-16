@@ -2,7 +2,7 @@ package org.jetbrains.plugins.scala.project.sdkdetect
 
 import org.jetbrains.plugins.scala.{NlsString, ScalaBundle}
 
-import java.io.File
+import java.nio.file.Path
 
 package object repository {
 
@@ -42,7 +42,7 @@ package object repository {
     case class NotSupportedForScalaVersion(scalaVersion: String, detector: ScalaSdkDetector) extends CompilerClasspathResolveFailure
     case class UnknownResolveIssue(resolveProblems: Seq[String]) extends CompilerClasspathResolveFailure
     case class UnknownException(exception: Throwable) extends CompilerClasspathResolveFailure
-    case class CantReadClasspathFromManifest(jarFile: File) extends CompilerClasspathResolveFailure
-    case class FileNotFound(file: File) extends CompilerClasspathResolveFailure
+    case class CantReadClasspathFromManifest(jarFile: Path) extends CompilerClasspathResolveFailure
+    case class FileNotFound(file: Path) extends CompilerClasspathResolveFailure
   }
 }

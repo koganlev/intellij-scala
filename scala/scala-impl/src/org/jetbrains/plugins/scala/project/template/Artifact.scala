@@ -1,7 +1,8 @@
 package org.jetbrains.plugins.scala.project.template
 
-import java.io.{BufferedInputStream, File, IOException}
+import java.io.{BufferedInputStream, IOException}
 import java.net.URL
+import java.nio.file.Path
 import java.util.Properties
 import scala.collection.immutable.ListSet
 import scala.util.Using
@@ -13,9 +14,9 @@ sealed abstract class Artifact(
 
   private val fileNameRegex = (prefix + "-(.*?)(?:-src|-sources|-javadoc)?\\.jar").r
 
-  def versionOf(file: File): Option[String] = {
-    val fromName = versionFromFileName(file.getName)
-    val result = fromName.orElse(versionFromPropertyFile(file.toURI.toString))
+  def versionOf(file: Path): Option[String] = {
+    val fromName = versionFromFileName(file.getFileName.toString)
+    val result = fromName.orElse(versionFromPropertyFile(file.toUri.toString))
     result
   }
 

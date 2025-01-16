@@ -35,6 +35,6 @@ class ResolveCompilerBridgeTest_2_13 extends SbtExternalSystemImportingTestLike 
     val compilerBridge = properties.compilerBridgeBinaryJar.orNull
     assertNotNull(s"Scala 2 compiler bridge not configured", compilerBridge)
 
-    assertEquals(s"scala2-sbt-bridge-$scalaVersion.jar", compilerBridge.getName)
+    assertEquals(s"scala2-sbt-bridge-$scalaVersion.jar", compilerBridge.getFileName.toString)
   }
 }

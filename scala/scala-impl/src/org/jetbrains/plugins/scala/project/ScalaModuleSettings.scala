@@ -17,7 +17,7 @@ import org.jetbrains.plugins.scala.project.ScalaModuleSettings._
 import org.jetbrains.plugins.scala.project.settings.{ScalaCompilerConfiguration, ScalaCompilerSettings}
 import org.jetbrains.sbt.project.SbtVersionProvider
 
-import java.io.File
+import java.nio.file.Path
 import java.util.jar.Attributes
 
 private class ScalaModuleSettings private(
@@ -283,7 +283,7 @@ private object ScalaModuleSettings {
   }
 
   private val isMetaParadiseJar = cached("isMetaParadiseJar", ModificationTracker.NEVER_CHANGED, (pathname: String) => {
-    new File(pathname) match {
+    Path.of(pathname).toFile match {
       case file if containsEntry(file, "scalac-plugin.xml") =>
         def hasAttribute(nameSuffix: String, value: String) = getJarAttribute(
           file,
@@ -297,4 +297,3 @@ private object ScalaModuleSettings {
   })
 
 }
-

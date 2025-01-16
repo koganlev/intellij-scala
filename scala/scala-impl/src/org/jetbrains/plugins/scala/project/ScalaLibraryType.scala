@@ -10,7 +10,7 @@ import org.jetbrains.plugins.scala.ScalaBundle
 import org.jetbrains.plugins.scala.icons.Icons
 import org.jetbrains.plugins.scala.project.external.ScalaSdkUtils
 
-import java.io.File
+import java.nio.file.Path
 import java.{util => ju}
 import javax.swing.{Icon, JComponent}
 
@@ -116,7 +116,7 @@ object ScalaLibraryType {
           )
         }
 
-        private def addRootsInner(files: Iterable[File], rootType: OrderRootType)
+        private def addRootsInner(files: Iterable[Path], rootType: OrderRootType)
                                  (implicit editor: libraryEditor.LibraryEditor): Unit =
           for {
             file <- files

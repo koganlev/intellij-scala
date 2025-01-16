@@ -26,4 +26,3 @@ private[repository] class ProjectLocalDetector(contextDirectory: VirtualFile) ex
       .getOrElse(JStream.empty())
   }
 }
-

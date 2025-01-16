@@ -50,8 +50,8 @@ class ScalaVersionDownloadingDialogTest extends TestCase {
   }
 
   private def assertJarNamesEqual(expectedCompilerJars: Seq[String], expectedSourcesJars: Seq[String], scalaVersionResult: ScalaVersionResolveResult): Unit = {
-    val actualCompilerJars = scalaVersionResult.compilerClassPathJars.map(_.getName).sorted
-    val actualSourcesJars = scalaVersionResult.librarySourcesJars.map(_.getName).sorted
+    val actualCompilerJars = scalaVersionResult.compilerClassPathJars.map(_.getFileName.toString).sorted
+    val actualSourcesJars = scalaVersionResult.librarySourcesJars.map(_.getFileName.toString).sorted
     assertCollectionEquals("Downloaded compiler jars names are not equal", expectedCompilerJars.sorted, actualCompilerJars)
     assertCollectionEquals("Downloaded sources jars names are not equal", expectedSourcesJars.sorted, actualSourcesJars)
   }

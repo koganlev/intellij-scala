@@ -1,4 +1,5 @@
 package org.jetbrains.plugins.scala.project.sdkdetect.repository
+
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.util.SystemProperties
 import org.jetbrains.plugins.scala.ScalaBundle

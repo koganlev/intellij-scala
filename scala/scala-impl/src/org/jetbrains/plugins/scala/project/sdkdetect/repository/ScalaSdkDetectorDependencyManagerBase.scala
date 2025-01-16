@@ -41,8 +41,3 @@ abstract class ScalaSdkDetectorDependencyManagerBase extends ScalaSdkDetectorBas
     }
   }
 }
-
-
-
-
-

@@ -809,7 +809,7 @@ private[importing] object BspResolverLogic {
       None
     } else {
       val (home, version) = groupedJdks.maxBy { case (_, count) => count }._1
-      Option(home).map(_.uri.toFile).map(JdkByHome).orElse(Option(version).map(JdkByVersion))
+      Option(home).map(u => JdkByHome(Paths.get(u.uri))).orElse(Option(version).map(JdkByVersion))
     }
     jdkReference
   }

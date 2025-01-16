@@ -311,7 +311,7 @@ abstract class ScalaMavenImporterTest
     val compilerBridge = properties.compilerBridgeBinaryJar.orNull
     assertNotNull("Scala 3 compiler bridge not configured", compilerBridge)
 
-    org.junit.Assert.assertEquals(s"scala3-sbt-bridge-$scalaVersion.jar", compilerBridge.getName)
+    org.junit.Assert.assertEquals(s"scala3-sbt-bridge-$scalaVersion.jar", compilerBridge.getFileName.toString)
   }
 
   def testResolveCompilerBridge_Scala2(): Unit = {
@@ -330,6 +330,6 @@ abstract class ScalaMavenImporterTest
     val compilerBridge = properties.compilerBridgeBinaryJar.orNull
     assertNotNull("Scala 2 compiler bridge not configured", compilerBridge)
 
-    org.junit.Assert.assertEquals(s"scala2-sbt-bridge-$scalaVersion.jar", compilerBridge.getName)
+    org.junit.Assert.assertEquals(s"scala2-sbt-bridge-$scalaVersion.jar", compilerBridge.getFileName.toString)
   }
 }

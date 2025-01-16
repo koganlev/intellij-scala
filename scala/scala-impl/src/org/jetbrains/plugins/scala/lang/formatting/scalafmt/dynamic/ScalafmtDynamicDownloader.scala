@@ -22,7 +22,7 @@ class ScalafmtDynamicDownloader(
         .map(x => (x.group % x.artifact % x.version).transitive())
       val resolver = new ScalafmtDependencyResolver(extraResolvers, progressListener)
       val resolvedDependencies = resolver.resolve(dependencies: _*)
-      val jars: Seq[Path] = resolvedDependencies.map(_.file.toPath)
+      val jars: Seq[Path] = resolvedDependencies.map(_.file)
       val urls = jars.map(_.toUri.toURL)
       Right(DownloadSuccess(version, urls))
     } catch {

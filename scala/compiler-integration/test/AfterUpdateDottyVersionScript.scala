@@ -210,7 +210,7 @@ object AfterUpdateDottyVersionScript {
       val compileOutput = CompilerModuleExtension.getInstance(getModule).getCompilerOutputPath
       assertTrue("compilation output not found", compileOutput.exists())
 
-      val folderWithClasses = compileOutput.toFile.toPath.resolve(packagePath).toFile
+      val folderWithClasses = compileOutput.toPath.resolve(packagePath).toFile
       assertTrue(folderWithClasses.exists())
 
       val classes = folderWithClasses.listFiles.toSeq

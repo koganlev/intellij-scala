@@ -48,7 +48,7 @@ private final class ExpressionCompilerResolverListener(project: Project) extends
     val manager = new DependencyManagerBase {
       override protected def progressIndicator: Option[ProgressIndicator] = Some(indicator)
     }
-    manager.resolveSafe(dep).toOption.flatMap(_.headOption).map(_.file.toPath)
+    manager.resolveSafe(dep).toOption.flatMap(_.headOption).map(_.file)
   }
 }
 

@@ -5,13 +5,13 @@ import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.impl.libraries.LibraryEx
 import com.intellij.openapi.roots.libraries.Library
-import org.jetbrains.plugins.scala.project.{LibraryBase, LibraryEntityExt, LibraryExt, ModuleEntityExt, MutableEntityStorageExt, ScalaLibraryProperties, ScalaLibraryType, Version}
 import com.intellij.platform.workspace.jps.entities.{LibraryEntity, ModuleEntity}
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import org.jetbrains.plugins.scala.DependencyManager
 import org.jetbrains.plugins.scala.DependencyManagerBase.RichStr
+import org.jetbrains.plugins.scala.project.{LibraryBase, LibraryEntityExt, LibraryExt, ModuleEntityExt, MutableEntityStorageExt, ScalaLibraryProperties, ScalaLibraryType, Version}
 
-import java.io.File
+import java.nio.file.Path
 import scala.jdk.CollectionConverters.IteratorHasAsScala
 import scala.language.implicitConversions
 
@@ -20,9 +20,9 @@ object ScalaSdkUtils {
   def configureScalaSdk(
     module: Module,
     compilerVersion: String,
-    scalacClasspath: Seq[File],
-    scaladocExtraClasspath: Seq[File],
-    compilerBridgeBinaryJar: Option[File],
+    scalacClasspath: Seq[Path],
+    scaladocExtraClasspath: Seq[Path],
+    compilerBridgeBinaryJar: Option[Path],
     sdkPrefix: String,
     modelsProvider: IdeModifiableModelsProvider
   ): Unit = {
@@ -46,9 +46,9 @@ object ScalaSdkUtils {
   def configureScalaSdk(
     module: ModuleEntity,
     compilerVersion: String,
-    scalacClasspath: Seq[File],
-    scaladocExtraClasspath: Seq[File],
-    compilerBridgeBinaryJar: Option[File],
+    scalacClasspath: Seq[Path],
+    scaladocExtraClasspath: Seq[Path],
+    compilerBridgeBinaryJar: Option[Path],
     sdkPrefix: String,
     storage: MutableEntityStorage,
     project: Project,
@@ -93,9 +93,9 @@ object ScalaSdkUtils {
   def ensureScalaLibraryIsConvertedToScalaSdk(
     modelsProvider: IdeModifiableModelsProvider,
     library: Library,
-    compilerClasspath: Seq[File],
-    scaladocExtraClasspath: Seq[File],
-    compilerBridgeBinaryJar: Option[File],
+    compilerClasspath: Seq[Path],
+    scaladocExtraClasspath: Seq[Path],
+    compilerBridgeBinaryJar: Option[Path],
   ): Unit = {
     val modifiableModel = modelsProvider.getModifiableLibraryModel(library).asInstanceOf[LibraryEx.ModifiableModelEx]
     doEnsureScalaLibraryIsConvertedToScalaSdk(
@@ -111,9 +111,9 @@ object ScalaSdkUtils {
   def ensureScalaLibraryIsConvertedToScalaSdk(
     library: LibraryEntity,
     storage: MutableEntityStorage,
-    compilerClasspath: Seq[File],
-    scaladocExtraClasspath: Seq[File],
-    compilerBridgeBinaryJar: Option[File],
+    compilerClasspath: Seq[Path],
+    scaladocExtraClasspath: Seq[Path],
+    compilerBridgeBinaryJar: Option[Path],
   ): Unit =
     doEnsureScalaLibraryIsConvertedToScalaSdk(
       library,
@@ -128,9 +128,9 @@ object ScalaSdkUtils {
     library: LibraryBase,
     setScalaSdkKind: => Unit,
     setProperties: ScalaLibraryProperties => Unit,
-    compilerClasspath: Seq[File],
-    scaladocExtraClasspath: Seq[File],
-    compilerBridgeBinaryJar: Option[File],
+    compilerClasspath: Seq[Path],
+    scaladocExtraClasspath: Seq[Path],
+    compilerBridgeBinaryJar: Option[Path],
   ): Unit = {
     val properties = ScalaLibraryProperties(library.libraryVersion, compilerClasspath, scaladocExtraClasspath, compilerBridgeBinaryJar)
     if (!library.isScalaSdk) {
@@ -140,7 +140,7 @@ object ScalaSdkUtils {
     setProperties(properties)
   }
 
-  def resolveCompilerBridgeJar(scalaVersion: String): Option[File] =
+  def resolveCompilerBridgeJar(scalaVersion: String): Option[Path] =
     compilerBridgeName(scalaVersion)
       .map(name => "org.scala-lang" % name % scalaVersion)
       .flatMap(dep => DependencyManager.resolveSafe(dep).toOption)

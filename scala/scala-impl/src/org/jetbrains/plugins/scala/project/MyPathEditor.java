@@ -5,7 +5,7 @@ import com.intellij.openapi.projectRoots.ui.PathEditor;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 
-import java.io.File;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -32,7 +32,7 @@ public class MyPathEditor extends PathEditor {
 
   static VirtualFile pathToVirtualFile(String url) {
     String path = VfsUtil.urlToPath(url);
-    VirtualFile file = VfsUtil.findFileByIoFile(new File(path), true);
+    VirtualFile file = VfsUtil.findFile(Path.of(path), true);
     return file == null ? new AbsentLocalFile(url, path) : file;
   }
 

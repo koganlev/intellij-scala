@@ -10,6 +10,7 @@ import org.jetbrains.sbt.buildinfo.BuildInfo
 import org.junit.Assert._
 
 import java.io.{BufferedOutputStream, File, FileOutputStream}
+import java.nio.file.Files
 import java.util.jar.JarOutputStream
 import java.util.zip.ZipEntry
 import scala.util.Using
@@ -42,8 +43,8 @@ class SbtRunnerTest extends UsefulTestCase {
 
   private def doTestSbtLauncherVersionDetection(sbtVersion: String): Unit = {
     val sbtLaunchJar = new TestDependencyManagerForSbt(Version(sbtVersion)).resolveSingle("org.scala-sbt" % "sbt-launch" % sbtVersion).file
-    assertTrue(s"$sbtLaunchJar is not found. Make sure it is downloaded by Ivy.", sbtLaunchJar.exists())
-    val actualVersion = detectSbtVersion(tmpDirFile, sbtLaunchJar)
+    assertTrue(s"$sbtLaunchJar is not found. Make sure it is downloaded by Ivy.", Files.exists(sbtLaunchJar))
+    val actualVersion = detectSbtVersion(tmpDirFile, sbtLaunchJar.toFile)
     assertEquals(sbtVersion, actualVersion)
   }
 

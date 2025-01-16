@@ -43,8 +43,8 @@ import org.jetbrains.sbt.language.SbtFile
 import org.jetbrains.sbt.project.module.SbtModuleType
 import org.jetbrains.sbt.{Sbt, WorkspaceModelUtil}
 
-import java.io.File
 import java.net.URL
+import java.nio.file.Path
 import scala.annotation.unused
 import scala.jdk.CollectionConverters._
 import scala.language.implicitConversions
@@ -366,12 +366,12 @@ package object project {
     def isCompilerStrictMode: Boolean =
       scalaModuleSettings.exists(_.isCompilerStrictMode)
 
-    def scalaCompilerClasspath: Seq[File] = module.scalaSdk
+    def scalaCompilerClasspath: Seq[Path] = module.scalaSdk
       .fold(throw new ScalaSdkNotConfiguredException(module)) {
         _.properties.compilerClasspath
       }
 
-    def customScalaCompilerBridgeJar: Option[File] = module.scalaSdk
+    def customScalaCompilerBridgeJar: Option[Path] = module.scalaSdk
       .fold(throw new ScalaSdkNotConfiguredException(module)) {
         _.properties.compilerBridgeBinaryJar
       }
@@ -575,8 +575,8 @@ package object project {
     def findDocument: Option[Document] =
       Option(FileDocumentManager.getInstance.getDocument(file))
 
-    def toFile: File =
-      new File(file.getCanonicalPath)
+    def toPath: Path =
+      Path.of(file.getCanonicalPath)
   }
 
   // TODO May also be a library file (source or compiled), SCL-20935
@@ -772,7 +772,7 @@ package object project {
 
     def addScalaCompilerClassPath(module: Module): Unit =
       try {
-        val files = module.scalaCompilerClasspath.asJava
+        val files = module.scalaCompilerClasspath.map(_.toFile).asJava
         list.addAllFiles(files)
       } catch {
         case e: IllegalArgumentException => //noinspection ReferencePassedToNls
@@ -805,8 +805,8 @@ package object project {
   }
 
   private def toAbsolutePath(baseDirectory: String, path: String): String = {
-    val file = new File(path).isAbsolute
+    val file = Path.of(path).isAbsolute
     if (file) path
-    else new File(baseDirectory, path).getPath
+    else Path.of(baseDirectory, path).toString
   }
 }

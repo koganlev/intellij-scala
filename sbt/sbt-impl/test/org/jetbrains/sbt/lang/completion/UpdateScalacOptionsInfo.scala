@@ -402,7 +402,7 @@ object UpdateScalacOptionsInfo {
 
   private def createClassLoaderWithArtifacts(scalaArtifacts: Seq[DependencyDescription]): ClassLoader = {
     val compilerClasspath = DependencyManager.resolve(scalaArtifacts: _*)
-      .map(_.file.toURI.toURL)
+      .map(_.file.toUri.toURL)
       .toArray
 
     new URLClassLoader(compilerClasspath, null, null)

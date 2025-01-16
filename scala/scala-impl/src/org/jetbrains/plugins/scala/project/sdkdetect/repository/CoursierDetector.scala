@@ -31,5 +31,5 @@ private[repository] object CoursierDetector extends ScalaSdkDetectorDependencyMa
     maybeStream.getOrElse(JStream.empty[Path]())
   }
 
-  private def getCoursierCacheV1: Option[Path] = CoursierPaths.cacheDirectory().toOption.map(_.toPath)
+  private def getCoursierCacheV1: Option[Path] = CoursierPaths.cacheDirectory().toOption
 }

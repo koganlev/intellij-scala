@@ -37,9 +37,9 @@ class SbtScalaSdkDataService extends ScalaAbstractProjectDataService[SbtScalaSdk
       Option(scalaVersion).foreach(ScalaSdkUtils.configureScalaSdk(
         module,
         _,
-        scalacClasspath.asScala.toSeq,
-        scaladocExtraClasspath.asScala.toSeq,
-        Option(compilerBridgeBinaryJar),
+        scalacClasspath.asScala.toSeq.map(_.toPath),
+        scaladocExtraClasspath.asScala.toSeq.map(_.toPath),
+        Option(compilerBridgeBinaryJar).map(_.toPath),
         sdkPrefix = SbtProjectSystem.Id.getReadableName,
         modelsProvider
       ))

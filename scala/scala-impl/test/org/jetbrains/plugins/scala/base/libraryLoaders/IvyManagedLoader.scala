@@ -20,8 +20,9 @@ abstract class IvyManagedLoaderBase extends LibraryLoader {
     val deps = dependencies(version)
     val resolved = cache.getOrElseUpdate(deps, dependencyManager.resolve(deps: _*))
     resolved.foreach { resolved =>
-      VfsRootAccess.allowRootAccess(module, resolved.file.getCanonicalPath)
-      PsiTestUtil.addLibrary(module, resolved.info.toString, resolved.file.getParent, resolved.file.getName)
+      val resolvedFile = resolved.file.toFile
+      VfsRootAccess.allowRootAccess(module, resolvedFile.getCanonicalPath)
+      PsiTestUtil.addLibrary(module, resolved.info.toString, resolvedFile.getParent, resolvedFile.getName)
     }
   }
 }

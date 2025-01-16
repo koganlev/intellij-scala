@@ -72,12 +72,12 @@ case class ScalaSDKLoader(
     // Instead, it downloads regular class file jars.
     // As a workaround, I do another pass where I download sources for each such class files jar file independently, non-transitively.
     val resolvedSecondPass = if (resolved.size == 1) resolved else resolved.map(_.info).map(d => dependencyManager.resolveSingle(d.sources()))
-    resolvedSecondPass.map(_.file).map(findJarFile)
+    resolvedSecondPass.map(_.file.toFile).map(findJarFile) // TODO: SCL-23312
   }
 
   private def resolveCompilerBridge(version: ScalaVersion): Option[File] = {
     if (version >= ScalaVersion.fromString("2.13.12").get)
-      ScalaSdkUtils.resolveCompilerBridgeJar(version.minor)
+      ScalaSdkUtils.resolveCompilerBridgeJar(version.minor).map(_.toFile) // TODO: SCL-23312
     else None
   }
 
@@ -97,8 +97,8 @@ case class ScalaSDKLoader(
         resolved.size
       )
 
-    val (resolvedOk, resolvedMissing) = resolved.partition(_.file.exists())
-    val compilerClasspath = resolvedOk.map(_.file)
+    val (resolvedOk, resolvedMissing) = resolved.partition(_.file.toFile.exists()) // TODO: SCL-23312
+    val compilerClasspath = resolvedOk.map(_.file.toFile) // TODO: SCL-23312
 
     // Manually resolve a compiler bridge only if it hasn't been provided. This allows testing with a custom bridge.
     val compilerBridge = compilerBridgeBinaryJar.orElse(resolveCompilerBridge(version))
@@ -148,8 +148,8 @@ case class ScalaSDKLoader(
         .getOrElse(createNewLibrary)
 
     inWriteAction {
-      val version = Artifact.ScalaCompiler.versionOf(compilerFile)
-      val properties = ScalaLibraryProperties(version, compilerClasspath, Seq.empty, compilerBridge)
+      val version = Artifact.ScalaCompiler.versionOf(compilerFile.toPath)
+      val properties = ScalaLibraryProperties(version, compilerClasspath.map(_.toPath), Seq.empty, compilerBridge.map(_.toPath))
 
       val editor = new ExistingLibraryEditor(library, null)
       editor.setType(ScalaLibraryType())
