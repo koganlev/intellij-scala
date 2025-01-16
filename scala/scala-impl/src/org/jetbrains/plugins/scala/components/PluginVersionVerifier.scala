@@ -12,7 +12,7 @@ import org.jetbrains.plugins.scala.ScalaBundle
 import org.jetbrains.plugins.scala.extensions.invokeLater
 import org.jetbrains.plugins.scala.util.ScalaNotificationGroups
 
-import java.io.File
+import java.nio.file.Paths
 import javax.swing.event.HyperlinkEvent
 import scala.annotation.nowarn
 
@@ -102,8 +102,8 @@ class ScalaPluginVersionVerifierActivity extends RunOnceStartupActivity {
     val hasScala211 = try {
       val scalaClass = plugin.getPluginClassLoader.loadClass("scala.Option")
       val pathToJar = PathUtil.getJarPathForClass(scalaClass)
-      val file = new File(pathToJar)
-      file.getName.contains("-2.11")
+      val path = Paths.get(pathToJar)
+      path.getFileName.toString.contains("-2.11")
     } catch {
       case c: ControlFlowException => throw c
       case _: ClassNotFoundException => false
