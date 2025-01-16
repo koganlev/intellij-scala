@@ -13,7 +13,8 @@ import org.jetbrains.plugins.scala.components.libextensions.LibraryExtensionsMan
 import org.jetbrains.plugins.scala.{ScalaBundle, extensions}
 import org.jetbrains.sbt.resolvers.{SbtIvyResolver, SbtMavenResolver, SbtResolver}
 
-import java.io.{File, InputStreamReader}
+import java.io.InputStreamReader
+import java.nio.file.{Files, Path}
 import java.util.Collections
 import scala.jdk.CollectionConverters.CollectionHasAsScala
 import scala.util.Using
@@ -22,7 +23,7 @@ class ExtensionDownloader(private val progress: ProgressIndicator, private val s
 
   private val LOG         = Logger.getInstance(classOf[ExtensionDownloader])
 
-  def getExtensionJars: Seq[File] = {
+  def getExtensionJars: Seq[Path] = {
     val jarsWithProps = findJarsWithProps()
     for {(jar, prop) <- jarsWithProps} {
       LOG.info(s"${jar.getPath} -> ${prop.artifact}")
@@ -46,18 +47,18 @@ class ExtensionDownloader(private val progress: ProgressIndicator, private val s
     descriptions.flatMap(BundledExtensionIndex.INDEX.get).toSeq
   }
 
-  private def getRemoteExtensions(props: Seq[ExtensionProps]): Seq[File] = {
+  private def getRemoteExtensions(props: Seq[ExtensionProps]): Seq[Path] = {
     val (normal, withOverrides) = props.partition(_.urlOverride == null)
     downloadViaIvy(normal) ++ withOverrides.flatMap(downloadDirect)
   }
 
-  private def downloadDirect(props: ExtensionProps): Option[File] = {
+  private def downloadDirect(props: ExtensionProps): Option[Path] = {
     import scala.jdk.CollectionConverters._
 
-    val downloadRoot = new File(PathManager.getSystemPath, "scala/extensionsCache")
+    val downloadRoot = Path.of(PathManager.getSystemPath, "scala/extensionsCache")
     val fileName     = s"${Math.abs(props.hashCode())}.jar"
-    val targetFile   = new File(downloadRoot, fileName)
-    if (targetFile.exists() && targetFile.length() > 0)
+    val targetFile   = downloadRoot.resolve(fileName)
+    if (Files.exists(targetFile) && Files.size(targetFile) > 0)
       return Some(targetFile)
 
     val fileService = DownloadableFileService.getInstance()
@@ -65,32 +66,32 @@ class ExtensionDownloader(private val progress: ProgressIndicator, private val s
     val downloader  = fileService.createDownloader(Collections.singletonList(description), props.urlOverride)
 
     progress.setText(ScalaBundle.message("downloading.url", props.urlOverride))
-    val files = downloader.download(downloadRoot)
+    val files = downloader.download(downloadRoot.toFile)
     if (files == null || files.isEmpty) {
       LOG.error(s"Failed to download extension from ${props.urlOverride}")
-      targetFile.delete()
+      Files.deleteIfExists(targetFile)
       None
     } else {
       files
         .asScala
         .headOption
         .map { result =>
-          val partFile = result.first
-          if  (partFile.exists())
-            partFile.renameTo(targetFile)
+          val partFile = result.first.toPath
+          if (Files.exists(partFile))
+            Files.move(partFile, targetFile)
           partFile
         }
     }
   }
 
-  private def downloadViaIvy(props: Seq[ExtensionProps]): Seq[File] = {
+  private def downloadViaIvy(props: Seq[ExtensionProps]): Seq[Path] = {
     val ivyResolvers = sbtResolvers.toSeq.collect {
       case r: SbtMavenResolver => MavenResolver(r.name, r.root)
       case r: SbtIvyResolver if !r.isLocal => IvyResolver(r.name, r.root)
     }
     val deps = props.map(_.artifact.toDepDescription)
     val resolver = new IvyExtensionsResolver(ivyResolvers, progress)
-    resolver.resolve(deps:_*).map(_.file)
+    resolver.resolve(deps:_*).map(_.file.toPath)
   }
 
   private def findJarsWithProps(): Seq[(VirtualFile, ExtensionProps)] = {

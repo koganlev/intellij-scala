@@ -5,7 +5,7 @@ import org.jetbrains.plugins.scala.components.libextensions.api.psi.Inspection
 import org.jetbrains.plugins.scala.util.TestUtils
 import org.junit.Assert._
 
-import java.io.File
+import java.nio.file.Paths
 
 class LibraryExtensionsManagerTest extends SimpleTestCase {
 
@@ -14,7 +14,7 @@ class LibraryExtensionsManagerTest extends SimpleTestCase {
   private lazy val manager = LibraryExtensionsManager.getInstance(fixture.getProject)
 
   private def loadExtensions(): Unit = {
-    manager.processResolvedExtension(new File(jarPath))
+    manager.processResolvedExtension(Paths.get(jarPath))
   }
 
   override protected def sharedProjectToken: SharedTestProjectToken =

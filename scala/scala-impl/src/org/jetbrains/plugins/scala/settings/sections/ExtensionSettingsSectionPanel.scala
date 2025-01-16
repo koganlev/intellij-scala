@@ -7,7 +7,7 @@ import com.intellij.openapi.ui.Messages
 import com.intellij.ui._
 import com.intellij.ui.components.{JBLabel, JBList}
 import com.intellij.uiDesigner.core.{GridConstraints, GridLayoutManager}
-import com.intellij.util.ui.{JBUI, UIUtil}
+import com.intellij.util.ui.UIUtil
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.plugins.scala.ScalaBundle
 import org.jetbrains.plugins.scala.components.libextensions.LibraryExtensionsManager._
@@ -15,9 +15,8 @@ import org.jetbrains.plugins.scala.components.libextensions._
 import org.jetbrains.plugins.scala.settings.ScalaProjectSettings
 
 import java.awt.{BorderLayout, Insets}
-import java.io.File
+import java.nio.file.Paths
 import javax.swing._
-import javax.swing.border.EmptyBorder
 import scala.annotation.nowarn
 
 class ExtensionSettingsSectionPanel(project: Project) extends SettingsSectionPanel(project) {
@@ -113,7 +112,7 @@ class ExtensionSettingsSectionPanel(project: Project) extends SettingsSectionPan
         project, null)
       if (jar != null)
         try {
-          libraryExtensionsManager.addExtension(new File(jar.getCanonicalPath))
+          libraryExtensionsManager.addExtension(Paths.get(jar.getCanonicalPath))
           librariesList.setModel(new LibraryListModel(detailsModel))
         } catch {
           case ex: ExtensionException =>
@@ -141,7 +140,7 @@ class ExtensionSettingsSectionPanel(project: Project) extends SettingsSectionPan
       builder.append(s"$name $version")
       if (description.nonEmpty) builder.append(s" - $description")
       val label = new JBLabel(builder.mkString)
-      label.setToolTipText(file.getAbsolutePath)
+      label.setToolTipText(file.toAbsolutePath.toString)
       label
     }
     val librariesPane = new JPanel(new BorderLayout())

@@ -21,12 +21,13 @@ import org.jetbrains.plugins.scala.DependencyManagerBase._
 import org.jetbrains.plugins.scala.ScalaBundle
 import org.jetbrains.plugins.scala.components.ScalaPluginVersionVerifier
 import org.jetbrains.plugins.scala.components.libextensions.ui._
+import org.jetbrains.plugins.scala.extensions.ObjectExt
 import org.jetbrains.plugins.scala.project.ProjectExt
 import org.jetbrains.plugins.scala.settings.ScalaProjectSettings
 import org.jetbrains.sbt.project.module.SbtModule
 import org.jetbrains.sbt.resolvers.SbtResolver
 
-import java.io.File
+import java.nio.file.{Files, Path}
 import java.util.concurrent.atomic.AtomicBoolean
 import java.{util => ju}
 import scala.collection.immutable.ArraySeq
@@ -121,7 +122,7 @@ final class LibraryExtensionsManager(project: Project) {
     })
   }
 
-  private def enabledAcceptCb(resolved: Seq[File]): Unit = {
+  private def enabledAcceptCb(resolved: Seq[Path]): Unit = {
     resolved.foreach(processResolvedExtensionWithLogging)
     saveCachedExtensions()
     publisher.newExtensionsAdded()
@@ -135,12 +136,12 @@ final class LibraryExtensionsManager(project: Project) {
   @Internal
   //NOTE: the is 1 usage in `zio-direct-intellij` test code in `ZioDirectMacroSupportTest.registerScalaPluginExtensions`
   //https://github.com/zio/zio-direct-intellij/blob/48fd4cb957f3be153f6395e2987fdaf229c91132/src/test/scala/ZioDirectMacroSupportTest.scala#L38
-  def processResolvedExtension(resolved: File): Unit = {
-    val resolvedAbsolutePath = resolved.getAbsolutePath
-    if (myLoadedLibraries.exists(_.file.getAbsolutePath == resolvedAbsolutePath))
+  def processResolvedExtension(resolved: Path): Unit = {
+    val resolvedAbsolutePath = resolved.toAbsolutePath
+    if (myLoadedLibraries.exists(_.file.toAbsolutePath == resolvedAbsolutePath))
       throw new ExtensionAlreadyLoadedException(resolved)
-    val vFile = JarFileSystem.getInstance().findFileByPath(resolvedAbsolutePath.withJarSeparator)
-    val manifest = Option(vFile.findFileByRelativePath(MANIFEST_PATH))
+    val vFile = JarFileSystem.getInstance().findFileByPath(resolvedAbsolutePath.toString.withJarSeparator)
+    val manifest = Option(vFile).flatMap(_.findFileByRelativePath(MANIFEST_PATH).toOption)
       .map(vFile => Using(vFile.getInputStream)(XMLNoDTD.load))
 
     manifest match {
@@ -151,26 +152,26 @@ final class LibraryExtensionsManager(project: Project) {
     MOD_TRACKER.incModCount()
   }
 
-  private def processResolvedExtensionWithLogging(resolved: File): Unit = try {
+  private def processResolvedExtensionWithLogging(resolved: Path): Unit = try {
     processResolvedExtension(resolved)
   } catch {
     case _: ProcessCanceledException  =>
     case NonFatal(t)                  => LOG.error(t)
   }
 
-  private def loadJarWithManifest(manifest: Elem, jarFile: File): Unit = {
+  private def loadJarWithManifest(manifest: Elem, jarFile: Path): Unit = {
     LibraryDescriptor.parse(manifest) match {
       case Left(error)        => throw new BadExtensionDescriptor(jarFile, error)
       case Right(descriptor)  => loadDescriptor(descriptor, jarFile)
     }
   }
 
-  private def loadDescriptor(descriptor: LibraryDescriptor, jarFile: File): Unit = {
+  private def loadDescriptor(descriptor: LibraryDescriptor, jarFile: Path): Unit = {
     val classBuffer = mutable.HashMap[Class[_], mutable.ArrayBuffer[Any]]()
     descriptor.getCurrentPluginDescriptor.foreach { currentVersion =>
       val IdeaVersionDescriptor(_, _, _, defaultPackage, extensions) = currentVersion
       val classLoader = UrlClassLoader.build()
-        .files(ju.Collections.singletonList(jarFile.toPath))
+        .files(ju.Collections.singletonList(jarFile))
         .parent(getClass.getClassLoader)
         .useCache()
         .get()
@@ -191,14 +192,14 @@ final class LibraryExtensionsManager(project: Project) {
   }
 
   private def saveCachedExtensions(): Unit = {
-    properties.setList(EXT_JARS_KEY, myLoadedLibraries.map(_.file.getAbsolutePath).asJava)
+    properties.setList(EXT_JARS_KEY, myLoadedLibraries.map(_.file.toAbsolutePath.toString).asJava)
   }
 
   private def loadCachedExtensions(): Unit = {
     val jarPaths = properties.getList(EXT_JARS_KEY)
     if (jarPaths != null) {
-      val existingFiles = jarPaths.asScala.map(new File(_)).filter(_.exists())
-      properties.setList(EXT_JARS_KEY, existingFiles.map(_.getAbsolutePath).asJava)
+      val existingFiles = jarPaths.asScala.map(Path.of(_)).filter(Files.exists(_))
+      properties.setList(EXT_JARS_KEY, existingFiles.map(_.toAbsolutePath.toString).asJava)
       existingFiles.foreach(processResolvedExtensionWithLogging)
     }
   }
@@ -225,7 +226,7 @@ final class LibraryExtensionsManager(project: Project) {
 
   def getAvailableLibraries: collection.Seq[ExtensionJarData] = myLoadedLibraries
 
-  def addExtension(file: File): Unit = {
+  def addExtension(file: Path): Unit = {
     processResolvedExtension(file)
     saveCachedExtensions()
   }
