@@ -10,7 +10,8 @@ import org.jetbrains.plugins.scala.extensions.invokeLater
 import org.jetbrains.plugins.scala.lang.psi.api.base.ScAnnotation
 import org.jetbrains.plugins.scala.util.{MacroExpansion, Place}
 
-import java.io._
+import java.io.{BufferedInputStream, BufferedOutputStream, ObjectInputStream, ObjectOutputStream}
+import java.nio.file.{Files, Paths}
 import scala.collection.mutable
 import scala.util.Using
 
@@ -51,33 +52,33 @@ class ReflectExpansionsCollector(project: Project) {
   }
 
   private def deserializeExpansions(): Unit = {
-    val file = new File(System.getProperty("java.io.tmpdir") + s"/expansion-${project.getName}")
+    val file = Paths.get(System.getProperty("java.io.tmpdir")).resolve(s"expansion-${project.getName}")
 
-    if (!file.exists())
+    if (!Files.exists(file))
       return
 
     try {
-      Using.resource(new ObjectInputStream(new BufferedInputStream(new FileInputStream(file)))) { os =>
+      Using.resource(new ObjectInputStream(new BufferedInputStream(Files.newInputStream(file)))) { os =>
         collectedExpansions ++= os.readObject().asInstanceOf[collectedExpansions.type]
       }
     } catch {
       case e: Throwable =>
         LOG.warn("Filed to deserialize macro expansions, removing cache", e)
-        file.delete()
+        Files.deleteIfExists(file)
     }
   }
 
   def serializeExpansions(): Unit = {
-    val file = new File(System.getProperty("java.io.tmpdir") + s"/expansion-${project.getName}")
+    val file = Paths.get(System.getProperty("java.io.tmpdir")).resolve(s"expansion-${project.getName}")
     try {
-      Using.resource(new ObjectOutputStream(new BufferedOutputStream(new FileOutputStream(file)))) {
+      Using.resource(new ObjectOutputStream(new BufferedOutputStream(Files.newOutputStream(file)))) {
         _.writeObject(collectedExpansions)
       }
     } catch {
       case e: Throwable =>
         LOG.warn("Filed to serialize macro expansions, removing cache", e)
         collectedExpansions.clear()
-        file.delete()
+        Files.deleteIfExists(file)
     }
   }
 
