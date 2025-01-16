@@ -4,11 +4,7 @@ import com.intellij.analysis.AnalysisScope
 import com.intellij.execution.ExecutionException
 import com.intellij.execution.configurations._
 import com.intellij.execution.filters.TextConsoleBuilderFactory
-import com.intellij.execution.process.{
-  OSProcessHandler,
-  ProcessAdapter,
-  ProcessEvent
-}
+import com.intellij.execution.process.{OSProcessHandler, ProcessAdapter, ProcessEvent}
 import com.intellij.execution.runners.ExecutionEnvironment
 import com.intellij.ide.BrowserUtil
 import com.intellij.openapi.module.{Module, ModuleManager}
@@ -21,7 +17,8 @@ import com.intellij.psi.PsiManager
 import org.jetbrains.plugins.scala.lang.psi.api.ScalaFile
 import org.jetbrains.plugins.scala.project._
 
-import java.io.{File, FileOutputStream, IOException, PrintStream}
+import java.io.{IOException, PrintStream}
+import java.nio.file.{Files, Paths}
 import java.util.regex.Pattern
 import scala.collection.mutable
 import scala.jdk.CollectionConverters._
@@ -35,7 +32,7 @@ class ScaladocCommandLineState(env: ExecutionEnvironment, project: Project)
   )
 
   private val MainClassScala2 = "scala.tools.nsc.ScalaDoc"
-  private val classpathDelimeter = File.pathSeparator
+  private val classpathDelimeter = java.io.File.pathSeparator
   private var outputDir: String = ""
   private var showInBrowser: Boolean = false
   private var additionalScaladocFlags: String = ""
@@ -71,9 +68,9 @@ class ScaladocCommandLineState(env: ExecutionEnvironment, project: Project)
     if (showInBrowser) {
       handler.addProcessListener(new ProcessAdapter {
         override def processTerminated(event: ProcessEvent): Unit = {
-          val url: File = new File(outputDir, "index.html")
-          if (url.exists && event.getExitCode == 0) {
-            BrowserUtil.browse(url.getPath)
+          val url = Paths.get(outputDir, "index.html")
+          if (Files.exists(url) && event.getExitCode == 0) {
+            BrowserUtil.browse(url)
           }
         }
       })
@@ -311,13 +308,13 @@ class ScaladocCommandLineState(env: ExecutionEnvironment, project: Project)
 
     if (JdkUtil.useDynamicClasspath(project)) {
       try {
-        val tempParamsFile: File =
-          File.createTempFile("scaladocfileargs", ".tmp")
-        Using.resource(new PrintStream(new FileOutputStream(tempParamsFile))) {
+        val tempParamsFile =
+          Files.createTempFile("scaladocfileargs", ".tmp")
+        Using.resource(new PrintStream(Files.newOutputStream(tempParamsFile))) {
           pw =>
             paramListSimple.map(escapeParam).foreach(pw.println)
         }
-        paramList.add("@" + tempParamsFile.getAbsolutePath)
+        paramList.add("@" + tempParamsFile.toAbsolutePath)
       } catch {
         case e: IOException => throw new ExecutionException("I/O Error", e)
       }
