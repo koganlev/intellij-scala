@@ -61,17 +61,20 @@ import org.jetbrains.plugins.scala.util.ScalaPluginUtils
 import java.io.File
 import java.lang.ref.Reference
 import java.lang.reflect.InvocationTargetException
-import java.nio.file.Path
+import java.nio.charset.Charset
+import java.nio.file.{Files, Path}
 import java.util.concurrent.atomic.AtomicReference
 import java.util.concurrent.{Callable, ScheduledFuture, TimeUnit, ConcurrentMap => JConcurrentMap, Future => JFuture}
 import java.util.regex.Pattern
 import java.util.{Arrays, Set => JSet}
 import scala.annotation.{nowarn, tailrec}
+import scala.collection.convert.StreamExtensions.AccumulatorFactoryInfo
 import scala.collection.immutable.ArraySeq
 import scala.collection.mutable
 import scala.collection.mutable.ArrayBuffer
 import scala.concurrent.{ExecutionContext, ExecutionContextExecutorService, Future, Promise}
 import scala.jdk.CollectionConverters._
+import scala.jdk.StreamConverters.StreamHasToScala
 import scala.reflect.ClassTag
 import scala.runtime.NonLocalReturnControl
 import scala.util.control.Exception.catching
@@ -1808,6 +1811,16 @@ package object extensions {
 
   implicit class PathExt(private val path: Path) extends AnyVal {
     def /(@NonNls subPath: String): Path = path.resolve(subPath)
+
+    def lines(charset: Charset = Charset.defaultCharset): Array[String] = lines(Array, charset)
+    def lines[C1](factory: collection.Factory[String, C1], charset: Charset)
+                 (implicit info: AccumulatorFactoryInfo[String, C1]): C1 =
+      Files.lines(path, charset).toScala(factory)
+
+    def list(): Seq[Path] = list(Seq)
+    def list[C1](factory: collection.Factory[Path, C1])
+                (implicit info: AccumulatorFactoryInfo[Path, C1]): C1 =
+      Files.list(path).toScala(factory)
 
     def parents: Iterator[Path] =
       withParents.drop(1)

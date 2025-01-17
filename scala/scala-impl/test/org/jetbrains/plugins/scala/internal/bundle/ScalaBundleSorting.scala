@@ -5,11 +5,10 @@ import org.jetbrains.plugins.scala.util.TestUtils
 import org.jetbrains.plugins.scala.util.internal.I18nBundleContent
 import org.jetbrains.plugins.scala.util.internal.I18nBundleContent._
 
-import java.io.File
-import java.nio.file.Path
+import java.nio.file.{Files, Path}
 import java.util.Scanner
 import java.util.regex.Pattern
-import scala.io.Source
+import scala.util.Using
 
 //noinspection ScalaUnusedSymbol
 /**
@@ -22,7 +21,7 @@ object ScalaBundleSorting {
     def searcher: Searcher
 
     def srcPath: Path = rootPath / "src"
-    def resourcesPath: Path = rootPath /  "resources"
+    def resourcesPath: Path = rootPath / "resources"
     def messagesPath: Path = resourcesPath / "messages"
   }
 
@@ -178,7 +177,7 @@ object ScalaBundleSorting {
 
     val bundlePath = moduleInfo.bundleAbsolutePath
     println(s"Read bundle $bundlePath")
-    val I18nBundleContent(entries) = read(bundlePath.toFile)
+    val I18nBundleContent(entries) = read(bundlePath)
     val keyToAmountOfEntries = entries.groupBy(_.key).view.mapValues(_.size)
 
     def isEntryInInvalidPath(entry: Entry): Boolean =
@@ -202,8 +201,8 @@ object ScalaBundleSorting {
     println(s"$changed entries changed...")
     println(s"Write bundle $bundlePath")
     I18nBundleContent(entriesWithPath)
-        .sorted
-        .writeTo(bundlePath)
+      .sorted
+      .writeTo(bundlePath)
     println("Done.")
     println()
   }
@@ -227,8 +226,7 @@ object ScalaBundleSorting {
 
     def search(path: Path): Seq[String] = {
       val result = Seq.newBuilder[String]
-      val scanner = new Scanner(Source.fromFile(path.toFile).bufferedReader())
-      try {
+      Using(new Scanner(Files.newBufferedReader(path))) { scanner =>
         while (scanner.findWithinHorizon(pattern, 0) ne null) {
           val m = scanner.`match`()
 
@@ -239,8 +237,6 @@ object ScalaBundleSorting {
           assert(g != null)
           result += g
         }
-      } finally {
-        scanner.close()
       }
 
       result.result()
@@ -254,14 +250,14 @@ object ScalaBundleSorting {
       findKeysInDirectory(module.resourcesPath, module.searcher)
 
   def findKeysInDirectory(root: Path, searcher: Searcher): List[Finding] =
-    for (file <- allFilesIn(root.toFile).toList.sorted; key <- searcher.search(file.toPath)) yield {
+    for (file <- allFilesIn(root).toList.sorted; key <- searcher.search(file)) yield {
       val absoluteFilepath = file.toString.replace('\\', '/')
       val relativeFilepath = absoluteFilepath.substring(root.toString.length).stripPrefix("/")
       Finding(relativeFilepath, key)(absoluteFilepath)
     }
 
-  private def allFilesIn(file: File): Iterator[File] =
-    if (!file.exists) Iterator()
-    else if (!file.isDirectory) Iterator(file)
-    else file.listFiles.sorted.iterator.flatMap(allFilesIn)
+  private def allFilesIn(file: Path): Iterator[Path] =
+    if (!Files.exists(file)) Iterator()
+    else if (!Files.isDirectory(file)) Iterator(file)
+    else file.list().sorted.iterator.flatMap(allFilesIn)
 }

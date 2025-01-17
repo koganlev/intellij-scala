@@ -6,7 +6,6 @@ import org.jetbrains.plugins.scala.util.internal.I18nBundleContent.Entry
 
 import java.io.PrintWriter
 import java.nio.file.Path
-import scala.io.Source
 
 object ExtractStringsFromPluginXml {
   case class PluginXmlInfo(resourcePath: Path, relativeXmlPath: String, bundleQualifiedPath: String) {
@@ -44,13 +43,9 @@ object ExtractStringsFromPluginXml {
     allXmls.foreach(processPluginXml)
 
   def processPluginXml(info: PluginXmlInfo): Unit = {
-    val bundle = I18nBundleContent.read(info.absoluteBundlePath.toFile)
+    val bundle = I18nBundleContent.read(info.absoluteBundlePath)
 
-    val xmlContent = {
-      val source = Source.fromFile(info.absoluteXmlPath.toFile)
-      try source.getLines().toArray
-      finally source.close()
-    }
+    val xmlContent = info.absoluteXmlPath.lines()
 
     val newEntries = Seq.newBuilder[Entry]
     val displayNameRegex = "displayName=\"(.*?)\"".r

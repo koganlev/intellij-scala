@@ -4,10 +4,10 @@ import com.intellij.psi.PsiElement
 import org.jetbrains.plugins.scala.extensions._
 import org.jetbrains.plugins.scala.util.internal.I18nBundleContent._
 
-import java.io._
+import java.io.{OutputStream, PrintWriter}
 import java.nio.charset.StandardCharsets
-import java.nio.file.{Path, Paths}
-import scala.io.Source
+import java.nio.file.{Files, Path, Paths}
+import scala.util.Using
 
 case class I18nBundleContent(entries: Seq[Entry]) {
   def hasKey(key: String): Boolean = entries.exists(_.key == key)
@@ -19,19 +19,17 @@ case class I18nBundleContent(entries: Seq[Entry]) {
     val (before, after) = entries.partition(entryOrdering.lteq(_, entry))
     I18nBundleContent(before ++ Seq(entry) ++ after)
   }
+
   def writeTo(path: String): Unit =
-    writeTo(new PrintWriter(new File(path)))
+    writeTo(Path.of(path))
 
   def writeTo(path: Path): Unit =
     writeTo(new PrintWriter(path.toFile))
 
-  def writeTo(file: File): Unit =
-    writeTo(new PrintWriter(file))
-
   def writeTo(outputStream: OutputStream): Unit =
     writeTo(new PrintWriter(outputStream))
 
-  private def writeTo(printWriter: PrintWriter): Unit = try {
+  private def writeTo(printWriter: PrintWriter): Unit = Using(printWriter) { printWriter =>
     import printWriter._
     var path: String = null
     //make println platform-independent
@@ -50,7 +48,7 @@ case class I18nBundleContent(entries: Seq[Entry]) {
       print(entry.comments)
       println(entry.key + "=" + entry.text)
     }
-  } finally printWriter.close()
+  }
 }
 
 object I18nBundleContent {
@@ -65,17 +63,10 @@ object I18nBundleContent {
   }
 
   def read(bundlePath: String): I18nBundleContent =
-    read(new File(bundlePath))
+    read(Path.of(bundlePath))
 
-  def read(bundleFile: Path): I18nBundleContent =
-    read(bundleFile.toFile)
-
-  def read(bundleFile: File): I18nBundleContent = {
-    val lines = {
-      val source = Source.fromFile(bundleFile)(StandardCharsets.UTF_8)
-      try source.getLines().toArray
-      finally source.close()
-    }
+  def read(bundleFile: Path): I18nBundleContent = {
+    val lines = bundleFile.lines(StandardCharsets.UTF_8)
 
     var comments = ""
     var path = noPath
@@ -147,7 +138,7 @@ object I18nBundleContent {
   }
 
   private def moduleRootForFile(path: String) = {
-    assert(new File(path).isFile, s"Expected file: $path")
+    assert(isRegularFile(path), s"Expected file: $path")
     val idx = path.indexOf("/src/")
     if (idx < 0) None
     else Some(path.substring(0, idx + 1 /* include the '/' */))
@@ -165,9 +156,8 @@ object I18nBundleContent {
     Paths.get(_path)
       .parents
       .flatMap { path =>
-        new File(path.toUri)
+        path
           .list()
-          .map(Paths.get(path.toString, _))
           .find { path =>
             val fileName = path.getFileName.toString
             bundleClassRegex.findFirstIn(fileName).isDefined
@@ -177,7 +167,7 @@ object I18nBundleContent {
   }
 
   private def findBundleFileForClass(resourcePath: String, expectedPath: String, bundleName: String): String = {
-    if (new File(expectedPath).isFile) expectedPath
+    if (isRegularFile(expectedPath)) expectedPath
     else {
       // look for
       // resource/messages/<bundleName>.properties OR
@@ -185,9 +175,9 @@ object I18nBundleContent {
       // (at some point in time Scala prefix was added to all bundles)
       val path1 = resourcePath + "messages/" + bundleName + ".properties"
       val path2 = resourcePath + "messages/" + "Scala" + bundleName + ".properties"
-      if (new File(path1).isFile)
+      if (isRegularFile(path1))
         path1
-      else if (new File(path2).isFile)
+      else if (isRegularFile(path2))
         path2
       else
         throw new AssertionError(s"Expected Bundle file $expectedPath or $path1")
@@ -214,4 +204,6 @@ object I18nBundleContent {
     if (text2.length > 100) text2.replace("\n", "\\n\\\n")
     else text2.replace("\n", "\\n")
   }
+
+  private def isRegularFile(file: String): Boolean = Files.isRegularFile(Path.of(file))
 }

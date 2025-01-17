@@ -20,7 +20,7 @@ object ScalaBundleSortingTest {
     val keyToFindings: Map[String, List[Finding]] =
       ScalaBundleSorting.findKeyUsages(info)
 
-    val I18nBundleContent(entries) = read(info.bundleAbsolutePath.toFile)
+    val I18nBundleContent(entries) = read(info.bundleAbsolutePath)
 
     val usedEntries = entries.filterNot(_.path == unusedPath)
 
