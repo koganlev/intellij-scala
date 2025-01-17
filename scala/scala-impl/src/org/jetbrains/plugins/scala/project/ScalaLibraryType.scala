@@ -5,7 +5,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.libraries._
 import com.intellij.openapi.roots.ui.configuration._
 import com.intellij.openapi.roots.{JavadocOrderRootType, OrderRootType}
-import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.vfs.{VfsUtil, VirtualFile}
 import org.jetbrains.plugins.scala.ScalaBundle
 import org.jetbrains.plugins.scala.icons.Icons
 import org.jetbrains.plugins.scala.project.external.ScalaSdkUtils
@@ -120,7 +120,7 @@ object ScalaLibraryType {
                                  (implicit editor: libraryEditor.LibraryEditor): Unit =
           for {
             file <- files
-            url = file.toLibraryRootURL
+            url = VfsUtil.getUrlForLibraryRoot(file)
           } editor.addRoot(url, rootType)
       }
     }

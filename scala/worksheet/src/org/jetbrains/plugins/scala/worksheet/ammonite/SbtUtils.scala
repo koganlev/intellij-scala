@@ -3,7 +3,8 @@ package org.jetbrains.plugins.scala.worksheet.ammonite
 import com.intellij.execution.process.{OSProcessHandler, ProcessAdapter, ProcessEvent}
 import com.intellij.openapi.util.Key
 import com.intellij.util.PathUtil
-import org.jetbrains.plugins.scala.project.template._
+import org.jetbrains.plugins.scala.extensions.PathExt
+import org.jetbrains.plugins.scala.project.template.{usingTempDirectory, usingTempFile, writeLinesTo}
 import org.jetbrains.sbt.SbtUtil
 
 import java.io.FileNotFoundException

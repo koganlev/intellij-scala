@@ -5,8 +5,8 @@ import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.util.SystemProperties
 import org.apache.ivy.util.{AbstractMessageLogger, Message, MessageLogger}
 import org.jetbrains.plugins.scala.DependencyManagerBase.{DependencyDescription, ResolveFailure, ResolvedDependency, Types, UnresolvedDependency}
-import org.jetbrains.plugins.scala.extensions.LoggerExt
-import org.jetbrains.plugins.scala.project.template.{PathExt, ScalaSdkDescriptor, _}
+import org.jetbrains.plugins.scala.extensions.{LoggerExt, PathExt}
+import org.jetbrains.plugins.scala.project.template.{IvySdkChoice, ScalaSdkDescriptor, SdkChoice}
 import org.jetbrains.plugins.scala.{DependencyManagerBase, ScalaBundle}
 
 import java.nio.file.{Path, Paths}

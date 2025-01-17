@@ -2,12 +2,13 @@ package org.jetbrains.plugins.scala.project.sdkdetect.repository
 
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.progress.{EmptyProgressIndicator, ProgressIndicator}
+import org.jetbrains.plugins.scala.extensions.PathExt
 import org.jetbrains.plugins.scala.project.sdkdetect.repository.ScalaSdkDetectorBase._
 import org.jetbrains.plugins.scala.project.template.Artifact.{Scala3Compiler, ScalaCompiler, ScalaLibraryAndModulesArtifacts}
 import org.jetbrains.plugins.scala.project.template.Kind.{Binaries, Docs, Sources}
 import org.jetbrains.plugins.scala.project.template.{Artifact, ScalaSdkComponent, ScalaSdkDescriptor, SdkChoice}
 
-import java.nio.file.{Files, Path}
+import java.nio.file.Path
 import java.util.stream.{Stream => JStream}
 import scala.jdk.CollectionConverters.IteratorHasAsScala
 
@@ -95,7 +96,7 @@ abstract class ScalaSdkDetectorBase extends ScalaSdkDetector
   }
 
   protected def collectJarFiles(path: Path)(implicit indicator: ProgressIndicator): JStream[Path] =
-    Files.walk(path).filter { indicator.checkCanceled(); _.toString.endsWith(".jar") }
+    path.walk().filter { indicator.checkCanceled(); _.toString.endsWith(".jar") }
 
   protected def progress(text2: String)(implicit indicator: ProgressIndicator): Unit = {
     indicator.checkCanceled()

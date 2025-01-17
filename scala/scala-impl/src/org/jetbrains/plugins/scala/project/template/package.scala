@@ -3,13 +3,12 @@ package org.jetbrains.plugins.scala.project
 import com.intellij.openapi.application.Experiments
 import com.intellij.openapi.util.io
 import com.intellij.openapi.util.text.Strings
-import com.intellij.openapi.vfs.{VfsUtil, VirtualFile, VirtualFileManager}
+import com.intellij.openapi.vfs.{VirtualFile, VirtualFileManager}
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.plugins.scala.extensions.IterableOnceExt
 
 import java.awt.Container
 import java.io._
-import java.nio.file.{Files, Path}
 import javax.swing.JLabel
 import scala.util.Using
 
@@ -44,17 +43,6 @@ package object template {
       lines.foreach(writer.println)
       writer.flush()
     }
-  }
-
-  implicit class PathExt(path: Path) {
-    def /(string: String): Path = path.resolve(string)
-    def walk: java.util.stream.Stream[Path] = Files.walk(path)
-    def children: java.util.stream.Stream[Path] = Files.list(path)
-    def exists: Boolean = Files.exists(path)
-    def childExists(sub: String): Boolean = Files.exists(path / sub)
-    def isDir: Boolean = Files.isDirectory(path)
-    def nameContains(str: String): Boolean = path.getFileName.toString.contains(str)
-    def toLibraryRootURL: String = VfsUtil.getUrlForLibraryRoot(path)
   }
 
   implicit class FileExt(private val delegate: File) extends AnyVal {

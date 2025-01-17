@@ -5,16 +5,15 @@ import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.vfs.{VfsUtilCore, VirtualFile}
 import org.jetbrains.plugins.scala.ScalaBundle
-import org.jetbrains.plugins.scala.extensions.ObjectExt
+import org.jetbrains.plugins.scala.extensions.{ObjectExt, PathExt}
 import org.jetbrains.plugins.scala.project.external.ScalaSdkUtils
 import org.jetbrains.plugins.scala.project.sdkdetect.repository.CompilerClasspathResolveFailure.{AmbiguousArtifactsResolved, CantReadClasspathFromManifest, UnresolvedArtifact}
-import org.jetbrains.plugins.scala.project.template._
+import org.jetbrains.plugins.scala.project.template.{FileExt, ScalaSdkComponent, ScalaSdkDescriptor, SdkChoice, SystemSdkChoice}
 import org.jetbrains.plugins.scala.util.JarManifestUtils
 
-import java.nio.file.{Files, Path, Paths}
+import java.nio.file.{Path, Paths}
 import java.util.stream.{Stream => JStream}
 import scala.jdk.CollectionConverters.IteratorHasAsScala
-import scala.jdk.StreamConverters.StreamHasToScala
 import scala.util.Using
 
 private[project] object SystemDetector extends ScalaSdkDetectorBase {
@@ -88,11 +87,10 @@ private[project] object SystemDetector extends ScalaSdkDetectorBase {
     val versionFile = scalaDir / "VERSION"
     if (!versionFile.exists)
       None
-    else
-      Using.resource(scala.io.Source.fromInputStream(Files.newInputStream(versionFile))) { source =>
-        val line = source.getLines().find(_.startsWith(VersionPropertyPrefix))
-        line.map(_.stripPrefix(VersionPropertyPrefix).trim)
-      }
+    else {
+      val line = versionFile.lines(Iterator).find(_.startsWith(VersionPropertyPrefix))
+      line.map(_.stripPrefix(VersionPropertyPrefix).trim)
+    }
   }
 
   private def rootsFromPrograms: Seq[Path] =
@@ -159,7 +157,7 @@ private[project] object SystemDetector extends ScalaSdkDetectorBase {
   private def findPotentialScalaSdkRoots(implicit indicator: ProgressIndicator): Seq[Path] = {
     val systemRoots = getSystemRoots
     systemRoots.flatMap { root =>
-      Using.resource(root.children) { childrenStream =>
+      Using.resource(root.childrenStream()) { childrenStream =>
         childrenStream
           .filter { path =>
             progress(path.toString)
@@ -171,7 +169,7 @@ private[project] object SystemDetector extends ScalaSdkDetectorBase {
   }
 
   private def isScalaSdkFolder(path: Path): Boolean = {
-    path.isDir &&
+    path.isDirectory &&
       path.getFileName.toString.toLowerCase.startsWith("scala") &&
       scalaChildDirs.forall(path.childExists) &&
       (containsRequiredScalaLibraryJars(path) || findCompilerClasspathJar(path).isDefined)
@@ -265,7 +263,7 @@ private[project] object SystemDetector extends ScalaSdkDetectorBase {
     systemRoot: Path,
     descriptor: ScalaSdkDescriptor
   ): Either[Seq[CompilerClasspathResolveFailure], ScalaSdkDescriptor] = {
-    val jarArtifacts = (systemRoot / LibFolder).children.toScala(Seq).flatMap(JarArtifact.from)
+    val jarArtifacts = (systemRoot / LibFolder).children().flatMap(JarArtifact.from)
 
     val localResolveResults: Seq[Either[CompilerClasspathResolveFailure, JarArtifact]] =
       Scala3ExtraCompilerClasspathArtifacts.map(resolve(_, jarArtifacts)) ++

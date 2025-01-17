@@ -9,7 +9,7 @@ import com.intellij.openapi.extensions.PluginId
 import com.intellij.util.PathUtil
 import org.jetbrains.annotations.Nls
 import org.jetbrains.plugins.scala.ScalaBundle
-import org.jetbrains.plugins.scala.extensions.invokeLater
+import org.jetbrains.plugins.scala.extensions.{PathExt, invokeLater}
 import org.jetbrains.plugins.scala.util.ScalaNotificationGroups
 
 import java.nio.file.Paths
@@ -103,7 +103,7 @@ class ScalaPluginVersionVerifierActivity extends RunOnceStartupActivity {
       val scalaClass = plugin.getPluginClassLoader.loadClass("scala.Option")
       val pathToJar = PathUtil.getJarPathForClass(scalaClass)
       val path = Paths.get(pathToJar)
-      path.getFileName.toString.contains("-2.11")
+      path.nameContains("-2.11")
     } catch {
       case c: ControlFlowException => throw c
       case _: ClassNotFoundException => false

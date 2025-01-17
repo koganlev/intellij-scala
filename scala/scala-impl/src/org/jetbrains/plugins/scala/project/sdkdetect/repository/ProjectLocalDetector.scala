@@ -3,8 +3,8 @@ package org.jetbrains.plugins.scala.project.sdkdetect.repository
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.vfs.{VfsUtilCore, VirtualFile}
 import org.jetbrains.plugins.scala.ScalaBundle
-import org.jetbrains.plugins.scala.extensions.ObjectExt
-import org.jetbrains.plugins.scala.project.template.{PathExt, _}
+import org.jetbrains.plugins.scala.extensions.{ObjectExt, PathExt}
+import org.jetbrains.plugins.scala.project.template.{ProjectSdkChoice, ScalaSdkDescriptor, SdkChoice}
 
 import java.nio.file.Path
 import java.util.stream.{Stream => JStream}

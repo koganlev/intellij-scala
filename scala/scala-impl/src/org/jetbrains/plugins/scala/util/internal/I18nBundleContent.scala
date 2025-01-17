@@ -66,7 +66,7 @@ object I18nBundleContent {
     read(Path.of(bundlePath))
 
   def read(bundleFile: Path): I18nBundleContent = {
-    val lines = bundleFile.lines(StandardCharsets.UTF_8)
+    val lines = bundleFile.lines(Array, StandardCharsets.UTF_8)
 
     var comments = ""
     var path = noPath
@@ -157,7 +157,7 @@ object I18nBundleContent {
       .parents
       .flatMap { path =>
         path
-          .list()
+          .children()
           .find { path =>
             val fileName = path.getFileName.toString
             bundleClassRegex.findFirstIn(fileName).isDefined

@@ -45,7 +45,7 @@ object ExtractStringsFromPluginXml {
   def processPluginXml(info: PluginXmlInfo): Unit = {
     val bundle = I18nBundleContent.read(info.absoluteBundlePath)
 
-    val xmlContent = info.absoluteXmlPath.lines()
+    val xmlContent = info.absoluteXmlPath.lines(Array)
 
     val newEntries = Seq.newBuilder[Entry]
     val displayNameRegex = "displayName=\"(.*?)\"".r

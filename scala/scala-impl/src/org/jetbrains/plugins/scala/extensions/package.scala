@@ -66,6 +66,7 @@ import java.nio.file.{Files, Path}
 import java.util.concurrent.atomic.AtomicReference
 import java.util.concurrent.{Callable, ScheduledFuture, TimeUnit, ConcurrentMap => JConcurrentMap, Future => JFuture}
 import java.util.regex.Pattern
+import java.util.stream.{Stream => JStream}
 import java.util.{Arrays, Set => JSet}
 import scala.annotation.{nowarn, tailrec}
 import scala.collection.convert.StreamExtensions.AccumulatorFactoryInfo
@@ -1812,15 +1813,22 @@ package object extensions {
   implicit class PathExt(private val path: Path) extends AnyVal {
     def /(@NonNls subPath: String): Path = path.resolve(subPath)
 
-    def lines(charset: Charset = Charset.defaultCharset): Array[String] = lines(Array, charset)
-    def lines[C1](factory: collection.Factory[String, C1], charset: Charset)
+    def childrenStream(): JStream[Path] = Files.list(path)
+    def children(): Seq[Path] = children(Seq)
+    def children[C1](factory: collection.Factory[Path, C1]): C1 =
+      childrenStream().toScala(factory)
+
+    def childExists(child: String): Boolean = (path / child).exists
+    def exists: Boolean = Files.exists(path)
+
+    def isDirectory: Boolean = Files.isDirectory(path)
+    def isRegularFile: Boolean = Files.isRegularFile(path)
+
+    def lines[C1](factory: collection.Factory[String, C1], charset: Charset = Charset.defaultCharset)
                  (implicit info: AccumulatorFactoryInfo[String, C1]): C1 =
       Files.lines(path, charset).toScala(factory)
 
-    def list(): Seq[Path] = list(Seq)
-    def list[C1](factory: collection.Factory[Path, C1])
-                (implicit info: AccumulatorFactoryInfo[Path, C1]): C1 =
-      Files.list(path).toScala(factory)
+    def nameContains(str: String): Boolean = path.getFileName.toString.contains(str)
 
     def parents: Iterator[Path] =
       withParents.drop(1)
@@ -1828,6 +1836,8 @@ package object extensions {
       Iterator.iterate(path)(_.getParent).takeWhile(_ != null)
     def systemIndependentPathString: String =
       path.toString.replace(java.io.File.separatorChar, '/')
+
+    def walk(): JStream[Path] = Files.walk(path)
   }
 
   object executionContext {

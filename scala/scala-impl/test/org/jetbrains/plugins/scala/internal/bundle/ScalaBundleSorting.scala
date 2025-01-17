@@ -259,5 +259,5 @@ object ScalaBundleSorting {
   private def allFilesIn(file: Path): Iterator[Path] =
     if (!Files.exists(file)) Iterator()
     else if (!Files.isDirectory(file)) Iterator(file)
-    else file.list().sorted.iterator.flatMap(allFilesIn)
+    else file.children().sorted.iterator.flatMap(allFilesIn)
 }
