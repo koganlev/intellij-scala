@@ -32,8 +32,5 @@
  *
  *  - [[com.intellij.openapi.fileTypes.SyntaxHighlighterFactory SyntaxHighlighterFactory / SyntaxHighlighter]]
  *    - [[org.jetbrains.plugins.scala.highlighter.ScalaSyntaxHighlighterFactory]]
- *
- *  - [[com.intellij.openapi.fileTypes.EditorHighlighterProvider EditorHighlighterProvider / ScalaEditorHighlighter]]
- *    - [[org.jetbrains.plugins.scala.highlighter.ScalaEditorHighlighterProvider]]
  */
 final class _intellij_platform_entities private()
