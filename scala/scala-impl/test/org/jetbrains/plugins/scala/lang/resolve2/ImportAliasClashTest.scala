@@ -1,9 +1,11 @@
 package org.jetbrains.plugins.scala.lang.resolve2
 
+import org.jetbrains.plugins.scala.extensions.PathExt
+
+import java.nio.file.Path
+
 class ImportAliasClashTest extends ResolveTestBase {
-  override def folderPath: String = {
-    super.folderPath + "import/alias/clash/"
-  }
+  override def folderPath: Path = super.folderPath / "import" / "alias" / "clash"
 
   //TODO importexclude
 //  def testRenameType1 = doTest

@@ -1,6 +1,7 @@
 package org.jetbrains.plugins.scala.internal.bundle
 
-import java.io.File
+import org.jetbrains.plugins.scala.extensions.PathExt
+
 import java.nio.file.attribute.BasicFileAttributes
 import java.nio.file.{FileVisitResult, Files, Path, SimpleFileVisitor}
 import scala.collection.mutable
@@ -18,9 +19,9 @@ object ScalaPluginResourcesUtils {
     ignoreDirNames: Seq[String] = DefaultIgnoredDirs
   ): Seq[Path] =
     findAllFiles(root, ignoreDirNames, file => {
-      file.getName.endsWith("Bundle.properties") &&
-        file.getParentFile.getName == "messages" &&
-        file.getParentFile.getParentFile.getName == "resources"
+      file.getFileName.toString.endsWith("Bundle.properties") &&
+        file.parents.nextOption().exists(_.getFileName.toString == "messages") &&
+        file.parents.drop(1).nextOption().exists(_.getFileName.toString == "resources")
     })
 
   //example: scala-coverage.xml, intellij-qodana-jvm-sbt.xml
@@ -29,16 +30,16 @@ object ScalaPluginResourcesUtils {
     ignoreDirNames: Seq[String] = DefaultIgnoredDirs
   ): Seq[Path] =
     findAllFiles(root, ignoreDirNames, file => {
-      file.getName.endsWith(".xml") &&
-        file.getParentFile.getName == "META-INF" &&
-        file.getParentFile.getParentFile.getName == "resources"
+      file.getFileName.toString.endsWith(".xml") &&
+        file.parents.nextOption().exists(_.getFileName.toString == "META-INF") &&
+        file.parents.drop(1).nextOption().exists(_.getFileName.toString == "resources")
     })
 
   //example: scala-coverage.xml, intellij-qodana-jvm-sbt.xml
   def findAllFiles(
     root: Path,
     ignoreDirNames: Seq[String] = DefaultIgnoredDirs,
-    accept: File => Boolean
+    accept: Path => Boolean
   ): Seq[Path] = {
     assert(Files.exists(root))
 
@@ -51,8 +52,7 @@ object ScalaPluginResourcesUtils {
           FileVisitResult.CONTINUE
 
       override def visitFile(path: Path, attrs: BasicFileAttributes): FileVisitResult = {
-        val file = path.toFile
-        if (accept(file)) {
+        if (accept(path)) {
           result += path
           FileVisitResult.CONTINUE
         }

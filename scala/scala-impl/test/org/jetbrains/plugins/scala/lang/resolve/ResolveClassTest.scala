@@ -1,17 +1,18 @@
 package org.jetbrains.plugins.scala.lang.resolve
 
+import org.jetbrains.plugins.scala.extensions.{ObjectExt, PathExt}
 import org.jetbrains.plugins.scala.lang.psi.api.statements.ScFunction
 import org.jetbrains.plugins.scala.lang.psi.api.toplevel.typedef.ScObject
 import org.junit.Assert._
 
 class ResolveClassTest extends ScalaResolveTestCase {
-  override def folderPath = super.folderPath + "resolve/class/companion/"
+  override def folderPath = super.folderPath / "resolve" / "class" / "companion"
 
   def testCaseClass(): Unit = {
     val ref = findReferenceAtCaret()
     val resolved = ref.resolve
     assertNotNull(resolved)
-    assertTrue(resolved.isInstanceOf[ScObject])
+    assertTrue(resolved.is[ScObject])
   }
 
   def testApplyToCase(): Unit = {
@@ -24,7 +25,7 @@ class ResolveClassTest extends ScalaResolveTestCase {
     val ref = findReferenceAtCaret()
     val resolved = ref.resolve
     assertNotNull(resolved)
-    assertTrue(resolved.isInstanceOf[ScFunction])
+    assertTrue(resolved.is[ScFunction])
   }
 
   def testApplyFromTrait(): Unit = {

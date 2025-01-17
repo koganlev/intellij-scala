@@ -1,11 +1,14 @@
 package org.jetbrains.plugins.scala.lang.resolve
 
+import org.jetbrains.plugins.scala.extensions.PathExt
 import org.jetbrains.plugins.scala.lang.psi.api.base.ScReference
 import org.junit.Assert._
 
+import java.nio.file.Path
+
 class OverloadedResolutionTest extends ScalaResolveTestCase {
 
-  override def folderPath: String = s"${super.folderPath}resolve/overloadedResolution"
+  override def folderPath: Path = super.folderPath / "resolve" / "overloadedResolution"
 
   def testSCL7890(): Unit = doTest()
 

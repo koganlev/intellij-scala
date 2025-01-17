@@ -2,10 +2,12 @@ package org.jetbrains.plugins.scala
 package lang
 package resolve2
 
+import org.jetbrains.plugins.scala.extensions.PathExt
+
+import java.nio.file.Path
+
 abstract class PredefElementTestBase extends ResolveTestBase {
-  override def folderPath: String = {
-    super.folderPath + "predef/element/"
-  }
+  override def folderPath: Path = super.folderPath / "predef" / "element"
 }
 
 class PredefElementTest extends PredefElementTestBase {
@@ -25,4 +27,3 @@ class PredefElementTest_with_ScalaObject extends PredefElementTestBase {
 
   def testTrait(): Unit = doTest()
 }
-

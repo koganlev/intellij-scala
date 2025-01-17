@@ -3,13 +3,14 @@ package lang
 package resolve
 package imports
 
-
-import org.jetbrains.plugins.scala.extensions.PsiNamedElementExt
+import org.jetbrains.plugins.scala.extensions.{PathExt, PsiNamedElementExt}
 import org.jetbrains.plugins.scala.lang.psi.api.base.ScReference
 import org.junit.Assert
 
+import java.nio.file.Path
+
 class HideImportsTest extends ScalaResolveTestCase {
-  override def folderPath: String = super.folderPath + "resolve/imports/simple/"
+  override def folderPath: Path = super.folderPath / "resolve" / "imports" / "simple"
 
   def testHidePredefImplicit(): Unit = {
     findReferenceAtCaret() match {

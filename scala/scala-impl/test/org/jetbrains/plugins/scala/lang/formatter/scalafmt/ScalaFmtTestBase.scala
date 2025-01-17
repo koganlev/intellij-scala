@@ -2,6 +2,7 @@ package org.jetbrains.plugins.scala.lang.formatter.scalafmt
 
 import com.intellij.openapi.project.Project
 import com.intellij.testFramework.UsefulTestCase
+import org.jetbrains.plugins.scala.extensions.PathExt
 import org.jetbrains.plugins.scala.lang.formatter.AbstractScalaFormatterTestBase
 import org.jetbrains.plugins.scala.lang.formatting.scalafmt.ScalafmtDynamicService
 import org.jetbrains.plugins.scala.lang.formatting.scalafmt.ScalafmtDynamicService.DefaultVersion
@@ -11,13 +12,13 @@ import org.jetbrains.plugins.scala.util.TestUtils
 import org.junit.Assert.assertTrue
 import org.scalafmt.dynamic.ScalafmtVersion
 
-import java.io.File
+import java.nio.file.Path
 import scala.collection.mutable
 
 trait ScalaFmtTestBase extends AbstractScalaFormatterTestBase with ScalaFmtForTestsSetupOps {
 
-  override protected def scalafmtConfigsBasePath: String =
-    TestUtils.getTestDataPath + "/formatter/scalafmt/"
+  override protected def scalafmtConfigsBasePath: Path =
+    Path.of(TestUtils.getTestDataPath, "formatter", "scalafmt")
 
   override def setUp(): Unit = {
     super.setUp()
@@ -55,7 +56,7 @@ trait ScalaFmtForTestsSetupOps extends UsefulTestCase {
     configIsSet = false
   }
 
-  protected def scalafmtConfigsBasePath: String
+  protected def scalafmtConfigsBasePath: Path
 
   protected def getProject: Project
 
@@ -64,14 +65,14 @@ trait ScalaFmtForTestsSetupOps extends UsefulTestCase {
   final def setScalafmtConfig(configFileName: String): Unit = {
     if (configIsSet)
       throw new AssertionError("scalafmt config should be set only once")
-    val configFile = new File(scalafmtConfigsBasePath, configFileName)
+    val configFile = scalafmtConfigsBasePath / configFileName
     assertTrue(
       s"""Scalafmt config file doesn't exist: $configFile.
          |Possible files in parent directory:
-         |${configFile.getParentFile.listFiles().map(_.getPath).mkString("\n")}""".stripMargin,
-      configFile.exists()
+         |${configFile.getParent.children().mkString("\n")}""".stripMargin,
+      configFile.exists
     )
-    getScalaCodeStyleSettings.SCALAFMT_CONFIG_PATH = configFile.getPath
+    getScalaCodeStyleSettings.SCALAFMT_CONFIG_PATH = configFile.toString
     configIsSet = true
   }
 }

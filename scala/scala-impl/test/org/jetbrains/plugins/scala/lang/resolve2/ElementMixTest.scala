@@ -1,9 +1,12 @@
 package org.jetbrains.plugins.scala.lang.resolve2
 
+import org.jetbrains.plugins.scala.extensions.PathExt
+
+import java.nio.file.Path
+
 class ElementMixTest extends ResolveTestBase {
-  override def folderPath: String = {
-    super.folderPath + "element/mix/"
-  }
+  override def folderPath: Path = super.folderPath / "element" / "mix"
+
   //TODO classes clash
 //  def testCaseClassAndClass = doTest
   def testCaseClassAndObject(): Unit = doTest()
@@ -33,5 +36,4 @@ class ElementMixTest extends ResolveTestBase {
   def testObjectAndTrait(): Unit = doTest()
   def testObjectAndTypeAlias(): Unit = doTest()
   def testTraitAndTypeAlias(): Unit = doTest()
-
 }

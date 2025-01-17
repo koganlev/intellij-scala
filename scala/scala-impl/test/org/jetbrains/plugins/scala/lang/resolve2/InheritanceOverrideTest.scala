@@ -1,9 +1,11 @@
 package org.jetbrains.plugins.scala.lang.resolve2
 
+import org.jetbrains.plugins.scala.extensions.PathExt
+
+import java.nio.file.Path
+
 class InheritanceOverrideTest extends ResolveTestBase {
-  override def folderPath: String = {
-    super.folderPath + "inheritance/override/"
-  }
+  override def folderPath: Path = super.folderPath / "inheritance" / "override"
 
   //TODO answer?
 //  def testCaseClass = doTest

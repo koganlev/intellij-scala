@@ -1,17 +1,16 @@
 package org.jetbrains.plugins.scala.lang.types.utils
 
-import com.intellij.openapi.util.io.FileUtil
-import com.intellij.openapi.util.text.StringUtil
-import com.intellij.openapi.vfs.{CharsetToolkit, LocalFileSystem}
 import com.intellij.psi.PsiElement
 import com.intellij.psi.util.PsiTreeUtil
 import org.jetbrains.plugins.scala.base.ScalaLightCodeInsightFixtureTestCase
+import org.jetbrains.plugins.scala.extensions.{PathExt, StringExt}
 import org.jetbrains.plugins.scala.lang.psi.api.ScalaFile
 import org.jetbrains.plugins.scala.util.TestUtils
 import org.jetbrains.plugins.scala.util.TestUtils.ExpectedResultFromLastComment
 import org.junit.Assert._
 
-import java.io.File
+import java.nio.charset.StandardCharsets
+import java.nio.file.Path
 import scala.reflect._
 
 abstract class ScPsiElementAssertionTestBase[T <: PsiElement : ClassTag]
@@ -22,16 +21,15 @@ abstract class ScPsiElementAssertionTestBase[T <: PsiElement : ClassTag]
 
   private lazy val psiClazz: Class[T] = classTag[T].runtimeClass.asInstanceOf[Class[T]]
 
-  def folderPath: String
+  def folderPath: Path = Path.of(getTestDataPath)
 
   def computeRepresentation(t: T): Either[String, String]
 
   protected def doTest(): Unit = {
-    val filePath = folderPath + getTestName(false) + ".scala"
-    val file = LocalFileSystem.getInstance.findFileByPath(filePath.replace(File.separatorChar, '/'))
-    assert(file != null, "file " + filePath + " not found")
-    val fileText = StringUtil.convertLineSeparators(FileUtil.loadFile(new File(file.getCanonicalPath), CharsetToolkit.UTF8))
-    configureFromFileText(getTestName(false) + ".scala", fileText)
+    val fileName = getTestName(false) + ".scala"
+    val filePath = folderPath / fileName
+    val fileText = filePath.readAllBytesToString(StandardCharsets.UTF_8).withNormalizedSeparator
+    configureFromFileText(fileName, fileText)
     val scalaFile = getFile.asInstanceOf[ScalaFile]
     val offset = fileText.indexOf(startExprMarker)
     val startOffset = offset + startExprMarker.length

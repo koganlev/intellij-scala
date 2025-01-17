@@ -1,11 +1,14 @@
 package org.jetbrains.plugins.scala
 package refactoring.extractMethod
 
+import org.jetbrains.plugins.scala.extensions.PathExt
 import org.jetbrains.plugins.scala.lang.formatting.settings.ScalaCodeStyleSettings
 import org.jetbrains.plugins.scala.util.TypeAnnotationSettings
 
+import java.nio.file.Path
+
 class ScalaExtractMethodCaseClass extends ScalaExtractMethodTestBase {
-  override def folderPath: String = super.folderPath + "caseClass/"
+  override def folderPath: Path = super.folderPath / "caseClass"
 
   def testNoReturnSeveralOutput(): Unit = {
     val settings = TypeAnnotationSettings.alwaysAddType(ScalaCodeStyleSettings.getInstance(getProject))

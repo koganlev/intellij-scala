@@ -2,17 +2,18 @@ package org.jetbrains.plugins.scala.util
 
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.{Project, ProjectUtil}
-import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.{PsiComment, PsiFile, PsiManager}
-import org.jetbrains.annotations.NotNull
+import org.jetbrains.annotations.{NotNull, Nullable}
+import org.jetbrains.plugins.scala.extensions.{PathExt, ToNullSafe}
 import org.jetbrains.plugins.scala.lang.lexer.ScalaTokenTypes
 import org.junit.Assert
 import org.junit.Assert.{assertNotNull, fail}
 
-import java.io.{File, IOException}
+import java.io.IOException
 import java.net.URISyntaxException
+import java.nio.charset.Charset
 import java.nio.file.Path
 import java.util
 import scala.util.chaining.scalaUtilChainingOps
@@ -27,8 +28,8 @@ object TestUtils {
 
   private var TEST_DATA_PATH: String = _
 
-  def getTestDataDir: File =
-    new File(getTestDataPath).getCanonicalFile
+  def getTestDataDir: Path =
+    Path.of(getTestDataPath).toCanonicalPath
 
   def getTestDataPath: String = {
     if (TEST_DATA_PATH == null) {
@@ -36,9 +37,9 @@ object TestUtils {
         val resource = TestUtils.getClass.getClassLoader.getResource("testdata")
         TEST_DATA_PATH =
           if (resource == null)
-            find("scala/scala-impl", "testdata").getAbsolutePath
+            find("scala/scala-impl", "testdata").toAbsolutePath.toString
           else
-            new File(resource.toURI).getPath.replace(File.separatorChar, '/')
+            Path.of(resource.toURI).systemIndependentPathString
       } catch {
         case e@(_: URISyntaxException | _: IOException) =>
           LOG.error(e)
@@ -53,7 +54,7 @@ object TestUtils {
   def findCommunityRoot: String = {
     // <community-root>/scala/scala-impl/testdata/
     val testDataPath = getTestDataPath
-    java.nio.file.Paths.get(testDataPath, "..", "..", "..").normalize.toString + "/"
+    Path.of(testDataPath, "..", "..", "..").normalize.toString + "/"
   }
 
   def findCommunityRootPath: Path =
@@ -66,23 +67,23 @@ object TestUtils {
 
   @throws[IOException]
   def findTestDataDir(pathname: String): String =
-    findTestDataDir(new File(pathname), "testdata")
+    findTestDataDir(Path.of(pathname), "testdata")
 
   @throws[IOException]
-  private def find(pathname: String, child: String): File = {
-    val file = new File("community/" + pathname, child)
+  private def find(pathname: String, child: String): Path = {
+    val file = Path.of("community", pathname, child)
     if (file.exists) file
-    else new File(findTestDataDir(pathname))
+    else Path.of(findTestDataDir(pathname))
   }
 
   /** Go upwards to find testdata, because when running test from IDEA, the launching dir might be some subdirectory. */
   @throws[IOException]
-  private def findTestDataDir(parent: File, child: String): String = {
-    val testData = new File(parent, child).getCanonicalFile
+  private def findTestDataDir(parent: Path, child: String): String = {
+    val testData = (parent / child).toCanonicalPath
     if (testData.exists)
-      testData.getCanonicalPath
+      testData.toString
     else {
-      val newParent = parent.getCanonicalFile.getParentFile
+      val newParent = parent.toCanonicalPath.getParent
       if (newParent == null) throw new RuntimeException("no testdata directory found")
       else findTestDataDir(newParent, child)
     }
@@ -99,11 +100,11 @@ object TestUtils {
   }
 
   @throws[IOException]
-  def readInput(filePath: String): util.List[String] = readInput(new File(filePath), null)
+  def readInput(filePath: String): util.List[String] = readInput(Path.of(filePath), null)
 
   @throws[IOException]
-  def readInput(file: File, encoding: String): util.List[String] = {
-    var content = new String(FileUtil.loadFileText(file, encoding))
+  def readInput(file: Path, @Nullable encoding: Charset): util.List[String] = {
+    var content = file.readAllBytesToString(encoding.nullSafe.getOrElse(Charset.defaultCharset))
     Assert.assertNotNull(content)
     val input = new util.ArrayList[String]
     var separatorIndex = 0

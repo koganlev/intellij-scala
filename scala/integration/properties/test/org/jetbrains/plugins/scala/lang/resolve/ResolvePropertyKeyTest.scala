@@ -5,14 +5,16 @@ import com.intellij.lang.properties.IProperty
 import com.intellij.util.PathUtil
 import org.junit.Assert
 
+import java.nio.file.Path
+
 class ResolvePropertyKeyTest extends ScalaResolveTestCase {
 
-  override def folderPath: String = {
+  override def folderPath: Path = {
     val pathname = PathUtil.getJarPathForClass(getClass)
-    util.TestUtils.findTestDataDir(pathname) + "/resolve/propertyKey/"
+    Path.of(util.TestUtils.findTestDataDir(pathname), "resolve", "propertyKey")
   }
 
-  protected override def sourceRootPath: String = folderPath
+  protected override def sourceRootPath: Path = folderPath
 
   private def doTest(): Unit = {
     val reference = findReferenceAtCaret()

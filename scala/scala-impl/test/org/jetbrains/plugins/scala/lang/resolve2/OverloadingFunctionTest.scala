@@ -1,9 +1,11 @@
 package org.jetbrains.plugins.scala.lang.resolve2
 
+import org.jetbrains.plugins.scala.extensions.PathExt
+
+import java.nio.file.Path
+
 class OverloadingFunctionTest extends ResolveTestBase {
-  override def folderPath: String = {
-    super.folderPath + "overloading/functions/"
-  }
+  override def folderPath: Path = super.folderPath / "overloading" / "functions"
 
   def testFunction1(): Unit = doTest()
   def testFunction2(): Unit = doTest()

@@ -3,11 +3,12 @@ package org.jetbrains.plugins.scala.lang.resolve2
 import _root_.org.jetbrains.plugins.scala.lang.resolve.{ScalaResolveResult, ScalaResolveTestCase}
 import com.intellij.psi.impl.source.resolve.reference.impl.PsiMultiReference
 import com.intellij.psi.{PsiElement, PsiReference}
-import org.jetbrains.plugins.scala.extensions._
+import org.jetbrains.plugins.scala.extensions.{PathExt, PsiNamedElementExt}
 import org.jetbrains.plugins.scala.lang.psi.api.base.ScReference
 import org.jetbrains.plugins.scala.lang.psi.api.toplevel.typedef.ScTypeDefinition
 import org.junit.Assert._
 
+import java.nio.file.Path
 import scala.collection.mutable.ArrayBuffer
 import scala.util.matching.Regex
 
@@ -62,9 +63,7 @@ abstract class ResolveTestBase extends ScalaResolveTestCase {
     referencesWithExpectedTargetInfo = configureReferences()
   }
 
-  override def folderPath: String = {
-    super.folderPath + "resolve2/"
-  }
+  override def folderPath: Path = super.folderPath / "resolve2"
 
   protected def configureReferences(): Seq[ReferenceWithExpectedResolveResult] = {
     val result = new ArrayBuffer[ReferenceWithExpectedResolveResult]
@@ -258,4 +257,3 @@ abstract class ResolveTestBase extends ScalaResolveTestCase {
     "\n\n" + lines.mkString("\n") + "\n"
   }
 }
-

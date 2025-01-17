@@ -1,12 +1,10 @@
 package org.jetbrains.plugins.scala.lang.typeConformance
 
-import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.text.StringUtil
-import com.intellij.openapi.vfs.{CharsetToolkit, LocalFileSystem}
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.{PsiComment, PsiElement}
 import org.jetbrains.plugins.scala.base.{FailableTest, ScalaLightCodeInsightFixtureTestCase}
-import org.jetbrains.plugins.scala.extensions.PsiElementExt
+import org.jetbrains.plugins.scala.extensions.{PathExt, PsiElementExt}
 import org.jetbrains.plugins.scala.lang.parser.ScalaElementType
 import org.jetbrains.plugins.scala.lang.psi.api.ScalaFile
 import org.jetbrains.plugins.scala.lang.psi.api.expr.ScMethodCall
@@ -19,13 +17,14 @@ import org.jetbrains.plugins.scala.{ScalaFileType, TypecheckerTests}
 import org.junit.Assert.fail
 import org.junit.experimental.categories.Category
 
-import java.io.File
+import java.nio.charset.StandardCharsets
+import java.nio.file.Path
 
 @Category(Array(classOf[TypecheckerTests]))
 abstract class TypeConformanceTestBase extends ScalaLightCodeInsightFixtureTestCase with FailableTest {
   protected val caretMarker = "/*caret*/"
 
-  def folderPath: String = TestUtils.getTestDataPath + "/typeConformance/"
+  def folderPath: Path = Path.of(TestUtils.getTestDataPath, "typeConformance")
 
   protected def doTest(fileText: String, checkEquivalence: Boolean = false): Unit = {
     configureFromFileText(ScalaFileType.INSTANCE, fileText.trim)
@@ -79,10 +78,8 @@ abstract class TypeConformanceTestBase extends ScalaLightCodeInsightFixtureTestC
   }
 
   protected def configureFromFile(fileName: String = getTestName(false) + ".scala"): Unit = {
-    val filePath = folderPath + fileName
-    val file = LocalFileSystem.getInstance.findFileByPath(filePath.replace(File.separatorChar, '/'))
-    assert(file != null, "file " + filePath + " not found")
-    val fileText = StringUtil.convertLineSeparators(FileUtil.loadFile(new File(file.getCanonicalPath), CharsetToolkit.UTF8))
+    val filePath = folderPath / fileName
+    val fileText = StringUtil.convertLineSeparators(filePath.readAllBytesToString(StandardCharsets.UTF_8))
     configureFromFileText(ScalaFileType.INSTANCE, fileText.trim)
   }
 

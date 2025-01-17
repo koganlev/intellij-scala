@@ -3,13 +3,16 @@ package lang.typeInference.generated
 
 import org.jetbrains.plugins.scala.DependencyManagerBase._
 import org.jetbrains.plugins.scala.base.libraryLoaders.{IvyManagedLoader, LibraryLoader}
+import org.jetbrains.plugins.scala.extensions.PathExt
 import org.jetbrains.plugins.scala.lang.typeInference.TypeInferenceTestBase
+
+import java.nio.file.Path
 
 class TypeInferenceScalazTest extends TypeInferenceTestBase {
 
   override protected def supportedIn(version: ScalaVersion): Boolean = version  <= LatestScalaVersions.Scala_2_11
 
-  override def folderPath: String = super.folderPath + "scalaz/"
+  override def folderPath: Path = super.folderPath / "scalaz"
 
   override protected def additionalLibraries: Seq[LibraryLoader] =
     Seq(IvyManagedLoader("org.scalaz" %% "scalaz-core" % "7.1.0"))

@@ -18,7 +18,6 @@ package org.jetbrains.plugins.scala.base;
 import com.intellij.application.options.CodeStyle;
 import com.intellij.lang.Language;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiFileFactory;
@@ -37,18 +36,19 @@ import org.jetbrains.plugins.scala.lang.formatting.settings.ScalaCodeStyleSettin
 import org.jetbrains.plugins.scala.util.TestUtils;
 import org.junit.experimental.categories.Category;
 
-import java.io.File;
+import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Objects;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import static com.intellij.openapi.util.io.FileUtil.loadFileText;
-import static com.intellij.openapi.util.text.StringUtil.*;
+import static com.intellij.openapi.util.text.StringUtil.endsWith;
+import static com.intellij.openapi.util.text.StringUtil.startsWithChar;
 import static com.intellij.psi.impl.DebugUtil.psiToString;
 import static org.junit.Assert.*;
 
@@ -60,7 +60,7 @@ public abstract class ScalaFileSetTestCase extends TestSuite {
                 pathProperty :
                 getTestDataPath() + path;
 
-        findFiles(new File(customOrPropertyPath))
+        findFiles(Path.of(customOrPropertyPath))
                 .filter(file -> isTestFile(file, testFileExtensions))
                 .map(this::constructTestCase)
                 .forEach(this::addTest);
@@ -72,7 +72,7 @@ public abstract class ScalaFileSetTestCase extends TestSuite {
         return false;
     }
 
-    protected Test constructTestCase(File file) {
+    protected Test constructTestCase(Path file) {
         if (needsSdk())
             return new ActualTest(file);
         return new NoSdkTestCase(file);
@@ -173,9 +173,9 @@ public abstract class ScalaFileSetTestCase extends TestSuite {
     @SuppressWarnings("JUnitMalformedDeclaration")
     @Category({FileSetTests.class})
     private final class NoSdkTestCase extends LightJavaCodeInsightFixtureTestCase {
-        private final File testFile;
+        private final Path testFile;
 
-        private NoSdkTestCase(@NotNull File testFile) {
+        private NoSdkTestCase(@NotNull Path testFile) {
             this.testFile = testFile;
         }
 
@@ -196,10 +196,10 @@ public abstract class ScalaFileSetTestCase extends TestSuite {
 
         @Override
         public void runTestRunnable(@NotNull ThrowableRunnable<Throwable> testRunnable) throws Throwable {
-            final var fileText = FileUtil.loadFile(testFile, StandardCharsets.UTF_8);
+            final var fileText = Files.readString(testFile, StandardCharsets.UTF_8);
             try {
                 ScalaFileSetTestCase.this.runTest(
-                        testFile.getName(),
+                        testFile.getFileName().toString(),
                         StringUtil.convertLineSeparators(fileText),
                         getProject()
                 );
@@ -207,7 +207,7 @@ public abstract class ScalaFileSetTestCase extends TestSuite {
                 // to be able to navigate to the original test file location on test failure
                 // (you can use Ctrl/Cmd + Click in the console)
                 // (note, might not work with Android plugin disabled, see IDEA-257969)
-                System.err.println("### Test file: " + testFile.getAbsolutePath());
+                System.err.println("### Test file: " + testFile.toAbsolutePath());
                 throw error;
             }
         }
@@ -221,7 +221,7 @@ public abstract class ScalaFileSetTestCase extends TestSuite {
         @NotNull
         @Override
         public String getName() {
-            final var name = testFile.getName();
+            final var name = testFile.getFileName().toString();
             final var dotIndex = name.lastIndexOf('.');
             if (dotIndex == -1) {
                 return name;
@@ -234,9 +234,9 @@ public abstract class ScalaFileSetTestCase extends TestSuite {
     @Category({FileSetTests.class})
     private final class ActualTest extends ScalaLightCodeInsightFixtureTestCase {
 
-        private final File myTestFile;
+        private final Path myTestFile;
 
-        private ActualTest(@NotNull File testFile) {
+        private ActualTest(@NotNull Path testFile) {
             myTestFile = testFile;
         }
 
@@ -270,10 +270,10 @@ public abstract class ScalaFileSetTestCase extends TestSuite {
 
         @Override
         public void runTestRunnable(@NotNull ThrowableRunnable<Throwable> testRunnable) throws Throwable {
-            String fileText = new String(loadFileText(myTestFile, "UTF-8"));
+            String fileText = new String(Files.readAllBytes(myTestFile), StandardCharsets.UTF_8);
             try {
                 ScalaFileSetTestCase.this.runTest(
-                        myTestFile.getName(),
+                        myTestFile.getFileName().toString(),
                         StringUtil.convertLineSeparators(fileText),
                         getProject()
                 );
@@ -281,7 +281,7 @@ public abstract class ScalaFileSetTestCase extends TestSuite {
                 // to be able to navigate to the original test file location on test failure
                 // (you can use Ctrl/Cmd + Click in the console)
                 // (note, might not work with Android plugin disabled, see IDEA-257969)
-                System.err.println("### Test file: " + myTestFile.getAbsolutePath());
+                System.err.println("### Test file: " + myTestFile.toAbsolutePath());
                 throw error;
             }
         }
@@ -301,7 +301,7 @@ public abstract class ScalaFileSetTestCase extends TestSuite {
         @NotNull
         @Override
         public String getName() {
-            final var name = myTestFile.getName();
+            final var name = myTestFile.getFileName().toString();
             final var dotIndex = name.lastIndexOf('.');
             if (dotIndex == -1) {
                 return name;
@@ -335,9 +335,9 @@ public abstract class ScalaFileSetTestCase extends TestSuite {
     }
 
     @NotNull
-    private static Stream<File> findFiles(@NotNull File baseFile) {
-        if (baseFile.exists()) {
-            List<File> myFiles = new ArrayList<>();
+    private static Stream<Path> findFiles(@NotNull Path baseFile) {
+        if (Files.exists(baseFile)) {
+            List<Path> myFiles = new ArrayList<>();
             scanForFiles(baseFile, myFiles);
             return myFiles.stream();
         } else {
@@ -346,23 +346,27 @@ public abstract class ScalaFileSetTestCase extends TestSuite {
     }
 
     @SuppressWarnings({"HardCodedStringLiteral"})
-    private static void scanForFiles(@NotNull File directory,
-                                     @NotNull List<File> accumulator) {
+    private static void scanForFiles(@NotNull Path directory,
+                                     @NotNull List<Path> accumulator) {
         // recursively scan for all subdirectories
-        if (directory.isDirectory()) {
-            for (File file : Objects.requireNonNull(directory.listFiles())) {
-                if (file.isDirectory()) {
-                    scanForFiles(file, accumulator);
-                } else {
-                    accumulator.add(file);
-                }
+        if (Files.isDirectory(directory)) {
+            try (Stream<Path> stream = Files.list(directory)) {
+                stream.forEach(file -> {
+                    if (Files.isDirectory(file)) {
+                        scanForFiles(file, accumulator);
+                    } else {
+                        accumulator.add(file);
+                    }
+                });
+            } catch (IOException e) {
+                throw new RuntimeException(e);
             }
         }
     }
 
-    private static boolean isTestFile(@NotNull File file, String[] testFileExtensions) {
-        String path = file.getAbsolutePath();
-        String name = file.getName();
+    private static boolean isTestFile(@NotNull Path file, String[] testFileExtensions) {
+        String path = file.toAbsolutePath().toString();
+        String name = file.getFileName().toString();
 
         if (testFileExtensions.length == 0) {
             testFileExtensions = new String[] { ".test" };

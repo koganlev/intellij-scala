@@ -3,6 +3,7 @@ package refactoring.changeSignature
 
 import com.intellij.psi.PsiMember
 import com.intellij.refactoring.changeSignature.{ChangeSignatureProcessorBase, ParameterInfo}
+import org.jetbrains.plugins.scala.extensions.PathExt
 import org.jetbrains.plugins.scala.lang.formatting.settings.ScalaCodeStyleSettings
 import org.jetbrains.plugins.scala.lang.psi.api.base.ScMethodLike
 import org.jetbrains.plugins.scala.lang.psi.api.statements.ScFunction
@@ -13,8 +14,10 @@ import org.jetbrains.plugins.scala.lang.refactoring.changeSignature.{ScalaChange
 import org.jetbrains.plugins.scala.util.TypeAnnotationSettings
 import org.junit.Assert._
 
+import java.nio.file.Path
+
 abstract class ChangeSignatureInScalaTestBase extends ChangeSignatureTestBase {
-  override def folderPath: String = super.folderPath + "changeSignature/inScala/"
+  override def folderPath: Path = super.folderPath / "changeSignature" / "inScala"
 
   override def findTargetElement: PsiMember = {
     val element = new ScalaChangeSignatureHandler().findTargetMember(getFile, getEditor)
@@ -147,7 +150,7 @@ final class ChangeSignatureInScalaTest extends ChangeSignatureInScalaTestBase {
 final class ChangeSignatureInScalaTest_Scala3 extends ChangeSignatureInScalaTestBase {
   override def supportedIn(version: ScalaVersion): Boolean = version.isScala3
 
-  override def folderPath: String = super.folderPath + "scala3/"
+  override def folderPath: Path = super.folderPath / "scala3"
 
   // SCL-22597
   def testRenameParamWithScala3Wildcard(): Unit = {

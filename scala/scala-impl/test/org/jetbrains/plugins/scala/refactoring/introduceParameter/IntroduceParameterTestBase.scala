@@ -2,13 +2,10 @@ package org.jetbrains.plugins.scala.refactoring.introduceParameter
 
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.io.FileUtil
-import com.intellij.openapi.util.text.StringUtil
-import com.intellij.openapi.vfs.{CharsetToolkit, LocalFileSystem}
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.util.PsiTreeUtil
 import org.jetbrains.plugins.scala.base.ScalaLightCodeInsightFixtureTestCase
-import org.jetbrains.plugins.scala.extensions.executeWriteActionCommand
+import org.jetbrains.plugins.scala.extensions.{PathExt, StringExt, executeWriteActionCommand}
 import org.jetbrains.plugins.scala.lang.psi.api.ScalaFile
 import org.jetbrains.plugins.scala.lang.psi.api.base.ScMethodLike
 import org.jetbrains.plugins.scala.lang.psi.api.statements.ScFunctionDefinition
@@ -23,10 +20,11 @@ import org.jetbrains.plugins.scala.refactoring.refactoringCommonTestDataRoot
 import org.jetbrains.plugins.scala.util.TestUtils
 import org.jetbrains.plugins.scala.util.TestUtils.ExpectedResultFromLastComment
 
-import java.io.File
+import java.nio.charset.StandardCharsets
+import java.nio.file.Path
 
 abstract class IntroduceParameterTestBase extends ScalaLightCodeInsightFixtureTestCase {
-  protected def folderPath = refactoringCommonTestDataRoot + "introduceParameter/"
+  protected def folderPath: Path = refactoringCommonTestDataRoot / "introduceParameter"
   private val startMarker = "/*start*/"
   private val endMarker = "/*end*/"
   private val allMarker = "//all = "
@@ -37,11 +35,11 @@ abstract class IntroduceParameterTestBase extends ScalaLightCodeInsightFixtureTe
   protected def doTest(): Unit = {
     import _root_.org.junit.Assert._
     implicit val project: Project = getProject
-    val filePath = folderPath + getTestName(false) + ".scala"
-    val file = LocalFileSystem.getInstance.findFileByPath(filePath.replace(File.separatorChar, '/'))
-    assert(file != null, "file " + filePath + " not found")
-    val fileText = StringUtil.convertLineSeparators(FileUtil.loadFile(new File(file.getCanonicalPath), CharsetToolkit.UTF8))
-    configureFromFileText(getTestName(false) + ".scala", fileText)
+    val fileName = getTestName(false) + ".scala"
+    val filePath = folderPath / fileName
+    assert(filePath.exists, "file " + filePath + " not found")
+    val fileText = filePath.readAllBytesToString(StandardCharsets.UTF_8).withNormalizedSeparator
+    configureFromFileText(fileName, fileText)
     val scalaFile = getFile.asInstanceOf[ScalaFile]
     val startOffset = fileText.indexOf(startMarker) + startMarker.length
     assert(startOffset != -1 + startMarker.length,

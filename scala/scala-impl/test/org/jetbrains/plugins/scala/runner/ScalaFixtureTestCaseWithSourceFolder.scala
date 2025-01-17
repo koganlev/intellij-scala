@@ -6,10 +6,10 @@ import com.intellij.openapi.vfs.{LocalFileSystem, VirtualFile}
 import com.intellij.testFramework.{PsiTestUtil, VfsTestUtil}
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.scala.base.ScalaFixtureTestCase
-import org.jetbrains.plugins.scala.extensions.inWriteAction
+import org.jetbrains.plugins.scala.extensions.{PathExt, inWriteAction}
 import org.jetbrains.plugins.scala.project.ProjectExt
 
-import java.io.File
+import java.nio.file.{Files, Path}
 
 /**
  * @todo this partially duplicates logic in [[org.jetbrains.plugins.scala.debugger.ScalaCompilerTestBase]]<br>
@@ -29,9 +29,9 @@ abstract class ScalaFixtureTestCaseWithSourceFolder extends ScalaFixtureTestCase
   }
 
   private def getOrCreateChildDir(name: String) = {
-    val file = new File(getBaseDir.getCanonicalPath, name)
-    if (!file.exists()) file.mkdir()
-    LocalFileSystem.getInstance.refreshAndFindFileByPath(file.getCanonicalPath)
+    val file = Path.of(getBaseDir.getCanonicalPath, name)
+    Files.createDirectories(file)
+    LocalFileSystem.getInstance.refreshAndFindFileByNioFile(file.toCanonicalPath)
   }
 
   protected def getSourceRootDir: VirtualFile = getBaseDir.findChild("src")

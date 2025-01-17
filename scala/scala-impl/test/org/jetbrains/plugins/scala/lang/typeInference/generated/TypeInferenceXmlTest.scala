@@ -3,10 +3,14 @@ package lang
 package typeInference
 package generated
 
+import org.jetbrains.plugins.scala.extensions.PathExt
+
+import java.nio.file.Path
+
 class TypeInferenceXmlTest extends TypeInferenceTestBase {
   override protected def supportedIn(version: ScalaVersion): Boolean = version  == LatestScalaVersions.Scala_2_10
 
-  override def folderPath: String = super.folderPath + "xml/"
+  override def folderPath: Path = super.folderPath / "xml"
 
   def testCDSect(): Unit = doTest()
 

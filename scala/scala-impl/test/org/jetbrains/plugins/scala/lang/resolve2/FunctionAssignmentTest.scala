@@ -1,9 +1,11 @@
 package org.jetbrains.plugins.scala.lang.resolve2
 
+import org.jetbrains.plugins.scala.extensions.PathExt
+
+import java.nio.file.Path
+
 class FunctionAssignmentTest extends ResolveTestBase {
-  override def folderPath: String = {
-    super.folderPath + "function/assignment/"
-  }
+  override def folderPath: Path = super.folderPath / "function" / "assignment"
 
   def testClash(): Unit = doTest()
   def testClashWithType(): Unit = doTest()

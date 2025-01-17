@@ -3,16 +3,15 @@ package org.jetbrains.plugins.scala.lang.completion
 import com.intellij.codeInsight.completion.{CodeCompletionHandlerBase, CompletionType}
 import com.intellij.codeInsight.lookup.impl.LookupImpl
 import com.intellij.codeInsight.lookup.{LookupElement, LookupManager}
-import com.intellij.openapi.util.io.FileUtil
-import com.intellij.openapi.util.text.StringUtil
-import com.intellij.openapi.vfs.{CharsetToolkit, LocalFileSystem}
 import org.jetbrains.plugins.scala.base.ScalaLightCodeInsightFixtureTestCase
+import org.jetbrains.plugins.scala.extensions.{PathExt, StringExt}
 import org.jetbrains.plugins.scala.util.TestUtils
 import org.jetbrains.plugins.scala.{CompletionTests, ScalaVersion}
 import org.junit.Assert._
 import org.junit.experimental.categories.Category
 
-import java.io.File
+import java.nio.charset.StandardCharsets
+import java.nio.file.Path
 
 @Category(Array(classOf[CompletionTests]))
 abstract class FileTestDataCompletionTestBase extends ScalaLightCodeInsightFixtureTestCase {
@@ -20,7 +19,7 @@ abstract class FileTestDataCompletionTestBase extends ScalaLightCodeInsightFixtu
   protected lazy val caretMarker = "/*caret*/"
   protected lazy val extension: String = "scala"
 
-  def folderPath: String = getTestDataPath + "completion/"
+  def folderPath: Path = Path.of(getTestDataPath, "completion")
 
   override protected def supportedIn(version: ScalaVersion): Boolean = version >= ScalaVersion.Latest.Scala_2_13
 
@@ -32,17 +31,11 @@ abstract class FileTestDataCompletionTestBase extends ScalaLightCodeInsightFixtu
 
   protected def doTest(): Unit = {
     val fileName = getTestName(false) + s".$extension"
-    val filePath = s"$folderPath$fileName".replace(File.separatorChar, '/')
+    val filePath = folderPath / fileName
 
-    val file = LocalFileSystem.getInstance.findFileByPath(filePath)
-    assertNotNull(s"file '$filePath' not found", file)
-
-    val fileText = StringUtil.convertLineSeparators(
-      FileUtil.loadFile(
-        new File(file.getCanonicalPath),
-        CharsetToolkit.UTF8
-      )
-    )
+    val fileText = filePath
+      .readAllBytesToString(StandardCharsets.UTF_8)
+      .withNormalizedSeparator
 
     configureFromFileText(fileName, fileText)
 

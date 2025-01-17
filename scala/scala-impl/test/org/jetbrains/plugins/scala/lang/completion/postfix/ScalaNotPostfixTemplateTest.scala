@@ -1,11 +1,14 @@
 package org.jetbrains.plugins.scala.lang.completion.postfix
 
 import com.intellij.testFramework.TestIndexingModeSupporter.IndexingMode
+import org.jetbrains.plugins.scala.extensions.PathExt
 import org.jetbrains.plugins.scala.util.runners.WithIndexingMode
+
+import java.nio.file.Path
 
 @WithIndexingMode(mode = IndexingMode.SMART, reason = "`not` needs type inference to check conformance with Boolean")
 class ScalaNotPostfixTemplateTest extends PostfixTemplateTest {
-  override def testPath(): String = super.testPath() + "not/"
+  override def testPath(): Path = super.testPath() / "not"
 
   def testDoubleNot(): Unit = doTest()
 

@@ -1,9 +1,11 @@
 package org.jetbrains.plugins.scala.lang.resolve2
 
+import org.jetbrains.plugins.scala.extensions.PathExt
+
+import java.nio.file.Path
+
 class FunctionBlockTest extends ResolveTestBase {
-  override def folderPath: String = {
-    super.folderPath + "function/block/"
-  }
+  override def folderPath: Path = super.folderPath / "function" / "block"
 
   def testBlocksToCurryied(): Unit = doTest()
   def testBlocksToTwo(): Unit = doTest()

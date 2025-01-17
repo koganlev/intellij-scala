@@ -1,9 +1,11 @@
 package org.jetbrains.plugins.scala.lang.resolve2
 
+import org.jetbrains.plugins.scala.extensions.PathExt
+
+import java.nio.file.Path
+
 class Bug2Test extends ResolveTestBase {
-  override def folderPath: String = {
-    super.folderPath + "bug2/"
-  }
+  override def folderPath: Path = super.folderPath / "bug2"
 
   def testSCL1717(): Unit = {doTest()}
   def testSCL1934(): Unit = {doTest()}

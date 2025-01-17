@@ -3,13 +3,16 @@ package org.jetbrains.plugins.scala.lang.typeInference.generated
 import org.jetbrains.plugins.scala.DependencyManagerBase._
 import org.jetbrains.plugins.scala.SlowTests
 import org.jetbrains.plugins.scala.base.libraryLoaders.{IvyManagedLoader, LibraryLoader}
+import org.jetbrains.plugins.scala.extensions.PathExt
 import org.jetbrains.plugins.scala.lang.typeInference.TypeInferenceTestBase
 import org.junit.experimental.categories.Category
+
+import java.nio.file.Path
 
 @Category(Array(classOf[SlowTests]))
 class TypeInferenceCatsTest extends TypeInferenceTestBase {
 
-  override protected def folderPath: String = super.folderPath + "cats/"
+  override protected def folderPath: Path = super.folderPath / "cats"
 
   override protected def additionalLibraries: Seq[LibraryLoader] =
     Seq(IvyManagedLoader("org.typelevel" % "cats-core_2.11" % "0.4.0"))

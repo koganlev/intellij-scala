@@ -3,12 +3,15 @@ package refactoring.changeSignature
 
 import com.intellij.psi.{PsiEllipsisType, PsiMember, PsiMethod}
 import com.intellij.refactoring.changeSignature._
+import org.jetbrains.plugins.scala.extensions.{ObjectExt, PathExt}
 import org.jetbrains.plugins.scala.lang.psi.types.api.PsiTypeConstants
 import org.junit.Assert._
 
+import java.nio.file.Path
+
 class ChangeSignatureFromJavaTest extends ChangeSignatureTestBase {
 
-  override def folderPath: String = super.folderPath + "changeSignature/fromJava/"
+  override def folderPath: Path = super.folderPath / "changeSignature" / "fromJava"
 
   override def mainFileName(testName: String) = testName + ".java"
 
@@ -27,7 +30,7 @@ class ChangeSignatureFromJavaTest extends ChangeSignatureTestBase {
 
   override def findTargetElement: PsiMember = {
     val element = new JavaChangeSignatureHandler().findTargetMember(getFile, getEditor)
-    assertTrue("<caret> is not on method name", element.isInstanceOf[PsiMethod])
+    assertTrue("<caret> is not on method name", element.is[PsiMethod])
     element.asInstanceOf[PsiMethod]
   }
 

@@ -4,11 +4,14 @@ import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.pom.java.LanguageLevel
 import org.jetbrains.plugins.scala.ScalaVersion
 import org.jetbrains.plugins.scala.base.libraryLoaders.SmartJDKLoader
+import org.jetbrains.plugins.scala.extensions.PathExt
 import org.jetbrains.plugins.scala.lang.optimize.OptimizeImportsTestBase
+
+import java.nio.file.Path
 
 abstract class OptimizeImportsWildcardTestBase extends OptimizeImportsTestBase {
 
-  override def folderPath: String = super.folderPath + "wildcard/"
+  override def folderPath: Path = super.folderPath / "wildcard"
 
   override protected lazy val projectJdk: Sdk =
     SmartJDKLoader.createFilteredJdk(LanguageLevel.JDK_17, Seq("java.base", "java.desktop"))

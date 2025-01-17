@@ -3,6 +3,7 @@ package refactoring.changeSignature
 
 import com.intellij.psi.PsiMember
 import com.intellij.refactoring.changeSignature.{ChangeSignatureProcessorBase, ParameterInfo}
+import org.jetbrains.plugins.scala.extensions.{ObjectExt, PathExt}
 import org.jetbrains.plugins.scala.lang.psi.api.base.ScMethodLike
 import org.jetbrains.plugins.scala.lang.psi.impl.ScalaPsiElementFactory.createTypeFromText
 import org.jetbrains.plugins.scala.lang.psi.types.ScType
@@ -10,8 +11,10 @@ import org.jetbrains.plugins.scala.lang.psi.types.api._
 import org.jetbrains.plugins.scala.lang.refactoring.changeSignature.{ScalaChangeSignatureHandler, ScalaParameterInfo}
 import org.junit.Assert._
 
+import java.nio.file.Path
+
 class ChangeSignatureFromScalaTest extends ChangeSignatureTestBase {
-  override def folderPath: String = super.folderPath + "changeSignature/fromScala/"
+  override def folderPath: Path = super.folderPath / "changeSignature" / "fromScala"
 
   override def mainFileName(testName: String) = testName + ".scala"
   override def secondFileName(testName: String) = testName + ".java"
@@ -20,7 +23,7 @@ class ChangeSignatureFromScalaTest extends ChangeSignatureTestBase {
 
   override def findTargetElement: PsiMember = {
     val element = new ScalaChangeSignatureHandler().findTargetMember(getFile, getEditor)
-    assertTrue("<caret> is not on method name", element.isInstanceOf[ScMethodLike])
+    assertTrue("<caret> is not on method name", element.is[ScMethodLike])
     element.asInstanceOf[ScMethodLike]
   }
 

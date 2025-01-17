@@ -1,9 +1,12 @@
 package org.jetbrains.plugins.scala.refactoring.inline.generated
 
+import org.jetbrains.plugins.scala.extensions.PathExt
 import org.jetbrains.plugins.scala.refactoring.inline.InlineRefactoringTestBase
 
+import java.nio.file.Path
+
 class InlineRefactoringTypeAliasTest extends InlineRefactoringTestBase {
-  override def folderPath: String = super.folderPath + "typeAlias/"
+  override def folderPath: Path = super.folderPath / "typeAlias"
 
   def testInlineSimple(): Unit = doTest()
 

@@ -1,9 +1,11 @@
 package org.jetbrains.plugins.scala.lang.resolve2
 
+import org.jetbrains.plugins.scala.extensions.PathExt
+
+import java.nio.file.Path
+
 class ImportOrderTest extends ResolveTestBase {
-  override def folderPath: String = {
-    super.folderPath + "import/order/"
-  }
+  override def folderPath: Path = super.folderPath / "import" / "order"
 
   def testBlock(): Unit = doTest()
   def testClass(): Unit = doTest()

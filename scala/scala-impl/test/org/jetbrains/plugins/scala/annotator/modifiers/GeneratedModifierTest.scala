@@ -1,8 +1,6 @@
 package org.jetbrains.plugins.scala
 package annotator.modifiers
 
-import com.intellij.openapi.util.io.FileUtil
-import com.intellij.openapi.vfs.CharsetToolkit
 import com.intellij.psi.{PsiElement, PsiErrorElement}
 import org.jetbrains.plugins.scala.annotator.{AnnotatorHolderMock, Message}
 import org.jetbrains.plugins.scala.base.SimpleTestCase
@@ -11,7 +9,8 @@ import org.jetbrains.plugins.scala.lang.psi.api.base.ScModifierList
 import org.jetbrains.plugins.scala.lang.psi.api.toplevel.typedef.ScTypeDefinition
 import org.junit.experimental.categories.Category
 
-import java.io.File
+import java.nio.charset.StandardCharsets
+import java.nio.file.Path
 
 /**
  * See also [[org.jetbrains.plugins.scala.annotator.modifiers.ModifierCheckerTestBase]]
@@ -21,9 +20,9 @@ class GeneratedModifierTest extends SimpleTestCase {
   import Message._
 
   def test_all(): Unit = {
-    val text = {
-      val ioFile: File = new File(GeneratedModifierTestGenerator.generatedModifiersTestFilePath)
-      FileUtil.loadFile(ioFile, CharsetToolkit.UTF8)
+    val text: String = {
+      val path: Path = Path.of(GeneratedModifierTestGenerator.generatedModifiersTestFilePath)
+      path.readAllBytesToString(StandardCharsets.UTF_8)
     }
 
     val file = text.parse

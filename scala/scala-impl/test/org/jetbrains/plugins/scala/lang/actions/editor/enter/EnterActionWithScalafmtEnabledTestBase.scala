@@ -5,10 +5,12 @@ import org.jetbrains.plugins.scala.lang.formatter.scalafmt.ScalaFmtForTestsSetup
 import org.jetbrains.plugins.scala.lang.formatting.scalafmt.ScalafmtDynamicConfigService
 import org.jetbrains.plugins.scala.util.TestUtils
 
+import java.nio.file.Path
+
 abstract class EnterActionWithScalafmtEnabledTestBase extends DoEditorStateTestOps with ScalaFmtForTestsSetupOps {
 
-  override protected def scalafmtConfigsBasePath: String =
-    TestUtils.getTestDataPath + "/actions/editor/enter/_scalafmt_configs/"
+  override protected def scalafmtConfigsBasePath: Path =
+    Path.of(TestUtils.getTestDataPath, "actions", "editor", "enter", "_scalafmt_configs")
 
   override protected def configureByText(text: String, fileName: String, trimText: Boolean): Unit = {
     super.configureByText(text, fileName, trimText)

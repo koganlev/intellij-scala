@@ -6,46 +6,48 @@ import org.jetbrains.plugins.scala.lang.psi.api.base.patterns.ScReferencePattern
 import org.jetbrains.plugins.scala.lang.psi.api.statements.ScFunction;
 import org.jetbrains.plugins.scala.lang.psi.api.statements.params.ScParameter;
 
+import java.nio.file.Path;
+
 public class ResolveLocalsTest extends ScalaResolveTestCase{
 
   @Override
-  public String folderPath() {
-    return super.folderPath() + "resolve/local/";
+  public Path folderPath() {
+    return super.folderPath().resolve("resolve").resolve("local");
   }
 
-  public void testlocal1() throws Exception {
+  public void testlocal1() {
     PsiReference ref = findReferenceAtCaret();
     PsiElement resolved = ref.resolve();
     assertTrue(resolved instanceof ScReferencePattern);
-    assertEquals(((ScReferencePattern) resolved).name(), "aaa");
+    assertEquals("aaa", ((ScReferencePattern) resolved).name());
   }
 
-  public void testScalaKeyword() throws Exception {
+  public void testScalaKeyword() {
     PsiReference ref = findReferenceAtCaret();
     PsiElement resolved = ref.resolve();
     assertNotNull(resolved);
     assertTrue(resolved instanceof ScParameter);
   }
 
-  public void testgilles() throws Exception {
+  public void testgilles() {
     PsiReference ref = findReferenceAtCaret();
     PsiElement resolved = ref.resolve();
     assertTrue(resolved instanceof ScFunction);
-    assertEquals(((ScFunction) resolved).name(), "iii");
+    assertEquals("iii", ((ScFunction) resolved).name());
   }
 
-  public void testconstrParam() throws Exception {
+  public void testconstrParam() {
     PsiReference ref = findReferenceAtCaret();
     PsiElement resolved = ref.resolve();
     assertTrue(resolved instanceof ScParameter);
   }
 
-  public void testdefInAnonymous() throws Exception {
+  public void testdefInAnonymous() {
     PsiReference ref = findReferenceAtCaret();
     assertNotNull(ref.resolve());
   }
 
-  public void testInfixType() throws Exception {
+  public void testInfixType() {
     PsiReference ref = findReferenceAtCaret();
     assertNotNull(ref.resolve());
   }

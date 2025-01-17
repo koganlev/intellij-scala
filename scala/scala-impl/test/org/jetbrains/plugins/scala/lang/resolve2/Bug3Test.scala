@@ -1,5 +1,8 @@
 package org.jetbrains.plugins.scala.lang.resolve2
 import org.jetbrains.plugins.scala.ScalaVersion
+import org.jetbrains.plugins.scala.extensions.PathExt
+
+import java.nio.file.Path
 
 class Bug3Test_2_11 extends Bug3TestBase {
   override protected def supportedIn(version: ScalaVersion): Boolean = version == ScalaVersion.Latest.Scala_2_11
@@ -18,9 +21,8 @@ class Bug3Test_2_13 extends Bug3TestBase {
 }
 
 abstract class Bug3TestBase extends ResolveTestBase {
-  override def folderPath: String = {
-    super.folderPath + "bug3/"
-  }
+  override def folderPath: Path = super.folderPath / "bug3"
+
   def testSCL1707(): Unit = {doTest()}
   def testSCL2073(): Unit = {doTest()}
   def testSCL2109(): Unit = {doTest()}

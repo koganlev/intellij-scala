@@ -1,9 +1,12 @@
 package org.jetbrains.plugins.scala.lang.resolve2
 
+import org.jetbrains.plugins.scala.extensions.PathExt
+
+import java.nio.file.Path
+
 class QualifierAccessTest extends ResolveTestBase {
 
-  override def folderPath: String =
-    super.folderPath + "qualifier/access/"
+  override def folderPath: Path = super.folderPath / "qualifier" / "access"
 
   def testClassParameterValue(): Unit = doTest()
   def testClassParameterVariable(): Unit = doTest()

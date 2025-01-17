@@ -4,16 +4,18 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
 import org.jetbrains.plugins.scala.lang.psi.api.toplevel.typedef.ScTemplateDefinition;
 
+import java.nio.file.Path;
+
 public class ResolveClassLevelImportTest extends ScalaResolveTestCase {
   @Override
-  public String folderPath() {
-    return super.folderPath() + "resolve/class/classLevelImport/";
+  public Path folderPath() {
+    return super.folderPath().resolve("resolve").resolve("class").resolve("classLevelImport");
   }
 
-  public void testclassLevelImport() throws Exception {
+  public void testclassLevelImport() {
     PsiReference ref = findReferenceAtCaret();
     PsiElement resolved = ref.resolve();
     assertTrue(resolved instanceof ScTemplateDefinition);
-    assertEquals(((ScTemplateDefinition) resolved).qualifiedName(), "scala.collection.immutable.Map");
+    assertEquals("scala.collection.immutable.Map", ((ScTemplateDefinition) resolved).qualifiedName());
   }
 }

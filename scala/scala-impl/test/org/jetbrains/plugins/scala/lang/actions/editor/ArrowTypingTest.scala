@@ -1,13 +1,13 @@
 package org.jetbrains.plugins.scala
 package lang.actions.editor
 
-import com.intellij.openapi.util.io.FileUtil
 import com.intellij.testFramework.fixtures.CodeInsightTestFixture
 import org.jetbrains.plugins.scala.base.EditorActionTestBase
 import org.jetbrains.plugins.scala.editor.typedHandler.ScalaTypedHandler
+import org.jetbrains.plugins.scala.extensions.PathExt
 import org.jetbrains.plugins.scala.lang.formatting.settings.ScalaCodeStyleSettings
 
-import java.io.File
+import java.nio.file.Path
 
 class ArrowTypingTest extends EditorActionTestBase {
 
@@ -66,8 +66,8 @@ class ArrowTypingTest extends EditorActionTestBase {
   def testReplaceLambdaArrow(): Unit = {
     settings.REPLACE_CASE_ARROW_WITH_UNICODE_CHAR = true
 
-    val before1 = convertLoadedString(FileUtil.loadFile(new File(getTestDataPath + s"/${getTestName(true)}Before.test")))
-    val after1 = convertLoadedString(FileUtil.loadFile(new File(getTestDataPath + s"/${getTestName(true)}After.test")))
+    val before1 = convertLoadedString(Path.of(getTestDataPath, s"${getTestName(true)}Before.test").readAllBytesToString())
+    val after1 = convertLoadedString(Path.of(getTestDataPath, s"${getTestName(true)}After.test").readAllBytesToString())
 
     checkGeneratedTextAfterTyping(before1, after1, '>')
   }
@@ -108,7 +108,7 @@ class ArrowTypingTest extends EditorActionTestBase {
     settings.REPLACE_CASE_ARROW_WITH_UNICODE_CHAR = true
 
     val fileName = s"$getTestDataPath/${getTestName(true)}.test"
-    val text = convertLoadedString(FileUtil.loadFile(new File(fileName)))
+    val text = convertLoadedString(Path.of(fileName).readAllBytesToString())
 
     checkGeneratedTextAfterTyping(text, text, '>')
   }

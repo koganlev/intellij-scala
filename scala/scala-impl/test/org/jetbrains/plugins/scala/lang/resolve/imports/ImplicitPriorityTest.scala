@@ -3,10 +3,13 @@ package lang
 package resolve
 package imports
 
+import org.jetbrains.plugins.scala.extensions.PathExt
 import org.jetbrains.plugins.scala.lang.psi.api.base.ScReference
 
+import java.nio.file.Path
+
 class ImplicitPriorityTest extends ScalaResolveTestCase {
-  override def folderPath: String = super.folderPath + "resolve/implicitPriority/"
+  override def folderPath: Path = super.folderPath / "resolve" / "implicitPriority"
 
   def testlowPriorityImplicits(): Unit = {
     findReferenceAtCaret() match {

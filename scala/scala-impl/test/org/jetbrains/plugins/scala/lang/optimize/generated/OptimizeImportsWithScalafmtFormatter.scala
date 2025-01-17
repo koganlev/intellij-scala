@@ -4,11 +4,14 @@ import com.intellij.application.options.CodeStyle
 import org.jetbrains.plugins.scala.DependencyManagerBase.RichStr
 import org.jetbrains.plugins.scala.ScalaVersion
 import org.jetbrains.plugins.scala.base.libraryLoaders.{IvyManagedLoader, LibraryLoader}
+import org.jetbrains.plugins.scala.extensions.PathExt
 import org.jetbrains.plugins.scala.lang.formatter.scalafmt.ScalaFmtForTestsSetupOps
 import org.jetbrains.plugins.scala.lang.formatting.settings.ScalaCodeStyleSettings
 import org.jetbrains.plugins.scala.lang.optimize.OptimizeImportsTestBase
 import org.jetbrains.plugins.scala.util.RevertableChange
 import org.scalafmt.dynamic.ScalafmtVersion
+
+import java.nio.file.Path
 
 abstract class OptimizeImportsWithScalafmtFormatterBase
   extends OptimizeImportsTestBase
@@ -19,11 +22,11 @@ abstract class OptimizeImportsWithScalafmtFormatterBase
   override protected def supportedIn(version: ScalaVersion): Boolean =
     version == ScalaVersion.Latest.Scala_2_13
 
-  override def folderPath: String = super.folderPath + "scalafmt/"
+  override def folderPath: Path = super.folderPath / "scalafmt"
 
-  protected override def sourceRootPath: String = folderPath
+  protected override def sourceRootPath: Path = folderPath
 
-  override protected def scalafmtConfigsBasePath: String = folderPath
+  override protected def scalafmtConfigsBasePath: Path = folderPath
 
   protected lazy val scalaCodeStyleSettings = CodeStyle.getSettings(getProject).getCustomSettings(classOf[ScalaCodeStyleSettings])
 

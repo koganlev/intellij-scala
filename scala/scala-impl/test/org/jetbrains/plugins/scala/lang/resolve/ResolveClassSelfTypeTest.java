@@ -4,41 +4,43 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
 import org.jetbrains.plugins.scala.lang.psi.api.toplevel.typedef.ScTrait;
 
+import java.nio.file.Path;
+
 public class ResolveClassSelfTypeTest extends ScalaResolveTestCase {
   @Override
-  public String folderPath() {
-    return super.folderPath() + "resolve/class/selftype/";
+  public Path folderPath() {
+    return super.folderPath().resolve("resolve").resolve("class").resolve("selftype");
   }
 
-  public void testselftype1() throws Exception {
+  public void testselftype1() {
     PsiReference ref = findReferenceAtCaret();
     PsiElement resolved = ref.resolve();
     assertTrue(resolved instanceof ScTrait);
     final ScTrait trait = (ScTrait) resolved;
-    assertEquals(trait.getName(), "Inner");
+    assertEquals("Inner", trait.getName());
   }
 
-  public void testselftype2() throws Exception {
+  public void testselftype2() {
     PsiReference ref = findReferenceAtCaret();
     PsiElement resolved = ref.resolve();
     assertTrue(resolved instanceof ScTrait);
     final ScTrait trait = (ScTrait) resolved;
-    assertEquals(trait.getName(), "Inner");
+    assertEquals("Inner", trait.getName());
   }
 
-  public void testselftype3() throws Exception {
+  public void testselftype3() {
     PsiReference ref = findReferenceAtCaret();
     PsiElement resolved = ref.resolve();
     assertTrue(resolved instanceof ScTrait);
     final ScTrait trait = (ScTrait) resolved;
-    assertEquals(trait.getName(), "Inner");
+    assertEquals("Inner", trait.getName());
   }
 
-  public void testselftype4() throws Exception {
+  public void testselftype4() {
     PsiReference ref = findReferenceAtCaret();
     PsiElement resolved = ref.resolve();
     assertTrue(resolved instanceof ScTrait);
     final ScTrait trait = (ScTrait) resolved;
-    assertEquals(trait.getName(), "Inner");
+    assertEquals("Inner", trait.getName());
   }
 }

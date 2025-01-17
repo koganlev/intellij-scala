@@ -2,12 +2,9 @@ package org.jetbrains.plugins.scala.refactoring.introduceField
 
 import com.intellij.openapi.command.UndoConfirmationPolicy
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.io.FileUtil
-import com.intellij.openapi.util.text.StringUtil
-import com.intellij.openapi.vfs.{CharsetToolkit, LocalFileSystem}
 import com.intellij.testFramework.UsefulTestCase
 import org.jetbrains.plugins.scala.base.ScalaLightCodeInsightFixtureTestCase
-import org.jetbrains.plugins.scala.extensions.{PsiElementExt, executeWriteActionCommand}
+import org.jetbrains.plugins.scala.extensions.{IterableOnceExt, PathExt, PsiElementExt, StringExt, executeWriteActionCommand}
 import org.jetbrains.plugins.scala.lang.psi.api.ScalaFile
 import org.jetbrains.plugins.scala.lang.psi.api.expr.ScExpression
 import org.jetbrains.plugins.scala.lang.psi.api.toplevel.typedef.ScTemplateDefinition
@@ -20,9 +17,10 @@ import org.jetbrains.plugins.scala.util.TestUtils
 import org.jetbrains.plugins.scala.util.TestUtils.ExpectedResultFromLastComment
 import org.junit.Assert._
 
-import java.io.File
+import java.nio.charset.StandardCharsets
+import java.nio.file.Path
 
-abstract class IntroduceFieldTestBase() extends ScalaLightCodeInsightFixtureTestCase {
+abstract class IntroduceFieldTestBase extends ScalaLightCodeInsightFixtureTestCase {
   private val startMarker = "/*start*/"
   private val endMarker = "/*end*/"
   private val replaceAllMarker = "/*replaceAll*/"
@@ -30,15 +28,15 @@ abstract class IntroduceFieldTestBase() extends ScalaLightCodeInsightFixtureTest
   private val initLocallyMarker = "/*initLocally*/"
   private val selectedClassNumberMarker = "/*selectedClassNumber = "
 
-  protected def folderPath: String = refactoringCommonTestDataRoot + "introduceField/"
+  protected def folderPath: Path = refactoringCommonTestDataRoot / "introduceField"
 
   implicit protected def projectContext: Project = getProject
 
   protected def doTest(scType: ScType = Int): Unit = {
-    val filePath = folderPath + getTestName(false) + ".scala"
-    val file = LocalFileSystem.getInstance.findFileByPath(filePath.replace(File.separatorChar, '/'))
-    assert(file != null, "file " + filePath + " not found")
-    var fileText = StringUtil.convertLineSeparators(FileUtil.loadFile(new File(file.getCanonicalPath), CharsetToolkit.UTF8))
+    val fileName = getTestName(false) + ".scala"
+    val filePath = folderPath / fileName
+    assert(filePath.exists, "file " + filePath + " not found")
+    var fileText = filePath.readAllBytesToString(StandardCharsets.UTF_8).withNormalizedSeparator
 
     val startOffset = fileText.indexOf(startMarker)
     assert(startOffset != -1, "Not specified start marker in test case. Use /*start*/ in scala file for this.")
@@ -66,7 +64,7 @@ abstract class IntroduceFieldTestBase() extends ScalaLightCodeInsightFixtureTest
     try {
       val handler = new ScalaIntroduceFieldFromExpressionHandler
       val Some((expr, types)) = getExpressionWithTypes(scalaFile, editor.getDocument, startOffset, endOffset)(getProject)
-      val aClass = expr.parents.toList.filter(_.isInstanceOf[ScTemplateDefinition])(selectedClassNumber).asInstanceOf[ScTemplateDefinition]
+      val aClass = expr.parents.toList.filterByType[ScTemplateDefinition].apply(selectedClassNumber)
       val ifc = new IntroduceFieldContext[ScExpression](getProject, editor, scalaFile, expr, types, aClass)
       val settings = new IntroduceFieldSettings[ScExpression](ifc)
       settings.replaceAll = replaceAll

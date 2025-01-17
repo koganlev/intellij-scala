@@ -1,8 +1,12 @@
 package org.jetbrains.plugins.scala.lang.typeInference
 
+import org.jetbrains.plugins.scala.extensions.PathExt
+
+import java.nio.file.Path
+
 class BoundsTest extends TypeInferenceTestBase {
 
-  override def folderPath: String = super.folderPath + "bugs5/"
+  override def folderPath: Path = super.folderPath / "bugs5"
 
   def testSCL4373(): Unit = doTest()
 

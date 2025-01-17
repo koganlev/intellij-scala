@@ -16,17 +16,17 @@
 package org.jetbrains.plugins.scala.lang.resolve
 
 import com.intellij.openapi.editor.CaretState
-import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.text.StringUtil
-import com.intellij.openapi.vfs.CharsetToolkit
 import com.intellij.psi.PsiReference
 import org.jetbrains.plugins.scala.TypecheckerTests
 import org.jetbrains.plugins.scala.base.ScalaLightCodeInsightFixtureTestCase
+import org.jetbrains.plugins.scala.extensions.PathExt
 import org.jetbrains.plugins.scala.util.TestUtils
 import org.junit.Assert._
 import org.junit.experimental.categories.Category
 
-import java.io.File
+import java.nio.charset.StandardCharsets
+import java.nio.file.Path
 import scala.collection.mutable
 import scala.jdk.CollectionConverters.{ListHasAsScala, SeqHasAsJava}
 
@@ -35,8 +35,7 @@ import scala.jdk.CollectionConverters.{ListHasAsScala, SeqHasAsJava}
  */
 @Category(Array(classOf[TypecheckerTests]))
 abstract class ScalaResolveTestCase extends ScalaLightCodeInsightFixtureTestCase {
-  def folderPath: String =
-    TestUtils.getTestDataPath + "/"
+  def folderPath: Path = Path.of(TestUtils.getTestDataPath)
 
   protected def findReferenceAtCaret(): PsiReference =
     getFile.findReferenceAt(getEditor.getCaretModel.getOffset)
@@ -61,14 +60,13 @@ abstract class ScalaResolveTestCase extends ScalaLightCodeInsightFixtureTestCase
       extention = ".java"
       fileName = fileName.substring("JavaFileWithName".length())
     }
-    val filePath = folderPath + File.separator + fileName + extention
-    testFilePath = filePath
+    val nioFile = folderPath / (fileName + extention)
+    testFilePath = nioFile.toString
 
-    val ioFile = new File(filePath)
-    val fileTextRaw = FileUtil.loadFile(ioFile, CharsetToolkit.UTF8)
+    val fileTextRaw = nioFile.readAllBytesToString(StandardCharsets.UTF_8)
     val fileTextOriginal = StringUtil.convertLineSeparators(fileTextRaw)
 
-    setupEditor(ioFile.getName, fileTextOriginal)
+    setupEditor(nioFile.getFileName.toString, fileTextOriginal)
   }
 
   private val RefTag = "<ref>"

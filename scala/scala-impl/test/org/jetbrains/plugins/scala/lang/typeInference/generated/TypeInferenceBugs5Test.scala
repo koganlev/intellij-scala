@@ -1,11 +1,14 @@
 package org.jetbrains.plugins.scala.lang.typeInference.generated
 
-import org.jetbrains.plugins.scala.{LatestScalaVersions, ScalaVersion}
+import org.jetbrains.plugins.scala.extensions.PathExt
 import org.jetbrains.plugins.scala.lang.typeInference.TypeInferenceTestBase
 import org.jetbrains.plugins.scala.lang.typeInference.testInjectors.{SCL9445Injector, SCL9532Injector, SCL9533Injector, SCL9865Injector}
+import org.jetbrains.plugins.scala.{LatestScalaVersions, ScalaVersion}
+
+import java.nio.file.Path
 
 abstract class TypeInferenceBugs5TestBase extends TypeInferenceTestBase {
-  override def folderPath: String = super.folderPath + "bugs5/"
+  override def folderPath: Path = super.folderPath / "bugs5"
 }
 
 class TypeInferenceBugs5Test extends TypeInferenceBugs5TestBase {

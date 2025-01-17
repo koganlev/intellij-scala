@@ -1,12 +1,14 @@
 package org.jetbrains.plugins.scala.lang.resolve2
 
+import org.jetbrains.plugins.scala.extensions.PathExt
 import org.jetbrains.plugins.scala.lang.psi.api.base.ScReference
 import org.junit.Assert
 
+import java.nio.file.Path
+
 class DynamicTest extends ResolveTestBase {
 
-  override def folderPath: String =
-    super.folderPath + "dynamic/"
+  override def folderPath: Path = super.folderPath / "dynamic"
 
   def testApplyDynamic(): Unit = doTest()
   def testApplyDynamicNoMethod(): Unit = doTest()

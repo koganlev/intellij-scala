@@ -11,10 +11,10 @@ import com.intellij.psi.{PsiDocumentManager, PsiFile}
 import com.intellij.refactoring.rename.{RenameProcessor, RenamePsiElementProcessor}
 import com.intellij.testFramework.{PlatformTestUtil, PsiTestUtil}
 import org.jetbrains.plugins.scala.base.ScalaLightCodeInsightFixtureTestCase
+import org.jetbrains.plugins.scala.extensions.PathExt
 import org.jetbrains.plugins.scala.lang.refactoring.util.ScalaNamesUtil
 import org.jetbrains.plugins.scala.util.WriteCommandActionEx
 
-import java.io.File
 import java.nio.file.Path
 import java.util
 import scala.annotation.nowarn
@@ -28,10 +28,10 @@ abstract class ScalaRenameTestBase extends ScalaLightCodeInsightFixtureTestCase 
   private var myDirectory: VirtualFile = _
   private var filesBefore: Seq[VirtualFile] = _
 
-  protected val folderPath: String = refactoringCommonTestDataRoot + "rename3/"
+  protected val folderPath: Path = refactoringCommonTestDataRoot / "rename3"
 
-  private def rootBefore = (folderPath + getTestName(true) + "/before").replace(File.separatorChar, '/')
-  private def rootAfter = (folderPath + getTestName(true) + "/after").replace(File.separatorChar, '/')
+  private def rootBefore: Path = folderPath / getTestName(true) / "before"
+  private def rootAfter: Path = folderPath / getTestName(true) / "after"
 
   protected def doTest(newName: String = "NameAfterRename"): Unit = {
     val caretPositions = findCaretsAndRemoveMarkers(filesBefore)
@@ -47,7 +47,7 @@ abstract class ScalaRenameTestBase extends ScalaLightCodeInsightFixtureTestCase 
 
       val oldName = doRename(editor, file, newName)
 
-      val dirAfter = LocalFileSystem.getInstance.refreshAndFindFileByPath(rootAfter)
+      val dirAfter = LocalFileSystem.getInstance.refreshAndFindFileByNioFile(rootAfter)
       PlatformTestUtil.assertDirectoriesEqual(dirAfter, myDirectory)
 
       //rename back for next caret position
@@ -103,7 +103,7 @@ abstract class ScalaRenameTestBase extends ScalaLightCodeInsightFixtureTestCase 
   override protected def setUp(): Unit = {
     super.setUp()
     LocalFileSystem.getInstance().refresh(false)
-    myDirectory = PsiTestUtil.createTestProjectStructure(getProject, getModule, rootBefore, new util.HashSet[Path](), true)
+    myDirectory = PsiTestUtil.createTestProjectStructure(getProject, getModule, rootBefore.toString, new util.HashSet[Path](), true)
     filesBefore =
       VfsUtil.collectChildrenRecursively(myDirectory.findChild("tests")).asScala
         .filter(!_.isDirectory)

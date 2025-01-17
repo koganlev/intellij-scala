@@ -1,8 +1,11 @@
 package org.jetbrains.plugins.scala
 package refactoring.move
 
+import org.jetbrains.plugins.scala.extensions.PathExt
 import org.jetbrains.plugins.scala.util.runners.{MultipleScalaVersionsRunner, RunWithScalaVersions, TestScalaVersion}
 import org.junit.runner.RunWith
+
+import java.nio.file.Path
 
 @RunWith(classOf[MultipleScalaVersionsRunner])
 @RunWithScalaVersions(Array(
@@ -11,7 +14,7 @@ import org.junit.runner.RunWith
 ))
 final class ScalaMoveClassTest_Scala2Common extends ScalaMoveClassTestBase {
 
-  override protected def getTestDataRoot: String = super.getTestDataRoot + "/scala2_common/"
+  override protected def getTestDataRoot: Path = super.getTestDataRoot / "scala2_common"
 
   def testPackageObject(): Unit = {
     doTest(Seq("com.`package`"), "org")

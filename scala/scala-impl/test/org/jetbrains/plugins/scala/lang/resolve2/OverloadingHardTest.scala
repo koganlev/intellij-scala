@@ -1,9 +1,11 @@
 package org.jetbrains.plugins.scala.lang.resolve2
 
+import org.jetbrains.plugins.scala.extensions.PathExt
+
+import java.nio.file.Path
+
 class OverloadingHardTest extends ResolveTestBase {
-  override def folderPath: String = {
-    super.folderPath + "overloading/hardOverloadings/"
-  }
+  override def folderPath: Path = super.folderPath / "overloading" / "hardOverloadings"
 
   def testIgnoreValue(): Unit = doTest()
   def testImplicitsPriority(): Unit = doTest()

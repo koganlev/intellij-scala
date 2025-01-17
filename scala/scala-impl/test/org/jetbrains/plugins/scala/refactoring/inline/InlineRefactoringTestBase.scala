@@ -3,14 +3,12 @@ package org.jetbrains.plugins.scala.refactoring.inline
 import com.intellij.ide.DataManager
 import com.intellij.lang.refactoring.InlineActionHandler
 import com.intellij.openapi.actionSystem.CommonDataKeys
-import com.intellij.openapi.util.io.FileUtil
-import com.intellij.openapi.vfs.{CharsetToolkit, LocalFileSystem, VirtualFile}
 import com.intellij.psi.PsiElement
 import com.intellij.refactoring.actions.BaseRefactoringAction
 import com.intellij.refactoring.util.CommonRefactoringUtil.RefactoringErrorHintException
 import org.jetbrains.plugins.scala.base.ScalaLightCodeInsightFixtureTestCase
 import org.jetbrains.plugins.scala.editor.DocumentExt
-import org.jetbrains.plugins.scala.extensions.StringExt
+import org.jetbrains.plugins.scala.extensions.{PathExt, StringExt}
 import org.jetbrains.plugins.scala.refactoring.inline.InlineRefactoringTestBase.{ExpectedResult, SettingDescriptor, TestCaseDescriptor, TestCaseOptions, parseExpectedError}
 import org.jetbrains.plugins.scala.refactoring.refactoringCommonTestDataRoot
 import org.jetbrains.plugins.scala.settings.ScalaApplicationSettings
@@ -19,24 +17,25 @@ import org.jetbrains.plugins.scala.util.{RevertableChange, TestUtils}
 import org.jetbrains.plugins.scala.{ScalaBundle, ScalaFileType}
 import org.junit.Assert._
 
-import java.io.File
+import java.nio.charset.StandardCharsets
+import java.nio.file.Path
 import java.util.concurrent.TimeUnit
 
 abstract class InlineRefactoringTestBase extends ScalaLightCodeInsightFixtureTestCase {
   protected val caretMarker = "/*caret*/"
 
-  protected def folderPath = refactoringCommonTestDataRoot + "inline/"
+  protected def folderPath: Path = refactoringCommonTestDataRoot / "inline"
 
   protected def doTest(): Unit = {
-    val filePath = folderPath + getTestName(false) + ".scala"
+    val fileName = getTestName(false) + ".scala"
+    val filePath = folderPath / fileName
     doTest(filePath)
   }
 
-  protected def doTest(filePath: String): Unit = try {
-    val testCaseFile = LocalFileSystem.getInstance.findFileByPath(filePath.replace(File.separatorChar, '/'))
-    assertNotNull(s"Can't find file $filePath", testCaseFile)
+  protected def doTest(filePath: Path): Unit = try {
+    assertTrue(s"Can't find file $filePath", filePath.exists)
 
-    val testCaseDescriptor = parseTestCase(testCaseFile)
+    val testCaseDescriptor = parseTestCase(filePath)
     configureFromFileText(ScalaFileType.INSTANCE, testCaseDescriptor.fileText)
 
     assertCaretIsSet()
@@ -68,8 +67,8 @@ abstract class InlineRefactoringTestBase extends ScalaLightCodeInsightFixtureTes
       elementAtCaretFromFocus
   }
 
-  private def parseTestCase(testCaseFile: VirtualFile): TestCaseDescriptor = {
-    val testFileTextOriginal = FileUtil.loadFile(new File(testCaseFile.getCanonicalPath), CharsetToolkit.UTF8).withNormalizedSeparator
+  private def parseTestCase(testCaseFile: Path): TestCaseDescriptor = {
+    val testFileTextOriginal = testCaseFile.readAllBytesToString(StandardCharsets.UTF_8).withNormalizedSeparator
 
     val (directiveLines, nonDirectiveLines) = testFileTextOriginal.linesIterator.toSeq.span(_.startsWith(ScalaDirectivePrefix))
     val testOptions = parseTestOptionDirectives(directiveLines)

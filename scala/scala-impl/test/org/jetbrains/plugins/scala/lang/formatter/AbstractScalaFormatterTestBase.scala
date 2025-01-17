@@ -7,13 +7,12 @@ import com.intellij.openapi.editor.EditorFactory
 import com.intellij.openapi.editor.impl.DocumentImpl
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
-import com.intellij.openapi.util.io.FileUtil
 import com.intellij.psi.codeStyle.CodeStyleManager
 import com.intellij.psi.{PsiDocumentManager, PsiElement, PsiFile, PsiFileFactory}
 import com.intellij.testFramework.LightIdeaTestCase
 import com.intellij.util.IncorrectOperationException
 import org.jetbrains.annotations.Nullable
-import org.jetbrains.plugins.scala.extensions.{CharSeqExt, IteratorExt, PsiElementExt, StringExt, inWriteAction}
+import org.jetbrains.plugins.scala.extensions.{CharSeqExt, IteratorExt, PathExt, PsiElementExt, StringExt, inWriteAction}
 import org.jetbrains.plugins.scala.lang.formatter.AbstractScalaFormatterTestBase._
 import org.jetbrains.plugins.scala.lang.formatting.scalafmt.processors.ScalaFmtPreFormatProcessor
 import org.jetbrains.plugins.scala.lang.formatting.settings.ScalaCodeStyleSettings
@@ -21,7 +20,7 @@ import org.jetbrains.plugins.scala.util.{MarkersUtils, TestUtils}
 import org.jetbrains.plugins.scala.{LatestScalaVersions, NlsString, Scala3Language, ScalaLanguage, ScalaVersion}
 import org.junit.Assert._
 
-import java.io.File
+import java.nio.file.Path
 
 /**
  * Base class for java formatter tests that holds utility methods.
@@ -298,8 +297,7 @@ private object AbstractScalaFormatterTestBase {
   }
 
   private def loadFile(name: String): String = {
-    val fullName = (TestUtils.getTestDataPath + "/psi/formatter") + File.separatorChar + name
-    val text = new String(FileUtil.loadFileText(new File(fullName)))
+    val text = Path.of(TestUtils.getTestDataPath, "psi", "formatter", name).readAllBytesToString()
     text.withNormalizedSeparator
   }
 }

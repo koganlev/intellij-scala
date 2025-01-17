@@ -1,9 +1,11 @@
 package org.jetbrains.plugins.scala.lang.resolve2
 
+import org.jetbrains.plugins.scala.extensions.PathExt
+
+import java.nio.file.Path
+
 class FunctionCountTest extends ResolveTestBase {
-  override def folderPath: String = {
-    super.folderPath + "function/count/"
-  }
+  override def folderPath: Path = super.folderPath / "function" / "count"
 
   def testEmptyToEmpty(): Unit = doTest()
   def testEmptyToNone(): Unit = doTest()

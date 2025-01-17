@@ -3,8 +3,12 @@ package lang
 package typeInference
 package generated
 
+import org.jetbrains.plugins.scala.extensions.PathExt
+
+import java.nio.file.Path
+
 abstract class TypeInferenceStatementsTestBase extends TypeInferenceTestBase {
-  override def folderPath: String = super.folderPath + "statements/"
+  override def folderPath: Path = super.folderPath / "statements"
 }
 
 class TypeInferenceStatementsTest extends TypeInferenceStatementsTestBase {

@@ -3,13 +3,15 @@ package org.jetbrains.plugins.scala.lang.completion3
 import org.jetbrains.plugins.scala.ScalaVersion
 import org.jetbrains.plugins.scala.lang.completion3.base.ScalaCompletionTestBase
 
+import java.nio.file.Path
+
 class Scala3GlobalMemberCompletionTest extends ScalaCompletionTestBase {
   override protected def supportedIn(version: ScalaVersion) = version >= ScalaVersion.Latest.Scala_3_0
 
   override def getTestDataPath: String =
     s"${super.getTestDataPath}globalMember3"
 
-  override protected def sourceRootPath: String = getTestDataPath
+  override protected def sourceRootPath: Path = Path.of(getTestDataPath)
 
   def testExtensionMethod(): Unit = doCompletionTest(
     fileText =

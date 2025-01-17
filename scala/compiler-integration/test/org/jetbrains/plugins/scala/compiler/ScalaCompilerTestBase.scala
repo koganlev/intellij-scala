@@ -116,7 +116,7 @@ abstract class ScalaCompilerTestBase extends JavaModuleTestCase with ScalaSdkOwn
   protected def compilerBridgeBinaryJar: Option[File] = None
 
   override protected def librariesLoaders: Seq[LibraryLoader] = Seq(
-    ScalaSDKLoader(includeReflectLibrary, includeCompilerAsLibrary, compilerBridgeBinaryJar = compilerBridgeBinaryJar),
+    ScalaSDKLoader(includeReflectLibrary, includeCompilerAsLibrary, compilerBridgeBinaryJar = compilerBridgeBinaryJar.map(_.toPath)),
     HeavyJDKLoader(testProjectJdkVersion)
   ) ++ additionalLibraries
 

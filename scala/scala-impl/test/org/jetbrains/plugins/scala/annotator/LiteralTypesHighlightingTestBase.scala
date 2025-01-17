@@ -1,11 +1,11 @@
 package org.jetbrains.plugins.scala.annotator
 
-import com.intellij.openapi.util.io.FileUtil
-import com.intellij.openapi.vfs.CharsetToolkit
 import org.jetbrains.plugins.scala.base.ScalaLightCodeInsightFixtureTestCase
+import org.jetbrains.plugins.scala.extensions.PathExt
 import org.jetbrains.plugins.scala.util.TestUtils
 
-import java.io.File
+import java.nio.charset.StandardCharsets
+import java.nio.file.Path
 
 /**
  * @see [[org.jetbrains.plugins.scala.annotator.element.ScLiteralTypeElementAnnotatorTestBase]]
@@ -14,13 +14,12 @@ abstract class LiteralTypesHighlightingTestBase
   extends ScalaLightCodeInsightFixtureTestCase
     with ScalaHighlightingTestLike {
 
-  def folderPath: String = TestUtils.getTestDataPath + "/annotator/literalTypes/"
+  def folderPath: Path = Path.of(TestUtils.getTestDataPath, "annotator", "literalTypes")
 
   def doTest(expectedErrors: List[Message] = Nil, fileText: Option[String] = None, settingOn: Boolean = false): Unit = {
     val text = fileText.getOrElse {
-      val filePath = folderPath + getTestName(true) + ".scala"
-      val ioFile: File = new File(filePath)
-      FileUtil.loadFile(ioFile, CharsetToolkit.UTF8)
+      val filePath: Path = folderPath / s"${getTestName(true)}.scala"
+      filePath.readAllBytesToString(StandardCharsets.UTF_8)
     }
 
     if (settingOn) {

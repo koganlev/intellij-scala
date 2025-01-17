@@ -14,29 +14,31 @@ import org.jetbrains.plugins.scala.lang.psi.api.toplevel.typedef.ScClass;
 import org.jetbrains.plugins.scala.lang.psi.api.toplevel.typedef.ScTemplateDefinition;
 import org.jetbrains.plugins.scala.lang.psi.api.toplevel.typedef.ScTypeDefinition;
 
+import java.nio.file.Path;
+
 public class NonlocalResolveTest extends ScalaResolveTestCase{
 
   @Override
-  public String folderPath() {
-    return super.folderPath() + "resolve/nonlocal/";
+  public Path folderPath() {
+    return super.folderPath().resolve("resolve").resolve("nonlocal");
   }
 
-  public void testBeanProperty() throws Exception {
+  public void testBeanProperty() {
     PsiReference ref = findReferenceAtCaret();
     PsiElement resolved = ref.resolve();
     assertNotNull(resolved);
     assertTrue(resolved instanceof ScPrimaryConstructor);
   }
 
-  public void testArrayBufferAdd() throws Exception {
+  public void testArrayBufferAdd() {
     PsiReference ref = findReferenceAtCaret();
     PsiElement resolved = ref.resolve();
     assertTrue(resolved instanceof ScFunction);
     ScFunction function = (ScFunction) resolved;
-    assertEquals(function.containingClass().getName(), "ArrayBuffer");
+    assertEquals("ArrayBuffer", function.containingClass().getName());
   }
 
-  public void testMathSimple() throws Exception {
+  public void testMathSimple() {
     PsiReference ref = findReferenceAtCaret();
     PsiElement resolved = ref.resolve();
     assertNotNull(resolved);
@@ -44,7 +46,7 @@ public class NonlocalResolveTest extends ScalaResolveTestCase{
     assertEquals("java.lang.Math", ((PsiClass) resolved).getQualifiedName());
   }
 
-  public void testCompoundTypesOverriding() throws Exception {
+  public void testCompoundTypesOverriding() {
     PsiReference ref = findReferenceAtCaret();
     PsiElement resolved = ref.resolve();
     assertNotNull(resolved);
@@ -54,7 +56,7 @@ public class NonlocalResolveTest extends ScalaResolveTestCase{
     assertEquals("C", clazz.getName());
   }
 
-  public void testMathImported() throws Exception {
+  public void testMathImported() {
     PsiReference ref = findReferenceAtCaret();
     PsiElement resolved = ref.resolve();
     assertNotNull(resolved);
@@ -62,113 +64,113 @@ public class NonlocalResolveTest extends ScalaResolveTestCase{
     assertEquals("java.lang.Math", ((PsiClass) resolved).getQualifiedName());
   }
 
-  public void testtypedecl() throws Exception {
+  public void testtypedecl() {
     PsiReference ref = findReferenceAtCaret();
     assertTrue(ref.resolve() instanceof ScTypeAliasDeclaration);
   }
 
-  public void testexistential() throws Exception {
+  public void testexistential() {
     PsiReference ref = findReferenceAtCaret();
     PsiElement resolved = ref.resolve();
     assertTrue(resolved instanceof ScTypeAlias);
   }
 
-  public void testimportFromObject() throws Exception {
+  public void testimportFromObject() {
     PsiReference ref = findReferenceAtCaret();
     PsiElement element = ref.resolve();
     assertTrue(element instanceof ScFunction && ((ScFunction) element).getName().equals("apply"));
   }
 
-  public void testsubstitutor1() throws Exception {
+  public void testsubstitutor1() {
     PsiReference ref = findReferenceAtCaret();
     assertTrue(ref.resolve() instanceof PsiMethod);
   }
 
-  public void testhigherkind() throws Exception {
+  public void testhigherkind() {
     PsiReference ref = findReferenceAtCaret();
     assertTrue(ref.resolve() instanceof ScTypeDefinition);
   }
 
-  public void testhigherkind1() throws Exception {
+  public void testhigherkind1() {
     PsiReference ref = findReferenceAtCaret();
     assertTrue(ref.resolve() instanceof ScFunction);
   }
 
-  public void testcompoundtypes() throws Exception {
+  public void testcompoundtypes() {
     PsiReference ref = findReferenceAtCaret();
     assertTrue(ref.resolve() instanceof ScTypeAlias);
   }
 
-  public void testvalsaspatterns() throws Exception {
+  public void testvalsaspatterns() {
     PsiReference ref = findReferenceAtCaret();
     assertTrue(ref.resolve() instanceof ScPattern);
   }
 
-  public void testtraitsupertypes() throws Exception {
+  public void testtraitsupertypes() {
     PsiReference ref = findReferenceAtCaret();
     assertTrue(ref.resolve() instanceof ScFunction);
   }
 
-  public void testtypealiases() throws Exception {
+  public void testtypealiases() {
     PsiReference ref = findReferenceAtCaret();
     assertTrue(ref.resolve() instanceof PsiMethod);
   }
 
-  public void testjavaGenerics() throws Exception {
+  public void testjavaGenerics() {
     PsiReference ref = findReferenceAtCaret();
     assertTrue(ref.resolve() instanceof PsiMethod);
   }
 
-  public void testself() throws Exception {
+  public void testself() {
     PsiReference ref = findReferenceAtCaret();
     final PsiElement t = ref.resolve();
     assertTrue(t instanceof ScFunction);
-    assertEquals(((ScFunction) t).getName(), "ccc");
+    assertEquals("ccc", ((ScFunction) t).getName());
   }
 
-  public void testselfTypeShadow() throws Exception {
+  public void testselfTypeShadow() {
     PsiReference ref = findReferenceAtCaret();
     final PsiElement t = ref.resolve();
     assertTrue(t instanceof ScClass);
-    assertEquals(((ScClass) t).qualifiedName(), "scala.Symbol");
+    assertEquals("scala.Symbol", ((ScClass) t).qualifiedName());
   }
 
-  public void testsubstAliasBound() throws Exception {
+  public void testsubstAliasBound() {
     PsiReference ref = findReferenceAtCaret();
     assertTrue(ref.resolve() instanceof PsiMethod);
   }
 
-  public void testrecursiveInvocation() throws Exception {
+  public void testrecursiveInvocation() {
     PsiReference ref = findReferenceAtCaret();
     assertTrue(ref.resolve() instanceof PsiMethod);
   }
 
-  public void testrecursivePattern() throws Exception {
+  public void testrecursivePattern() {
     PsiReference ref = findReferenceAtCaret();
     assertNull(ref.resolve());
   }
 
-  public void testbaseClassParam() throws Exception {
+  public void testbaseClassParam() {
     PsiReference ref = findReferenceAtCaret();
     assertNotNull(ref.resolve());
   }
 
-  public void testlub1() throws Exception {
+  public void testlub1() {
     PsiReference ref = findReferenceAtCaret();
     assertNotNull(ref.resolve());
   }
 
-  public void testNoShadowing() throws Exception {
+  public void testNoShadowing() {
     PsiReference ref = findReferenceAtCaret();
     assertNull(ref.resolve());
   }
 
-  public void testGood() throws Exception {
+  public void testGood() {
     PsiReference ref = findReferenceAtCaret();
     assertNotNull(ref.resolve());
   }
   
-  public void testSCL3666() throws Exception {
+  public void testSCL3666() {
     PsiReference ref = findReferenceAtCaret();
     if (ref instanceof ScReference refElement) {
       assertNotNull(ref.resolve());
@@ -176,7 +178,7 @@ public class NonlocalResolveTest extends ScalaResolveTestCase{
     }
   }
 
-  public void testTwoImports() throws Exception {
+  public void testTwoImports() {
     PsiReference ref = findReferenceAtCaret();
     assertNull(ref.resolve());
   }

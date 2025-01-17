@@ -1,13 +1,10 @@
 package org.jetbrains.plugins.scala
 package lang.resolve
 
-import com.intellij.openapi.util.io.FileUtil
-import com.intellij.openapi.util.text.StringUtil
-import com.intellij.openapi.vfs.CharsetToolkit
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.{PsiDocumentManager, PsiElement, PsiFile, PsiReference}
 import org.jetbrains.plugins.scala.base.ScalaLightCodeInsightFixtureTestCase
-import org.jetbrains.plugins.scala.extensions.{Parent, PsiElementExt, PsiNamedElementExt}
+import org.jetbrains.plugins.scala.extensions.{Parent, PathExt, PsiElementExt, PsiNamedElementExt, StringExt}
 import org.jetbrains.plugins.scala.lang.psi.api.base.ScReference
 import org.jetbrains.plugins.scala.lang.psi.api.statements.params.ScParameter
 import org.jetbrains.plugins.scala.lang.psi.api.toplevel.typedef.ScMember
@@ -15,7 +12,8 @@ import org.jetbrains.plugins.scala.util.TestUtils
 import org.junit.Assert._
 import org.junit.experimental.categories.Category
 
-import java.io.File
+import java.nio.charset.StandardCharsets
+import java.nio.file.Path
 import scala.util.{Failure, Success, Try}
 
 @Category(Array(classOf[TypecheckerTests]))
@@ -168,11 +166,10 @@ abstract class SimpleResolveTestBase extends ScalaLightCodeInsightFixtureTestCas
     doResolveTest(source -> fileName)
 
   protected def doResolveTest(): Unit = {
-    val filePath = folderPath + getTestName(false) + ".scala"
-    val ioFile: File = new File(filePath)
-    var fileText: String = FileUtil.loadFile(ioFile, CharsetToolkit.UTF8)
-    fileText = StringUtil.convertLineSeparators(fileText)
-    doResolveTest(fileText, ioFile.getName)
+    val fileName = getTestName(false)
+    val nioFile = Path.of(folderPath, s"$fileName.scala")
+    val fileText = nioFile.readAllBytesToString(StandardCharsets.UTF_8).withNormalizedSeparator
+    doResolveTest(fileText, fileName)
   }
 
 }
@@ -181,4 +178,3 @@ object SimpleResolveTestBase {
   val REFSRC = "<src>"
   val REFTGT = "<tgt>"
 }
-

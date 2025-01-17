@@ -1,10 +1,12 @@
 package org.jetbrains.sbt
 package lang.completion
 
-import org.jetbrains.plugins.scala.util.RevertableChange
+import org.jetbrains.plugins.scala.extensions.PathExt
+
+import java.nio.file.Path
 
 class SbtCompletionScalacOptionsTest extends SbtFileTestDataCompletionTestBase with MockSbt_1_0 {
-  override def folderPath: String = super.folderPath + "scalacOptions/"
+  override def folderPath: Path = super.folderPath / "scalacOptions"
 
   def testCompleteSeqRef(): Unit = doTest()
 

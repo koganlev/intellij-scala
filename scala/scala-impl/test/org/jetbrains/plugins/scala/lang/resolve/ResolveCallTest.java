@@ -11,13 +11,15 @@ import org.jetbrains.plugins.scala.lang.psi.api.statements.params.ScParameter;
 import org.jetbrains.plugins.scala.lang.psi.impl.toplevel.synthetic.ScSyntheticFunction;
 import scala.Option;
 
+import java.nio.file.Path;
+
 public class ResolveCallTest extends ScalaResolveTestCase {
   @Override
-  public String folderPath() {
-    return super.folderPath() + "/resolve/call/";
+  public Path folderPath() {
+    return super.folderPath().resolve("resolve").resolve("call");
   }
 
-  public void testSelfConstructorCall() throws Exception {
+  public void testSelfConstructorCall() {
     PsiElement elementAt = getFile().findElementAt(getEditor().getCaretModel().getOffset());
     ScSelfInvocation selfInvocation = PsiTreeUtil.getTopmostParentOfType(elementAt, ScSelfInvocation.class);
     Option<PsiElement> bind = selfInvocation.bind();
@@ -25,7 +27,7 @@ public class ResolveCallTest extends ScalaResolveTestCase {
     assertTrue(bind.get() instanceof ScPrimaryConstructor);
   }
 
-  public void testEmptySelfConstructorCall() throws Exception {
+  public void testEmptySelfConstructorCall() {
     PsiElement elementAt = getFile().findElementAt(getEditor().getCaretModel().getOffset());
     ScSelfInvocation selfInvocation = PsiTreeUtil.getTopmostParentOfType(elementAt, ScSelfInvocation.class);
     Option<PsiElement> bind = selfInvocation.bind();
@@ -33,62 +35,62 @@ public class ResolveCallTest extends ScalaResolveTestCase {
     assertTrue(bind.get() instanceof ScPrimaryConstructor);
   }
 
-  public void testisInstanceOf() throws Exception {
+  public void testisInstanceOf() {
     PsiReference ref = findReferenceAtCaret();
     PsiElement resolved = ref.resolve();
     assertNotNull(resolved);
     assertTrue(resolved instanceof ScSyntheticFunction);
   }
 
-  public void testAssignmentCall() throws Exception {
+  public void testAssignmentCall() {
     PsiReference ref = findReferenceAtCaret();
     PsiElement resolved = ref.resolve();
     assertNotNull(resolved);
     assertTrue(resolved instanceof ScFunction);
   }
 
-  public void testImplicitConversionOfPrivate() throws Exception {
+  public void testImplicitConversionOfPrivate() {
     PsiReference ref = findReferenceAtCaret();
     PsiElement resolved = ref.resolve();
     assertNotNull(resolved);
     assertTrue(resolved instanceof ScFunction); //this is not Java PsiMethod, which has private access
   }
 
-  public void testobjectApply() throws Exception {
+  public void testobjectApply() {
     PsiReference ref = findReferenceAtCaret();
     PsiElement resolved = ref.resolve();
     assertTrue(resolved instanceof ScFunction);
     assertEquals("apply", ((ScFunction) resolved).getName());
   }
 
-  public void testObjectGenericApply() throws Exception {
+  public void testObjectGenericApply() {
     PsiReference ref = findReferenceAtCaret();
     PsiElement resolved = ref.resolve();
     assertTrue(resolved instanceof ScFunction);
     assertEquals("apply", ((ScFunction) resolved).getName());
   }
 
-  public void testrefPattern() throws Exception {
+  public void testrefPattern() {
     PsiReference ref = findReferenceAtCaret();
     PsiElement resolved = ref.resolve();
     assertTrue(resolved instanceof ScFunction);
     assertEquals("foo", ((ScFunction) resolved).getName());
   }
 
-  public void testSuperConstructorInvocation() throws Exception {
+  public void testSuperConstructorInvocation() {
     PsiReference ref = findReferenceAtCaret();
     PsiElement resolved = ref.resolve();
     assertTrue(resolved instanceof ScFunction);
     assertEquals("c", ((ScFunction) resolved).containingClass().getName());
   }
 
-  public void testNamingParam() throws Exception {
+  public void testNamingParam() {
     PsiReference ref = findReferenceAtCaret();
     PsiElement resolved = ref.resolve();
     assertTrue(resolved instanceof ScParameter);
   }
 
-  public void testsimpleCallParensOmitted() throws Exception {
+  public void testsimpleCallParensOmitted() {
     PsiReference ref = findReferenceAtCaret();
     PsiElement resolved = ref.resolve();
     assertTrue(resolved instanceof ScFunctionDefinition);

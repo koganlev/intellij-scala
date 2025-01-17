@@ -1,6 +1,9 @@
 package org.jetbrains.plugins.scala.lang.resolve2
 
 import org.jetbrains.plugins.scala.ScalaVersion
+import org.jetbrains.plugins.scala.extensions.PathExt
+
+import java.nio.file.Path
 
 /** Also see [[org.jetbrains.plugins.scala.lang.resolve.ScaladocLinkResolveTest_Old]] */
 abstract class ScalaDocLinkResolveTestBase extends ResolveTestBaseWithAlternativeExpectedData {
@@ -29,8 +32,7 @@ class ScalaDocLinkResolveTest extends ScalaDocLinkResolveTestBase {
   override protected def supportedIn(version: ScalaVersion): Boolean =
     version == ScalaVersion.Latest.Scala_2_13
 
-  override def folderPath: String =
-    s"${super.folderPath}scaladoc"
+  override def folderPath: Path = super.folderPath / "scaladoc"
 }
 
 class ScalaDocLinkResolveTest_Scala3 extends ResolveTestBaseWithAlternativeExpectedData {
@@ -38,8 +40,7 @@ class ScalaDocLinkResolveTest_Scala3 extends ResolveTestBaseWithAlternativeExpec
   override protected def supportedIn(version: ScalaVersion): Boolean =
     version.isScala3
 
-  override def folderPath: String =
-    s"${super.folderPath}scaladoc3"
+  override def folderPath: Path = super.folderPath / "scaladoc3"
 
   def testParametersAndTypeParametersInEnumCases(): Unit = doTest()
 }

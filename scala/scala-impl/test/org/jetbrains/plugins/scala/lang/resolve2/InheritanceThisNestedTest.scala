@@ -1,9 +1,11 @@
 package org.jetbrains.plugins.scala.lang.resolve2
 
+import org.jetbrains.plugins.scala.extensions.PathExt
+
+import java.nio.file.Path
+
 class InheritanceThisNestedTest extends ResolveTestBase {
-  override def folderPath: String = {
-    super.folderPath + "inheritance/this/nested/"
-  }
+  override def folderPath: Path = super.folderPath / "inheritance" / "this" / "nested"
 
   def testClass(): Unit = doTest()
   def testObject(): Unit = doTest()

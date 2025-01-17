@@ -6,6 +6,8 @@ import org.jetbrains.plugins.scala.extensions.PsiNamedElementExt
 import org.jetbrains.plugins.scala.util.assertions.PsiAssertions.assertNoParserErrors
 import org.junit.Assert.assertEquals
 
+import java.nio.file.Path
+
 /**
  * NOTE: prefer using [[InlineRefactoringTestBase]]-based tests.<br>
  * This test class should be used for complex scenarios which is hard to describe using simple single-test file
@@ -14,7 +16,7 @@ class InlineRefactoringIntoStringLiteralCodeTest extends InlineRefactoringTestBa
 
   override protected def supportedIn(version: ScalaVersion): Boolean = version.isScala3
 
-  override def folderPath: String = null //not used
+  override def folderPath: Path = null //not used
 
   def testInlineTopLevelUsageInMultipleFiles(): Unit = {
     val definitionsFile = configureScalaFromFileText(

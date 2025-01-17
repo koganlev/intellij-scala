@@ -1,9 +1,11 @@
 package org.jetbrains.plugins.scala.lang.resolve2
 
+import org.jetbrains.plugins.scala.extensions.PathExt
+
+import java.nio.file.Path
+
 class OverloadingTest extends ResolveTestBase {
-  override def folderPath: String = {
-    super.folderPath + "overloading/"
-  }
+  override def folderPath: Path = super.folderPath / "overloading"
 
   def testAmbiguos(): Unit = doTest()
   def testCanConformsWeak(): Unit = doTest()

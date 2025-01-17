@@ -11,7 +11,7 @@ import org.jetbrains.plugins.scala.DependencyManagerBase.DependencyDescription
 import org.jetbrains.plugins.scala.ScalaVersion
 import org.jetbrains.plugins.scala.base.ScalaFixtureTestCase
 import org.jetbrains.plugins.scala.base.libraryLoaders.{IvyManagedLoader, ScalaReflectLibraryLoader, SmartJDKLoader}
-import org.jetbrains.plugins.scala.extensions.PsiElementExt
+import org.jetbrains.plugins.scala.extensions.{ObjectExt, PathExt, PsiElementExt}
 import org.jetbrains.plugins.scala.lang.psi.api.statements.ScTypeAlias
 import org.jetbrains.plugins.scala.lang.psi.api.toplevel.typedef.{ScObject, ScTypeDefinition}
 import org.jetbrains.plugins.scala.lang.psi.impl.ScalaPsiManager
@@ -21,7 +21,7 @@ import org.jetbrains.plugins.scala.settings.ScalaProjectSettings.AliasExportSema
 import org.jetbrains.plugins.scala.text.TextToTextTestBase._
 import org.junit.Assert
 
-import java.io.File
+import java.nio.file.Path
 import java.util.Collections
 import scala.jdk.CollectionConverters.{ListHasAsScala, SeqHasAsJava}
 
@@ -52,14 +52,14 @@ abstract class TextToTextTestBase(dependencies: Seq[DependencyDescription],
     val sources = IvyManagedLoader(classes.filter(it => !ArtifactsWithoutSources(it.info.org, it.info.artId)).map(_.info.sources()): _*).resolve(scalaVersion)
     classes.foreach { cls =>
       val source = sources.find(_.info == cls.info.sources())
-      val classRoots = Collections.singletonList(findJarFile(cls.file.toFile)) // TODO: SCL-23312
-      val sourceRoots = source.map(it => findJarFile(it.file.toFile)).toSeq.asJava // TODO: SCL-23312
+      val classRoots = Collections.singletonList(findJarFile(cls.file))
+      val sourceRoots = source.map(it => findJarFile(it.file)).toSeq.asJava
       PsiTestUtil.addProjectLibrary(module, cls.info.toString, classRoots, sourceRoots)
     }
   }
 
-  private def findJarFile(file: File): VirtualFile =
-    JarFileSystem.getInstance.refreshAndFindFileByPath(file.getCanonicalPath + "!/")
+  private def findJarFile(file: Path): VirtualFile =
+    JarFileSystem.getInstance.refreshAndFindFileByPath(file.toCanonicalPath.toString + "!/")
 
   def testTextToText(): Unit = {
     val scalaProjectSettings = ScalaProjectSettings.getInstance(getProject)
@@ -146,7 +146,7 @@ abstract class TextToTextTestBase(dependencies: Seq[DependencyDescription],
 
   private def classesIn(pkg: PsiPackage, exceptions: Set[String]): Seq[ScTypeDefinition] = {
     val packageClasses = pkg.getClasses
-      .collect({case c: ScTypeDefinition if c.isInCompiledFile && !(c.isInstanceOf[ScObject] && c.baseCompanion.isDefined) => c})
+      .collect({ case c: ScTypeDefinition if c.isInCompiledFile && !(c.is[ScObject] && c.baseCompanion.isDefined) => c })
       .sortBy(_.qualifiedName)
 
     val subpackageClasses = pkg.getSubPackages

@@ -1,9 +1,12 @@
 package org.jetbrains.plugins.scala.lang.resolve2
 
+import org.jetbrains.plugins.scala.extensions.PathExt
+
+import java.nio.file.Path
+
 class ElementClashTest extends ResolveTestBase {
-  override def folderPath: String = {
-    super.folderPath + "element/clash/"
-  }
+  override def folderPath: Path = super.folderPath / "element" / "clash"
+
   //TODO classes clash
 //  def testClass = doTest
   //TODO classes clash

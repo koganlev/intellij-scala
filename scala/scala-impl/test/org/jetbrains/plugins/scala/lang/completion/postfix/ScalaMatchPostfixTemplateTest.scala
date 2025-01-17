@@ -3,8 +3,11 @@ package completion
 package postfix
 
 import com.intellij.testFramework.TestIndexingModeSupporter.IndexingMode
+import org.jetbrains.plugins.scala.extensions.PathExt
 import org.jetbrains.plugins.scala.util.runners.{MultipleScalaVersionsRunner, RunWithScalaVersions, TestScalaVersion, WithIndexingMode}
 import org.junit.runner.RunWith
+
+import java.nio.file.Path
 
 @RunWith(classOf[MultipleScalaVersionsRunner])
 @RunWithScalaVersions(Array(
@@ -13,7 +16,7 @@ import org.junit.runner.RunWith
 @WithIndexingMode(mode = IndexingMode.DUMB_EMPTY_INDEX)
 class ScalaMatchPostfixTemplateTest extends PostfixTemplateTest {
 
-  override def testPath(): String = super.testPath() + "match/"
+  override def testPath(): Path = super.testPath() / "match"
 
   def testSimple(): Unit = doTest()
 

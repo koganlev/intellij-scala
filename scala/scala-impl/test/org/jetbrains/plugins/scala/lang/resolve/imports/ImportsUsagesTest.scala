@@ -3,13 +3,15 @@ package lang
 package resolve
 package imports
 
-
 import com.intellij.psi.{PsiField, PsiMethod, PsiReference}
+import org.jetbrains.plugins.scala.extensions.{ObjectExt, PathExt}
 import org.jetbrains.plugins.scala.lang.psi.api.base.ScReference
 import org.jetbrains.plugins.scala.lang.psi.api.toplevel.typedef.ScObject
 
+import java.nio.file.Path
+
 class ImportsUsagesTest extends ScalaResolveTestCase {
-  override def folderPath: String = super.folderPath + "resolve/imports/simple/"
+  override def folderPath: Path = super.folderPath / "resolve" / "imports" / "simple"
 
   def printResults(imports: Object): Unit = {
   }
@@ -19,7 +21,7 @@ class ImportsUsagesTest extends ScalaResolveTestCase {
       case r: PsiReference =>
         val resolve = r.resolve
         assert(resolve != null)
-        assert(resolve.isInstanceOf[PsiField])
+        assert(resolve.is[PsiField])
     }
   }
 
@@ -28,7 +30,7 @@ class ImportsUsagesTest extends ScalaResolveTestCase {
       case r: PsiReference =>
         val resolve = r.resolve
         assert(resolve != null)
-        assert(resolve.isInstanceOf[PsiMethod])
+        assert(resolve.is[PsiMethod])
     }
   }
 
@@ -37,7 +39,7 @@ class ImportsUsagesTest extends ScalaResolveTestCase {
       case r: PsiReference =>
         val resolve = r.resolve
         assert(resolve != null)
-        assert(resolve.isInstanceOf[ScObject])
+        assert(resolve.is[ScObject])
     }
   }
 
@@ -46,7 +48,7 @@ class ImportsUsagesTest extends ScalaResolveTestCase {
       case r: PsiReference =>
         val resolve = r.resolve
         assert(resolve != null)
-        assert(resolve.isInstanceOf[ScObject])
+        assert(resolve.is[ScObject])
     }
   }
 
@@ -152,7 +154,4 @@ class ImportsUsagesTest extends ScalaResolveTestCase {
       case _ => throw new Exception("Wrong reference!")
     }
   }
-
-
-
 }

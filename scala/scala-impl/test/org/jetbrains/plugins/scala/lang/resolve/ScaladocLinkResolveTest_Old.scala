@@ -4,18 +4,20 @@ import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.pom.java.LanguageLevel
 import com.intellij.psi.PsiClass
 import org.jetbrains.plugins.scala.base.libraryLoaders.SmartJDKLoader
+import org.jetbrains.plugins.scala.extensions.PathExt
 import org.jetbrains.plugins.scala.lang.psi.api.base.ScReference
 import org.jetbrains.plugins.scala.lang.psi.api.toplevel.ScNamedElement
 import org.jetbrains.plugins.scala.lang.psi.api.toplevel.typedef.ScTemplateDefinition
 import org.jetbrains.plugins.scala.lang.psi.impl.statements.params.{ScParameterImpl, ScTypeParamImpl}
 import org.junit.Assert.{assertEquals, assertTrue}
 
+import java.nio.file.Path
 import scala.jdk.CollectionConverters.CollectionHasAsScala
 
 /** Also see [[org.jetbrains.plugins.scala.lang.resolve2.ScalaDocLinkResolveTest]] */
 class ScaladocLinkResolveTest_Old extends ScalaResolveTestCase {
 
-  override def folderPath: String = super.folderPath + "resolve/scaladoc"
+  override def folderPath: Path = super.folderPath / "resolve" / "scaladoc"
 
   override protected lazy val projectJdk: Sdk =
     SmartJDKLoader.createFilteredJdk(LanguageLevel.JDK_17, Seq("java.base", "java.desktop"))

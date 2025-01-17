@@ -4,16 +4,18 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
 import org.jetbrains.plugins.scala.lang.psi.api.statements.ScTypeAliasDefinition;
 
+import java.nio.file.Path;
+
 public class ResolveClassSdk1Test extends ScalaResolveTestCase {
   @Override
-  public String folderPath() {
-    return super.folderPath() + "resolve/class/sdk1/";
+  public Path folderPath() {
+    return super.folderPath().resolve("resolve").resolve("class").resolve("sdk1");
   }
 
-  public void testsdk1() throws Exception {
+  public void testsdk1() {
     PsiReference ref = findReferenceAtCaret();
     PsiElement resolved = ref.resolve();
     assertTrue(resolved instanceof ScTypeAliasDefinition);
-    assertEquals(((ScTypeAliasDefinition) resolved).getName(), "Traversable");
+    assertEquals("Traversable", ((ScTypeAliasDefinition) resolved).getName());
   }
 }

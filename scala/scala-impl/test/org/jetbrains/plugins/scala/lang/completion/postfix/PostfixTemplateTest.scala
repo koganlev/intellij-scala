@@ -7,13 +7,10 @@ import com.intellij.codeInsight.template.postfix.templates.PostfixTemplate
 import com.intellij.openapi.application.impl.NonBlockingReadActionImpl
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.util.TextRange
-import com.intellij.openapi.util.io.FileUtil
-import com.intellij.openapi.util.text.StringUtil
-import com.intellij.openapi.vfs.CharsetToolkit
 import com.intellij.psi.PsiFile
 import com.intellij.testFramework.TestIndexingModeSupporter.IndexingMode
 import org.jetbrains.plugins.scala.base.ScalaLightCodeInsightFixtureTestCase
-import org.jetbrains.plugins.scala.extensions.inWriteCommandAction
+import org.jetbrains.plugins.scala.extensions.{PathExt, StringExt, inWriteCommandAction}
 import org.jetbrains.plugins.scala.lang.psi.ScalaPsiUtil
 import org.jetbrains.plugins.scala.lang.psi.api.ScalaPsiElement
 import org.jetbrains.plugins.scala.util.TestUtils
@@ -22,7 +19,8 @@ import org.junit.Assert.{assertEquals, assertFalse, assertTrue}
 import org.junit.experimental.categories.Category
 import org.junit.runner.RunWith
 
-import java.io.File
+import java.nio.charset.StandardCharsets
+import java.nio.file.Path
 
 @Category(Array(classOf[CompletionTests]))
 @RunWith(classOf[MultipleScalaVersionsRunner])
@@ -35,11 +33,12 @@ abstract class PostfixTemplateTest extends ScalaLightCodeInsightFixtureTestCase 
 
   import PostfixTemplateTest._
 
-  def testPath(): String = TestUtils.getTestDataPath + "/postfixTemplate/"
+  def testPath(): Path = Path.of(TestUtils.getTestDataPath, "postfixTemplate")
 
   protected final def parseTestData(): (String, String) = {
-    var fileText: String = FileUtil.loadFile(new File(testPath() + getTestName(true) + ".test"), CharsetToolkit.UTF8)
-    fileText = StringUtil.convertLineSeparators(fileText)
+    val fileName = getTestName(true) + ".test"
+    val filePath = testPath() / fileName
+    val fileText: String = filePath.readAllBytesToString(StandardCharsets.UTF_8).withNormalizedSeparator
     var separatorIndex = fileText.indexOf("----")
     assertTrue(separatorIndex > 0)
     val inputText = fileText.substring(0, separatorIndex).trim

@@ -2,11 +2,12 @@ package org.jetbrains.plugins.scala
 package lang
 package resolve2
 
+import org.jetbrains.plugins.scala.extensions.PathExt
+
+import java.nio.file.Path
 
 abstract class ImportTestBase extends ResolveTestBase {
-  override def folderPath: String = {
-    super.folderPath + "import/"
-  }
+  override def folderPath: Path = super.folderPath / "import"
 }
 
 class ImportTest extends ImportTestBase {

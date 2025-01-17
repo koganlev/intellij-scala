@@ -1,8 +1,5 @@
 package org.jetbrains.plugins.scala.lang.implicits
 
-import com.intellij.openapi.util.io.FileUtil
-import com.intellij.openapi.util.text.StringUtil
-import com.intellij.openapi.vfs.{CharsetToolkit, LocalFileSystem}
 import com.intellij.psi.PsiNamedElement
 import com.intellij.psi.util.PsiTreeUtil
 import org.jetbrains.plugins.scala.base.ScalaLightCodeInsightFixtureTestCase
@@ -12,21 +9,20 @@ import org.jetbrains.plugins.scala.lang.psi.api.expr.ScExpression
 import org.jetbrains.plugins.scala.util.TestUtils
 import org.jetbrains.plugins.scala.util.TestUtils.ExpectedResultFromLastComment
 
-import java.io.File
+import java.nio.charset.StandardCharsets
+import java.nio.file.Path
 
 abstract class ImplicitsTestBase extends ScalaLightCodeInsightFixtureTestCase {
   private val startExprMarker = "/*start*/"
   private val endExprMarker = "/*end*/"
 
-  def folderPath: String = getTestDataPath + "implicits/"
+  def folderPath: Path = Path.of(getTestDataPath, "implicits")
 
   protected def doTest(): Unit = {
     import _root_.org.junit.Assert._
 
-    val filePath = folderPath + getTestName(false) + ".scala"
-    val file = LocalFileSystem.getInstance.findFileByPath(filePath.replace(File.separatorChar, '/'))
-    assert(file != null, "file " + filePath + " not found")
-    val fileText = StringUtil.convertLineSeparators(FileUtil.loadFile(new File(file.getCanonicalPath), CharsetToolkit.UTF8))
+    val filePath = folderPath / s"${getTestName(false)}.scala"
+    val fileText = filePath.readAllBytesToString(StandardCharsets.UTF_8).withNormalizedSeparator
     configureFromFileText(getTestName(false) + ".scala", fileText)
     val scalaFile = getFile.asInstanceOf[ScalaFile]
     val offset = fileText.indexOf(startExprMarker)

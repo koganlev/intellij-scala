@@ -1,10 +1,12 @@
 package org.jetbrains.plugins.scala.lang.resolve2
+
+import org.jetbrains.plugins.scala.extensions.PathExt
 import org.jetbrains.plugins.scala.{LatestScalaVersions, ScalaVersion}
 
+import java.nio.file.Path
+
 class BugTest extends ResolveTestBase {
-  override def folderPath: String = {
-    super.folderPath + "bug/"
-  }
+  override def folderPath: Path = super.folderPath / "bug"
 
   override protected def supportedIn(version: ScalaVersion) =
     version >= LatestScalaVersions.Scala_2_12

@@ -2,33 +2,36 @@ package org.jetbrains.plugins.scala.lang.resolve;
 
 import com.intellij.psi.PsiReference;
 
+import java.nio.file.Path;
+
 public class DefaultPackageResolveTest extends ScalaResolveTestCase {
   @Override
-  public String folderPath() {
-    return super.folderPath() + "resolve/defaultPackage/";
+
+  public Path folderPath() {
+    return super.folderPath().resolve("resolve").resolve("defaultPackage");
   }
 
   @Override
-  public String sourceRootPath() {
+  public Path sourceRootPath() {
     return folderPath();
   }
 
-  public void testScalaToJava() throws Exception {
+  public void testScalaToJava() {
     PsiReference ref = findReferenceAtCaret();
     assertNull(ref.resolve());
   }
 
-  public void testScalaToScala() throws Exception {
+  public void testScalaToScala() {
     PsiReference ref = findReferenceAtCaret();
     assertNull(ref.resolve());
   }
 
-  public void testScalaToScript() throws Exception {
+  public void testScalaToScript() {
     PsiReference ref = findReferenceAtCaret();
     assertNull(ref.resolve());
   }
 
-  public void testDefaultScalaToJava() throws Exception {
+  public void testDefaultScalaToJava() {
     PsiReference ref = findReferenceAtCaret();
     assertNotNull(ref.resolve());
   }

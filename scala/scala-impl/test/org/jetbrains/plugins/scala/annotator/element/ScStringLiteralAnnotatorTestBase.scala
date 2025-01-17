@@ -13,7 +13,7 @@ import org.junit.Assert.assertEquals
 import org.junit.runner.RunWith
 import org.junit.runners.AllTests
 
-import java.io.File
+import java.nio.file.Path
 import scala.jdk.CollectionConverters.ListHasAsScala
 
 @RunWith(classOf[AllTests])
@@ -28,10 +28,10 @@ abstract class ScStringLiteralAnnotatorTestBase(testDataPath: String)
     profile.setSettings(newSettings)
   }
 
-  override protected def constructTestCase(testFile: File): Test =
+  override protected def constructTestCase(testFile: Path): Test =
     new MyTest(testFile)
 
-  private class MyTest(override val myTestFile: File)
+  private class MyTest(override val myTestFile: Path)
     extends ScalaLightCodeInsightFixtureTestCase
       with ScalaLightCodeInsightFixtureTest_ForFileTestTests
       with ScalaHighlightingTestLike {

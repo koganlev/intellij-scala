@@ -1,9 +1,12 @@
 package org.jetbrains.plugins.scala.lang.resolve2
 
+import org.jetbrains.plugins.scala.extensions.PathExt
+
+import java.nio.file.Path
+
 class PredefLiteralTest extends ResolveTestBase {
-  override def folderPath: String = {
-    super.folderPath + "predef/literal/"
-  }
+  override def folderPath: Path = super.folderPath / "predef" / "literal"
+
   //TODO answer?
 //  def testBoolean = doTest
   //TODO answer?

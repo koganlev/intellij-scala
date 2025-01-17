@@ -1,9 +1,11 @@
 package org.jetbrains.plugins.scala.lang.resolve2
 
+import org.jetbrains.plugins.scala.extensions.PathExt
+
+import java.nio.file.Path
+
 class ImportAccessTest extends ResolveTestBase {
-  override def folderPath: String = {
-    super.folderPath + "import/access/"
-  }
+  override def folderPath: Path = super.folderPath / "import" / "access"
 
   def testInheritedPrivate(): Unit = doTest()
   def testInheritedPrivateClash1(): Unit = doTest()

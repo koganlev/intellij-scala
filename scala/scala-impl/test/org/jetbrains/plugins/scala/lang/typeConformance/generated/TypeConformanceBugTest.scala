@@ -1,8 +1,12 @@
 package org.jetbrains.plugins.scala.lang.typeConformance
 package generated
 
+import org.jetbrains.plugins.scala.extensions.PathExt
+
+import java.nio.file.Path
+
 class TypeConformanceBugTest extends TypeConformanceTestBase {
-  override def folderPath: String = super.folderPath + "bug/"
+  override def folderPath: Path = super.folderPath / "bug"
 
   def testSCL2244(): Unit = {doTest()}
 

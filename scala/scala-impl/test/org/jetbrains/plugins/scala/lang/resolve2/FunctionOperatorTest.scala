@@ -1,9 +1,11 @@
 package org.jetbrains.plugins.scala.lang.resolve2
 
+import org.jetbrains.plugins.scala.extensions.PathExt
+
+import java.nio.file.Path
+
 class FunctionOperatorTest extends ResolveTestBase {
-  override def folderPath: String = {
-    super.folderPath + "function/operator/"
-  }
+  override def folderPath: Path = super.folderPath / "function" / "operator"
 
   def testDot(): Unit = doTest()
   def testDotAndParentheses(): Unit = doTest()

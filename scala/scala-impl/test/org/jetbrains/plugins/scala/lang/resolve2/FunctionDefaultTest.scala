@@ -1,9 +1,11 @@
 package org.jetbrains.plugins.scala.lang.resolve2
 
+import org.jetbrains.plugins.scala.extensions.PathExt
+
+import java.nio.file.Path
+
 class FunctionDefaultTest extends ResolveTestBase {
-  override def folderPath: String = {
-    super.folderPath + "function/default/"
-  }
+  override def folderPath: Path = super.folderPath / "function" / "default"
 
   def testFirstAsOne(): Unit = doTest()
   def testFirstAsTwo(): Unit = doTest()

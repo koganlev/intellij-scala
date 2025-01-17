@@ -7,16 +7,15 @@ import com.intellij.openapi.editor.markup.SeparatorPlacement
 import com.intellij.psi.PsiElement
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
 import com.intellij.testFramework.fixtures.impl.JavaCodeInsightTestFixtureImpl
+import org.jetbrains.plugins.scala.extensions.{PathExt, StringExt}
 import org.jetbrains.plugins.scala.util.{RevertableChange, TestUtils}
 import org.jetbrains.plugins.scala.{ScalaFileType, TypecheckerTests}
 import org.junit.ComparisonFailure
 import org.junit.experimental.categories.Category
 
-import java.io.File
+import java.nio.file.Path
 import java.util
-import scala.io.Source
 import scala.jdk.CollectionConverters._
-import scala.util.Using
 
 //NOTE: method separators are enabled in
 //`File | Settings | Editor | General | Appearance | Show method separators`
@@ -39,8 +38,7 @@ abstract class MethodSeparatorLineMarkerTestBase extends LightJavaCodeInsightFix
   }
 
   def doTest(): Unit = {
-    val testPath = s"$getBasePath${getTestName(false)}.test"
-    val input = Using.resource(Source.fromFile(new File(testPath)))(_.getLines().mkString("\n"))
+    val input = Path.of(getBasePath, s"${getTestName(false)}.test").readAllBytesToString().withNormalizedSeparator
 
     myFixture.configureByText(ScalaFileType.INSTANCE, input.replaceAll(SeparatorMarker, ""))
     myFixture.asInstanceOf[JavaCodeInsightTestFixtureImpl].doHighlighting()

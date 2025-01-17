@@ -61,11 +61,11 @@ abstract class ScalaTestingTestCase
   protected val useDynamicClassPath = false
 
   protected def createPsiLocation(location: CaretLocation): PsiLocation[PsiElement] =
-    createPsiLocation(location, myModule, srcPath.toFile)
+    createPsiLocation(location, myModule, srcPath)
 
   override protected def createTestFromCaretLocation(caretLocation: CaretLocation): RunnerAndConfigurationSettings =
     inReadAction {
-      val psiElement = findPsiElement(caretLocation, getProject, srcPath.toFile)
+      val psiElement = findPsiElement(caretLocation, getProject, srcPath)
 
       createTestFromPsiElement(psiElement)
     }

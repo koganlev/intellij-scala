@@ -1,13 +1,12 @@
 package org.jetbrains.plugins.scala.refactoring
 package changeSignature
 
-import com.intellij.openapi.util.io.FileUtilRt
-import com.intellij.openapi.vfs.CharsetToolkit
 import com.intellij.psi._
 import com.intellij.psi.impl.source.PostprocessReformattingAspect
 import com.intellij.refactoring.changeSignature._
 import org.jetbrains.plugins.scala.EditorTests
 import org.jetbrains.plugins.scala.base.ScalaLightCodeInsightFixtureTestCase
+import org.jetbrains.plugins.scala.extensions.{PathExt, StringExt}
 import org.jetbrains.plugins.scala.lang.formatting.settings.ScalaCodeStyleSettings
 import org.jetbrains.plugins.scala.lang.psi.api.base.ScMethodLike
 import org.jetbrains.plugins.scala.lang.psi.api.statements.ScFunction
@@ -23,7 +22,8 @@ import org.junit.Assert._
 import org.junit.experimental.categories.Category
 import org.junit.runner.RunWith
 
-import java.io.File
+import java.nio.charset.StandardCharsets
+import java.nio.file.Path
 
 @RunWith(classOf[MultipleScalaVersionsRunner])
 @RunWithScalaVersions(Array(
@@ -38,9 +38,9 @@ abstract class ChangeSignatureTestBase extends ScalaLightCodeInsightFixtureTestC
 
   implicit def projectContext: ProjectContext = getProject
 
-  override def getTestDataPath: String = folderPath
+  override def getTestDataPath: String = folderPath.toString
 
-  def folderPath: String = refactoringCommonTestDataRoot
+  def folderPath: Path = refactoringCommonTestDataRoot
 
   def mainFileName(testName: String): String
   def mainFileAfterName(testName: String): String
@@ -95,8 +95,8 @@ abstract class ChangeSignatureTestBase extends ScalaLightCodeInsightFixtureTestC
     PsiFileTestUtil.addFileToProject(fileName, text, getProject)
 
   protected def getTextFromTestData(fileName: String) = {
-    val file = new File(getTestDataPath + fileName)
-    FileUtilRt.loadFile(file, CharsetToolkit.UTF8, true)
+    val file = folderPath / fileName
+    file.readAllBytesToString(StandardCharsets.UTF_8).withNormalizedSeparator
   }
 
   protected def getPsiTypeFromText(typeText: String, context: PsiElement): PsiType = {

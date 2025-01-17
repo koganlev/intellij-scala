@@ -3,12 +3,12 @@ package org.jetbrains.plugins.scala.lang.completion.keyword
 import com.intellij.codeInsight.completion.{CodeCompletionHandlerBase, CompletionType}
 import com.intellij.codeInsight.lookup.impl.LookupImpl
 import com.intellij.codeInsight.lookup.{LookupElementBuilder, LookupManager}
-import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.text.StringUtil
-import com.intellij.openapi.vfs.{CharsetToolkit, LocalFileSystem}
+import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.testFramework.EditorTestUtil
 import com.intellij.testFramework.TestIndexingModeSupporter.IndexingMode
 import org.jetbrains.plugins.scala.base.ScalaLightCodeInsightFixtureTestCase
+import org.jetbrains.plugins.scala.extensions.{ObjectExt, PathExt}
 import org.jetbrains.plugins.scala.lang.completion.lookups.ScalaKeywordLookupItem.KeywordInsertHandler
 import org.jetbrains.plugins.scala.lang.psi.api.ScalaFile
 import org.jetbrains.plugins.scala.util.TestUtils
@@ -18,7 +18,8 @@ import org.jetbrains.plugins.scala.{CompletionTests, ScalaVersion}
 import org.junit.Assert._
 import org.junit.experimental.categories.Category
 
-import java.io.File
+import java.nio.charset.StandardCharsets
+import java.nio.file.Path
 import scala.jdk.CollectionConverters._
 
 /**
@@ -32,18 +33,15 @@ abstract class KeywordCompletionTestBase extends ScalaLightCodeInsightFixtureTes
 
   override protected def supportedIn(version: ScalaVersion): Boolean = version >= ScalaVersion.Latest.Scala_2_13
 
-  def folderPath: String = getTestDataPath + "keywordCompletion/"
+  def folderPath: Path = Path.of(getTestDataPath, "keywordCompletion")
 
   protected def doTest(): Unit = {
     val lowercaseFirstLetterOfTestFile = true
     val testFileName = getTestName(lowercaseFirstLetterOfTestFile) + ".scala"
-
-    val filePath = folderPath + testFileName
-    val testFile = LocalFileSystem.getInstance.findFileByPath(filePath.replace(File.separatorChar, '/'))
-    assertNotNull(s"file $filePath not found", testFile)
+    val testFilePath = folderPath / testFileName
 
     try {
-      val fileText = StringUtil.convertLineSeparators(FileUtil.loadFile(new File(testFile.getCanonicalPath), CharsetToolkit.UTF8))
+      val fileText = StringUtil.convertLineSeparators(testFilePath.readAllBytesToString(StandardCharsets.UTF_8))
       configureFromFileText(testFileName, fileText)
 
       val scalaFile = getFile.asInstanceOf[ScalaFile]
@@ -59,7 +57,7 @@ abstract class KeywordCompletionTestBase extends ScalaLightCodeInsightFixtureTes
       val items = LookupManager.getActiveLookup(editor) match {
         case impl: LookupImpl =>
           impl.getItems.asScala.filter {
-            case item: LookupElementBuilder => item.getInsertHandler.isInstanceOf[KeywordInsertHandler]
+            case item: LookupElementBuilder => item.getInsertHandler.is[KeywordInsertHandler]
             case _ => false
           }.map {
             _.getLookupString
@@ -74,6 +72,7 @@ abstract class KeywordCompletionTestBase extends ScalaLightCodeInsightFixtureTes
       assertEquals(expected.trim, actual.trim)
     } catch {
       case ex: Throwable =>
+        val testFile = LocalFileSystem.getInstance.findFileByNioFile(testFilePath)
         System.err.println(s"Test file: $testFile")
         throw ex
     }

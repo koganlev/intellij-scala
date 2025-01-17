@@ -1,8 +1,12 @@
 package org.jetbrains.plugins.scala
 package refactoring.extractMethod
 
+import org.jetbrains.plugins.scala.extensions.PathExt
+
+import java.nio.file.Path
+
 class ScalaExtractMethodOutputTest extends ScalaExtractMethodTestBase {
-  override def folderPath: String = super.folderPath + "output/"
+  override def folderPath: Path = super.folderPath / "output"
 
   def testNoReturnNoOutput(): Unit = doTest()
 

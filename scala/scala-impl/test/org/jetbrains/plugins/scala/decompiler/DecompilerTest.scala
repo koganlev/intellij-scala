@@ -4,7 +4,6 @@ import junit.framework.TestCase
 import org.jetbrains.plugins.scala.util.TestUtils
 import org.junit.Assert
 
-import java.io.File
 import java.nio.charset.StandardCharsets
 import java.nio.file.{Files, Path}
 
@@ -31,9 +30,9 @@ trait DecompilerTestBase extends TestCase {
   }
 
   protected final def decompile(classFilePath: String): String = {
-    val file = new File(classFilePath)
-    val bytes = Files.readAllBytes(file.toPath)
-    val Some((_, sourceText)) = Decompiler.sourceNameAndText(file.getName, bytes)
+    val file = Path.of(classFilePath)
+    val bytes = Files.readAllBytes(file)
+    val Some((_, sourceText)) = Decompiler.sourceNameAndText(file.getFileName.toString, bytes)
     sourceText
   }
 }

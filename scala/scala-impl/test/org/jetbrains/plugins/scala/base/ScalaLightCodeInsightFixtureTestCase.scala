@@ -49,7 +49,7 @@ abstract class ScalaLightCodeInsightFixtureTestCase
 
   override def getTestDataPath: String = TestUtils.getTestDataPath + "/"
 
-  protected def sourceRootPath: String = null
+  protected def sourceRootPath: Path = null
 
   //start section: indexing mode setup
   private[this] var indexingMode: IndexingMode = IndexingMode.SMART
@@ -103,7 +103,7 @@ abstract class ScalaLightCodeInsightFixtureTestCase
    */
   private def afterSetUpProject(project: Project, module: Module): Unit = {
     if (sourceRootPath ne null) {
-      SourceRootTestUtil.addSourceRoot(module, Path.of(sourceRootPath))
+      SourceRootTestUtil.addSourceRoot(module, sourceRootPath)
     }
     setUpLibraries(module)
   }

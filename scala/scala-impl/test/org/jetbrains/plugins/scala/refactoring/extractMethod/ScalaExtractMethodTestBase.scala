@@ -1,15 +1,12 @@
 package org.jetbrains.plugins.scala.refactoring.extractMethod
 
-import com.intellij.openapi.actionSystem.DataKey
 import com.intellij.openapi.actionSystem.impl.SimpleDataContext
 import com.intellij.openapi.application.impl.NonBlockingReadActionImpl
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.io.FileUtil
-import com.intellij.openapi.vfs.{CharsetToolkit, LocalFileSystem}
 import com.intellij.psi.{PsiElement, PsiFile}
 import com.intellij.testFramework.UsefulTestCase
 import org.jetbrains.plugins.scala.base.ScalaLightCodeInsightFixtureTestCase
-import org.jetbrains.plugins.scala.extensions.StringExt
+import org.jetbrains.plugins.scala.extensions.{PathExt, StringExt}
 import org.jetbrains.plugins.scala.lang.formatting.settings.ScalaCodeStyleSettings
 import org.jetbrains.plugins.scala.lang.psi.api.ScalaFile
 import org.jetbrains.plugins.scala.lang.refactoring.extractMethod.ScalaExtractMethodHandler
@@ -17,7 +14,8 @@ import org.jetbrains.plugins.scala.refactoring.refactoringCommonTestDataRoot
 import org.jetbrains.plugins.scala.util.{TestUtils, TypeAnnotationSettings}
 import org.junit.Assert._
 
-import java.io.File
+import java.nio.charset.StandardCharsets
+import java.nio.file.Path
 
 abstract class ScalaExtractMethodTestBase extends ScalaLightCodeInsightFixtureTestCase {
 
@@ -25,7 +23,7 @@ abstract class ScalaExtractMethodTestBase extends ScalaLightCodeInsightFixtureTe
   private val endMarker = "/*end*/"
   private val scopeMarker = "/*inThisScope*/"
 
-  def folderPath: String = refactoringCommonTestDataRoot + "extractMethod/"
+  def folderPath: Path = refactoringCommonTestDataRoot / "extractMethod"
 
   protected def doTest(
     settings: ScalaCodeStyleSettings = TypeAnnotationSettings.alwaysAddType(ScalaCodeStyleSettings.getInstance(getProject))
@@ -35,16 +33,17 @@ abstract class ScalaExtractMethodTestBase extends ScalaLightCodeInsightFixtureTe
     val (fileName, filePath) = {
       //support ordinary scala files and scala worksheets
       val name1 = s"$testName.scala"
-      val path1 = s"$folderPath$name1".replace(File.separatorChar, '/')
+      val path1 = folderPath / name1
+      val file1Exists = path1.exists
 
       val name2 = s"$testName.sc"
-      val path2 = s"$folderPath$name2".replace(File.separatorChar, '/')
+      val path2 = folderPath / name2
+      val file2Exists = path2.exists
 
-      val vFile1 = LocalFileSystem.getInstance.findFileByPath(path1)
-      val vFile2 = LocalFileSystem.getInstance.findFileByPath(path2)
-      assertTrue(s"file for $testName not found in $folderPath", vFile1 != null || vFile2 != null)
 
-      if (vFile1 != null) (name1, path1)
+      assertTrue(s"file for $testName not found in $folderPath", file1Exists || file2Exists)
+
+      if (file1Exists) (name1, path1)
       else (name2, path2)
     }
 
@@ -89,11 +88,9 @@ abstract class ScalaExtractMethodTestBase extends ScalaLightCodeInsightFixtureTe
     file.getText.substring(0, lastPsi.getTextOffset).trim
   }
 
-  private def extractFileContentText(filePath: String): (String, Int, Int, Int) = {
-    val vFile = LocalFileSystem.getInstance.findFileByPath(filePath)
-    assert(vFile != null, s"file $filePath not found")
-
-    var fileText = FileUtil.loadFile(new File(vFile.getCanonicalPath), CharsetToolkit.UTF8).withNormalizedSeparator
+  private def extractFileContentText(filePath: Path): (String, Int, Int, Int) = {
+    assert(filePath.exists, s"file $filePath not found")
+    var fileText = filePath.readAllBytesToString(StandardCharsets.UTF_8).withNormalizedSeparator
 
     val scopeOffset = fileText.indexOf(scopeMarker)
 

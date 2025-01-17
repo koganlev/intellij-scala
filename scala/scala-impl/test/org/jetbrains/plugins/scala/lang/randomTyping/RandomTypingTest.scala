@@ -1,6 +1,5 @@
 package org.jetbrains.plugins.scala.lang.randomTyping
 
-import com.intellij.openapi.util.text.StringUtil
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.testFramework.TestLoggerKt
 import com.intellij.util.lang.CompoundRuntimeException
@@ -12,7 +11,7 @@ import org.jetbrains.plugins.scala.util.TestUtils
 import org.jetbrains.plugins.scala.{RandomTypingTests, ScalaVersion}
 import org.junit.experimental.categories.Category
 
-import java.nio.file.{Files, Path}
+import java.nio.file.Path
 import scala.collection.immutable.ArraySeq
 import scala.collection.mutable
 import scala.jdk.CollectionConverters.ListHasAsScala
@@ -71,7 +70,7 @@ abstract class RandomTypingTestBase(testFilePath: String) extends EditorActionTe
       // yeah this class does a lot of string indexing and slicing,
       // which doesn't work at all well with code points that do not fit into one char
       // So let's ignore those
-      .filterNot(file => hasCodePointsSpanningMultipleChars(Files.readString(file)))
+      .filterNot(file => hasCodePointsSpanningMultipleChars(file.readAllBytesToString()))
       .filterNot(file => ignoredFiles.contains(file.getFileName.toString))
       .to(ArraySeq)
     println(s"Test ${allFiles.size} in $testFilePath:")
@@ -86,7 +85,7 @@ abstract class RandomTypingTestBase(testFilePath: String) extends EditorActionTe
   def typeRandomly(file: Path, seed: Int): Unit = {
     println(s"Testing(seed = $seed) ${file.toAbsolutePath}")
     val targetText = {
-      val text = StringUtil.convertLineSeparators(Files.readString(file))
+      val text = file.readAllBytesToString().withNormalizedSeparator
       separatorRegex.findFirstMatchIn(text)
         .fold(text)(m => text.substring(0, m.start))
     }

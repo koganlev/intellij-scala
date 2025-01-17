@@ -4,11 +4,10 @@ import com.intellij.openapi.module.Module
 import com.intellij.openapi.roots.libraries.{Library, LibraryTablesRegistrar}
 import com.intellij.openapi.vfs.{JarFileSystem, VirtualFile}
 import com.intellij.testFramework.PsiTestUtil
-import org.jetbrains.plugins.scala.DependencyManagerBase.Resolver
-import org.jetbrains.plugins.scala.extensions.ObjectExt
+import org.jetbrains.plugins.scala.extensions.{ObjectExt, PathExt}
 import org.jetbrains.plugins.scala.{DependencyManager, DependencyManagerBase, ScalaVersion}
 
-import java.io.File
+import java.nio.file.Path
 import java.{util => ju}
 
 /**
@@ -37,11 +36,11 @@ final case class ScalaLibraryLoader(
     implicit val scalaVersionImplicit: ScalaVersion = scalaVersion
 
     val scalaLibraryClasses: ju.List[VirtualFile] = {
-      val files: Seq[File] = dependencyManager.resolve(scalaLibraryDescription).map(_.file.toFile) // TODO: SCL-23312
+      val files: Seq[Path] = dependencyManager.resolve(scalaLibraryDescription).map(_.file)
       files.map(findJarFile).asJava
     }
     val scalaLibrarySources: ju.List[VirtualFile] = {
-      val files = dependencyManager.resolve(scalaLibraryDescription % Types.SRC).map(_.file.toFile) // TODO: SCL-23312
+      val files = dependencyManager.resolve(scalaLibraryDescription % Types.SRC).map(_.file)
       files.map(findJarFile).asJava
     }
 
@@ -63,9 +62,9 @@ final case class ScalaLibraryLoader(
 
 object ScalaLibraryLoader {
 
-  private def findJarFile(file: File) =
+  private def findJarFile(file: Path) =
     JarFileSystem.getInstance().refreshAndFindFileByPath {
-      file.getCanonicalPath + "!/"
+      file.toCanonicalPath.toString + "!/"
     }
 
   /**

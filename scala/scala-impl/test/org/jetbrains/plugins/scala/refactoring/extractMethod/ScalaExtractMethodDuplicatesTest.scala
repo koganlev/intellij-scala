@@ -1,8 +1,12 @@
 package org.jetbrains.plugins.scala
 package refactoring.extractMethod
 
+import org.jetbrains.plugins.scala.extensions.PathExt
+
+import java.nio.file.Path
+
 class ScalaExtractMethodDuplicatesTest extends ScalaExtractMethodTestBase {
-  override def folderPath: String = super.folderPath + "duplicates/"
+  override def folderPath: Path = super.folderPath / "duplicates"
 
   def testSimpleDuplicate(): Unit = doTest()
   def testSeveralDuplicates(): Unit = doTest()

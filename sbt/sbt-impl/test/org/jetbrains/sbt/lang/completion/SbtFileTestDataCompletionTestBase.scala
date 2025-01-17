@@ -1,10 +1,12 @@
 package org.jetbrains.sbt.lang.completion
 
 import com.intellij.testFramework.{EditorTestUtil, UsefulTestCase}
+import org.jetbrains.plugins.scala.extensions.PathExt
 import org.jetbrains.plugins.scala.lang.completion.FileTestDataCompletionTestBase
 import org.jetbrains.plugins.scala.util.RevertableChange
 import org.jetbrains.sbt.MockSbtBase
 
+import java.nio.file.Path
 import scala.jdk.CollectionConverters._
 
 abstract class SbtFileTestDataCompletionTestBase extends FileTestDataCompletionTestBase {
@@ -13,7 +15,7 @@ abstract class SbtFileTestDataCompletionTestBase extends FileTestDataCompletionT
   override protected lazy val caretMarker = EditorTestUtil.CARET_TAG
   override protected lazy val extension = "sbt"
 
-  override def folderPath: String = super.folderPath + "Sbt/"
+  override def folderPath: Path = super.folderPath / "Sbt"
 
   override def doTest(): Unit = {
     // child tests contain too many completion items (more then default 500) which leads to nondeterministic test result

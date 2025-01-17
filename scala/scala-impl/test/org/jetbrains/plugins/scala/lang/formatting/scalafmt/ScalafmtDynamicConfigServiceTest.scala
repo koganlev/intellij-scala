@@ -4,23 +4,23 @@ import com.intellij.openapi.editor.Document
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.psi.{PsiDocumentManager, PsiManager}
-import org.jetbrains.plugins.scala.extensions.inWriteCommandAction
+import org.jetbrains.plugins.scala.extensions.{PathExt, inWriteCommandAction}
 import org.jetbrains.plugins.scala.lang.formatter.scalafmt.ScalaFmtTestBase
 import org.jetbrains.plugins.scala.util.TestUtils
 import org.junit.Assert.{assertEquals, assertNotNull, assertTrue}
 import org.scalafmt.dynamic.ScalafmtReflectConfig
 
-import java.io.File
+import java.nio.file.{Files, Path}
 
 class ScalafmtDynamicConfigServiceTest extends ScalaFmtTestBase {
 
-  private val originalScalafmtConfigurationsDir: File =
-    new File(TestUtils.getTestDataPath + "/formatter/scalafmt/config_service_test_data/")
+  private val originalScalafmtConfigurationsDir: Path =
+    Path.of(TestUtils.getTestDataPath, "formatter", "scalafmt", "config_service_test_data")
 
-  private var tempConfigurationsDir: File = _
+  private var tempConfigurationsDir: Path = _
 
-  override protected def scalafmtConfigsBasePath: String =
-    tempConfigurationsDir.toString
+  override protected def scalafmtConfigsBasePath: Path =
+    tempConfigurationsDir
 
   override def setUp(): Unit = {
     super.setUp()
@@ -28,17 +28,14 @@ class ScalafmtDynamicConfigServiceTest extends ScalaFmtTestBase {
     // Copy configuration files to a temporary directory.
     // This is necessary because the current test will make modifications in the configuration file,
     // and we don't want the test data to be modified in VCS
-    tempConfigurationsDir = FileUtil.createTempDirectory("scalafmtConfigTests", "", true)
-    originalScalafmtConfigurationsDir.listFiles().foreach { file =>
-      FileUtil.copyFileOrDir(
-        file,
-        new File(tempConfigurationsDir, file.getName)
-      )
+    tempConfigurationsDir = FileUtil.createTempDirectory("scalafmtConfigTests", "", true).toPath
+    originalScalafmtConfigurationsDir.children().foreach { file =>
+      Files.copy(file, tempConfigurationsDir / file.getFileName)
     }
   }
 
   private def findConfigurationDocument(configFileName: String): Document = {
-    val vFile = VirtualFileManager.getInstance().findFileByNioPath(new File(tempConfigurationsDir, configFileName).toPath)
+    val vFile = VirtualFileManager.getInstance().findFileByNioPath(tempConfigurationsDir / configFileName)
     assertNotNull("Can't resolve scalafmt config common configuration file", vFile)
     val psiFile = PsiManager.getInstance(getProject).findFile(vFile)
     PsiDocumentManager.getInstance(getProject).getDocument(psiFile)

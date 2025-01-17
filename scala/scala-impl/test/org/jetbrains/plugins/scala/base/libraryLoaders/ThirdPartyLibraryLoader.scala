@@ -5,9 +5,10 @@ package libraryLoaders
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.vfs.newvfs.impl.VfsRootAccess
 import com.intellij.testFramework.PsiTestUtil
+import org.jetbrains.plugins.scala.extensions.PathExt
 import org.jetbrains.plugins.scala.project.ModuleExt
 
-import java.io.File
+import java.nio.file.Path
 
 trait ThirdPartyLibraryLoader extends LibraryLoader {
   protected val name: String
@@ -20,10 +21,10 @@ trait ThirdPartyLibraryLoader extends LibraryLoader {
     if (alreadyExistsInModule) return
 
     val path = this.path
-    val file = new File(path).getCanonicalFile
-    assert(file.exists(), s"library root for $name does not exist at $file")
+    val file = Path.of(path).toCanonicalPath
+    assert(file.exists, s"library root for $name does not exist at $file")
     VfsRootAccess.allowRootAccess(module, path)
-    PsiTestUtil.addLibrary(module, name, file.getParent, file.getName)
+    PsiTestUtil.addLibrary(module, name, file.getParent.toString, file.getFileName.toString)
   }
 
   protected def path(implicit version: ScalaVersion): String

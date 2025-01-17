@@ -10,15 +10,16 @@ import com.intellij.refactoring.move.moveClassesOrPackages.MoveDirectoryWithClas
 import com.intellij.refactoring.rename.RenamePsiPackageProcessor
 import com.intellij.testFramework.{PlatformTestUtil, PsiTestUtil}
 import junit.framework.TestCase.{assertNotNull, assertTrue}
-import org.jetbrains.plugins.scala.extensions.inWriteCommandAction
+import org.jetbrains.plugins.scala.extensions.{PathExt, inWriteCommandAction}
 import org.jetbrains.plugins.scala.refactoring.move.ScalaMoveTestBase
 import org.jetbrains.plugins.scala.refactoring.move.directory.ScalaMoveDirectoryWithClassesTestBase.{MovePackageTestAction, PackageTestAction, RenamePackageTestAction}
 
+import java.nio.file.Path
 import scala.util.chaining.scalaUtilChainingOps
 
 // Based on [[com.intellij.java.refactoring.MovePackageAsDirectoryTest]]
 abstract class ScalaMoveDirectoryWithClassesTestBase extends ScalaMoveTestBase {
-  override protected def getTestDataRoot: String = super.getTestDataRoot + "directory/"
+  override protected def getTestDataRoot: Path = super.getTestDataRoot / "directory"
 
   override protected def configureModuleSources(module: Module, rootDir: VirtualFile): Unit = {
     val isMultipleSourceRoots = rootDir.getChildren

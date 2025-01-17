@@ -1,17 +1,20 @@
 package org.jetbrains.plugins.scala.lang.resolve.string_interpolators
 
 import com.intellij.psi.PsiReference
+import org.jetbrains.plugins.scala.extensions.PathExt
 import org.jetbrains.plugins.scala.lang.psi.api.statements.ScFunctionDefinition
 import org.jetbrains.plugins.scala.lang.psi.impl.expr.ScInterpolatedExpressionPrefix
 import org.jetbrains.plugins.scala.lang.resolve.ScalaResolveTestCase
 import org.jetbrains.plugins.scala.util.assertions.MatcherAssertions.assertIsA
 import org.junit.Assert._
 
+import java.nio.file.Path
+
 class StringInterpolatorsResolveTest extends ScalaResolveTestCase {
 
-  override def folderPath: String = s"${super.folderPath}resolve/string_interpolators"
+  override def folderPath: Path = super.folderPath / "resolve" / "string_interpolators"
 
-  override def sourceRootPath: String = folderPath
+  override def sourceRootPath: Path = folderPath
 
   def testRawInterpolator(): Unit =
     doTestDefaultInterpolator("raw")

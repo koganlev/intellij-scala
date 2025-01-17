@@ -1,7 +1,11 @@
 package org.jetbrains.plugins.scala.refactoring.extractMethod
 
+import org.jetbrains.plugins.scala.extensions.PathExt
+
+import java.nio.file.Path
+
 class ScalaExtractMethodScopeTest extends ScalaExtractMethodTestBase {
-  override def folderPath: String = super.folderPath + "scope/"
+  override def folderPath: Path = super.folderPath / "scope"
 
   def testNewClassScope(): Unit = doTest()
   def testNewClassScope2(): Unit = doTest()

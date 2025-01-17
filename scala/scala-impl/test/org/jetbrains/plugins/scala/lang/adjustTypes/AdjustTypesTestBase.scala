@@ -1,34 +1,31 @@
 package org.jetbrains.plugins.scala.lang.adjustTypes
 
-import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.text.StringUtil
-import com.intellij.openapi.vfs.{CharsetToolkit, LocalFileSystem}
 import com.intellij.psi.PsiElement
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.testFramework.UsefulTestCase
 import org.jetbrains.plugins.scala.base.ScalaLightCodeInsightFixtureTestCase
+import org.jetbrains.plugins.scala.extensions.PathExt
 import org.jetbrains.plugins.scala.lang.psi.ScalaPsiUtil
 import org.jetbrains.plugins.scala.lang.psi.api.ScalaFile
 import org.jetbrains.plugins.scala.util.TestUtils.ExpectedResultFromLastComment
 import org.jetbrains.plugins.scala.util.{TestUtils, WriteCommandActionEx}
 
-import java.io.File
+import java.nio.charset.StandardCharsets
+import java.nio.file.Path
 
 abstract class AdjustTypesTestBase extends ScalaLightCodeInsightFixtureTestCase {
   private val startMarker = "/*start*/"
   private val endMarker = "/*end*/"
 
-  protected def folderPath = getTestDataPath + "adjustTypes/"
+  protected def folderPath: Path = Path.of(getTestDataPath, "adjustTypes")
 
-  protected override def sourceRootPath: String = folderPath
+  protected override def sourceRootPath: Path = folderPath
 
   protected def doTest(): Unit = {
     import _root_.org.junit.Assert._
-    val filePath = folderPath + getTestName(false) + ".scala"
-    val file = LocalFileSystem.getInstance.refreshAndFindFileByPath(filePath.replace(File.separatorChar, '/'))
-    assert(file != null, "file " + filePath + " not found")
-
-    var fileText = StringUtil.convertLineSeparators(FileUtil.loadFile(new File(file.getCanonicalPath), CharsetToolkit.UTF8))
+    val filePath = folderPath / s"${getTestName(false)}.scala"
+    var fileText = StringUtil.convertLineSeparators(filePath.readAllBytesToString(StandardCharsets.UTF_8))
 
     val startOffset = fileText.indexOf(startMarker)
     assert(startOffset != -1, "Not specified start marker in test case. Use /*start*/ in scala file for this.")

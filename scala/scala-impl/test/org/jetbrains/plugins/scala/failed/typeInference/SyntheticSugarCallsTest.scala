@@ -1,11 +1,13 @@
 package org.jetbrains.plugins.scala.failed.typeInference
 
-import org.jetbrains.plugins.scala.ScalaVersion
+import org.jetbrains.plugins.scala.extensions.PathExt
 import org.jetbrains.plugins.scala.lang.typeInference.TypeInferenceTestBase
+
+import java.nio.file.Path
 
 class SyntheticSugarCallsTest extends TypeInferenceTestBase {
 
-  override def folderPath: String = super.folderPath + "bugs5/"
+  override def folderPath: Path = super.folderPath / "bugs5"
 
   override protected def shouldPass: Boolean = false
 

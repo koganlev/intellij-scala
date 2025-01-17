@@ -1,10 +1,13 @@
 package org.jetbrains.plugins.scala.lang.resolve
 
+import org.jetbrains.plugins.scala.extensions.PathExt
 import org.jetbrains.plugins.scala.lang.psi.api.base.ScReference
 import org.junit.Assert._
 
+import java.nio.file.Path
+
 class ResolveCallScalaTest extends ScalaResolveTestCase {
-  override def folderPath: String = super.folderPath + "resolve/call"
+  override def folderPath: Path = super.folderPath / "resolve" / "call"
 
   def doTest(): Unit = {
     findReferenceAtCaret() match {

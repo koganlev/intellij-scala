@@ -1,11 +1,13 @@
 package org.jetbrains.plugins.scala.lang.resolve2
 
-class ImportPathTest extends ResolveTestBase {
-  override def folderPath: String = {
-    super.folderPath + "import/path/"
-  }
+import org.jetbrains.plugins.scala.extensions.PathExt
 
-  protected override def sourceRootPath: String = folderPath
+import java.nio.file.Path
+
+class ImportPathTest extends ResolveTestBase {
+  override def folderPath: Path = super.folderPath / "import" / "path"
+
+  protected override def sourceRootPath: Path = folderPath
 
   def testDir(): Unit = doTest()
   //TODO ok

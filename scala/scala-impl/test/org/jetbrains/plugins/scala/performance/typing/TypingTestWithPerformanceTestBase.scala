@@ -1,7 +1,5 @@
 package org.jetbrains.plugins.scala.performance.typing
 
-import com.intellij.openapi.util.io.FileUtil
-import com.intellij.openapi.vfs.CharsetToolkit
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.util.ThrowableRunnable
@@ -9,15 +7,15 @@ import org.jetbrains.plugins.scala.base.ScalaFixtureTestCase
 import org.jetbrains.plugins.scala.extensions._
 import org.jetbrains.plugins.scala.util.TestUtils
 
-import java.io.File
+import java.nio.charset.StandardCharsets
+import java.nio.file.Path
 
 abstract class TypingTestWithPerformanceTestBase extends ScalaFixtureTestCase {
 
   def doFileTest(stringsToType: String*): Unit = {
     val fileName = getTestName(true) + ".scala"
-    val filePath = folderPath + fileName
-    val ioFile = new File(filePath)
-    val fileText = FileUtil.loadFile(ioFile, CharsetToolkit.UTF8)
+    val nioFile = Path.of(folderPath, fileName)
+    val fileText = nioFile.readAllBytesToString(StandardCharsets.UTF_8)
     val (input, expectedOpt) = separateText(fileText)
     doTest(stringsToType)(input, expectedOpt.orNull)
   }

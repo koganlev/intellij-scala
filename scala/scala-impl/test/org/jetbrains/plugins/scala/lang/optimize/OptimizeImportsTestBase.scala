@@ -3,13 +3,11 @@ package org.jetbrains.plugins.scala.lang.optimize
 import com.intellij.lang.ImportOptimizer
 import com.intellij.openapi.command.UndoConfirmationPolicy
 import com.intellij.openapi.util.Ref
-import com.intellij.openapi.util.io.FileUtil
-import com.intellij.openapi.vfs.{CharsetToolkit, LocalFileSystem}
 import com.intellij.psi.{PsiComment, PsiFile}
 import org.jetbrains.annotations.Nullable
 import org.jetbrains.plugins.scala.base.ScalaLightCodeInsightFixtureTestCase
 import org.jetbrains.plugins.scala.editor.importOptimizer.{OptimizeImportSettings, ScalaImportOptimizer}
-import org.jetbrains.plugins.scala.extensions.{&, ElementText, ElementType, StringExt, executeWriteActionCommand}
+import org.jetbrains.plugins.scala.extensions.{&, ElementText, ElementType, PathExt, StringExt, executeWriteActionCommand}
 import org.jetbrains.plugins.scala.lang.formatting.settings.ScalaCodeStyleSettings
 import org.jetbrains.plugins.scala.lang.lexer.ScalaTokenTypes
 import org.jetbrains.plugins.scala.lang.optimize.OptimizeImportsTestBase.OptimizeImportNotificationMessage
@@ -17,13 +15,14 @@ import org.jetbrains.plugins.scala.lang.psi.api.ScalaFile
 import org.jetbrains.plugins.scala.util.TestUtils
 import org.junit.Assert.{assertEquals, fail}
 
-import java.io.File
+import java.nio.charset.StandardCharsets
+import java.nio.file.Path
 
 abstract class OptimizeImportsTestBase extends ScalaLightCodeInsightFixtureTestCase {
 
-  final protected def baseRootPath: String = TestUtils.getTestDataPath + "/"
+  final protected def baseRootPath: Path = Path.of(TestUtils.getTestDataPath)
 
-  def folderPath: String = baseRootPath + "optimize/"
+  def folderPath: Path = baseRootPath / "optimize"
 
   protected def settings(file: PsiFile) = OptimizeImportSettings(file)
 
@@ -73,10 +72,8 @@ abstract class OptimizeImportsTestBase extends ScalaLightCodeInsightFixtureTestC
 
   private def extractTestData: (String, String, Option[String]) = {
     val fileText: String = {
-      val filePath = folderPath + getTestName(false) + ".scala"
-      val file = LocalFileSystem.getInstance.refreshAndFindFileByPath(filePath.replace(File.separatorChar, '/'))
-      assert(file != null, "file " + filePath + " not found")
-      FileUtil.loadFile(new File(file.getCanonicalPath), CharsetToolkit.UTF8).withNormalizedSeparator
+      val filePath = folderPath / s"${getTestName(false)}.scala"
+      filePath.readAllBytesToString(StandardCharsets.UTF_8).withNormalizedSeparator
     }
     extractTestData(fileText)
   }

@@ -1,32 +1,30 @@
 package org.jetbrains.plugins.scala.refactoring.move
 
 import com.intellij.openapi.module.Module
-import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ModuleRootModificationUtil
 import com.intellij.openapi.vfs.{LocalFileSystem, VfsUtil, VirtualFile}
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.testFramework.PsiTestUtil
 import org.jetbrains.plugins.scala.EditorTests
-import org.jetbrains.plugins.scala.base.{ScalaLightCodeInsightFixtureTestCase, SharedTestProjectToken}
-import org.jetbrains.plugins.scala.extensions.inWriteAction
+import org.jetbrains.plugins.scala.base.ScalaLightCodeInsightFixtureTestCase
+import org.jetbrains.plugins.scala.extensions.{PathExt, inWriteAction}
 import org.jetbrains.plugins.scala.util.TestUtils
 import org.junit.experimental.categories.Category
 
-import java.io.File
 import java.nio.file.Path
 import java.util
 
 @Category(Array(classOf[EditorTests]))
 abstract class ScalaMoveTestBase extends ScalaLightCodeInsightFixtureTestCase {
-  protected def getTestDataRoot: String = TestUtils.getTestDataPath + "/refactoring/move/"
+  protected def getTestDataRoot: Path = Path.of(TestUtils.getTestDataPath, "refactoring", "move")
 
   protected def configureModuleSources(module: Module, rootDir: VirtualFile): Unit =
     PsiTestUtil.addSourceContentToRoots(module, rootDir)
 
-  private def root: String = getTestDataRoot + getTestName(true)
+  private def root: Path = getTestDataRoot / getTestName(true)
 
-  private def findAndRefreshVFile(path: String) = {
-    val vFile = LocalFileSystem.getInstance.findFileByPath(path.replace(File.separatorChar, '/'))
+  private def findAndRefreshVFile(path: Path) = {
+    val vFile = LocalFileSystem.getInstance.findFileByNioFile(path)
     VfsUtil.markDirtyAndRefresh(/*async = */ false, /*recursive =*/ true, /*reloadChildren =*/ true, vFile)
     vFile
   }
@@ -40,8 +38,8 @@ abstract class ScalaMoveTestBase extends ScalaLightCodeInsightFixtureTestCase {
 
   override protected def setUp(): Unit = {
     super.setUp()
-    val rootBefore = root + "/before"
-    val rootAfter = root + "/after"
+    val rootBefore = root / "before"
+    val rootAfter = root / "after"
     findAndRefreshVFile(rootBefore)
 
     // remove existing content entries (default source folders),
@@ -54,7 +52,7 @@ abstract class ScalaMoveTestBase extends ScalaLightCodeInsightFixtureTestCase {
       })
     }
 
-    rootDirBefore = PsiTestUtil.createTestProjectStructure(getProject, getModule, rootBefore, new util.HashSet[Path](), false)
+    rootDirBefore = PsiTestUtil.createTestProjectStructure(getProject, getModule, rootBefore.toString, new util.HashSet[Path](), false)
     configureModuleSources(getModule, rootDirBefore)
     PsiDocumentManager.getInstance(getProject).commitAllDocuments()
 

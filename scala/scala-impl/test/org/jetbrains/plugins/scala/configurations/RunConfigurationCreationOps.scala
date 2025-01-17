@@ -9,9 +9,9 @@ import com.intellij.openapi.vfs.{LocalFileSystem, VirtualFile}
 import com.intellij.psi.{PsiElement, PsiManager}
 import org.jetbrains.plugins.scala.base.ScalaSdkOwner
 import org.jetbrains.plugins.scala.configurations.TestLocation.{CaretLocation, CaretLocation2}
-import org.jetbrains.plugins.scala.extensions.inReadAction
+import org.jetbrains.plugins.scala.extensions.{PathExt, inReadAction}
 
-import java.io.File
+import java.nio.file.Path
 
 trait RunConfigurationCreationOps extends ScalaSdkOwner {
 
@@ -20,7 +20,7 @@ trait RunConfigurationCreationOps extends ScalaSdkOwner {
   protected final def createPsiLocation(
     caretLocation: CaretLocation,
     module: Module,
-    srcDir: File,
+    srcDir: Path,
   ): PsiLocation[PsiElement] = {
     val project = module.getProject
     val psiElement = findPsiElement(caretLocation, project, srcDir)
@@ -30,10 +30,10 @@ trait RunConfigurationCreationOps extends ScalaSdkOwner {
   protected final def findPsiElement(
     caretLocation: CaretLocation,
     project: Project,
-    srcDir: File,
+    srcDir: Path,
   ): PsiElement = {
-    val ioFile = new File(srcDir, caretLocation.fileName)
-    val vFile = LocalFileSystem.getInstance.refreshAndFindFileByIoFile(ioFile)
+    val nioFile = srcDir / caretLocation.fileName
+    val vFile = LocalFileSystem.getInstance.refreshAndFindFileByNioFile(nioFile)
 
     val myManager = PsiManager.getInstance(project)
 

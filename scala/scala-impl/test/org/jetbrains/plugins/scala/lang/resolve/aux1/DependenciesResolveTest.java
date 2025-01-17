@@ -8,18 +8,20 @@ import org.jetbrains.plugins.scala.lang.psi.api.statements.ScTypeAlias;
 import org.jetbrains.plugins.scala.lang.psi.api.toplevel.typedef.ScClass;
 import org.jetbrains.plugins.scala.lang.resolve.ScalaResolveTestCase;
 
+import java.nio.file.Path;
+
 public class DependenciesResolveTest extends ScalaResolveTestCase {
   @Override
-  public String folderPath() {
-    return super.folderPath() + "resolve/aux1/idea/";
+  public Path folderPath() {
+    return super.folderPath().resolve("resolve").resolve("aux1").resolve("idea");
   }
 
   @Override
-  public String sourceRootPath() {
+  public Path sourceRootPath() {
     return folderPath();
   }
 
-  public void testLocalImport() throws Exception {
+  public void testLocalImport() {
     PsiReference ref = findReferenceAtCaret();
     final PsiElement resolved = ref.resolve();
 
@@ -28,10 +30,9 @@ public class DependenciesResolveTest extends ScalaResolveTestCase {
     final ScClass clazz = (ScClass) ((ScPrimaryConstructor) resolved).containingClass();
     final String name = clazz.getName();
     assertEquals("Description", name);
-
   }
 
-  public void testLocalImport1() throws Exception {
+  public void testLocalImport1() {
     PsiReference ref = findReferenceAtCaret();
     final PsiElement resolved = ref.resolve();
 
@@ -40,10 +41,9 @@ public class DependenciesResolveTest extends ScalaResolveTestCase {
     final ScTypeAlias alias = (ScTypeAlias) resolved;
     final String name = alias.getName();
     assertEquals("Den", name);
-
   }
 
-  public void testLocalImport2() throws Exception {
+  public void testLocalImport2() {
     PsiReference ref = findReferenceAtCaret();
     final PsiElement resolved = ref.resolve();
 
@@ -55,4 +55,3 @@ public class DependenciesResolveTest extends ScalaResolveTestCase {
   }
 
 }
-

@@ -1,12 +1,15 @@
 package org.jetbrains.plugins.scala.lang.resolve
 
 import com.intellij.psi.PsiReference
+import org.jetbrains.plugins.scala.extensions.PathExt
 import org.junit.Assert._
 
-class ResolvePackagesWithBacktickeds extends ScalaResolveTestCase {
-  override def folderPath: String = s"${super.folderPath}resolve/packages/backtickeds"
+import java.nio.file.Path
 
-  override protected def sourceRootPath: String = folderPath
+class ResolvePackagesWithBacktickeds extends ScalaResolveTestCase {
+  override def folderPath: Path = super.folderPath / "resolve" / "packages" / "backtickeds"
+
+  override protected def sourceRootPath: Path = folderPath
 
   private def checkReference(): Unit = {
     val ref: PsiReference = findReferenceAtCaret()

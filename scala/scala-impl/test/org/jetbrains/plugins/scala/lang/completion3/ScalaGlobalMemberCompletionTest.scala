@@ -6,6 +6,8 @@ import org.jetbrains.plugins.scala.lang.completion.lookups.ScalaLookupItem
 import org.jetbrains.plugins.scala.lang.completion3.base.ScalaCompletionTestBase
 import org.junit.Assert.assertEquals
 
+import java.nio.file.Path
+
 class ScalaGlobalMemberCompletionTest extends ScalaCompletionTestBase {
 
   import org.jetbrains.plugins.scala.lang.completion3.base.ScalaCompletionTestBase._
@@ -13,7 +15,7 @@ class ScalaGlobalMemberCompletionTest extends ScalaCompletionTestBase {
   override def getTestDataPath: String =
     s"${super.getTestDataPath}globalMember"
 
-  override protected def sourceRootPath: String = getTestDataPath
+  override protected def sourceRootPath: Path = Path.of(getTestDataPath)
 
   def testGlobalMember1(): Unit = doCompletionTest(
     fileText =

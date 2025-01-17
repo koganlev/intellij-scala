@@ -9,6 +9,8 @@ import org.jetbrains.plugins.scala.util.runners.{MultipleScalaVersionsRunner, Ru
 import org.junit.runner.RunWith
 import org.scalafmt.dynamic.ScalafmtVersion
 
+import java.nio.file.Path
+
 @RunWith(classOf[MultipleScalaVersionsRunner])
 @RunWithScalaVersions(Array(
   TestScalaVersion.Scala_2_12,
@@ -211,7 +213,7 @@ class CreateMethodQuickFixWithScalafmtTest
   extends CreateMethodQuickFixTestBase
     with ScalaFmtForTestsSetupOps {
 
-  override protected def scalafmtConfigsBasePath: String = TestUtils.getTestDataPath + "/annotator/createFromUsage"
+  override protected def scalafmtConfigsBasePath: Path = Path.of(TestUtils.getTestDataPath, "annotator", "createFromUsage")
 
   override def setUp(): Unit = {
     super.setUp()

@@ -3,10 +3,11 @@ package org.jetbrains.plugins.scala.codeInspection.format
 import com.intellij.codeInsight.daemon.impl.HighlightInfo
 import org.jetbrains.plugins.scala.ScalaVersion
 import org.jetbrains.plugins.scala.codeInspection.ScalaInspectionTestBase
+import org.jetbrains.plugins.scala.extensions.PathExt
 import org.jetbrains.plugins.scala.util.TestUtils
 import org.junit.Assert
 
-import java.io.File
+import java.nio.file.Path
 import scala.jdk.CollectionConverters.CollectionHasAsScala
 
 class ScalaMalformedFormatStringInspectionTest_2_11 extends ScalaMalformedFormatStringInspectionTestBase {
@@ -22,8 +23,8 @@ class ScalaMalformedFormatStringInspectionTest_2_13 extends ScalaMalformedFormat
 // this inspection doesn't have quick fix, only test warning messages and positions
 abstract class ScalaMalformedFormatStringInspectionTestBase extends ScalaInspectionTestBase {
 
-  private val testDataFolder = new File(TestUtils.getTestDataPath + "/inspections/ScalaMalformedFormatStringInspection")
-  assert(testDataFolder.exists())
+  private val testDataFolder = Path.of(TestUtils.getTestDataPath, "inspections", "ScalaMalformedFormatStringInspection")
+  assert(testDataFolder.exists)
 
   override protected val classOfInspection: Class[ScalaMalformedFormatStringInspection] =
     classOf[ScalaMalformedFormatStringInspection]
@@ -33,8 +34,8 @@ abstract class ScalaMalformedFormatStringInspectionTestBase extends ScalaInspect
   override protected val description: String = ""
 
   private def doTest(): Unit = {
-    val testFile = new File(testDataFolder, getTestName(true) + ".test")
-    assert(testFile.exists())
+    val testFile = testDataFolder / (getTestName(true) + ".test")
+    assert(testFile.exists)
 
     val Seq(code, expectedInspections) =
       TestUtils.readInput(testFile, null).asScala.toSeq

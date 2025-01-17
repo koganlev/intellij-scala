@@ -1811,6 +1811,7 @@ package object extensions {
   }
 
   implicit class PathExt(private val path: Path) extends AnyVal {
+    def /(subPath: Path): Path = path.resolve(subPath)
     def /(@NonNls subPath: String): Path = path.resolve(subPath)
 
     def allFiles(): LazyList[Path] = {
@@ -1834,6 +1835,7 @@ package object extensions {
       Files.lines(path, charset).toScala(factory)
 
     def nameContains(str: String): Boolean = path.getFileName.toString.contains(str)
+    def nameMatches(regex: String): Boolean = path.getFileName.toString.matches(regex)
 
     def parents: Iterator[Path] =
       withParents.drop(1)
@@ -1841,6 +1843,18 @@ package object extensions {
       Iterator.iterate(path)(_.getParent).takeWhile(_ != null)
     def systemIndependentPathString: String =
       path.toString.replace(java.io.File.separatorChar, '/')
+
+    /**
+     * [[com.intellij.openapi.util.io.FileUtil.loadFile]] but for [[Path]]
+     *
+     * Note: even though IDEA suggests replacing `new String(Files.readAllBytes(path), cs)` with [[Files.readString]],
+     *       there are some files that result in [[java.nio.charset.MalformedInputException]] with the latter and are
+     *       loaded successfully with the former.
+     */
+    def readAllBytesToString(charset: Charset = Charset.defaultCharset): String =
+      new String(Files.readAllBytes(path), charset)
+
+    def toCanonicalPath: Path = path.toAbsolutePath.normalize()
 
     def toVirtualFile: Option[VirtualFile] =
       VirtualFileManager.getInstance().findFileByNioPath(path).toOption

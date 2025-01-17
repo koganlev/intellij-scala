@@ -18,7 +18,7 @@ abstract class ScalaJUnitTestingTestCaseBase extends ScalaTestingTestCase {
 
   override protected def createTestFromCaretLocation(caretLocation: CaretLocation): RunnerAndConfigurationSettings =
     inReadAction {
-      val psiElement = findPsiElement(caretLocation, getProject, srcPath.toFile)
+      val psiElement = findPsiElement(caretLocation, getProject, srcPath)
       val context: ConfigurationContext = new ConfigurationContext(psiElement)
       // automatically detects the preferable configuration producer and creates configuration
       // TODO: remove `configurationProducer` from base class and rewrite base `createTestFromCaretLocation` to this implementation

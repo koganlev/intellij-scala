@@ -1,9 +1,11 @@
 package org.jetbrains.plugins.scala.lang.resolve2
 
+import org.jetbrains.plugins.scala.extensions.PathExt
+
+import java.nio.file.Path
+
 class TypeTest extends ResolveTestBase {
-  override def folderPath: String = {
-    super.folderPath + "type/"
-  }
+  override def folderPath: Path = super.folderPath / "type"
 
   def testClassParameter(): Unit = doTest()
   def testClassTypeParameter(): Unit = doTest()

@@ -1,8 +1,11 @@
 package org.jetbrains.plugins.scala.lang.completion.postfix
 
 import com.intellij.testFramework.TestIndexingModeSupporter.IndexingMode
+import org.jetbrains.plugins.scala.extensions.PathExt
 import org.jetbrains.plugins.scala.util.runners.{MultipleScalaVersionsRunner, RunWithScalaVersions, TestScalaVersion, WithIndexingMode}
 import org.junit.runner.RunWith
+
+import java.nio.file.Path
 
 @RunWith(classOf[MultipleScalaVersionsRunner])
 @RunWithScalaVersions(Array(
@@ -15,7 +18,7 @@ final class Scala3MatchPostfixTemplateTest extends PostfixTemplateTest {
     getScalaCodeStyleSettings.USE_SCALA3_INDENTATION_BASED_SYNTAX = true
   }
 
-  override def testPath(): String = super.testPath() + "match3/"
+  override def testPath(): Path = super.testPath() / "match3"
 
   def testSimple(): Unit = doTest()
 

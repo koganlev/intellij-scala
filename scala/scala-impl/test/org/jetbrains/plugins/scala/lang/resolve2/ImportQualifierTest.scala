@@ -1,9 +1,11 @@
 package org.jetbrains.plugins.scala.lang.resolve2
 
+import org.jetbrains.plugins.scala.extensions.PathExt
+
+import java.nio.file.Path
+
 class ImportQualifierTest extends ResolveTestBase {
-  override def folderPath: String = {
-    super.folderPath + "import/qualifier/"
-  }
+  override def folderPath: Path = super.folderPath / "import" / "qualifier"
 
   def testImport1(): Unit = doTest()
   def testImport2(): Unit = doTest()
