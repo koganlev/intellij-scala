@@ -112,8 +112,9 @@ object I18nBundleContent {
   private object PathHeader {
     val prefix = "### "
     def unapply(line: String): Option[String] = {
+      val isPluginV2Xml = (line.contains("scalaUltimate.") || line.contains("scalaCommunity.")) && line.contains(".xml")
       val isNewPath = line.startsWith(prefix) &&
-        (line.contains('.') && line.contains('/') || line.contains(unusedPath))
+        (line.contains('.') && line.contains('/') || line.contains(unusedPath) || isPluginV2Xml)
       isNewPath.option(line.substring(prefix.length))
     }
   }

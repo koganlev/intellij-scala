@@ -50,6 +50,8 @@ lazy val scalaCommunity: sbt.Project =
   newProject("scalaCommunity", file("."))
     .dependsOn(
       bsp % "test->test;compile->compile",
+      bspJUnit % "test->test;compile->compile",
+      bspTerminal % "test->test;compile->compile",
       codeInsight % "test->test;compile->compile",
       conversion % "test->test;compile->compile",
       uast % "test->test;compile->compile",
@@ -111,7 +113,7 @@ lazy val scalaApi = newProject(
   "scala-api",
   file("scala/scala-api")
 ).settings(
-  idePackagePrefix := Some("org.jetbrains.plugins.scala"),
+  idePackagePrefix := Some("org.jetbrains.plugins.scala")
 )
 
 lazy val workspaceEntities = newProjectWithKotlin("workspace-entities", file("sbt/sbt-impl/workspace-entities"))
@@ -171,6 +173,8 @@ lazy val worksheet =
       compilerIntegration % "test->test;compile->compile",
       worksheetReplInterface % "test->test;compile->compile",
       repl % "test->test;compile->compile", //do we indeed need this dependency on Scala REPL? can we get rid of it?
+    ).settings(
+      packageMethod := PackagingMethod.PluginModule("scalaCommunity.worksheet")
     )
 
 lazy val worksheetReplInterface =
@@ -452,7 +456,8 @@ lazy val compilerIntegration =
         "com.intellij.gradle",
         "org.jetbrains.idea.maven"
       ).map(_.toPlugin), // Used only in tests
-      libraryDependencies += Dependencies.intellijMavenTestFramework % Test
+      libraryDependencies += Dependencies.intellijMavenTestFramework % Test,
+      packageMethod := PackagingMethod.PluginModule("scalaCommunity.compiler-integration")
     )
 
 lazy val debugger =
@@ -460,6 +465,8 @@ lazy val debugger =
     .dependsOn(
       scalaImpl % "test->test;compile->compile",
       compilerIntegration % "test->test;compile->compile"
+    ).settings(
+      packageMethod := PackagingMethod.PluginModule("scalaCommunity.debugger")
     )
 
 
@@ -571,7 +578,8 @@ lazy val testingSupport =
       compilerIntegration % "test->test;compile->compile"
     )
     .settings(
-      intellijPlugins += "JUnit".toPlugin
+      intellijPlugins += "JUnit".toPlugin,
+      packageMethod := PackagingMethod.PluginModule("scalaCommunity.testing-support")
     )
 
 lazy val testRunners: Project =
@@ -676,8 +684,28 @@ lazy val decompiler =
       packageMethod := PackagingMethod.Standalone("lib/scalap.jar")
     )
 
+lazy val bspJUnit =
+  newProject("bsp-junit", file("bsp-builtin/bsp-junit"))
+    .dependsOn(
+      bsp % "test->test;compile->compile",
+    )
+    .settings(
+      intellijPlugins += "JUnit".toPlugin,
+      packageMethod := PackagingMethod.PluginModule("scalaCommunity.bsp-junit")
+    )
+
+lazy val bspTerminal =
+  newProject("bsp-terminal", file("bsp-builtin/bsp-terminal"))
+    .dependsOn(
+      bsp % "test->test;compile->compile",
+    )
+    .settings(
+      intellijPlugins += "org.jetbrains.plugins.terminal".toPlugin,
+      packageMethod := PackagingMethod.PluginModule("scalaCommunity.bsp-terminal")
+    )
+
 lazy val bsp =
-  newProject("bsp", file("bsp"))
+  newProject("bsp", file("bsp-builtin/bsp"))
     .enablePlugins(BuildInfoPlugin)
     .dependsOn(
       scalaImpl % "test->test;compile->compile",
@@ -685,11 +713,10 @@ lazy val bsp =
     )
     .settings(
       libraryDependencies ++= DependencyGroups.bsp,
-      intellijPlugins += "JUnit".toPlugin,
-      intellijPlugins += "org.jetbrains.plugins.terminal".toPlugin,
       buildInfoPackage := "org.jetbrains.bsp.buildinfo",
       buildInfoKeys := Seq("bloopVersion" -> Versions.bloopVersion),
-      buildInfoOptions += BuildInfoOption.ConstantValue
+      buildInfoOptions += BuildInfoOption.ConstantValue,
+      packageMethod := PackagingMethod.PluginModule("scalaCommunity.bsp"),
     )
 
 lazy val scalaCli =
@@ -697,6 +724,8 @@ lazy val scalaCli =
     .dependsOn(
       scalaImpl % "test->test;compile->compile",
       bsp % "test->test;compile->compile",
+    ).settings(
+      packageMethod := PackagingMethod.PluginModule("scalaCommunity.scala-cli")
     )
 
 // Integration with other IDEA plugins

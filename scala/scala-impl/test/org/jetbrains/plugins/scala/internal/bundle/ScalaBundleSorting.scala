@@ -55,7 +55,7 @@ object ScalaBundleSorting {
 
   val allModuleInfos: Seq[ModuleWithBundleInfo] = Seq(
     ModuleWithBundleInfo(
-      rootPath = communityDir / "bsp",
+      rootPath = communityDir / "bsp-builtin/bsp",
       bundleMessagesRelativePath = "ScalaBspBundle.properties",
     ),
     ModuleWithBundleInfo(

@@ -69,7 +69,7 @@ private object SbtUtils {
 
   private def launcherOptions(path: String): Seq[String] = {
     val scalaPluginJar = PathUtil.getJarPathForClass(getClass)
-    val pluginLibFolder = Path.of(scalaPluginJar).getParent
+    val pluginLibFolder = Path.of(scalaPluginJar).getParent.getParent
     val pluginRootFolder = pluginLibFolder.getParent
     val launcher = pluginRootFolder / "launcher" / "sbt-launch.jar"
     if (Files.exists(launcher))
