@@ -13,7 +13,7 @@ import com.intellij.openapi.vfs.LocalFileSystem
 import org.jetbrains.plugins.scala.ScalaBundle
 import org.jetbrains.plugins.scala.project.ModuleExt
 
-import java.io.File
+import java.nio.file.Path
 import java.util.Collections
 import scala.jdk.CollectionConverters._
 
@@ -65,8 +65,8 @@ object ExternalSystemVfsUtil {
       // order enumerator to just refresh the output directories without their children, but we don't have tests in place
       // in order to be more confident in this change.
       // https://github.com/JetBrains/intellij-community/blob/bf3083ca66771e038eb1c64128b4e508f52acfad/plugins/gradle/java/src/execution/build/GradleProjectTaskRunner.java#L174-L176
-      val toRefreshFiles = toRefresh.map(new File(_)).asJava
-      LocalFileSystem.getInstance().refreshIoFiles(toRefreshFiles, true, true, null)
+      val toRefreshFiles = toRefresh.map(Path.of(_)).asJava
+      LocalFileSystem.getInstance().refreshNioFiles(toRefreshFiles, true, true, null)
     } finally {
       //noinspection ScalaExtractStringToBundle
       indicator.setText("")

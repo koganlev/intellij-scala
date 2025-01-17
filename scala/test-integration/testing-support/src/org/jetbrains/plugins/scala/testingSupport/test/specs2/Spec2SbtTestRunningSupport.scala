@@ -16,7 +16,7 @@ private class Spec2SbtTestRunningSupport(testData: TestConfigurationData) extend
   override def allowsSbtUiRun: Boolean = false //TODO: disabled due to SCL-11640, SCL-11638
 
   override def modifySbtSettingsForUi(module: Module, comm: SbtShellCommunication): Future[SettingMap] = {
-    val value = "Attributed(new File(\"" + ScalaPluginJars.runnersJar.getAbsolutePath.replace("\\", "\\\\") + "\"))(AttributeMap.empty)"
+    val value = "Attributed(new File(\"" + ScalaPluginJars.runnersJar.toAbsolutePath.toString.replace("\\", "\\\\") + "\"))(AttributeMap.empty)"
     modifySbtSetting(
       comm, module, SettingMap(), "fullClasspath", "test", "Test", value,
       !_.contains(ScalaPluginJars.runnersJarName),

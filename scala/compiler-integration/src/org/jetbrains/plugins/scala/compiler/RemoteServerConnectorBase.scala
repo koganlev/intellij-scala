@@ -24,7 +24,7 @@ abstract class RemoteServerConnectorBase(
 
   protected val sbtData: SbtData = {
     val javaClassVersion = System.getProperty("java.class.version")
-    SbtData.from(ScalaPluginJars.jpsRoot, javaClassVersion, Utils.getSystemRoot.toPath) match {
+    SbtData.from(ScalaPluginJars.jpsRoot.toFile, javaClassVersion, Utils.getSystemRoot.toPath) match {
       case Left(msg)   => throw new IllegalArgumentException(msg)
       case Right(data) => data
     }
@@ -46,9 +46,9 @@ abstract class RemoteServerConnectorBase(
 
   private val additionalRuntimeClasspath: Seq[File] =
     compilerClasspath :+
-      ScalaPluginJars.runnersJar :+
-      ScalaPluginJars.compilerSharedJar :+
-      ScalaPluginJars.scalaJpsJar :+
+      ScalaPluginJars.runnersJar.toFile :+
+      ScalaPluginJars.compilerSharedJar.toFile :+
+      ScalaPluginJars.scalaJpsJar.toFile :+
       outputDir
 
   protected def worksheetArgs: Option[WorksheetArgs] = None

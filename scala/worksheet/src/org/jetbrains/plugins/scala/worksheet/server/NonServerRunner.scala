@@ -11,6 +11,7 @@ import org.jetbrains.jps.incremental.scala.Client
 import org.jetbrains.jps.incremental.scala.remote.{ClientEventProcessor, Event, TraceEvent}
 import org.jetbrains.plugins.scala.compiler.data.serialization.SerializationUtils
 import org.jetbrains.plugins.scala.compiler.{CompilationProcess, CompileServerLauncher, RemoteServerRunner}
+import org.jetbrains.plugins.scala.extensions.PathExt
 import org.jetbrains.plugins.scala.util.ScalaPluginJars
 import org.jetbrains.plugins.scala.worksheet.server.NonServerRunner.Log
 
@@ -35,7 +36,7 @@ class NonServerRunner(project: Project) {
   }
 
   def buildProcess(args: Seq[String], client: Client): CompilationProcess = {
-    CompileServerLauncher.compileServerJars.foreach(p => assert(p.exists(), p.getPath))
+    CompileServerLauncher.compileServerJars.foreach(p => assert(p.exists, p))
 
     val jdk = CompileServerLauncher.compileServerJdk(project)
     jdk match {
@@ -51,8 +52,8 @@ class NonServerRunner(project: Project) {
         val commands: Seq[String] = {
           val jdkPath = FileUtil.toCanonicalPath(jdk.executable.getPath)
           val jdkToolsPath = jdk.tools.map(_.toPath).toSeq
-          val runnerClassPath = classPathArg(jdkToolsPath :+ ScalaPluginJars.scalaNailgunRunnerJar.toPath)
-          val mainClassPath = classPathArg(jdkToolsPath ++ CompileServerLauncher.compileServerJars.map(_.toPath))
+          val runnerClassPath = classPathArg(jdkToolsPath :+ ScalaPluginJars.scalaNailgunRunnerJar)
+          val mainClassPath = classPathArg(jdkToolsPath ++ CompileServerLauncher.compileServerJars)
           val scalaCompileServerSystemDir = CompileServerLauncher.scalaCompileServerSystemDir
           val jvmParameters = CompileServerLauncher.jvmParameters
           val jnaParams = CompileServerLauncher.jnaVMOptions

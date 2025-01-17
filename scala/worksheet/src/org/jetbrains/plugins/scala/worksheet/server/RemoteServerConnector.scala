@@ -52,7 +52,7 @@ final class RemoteServerConnector(
           case Args.PlainModeArgs(sourceFile, outputDir, className) =>
             Some(WorksheetArgs.RunPlain(
               className,
-              ScalaPluginJars.runnersJar,
+              ScalaPluginJars.runnersJar.toFile,
               sourceFile.toFile,
               sourceFile.getFileName.toString,
               (outputDir +: outputDirs).map(_.toFile),

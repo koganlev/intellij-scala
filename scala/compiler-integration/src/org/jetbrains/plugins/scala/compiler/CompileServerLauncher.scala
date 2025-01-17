@@ -118,12 +118,12 @@ object CompileServerLauncher {
     }
   }
 
-  private def compilerServerAdditionalCP(): Iterable[File] = for {
+  private def compilerServerAdditionalCP(): Iterable[Path] = for {
     extension        <- CompileServerClasspathProvider.implementations
     pluginDescriptor = extension.getPluginDescriptor
-    pluginsLibs      = new File(pluginDescriptor.getPluginPath.toFile, "lib")
+    pluginsLibs      = pluginDescriptor.getPluginPath / "lib"
     filesPath        <- extension.classpathSeq
-  } yield new File(pluginsLibs, filesPath)
+  } yield pluginsLibs / filesPath
 
   // TODO: track that we attach debug agent and show notification, as with JPS Build Process
   // TODO: add internal action "Debug Scala Compile Server" as with JPS "Debug Build Process"
@@ -137,9 +137,9 @@ object CompileServerLauncher {
 
     compileServerJars.partition(_.exists) match {
       case (presentFiles, Seq()) =>
-        val (nailgunCpFiles, classpathFiles) = presentFiles.partition(_.getName contains "nailgun")
+        val (nailgunCpFiles, classpathFiles) = presentFiles.partition(_.nameContains("nailgun"))
         val nailgunClasspath = nailgunCpFiles
-          .map(_.canonicalPath).mkString(File.pathSeparator)
+          .map(_.toFile.canonicalPath).mkString(File.pathSeparator)
         val buildProcessClasspath = {
           //noinspection ApiStatus
           // in worksheet tests we reuse compile server between projects
@@ -151,7 +151,7 @@ object CompileServerLauncher {
           pluginsClasspath ++ applicationClasspath
         }
         val classpath =
-          (jdk.tools ++ (classpathFiles ++ compilerServerAdditionalCP()))
+          (jdk.tools ++ (classpathFiles ++ compilerServerAdditionalCP()).map(_.toFile))
             .map(_.canonicalPath) ++ buildProcessClasspath
 
         val freePort = CompileServerLauncher.findFreePort
@@ -294,7 +294,7 @@ object CompileServerLauncher {
             process
           }
       case (_, absentFiles) =>
-        val paths = absentFiles.map(_.getPath).mkString(", ")
+        val paths = absentFiles.mkString(", ")
         Left(CompileServerProblem.Error(CompilerIntegrationBundle.message("required.file.not.found.paths", paths)))
     }
   }
@@ -388,7 +388,7 @@ object CompileServerLauncher {
   /**
    * NOTE: extra classpath for JPS process is defined in a differ place in `compiler-integration.xml` in `compileServer.plugin` extension
    */
-  def compileServerJars: Seq[File] = Seq(
+  def compileServerJars: Seq[Path] = Seq(
     IntellijPlatformJars.jpsBuildersJar,
     IntellijPlatformJars.utilJar,
     IntellijPlatformJars.utilRtJar,

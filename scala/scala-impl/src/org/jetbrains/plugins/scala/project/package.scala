@@ -779,7 +779,7 @@ package object project {
           throw new ExecutionException(e.getMessage.replace("SDK", "facet"))
       }
 
-    def addRunners(): Unit = list.add(ScalaPluginJars.runnersJar)
+    def addRunners(): Unit = list.add(ScalaPluginJars.runnersJar.toFile)
   }
 
   private def withPathsRelativeTo(baseDirectory: String, options: Seq[String]): Seq[String] = options.map { option =>

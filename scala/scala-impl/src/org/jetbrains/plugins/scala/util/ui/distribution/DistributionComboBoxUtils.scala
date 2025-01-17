@@ -5,9 +5,10 @@ import com.intellij.openapi.roots.ui.distribution.{DistributionComboBox, Distrib
 import com.intellij.openapi.ui.{ComponentValidator, ValidationInfo}
 import org.jetbrains.annotations.Nullable
 import org.jetbrains.plugins.scala.ScalaBundle
+import org.jetbrains.plugins.scala.extensions.PathExt
 
 import java.awt.event.ItemEvent
-import java.io.File
+import java.nio.file.Path
 import javax.swing.JTextField
 import javax.swing.text.{AbstractDocument, AttributeSet, BadLocationException, DocumentFilter}
 
@@ -46,8 +47,8 @@ object DistributionComboBoxUtils {
   private def isSelectedPathAnExistingJarFile(distributionInfo: DistributionInfo): Boolean = {
     val path = getLocalDistributionInfoPath(distributionInfo)
     path == null || path.nonEmpty && {
-      val file = new File(path)
-      file.isFile && file.getName.endsWith(".jar")
+      val file = Path.of(path)
+      file.isRegularFile && file.getFileName.toString.endsWith(".jar")
     }
   }
 
