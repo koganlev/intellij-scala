@@ -16,7 +16,7 @@ import com.intellij.openapi.project.{DumbService, Project}
 import com.intellij.openapi.util._
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.text.StringUtil
-import com.intellij.openapi.vfs.{VfsUtil, VirtualFile}
+import com.intellij.openapi.vfs.{VfsUtil, VirtualFile, VirtualFileManager}
 import com.intellij.psi._
 import com.intellij.psi.impl.PsiImplUtil
 import com.intellij.psi.impl.light.LightMethod
@@ -1813,6 +1813,11 @@ package object extensions {
   implicit class PathExt(private val path: Path) extends AnyVal {
     def /(@NonNls subPath: String): Path = path.resolve(subPath)
 
+    def allFiles(): LazyList[Path] = {
+      val (files, directories) = children(LazyList).span(_.isRegularFile)
+      files #::: directories.flatMap(_.allFiles())
+    }
+
     def childrenStream(): JStream[Path] = Files.list(path)
     def children(): Seq[Path] = children(Seq)
     def children[C1](factory: collection.Factory[Path, C1]): C1 =
@@ -1836,6 +1841,9 @@ package object extensions {
       Iterator.iterate(path)(_.getParent).takeWhile(_ != null)
     def systemIndependentPathString: String =
       path.toString.replace(java.io.File.separatorChar, '/')
+
+    def toVirtualFile: Option[VirtualFile] =
+      VirtualFileManager.getInstance().findFileByNioPath(path).toOption
 
     def walk(): JStream[Path] = Files.walk(path)
   }

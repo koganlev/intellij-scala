@@ -3,12 +3,12 @@ package org.jetbrains.plugins.scala.project.sdkdetect.repository
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.util.SystemInfo
-import com.intellij.openapi.vfs.{VfsUtilCore, VirtualFile}
+import com.intellij.openapi.vfs.VirtualFile
 import org.jetbrains.plugins.scala.ScalaBundle
 import org.jetbrains.plugins.scala.extensions.{ObjectExt, PathExt}
 import org.jetbrains.plugins.scala.project.external.ScalaSdkUtils
 import org.jetbrains.plugins.scala.project.sdkdetect.repository.CompilerClasspathResolveFailure.{AmbiguousArtifactsResolved, CantReadClasspathFromManifest, UnresolvedArtifact}
-import org.jetbrains.plugins.scala.project.template.{FileExt, ScalaSdkComponent, ScalaSdkDescriptor, SdkChoice, SystemSdkChoice}
+import org.jetbrains.plugins.scala.project.template.{ScalaSdkComponent, ScalaSdkDescriptor, SdkChoice, SystemSdkChoice}
 import org.jetbrains.plugins.scala.util.JarManifestUtils
 
 import java.nio.file.{Path, Paths}
@@ -176,15 +176,15 @@ private[project] object SystemDetector extends ScalaSdkDetectorBase {
   }
 
   def buildSdkDescriptor(selectedFiles: Seq[VirtualFile]): Either[Seq[CompilerClasspathResolveFailure], ScalaSdkDescriptor] = {
-    val files = selectedFiles.map(VfsUtilCore.virtualToIoFile)
+    val files = selectedFiles.map(_.toNioPath)
 
     val systemRoot = files match {
-      case Seq(f) if f.isDirectory => Some(f.toPath)
+      case Seq(f) if f.isDirectory => Some(f)
       case _ => None
     }
 
-    val allFiles = files.filter(_.isFile) ++ files.flatMap(_.allFiles)
-    val components = ScalaSdkComponent.fromFiles(allFiles.map(_.toPath))
+    val allFiles = files.filter(_.isRegularFile) ++ files.flatMap(_.allFiles())
+    val components = ScalaSdkComponent.fromFiles(allFiles)
     buildFromComponents(components, None, systemRoot = systemRoot)
   }
 

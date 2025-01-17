@@ -3,7 +3,6 @@ package org.jetbrains.plugins.scala.project
 import com.intellij.openapi.application.Experiments
 import com.intellij.openapi.util.io
 import com.intellij.openapi.util.text.Strings
-import com.intellij.openapi.vfs.{VirtualFile, VirtualFileManager}
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.plugins.scala.extensions.IterableOnceExt
 
@@ -43,34 +42,6 @@ package object template {
       lines.foreach(writer.println)
       writer.flush()
     }
-  }
-
-  implicit class FileExt(private val delegate: File) extends AnyVal {
-    def /(path: String): File = new File(delegate, path)
-
-    def /(paths: Seq[String]): File = paths.foldLeft(delegate)(_ / _)
-
-    def parent: Option[File] = Option(delegate.getParentFile)
-
-    def children: Seq[File] = Option(delegate.listFiles).map(_.toSeq).getOrElse(Seq.empty)
-
-    def childrenNames: Seq[String] = children.map(_.getName)
-
-    def directories: Seq[File] = children.filter(_.isDirectory)
-
-    def files: Seq[File] = children.filter(_.isFile)
-
-    def findByName(name: String): Option[File] = Some(new File(delegate, name)).filter(_.exists())
-
-    def childExists(name: String): Boolean = new File(delegate, name).exists()
-
-    def allFiles: LazyList[File] = {
-      val (files, directories) = children.to(LazyList).span(_.isFile)
-      files #::: directories.flatMap(_.allFiles)
-    }
-
-    def toVirtualFile: Option[VirtualFile] =
-      Option(VirtualFileManager.getInstance().findFileByNioPath(delegate.toPath))
   }
 
   /**

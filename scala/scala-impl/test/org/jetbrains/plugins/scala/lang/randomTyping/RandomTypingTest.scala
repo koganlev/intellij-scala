@@ -1,25 +1,22 @@
 package org.jetbrains.plugins.scala.lang.randomTyping
 
-import com.intellij.openapi.util.io.FileUtil
+import com.intellij.openapi.util.text.StringUtil
 import com.intellij.psi.PsiDocumentManager
-import com.intellij.testFramework.{ErrorLog, TestLoggerKt}
+import com.intellij.testFramework.TestLoggerKt
 import com.intellij.util.lang.CompoundRuntimeException
 import com.intellij.util.ui.EDT
 import org.jetbrains.plugins.scala.base.EditorActionTestBase
 import org.jetbrains.plugins.scala.extensions._
 import org.jetbrains.plugins.scala.lang.randomTyping.RandomTypingTest._
-import org.jetbrains.plugins.scala.project.template.FileExt
 import org.jetbrains.plugins.scala.util.TestUtils
 import org.jetbrains.plugins.scala.{RandomTypingTests, ScalaVersion}
 import org.junit.experimental.categories.Category
 
-import java.io.File
-import java.nio.file.Files
+import java.nio.file.{Files, Path}
 import scala.collection.immutable.ArraySeq
 import scala.collection.mutable
 import scala.jdk.CollectionConverters.ListHasAsScala
 import scala.util.Random
-
 
 @Category(Array(classOf[RandomTypingTests]))
 class RandomTypingTest_in_Scala3 extends RandomTypingTestBase(TestUtils.getTestDataPath + "/parser/data3") {
@@ -69,13 +66,13 @@ abstract class RandomTypingTestBase(testFilePath: String) extends EditorActionTe
   def test_all_files(): Unit = {
     val random = new Random
 
-    val allFiles = new File(testFilePath)
-      .allFiles
+    val allFiles = Path.of(testFilePath)
+      .allFiles()
       // yeah this class does a lot of string indexing and slicing,
       // which doesn't work at all well with code points that do not fit into one char
       // So let's ignore those
-      .filterNot(file => hasCodePointsSpanningMultipleChars(Files.readString(file.toPath)))
-      .filterNot(file => ignoredFiles.contains(file.getName))
+      .filterNot(file => hasCodePointsSpanningMultipleChars(Files.readString(file)))
+      .filterNot(file => ignoredFiles.contains(file.getFileName.toString))
       .to(ArraySeq)
     println(s"Test ${allFiles.size} in $testFilePath:")
     for ((file, i) <- allFiles.zipWithIndex) {
@@ -84,15 +81,12 @@ abstract class RandomTypingTestBase(testFilePath: String) extends EditorActionTe
     }
   }
 
-  def typeRandomly(path: String, seed: Int): Unit =
-    typeRandomly(new File(path), seed)
-
   private val separatorRegex = raw"\n-{5,}".r
 
-  def typeRandomly(file: File, seed: Int): Unit = {
-    println(s"Testing(seed = $seed) ${file.getAbsolutePath}")
+  def typeRandomly(file: Path, seed: Int): Unit = {
+    println(s"Testing(seed = $seed) ${file.toAbsolutePath}")
     val targetText = {
-      val text = FileUtil.loadFile(file, /*convertLineSeparators*/ true)
+      val text = StringUtil.convertLineSeparators(Files.readString(file))
       separatorRegex.findFirstMatchIn(text)
         .fold(text)(m => text.substring(0, m.start))
     }
@@ -109,7 +103,7 @@ abstract class RandomTypingTestBase(testFilePath: String) extends EditorActionTe
           case _ => false
         }
         if (!ignoreException(e)) {
-          throw new Exception(s"Exception while typing ${file.getAbsolutePath} with seed $seed", e)
+          throw new Exception(s"Exception while typing ${file.toAbsolutePath} with seed $seed", e)
         }
     }
   }

@@ -11,7 +11,7 @@ import org.jetbrains.jps.incremental.scala.MessageKind
 import org.jetbrains.plugins.scala.compiler.highlighting.BackgroundExecutorService.executeOnBackgroundThreadInNotDisposed
 import org.jetbrains.plugins.scala.compiler.highlighting.ExternalHighlighting.RangeInfo
 import org.jetbrains.plugins.scala.compiler.{CompilerEvent, CompilerEventListener}
-import org.jetbrains.plugins.scala.project.template.FileExt
+import org.jetbrains.plugins.scala.extensions.PathExt
 import org.jetbrains.plugins.scala.settings.ScalaProjectSettings
 
 private class UpdateCompilerGeneratedStateListener(project: Project) extends CompilerEventListener {
@@ -28,7 +28,7 @@ private class UpdateCompilerGeneratedStateListener(project: Project) extends Com
         val newState = oldState.copy(highlightOnCompilationFinished = newHighlightOnCompilationFinished)
         CompilerGeneratedStateManager.update(project, newState)
       case CompilerEvent.MessageEmitted(compilationId, _, _, ClientMsg(MessageKind.Info, text, Some(source), _, Some(begin), Some(end), _)) if text.startsWith(CompilerPluginTypePrefix) =>
-        val virtualFile = source.toVirtualFile.get
+        val virtualFile = source.toPath.toVirtualFile.get
         val tpe = text.substring(CompilerPluginTypePrefix.length, text.indexOf(CompilerPluginTypeSuffix).ensuring(_ != -1))
         val fileState = FileCompilerGeneratedState(compilationId, Set.empty, Map(((begin, end), tpe)))
         val newState = replaceOrAppendFileState(oldState, virtualFile, fileState)
@@ -37,7 +37,7 @@ private class UpdateCompilerGeneratedStateListener(project: Project) extends Com
         for {
           text <- Option(msg.text)
           source <- msg.source
-          virtualFile <- source.toVirtualFile
+          virtualFile <- source.toPath.toVirtualFile
         } {
           def calculateRangeInfo(startInfo: Option[PosInfo], endInfo: Option[PosInfo], debugTag: String): Option[RangeInfo] =
             for {
@@ -76,7 +76,7 @@ private class UpdateCompilerGeneratedStateListener(project: Project) extends Com
       case CompilerEvent.CompilationFinished(compilationId, _, sources) =>
         val vFiles = for {
           source <- sources
-          virtualFile <- source.toVirtualFile
+          virtualFile <- source.toPath.toVirtualFile
         } yield virtualFile
         val emptyState = FileCompilerGeneratedState(compilationId, Set.empty, Map.empty)
         val intermediateState = vFiles.foldLeft(oldState) { case (acc, file) =>

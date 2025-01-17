@@ -7,7 +7,7 @@ import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ProjectFileIndex
 import com.intellij.util.concurrency.annotations.{RequiresBackgroundThread, RequiresReadLock}
-import org.jetbrains.plugins.scala.project.template.FileExt
+import org.jetbrains.plugins.scala.extensions.PathExt
 
 import java.io.File
 import scala.jdk.CollectionConverters._
@@ -28,6 +28,7 @@ private object VfsUtil {
   private def findModulesForSources(project: Project, sources: Set[File]): Array[Module] = {
     val fileIndex = ProjectFileIndex.getInstance(project)
     sources.toArray
+      .map(_.toPath)
       .flatMap(_.toVirtualFile)
       .map(fileIndex.getModuleForFile)
       .filter(_ != null) // getModuleForFile is nullable and getOutputPaths doesn't accept nulls

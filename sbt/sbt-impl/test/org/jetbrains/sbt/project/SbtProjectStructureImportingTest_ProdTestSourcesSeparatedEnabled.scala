@@ -10,10 +10,9 @@ import org.jetbrains.annotations.Nullable
 import org.jetbrains.jps.model.java.compiler.JpsJavaCompilerOptions
 import org.jetbrains.plugins.scala.SlowTests
 import org.jetbrains.plugins.scala.compiler.data.CompileOrder
-import org.jetbrains.plugins.scala.extensions.inWriteAction
+import org.jetbrains.plugins.scala.extensions.{PathExt, inWriteAction}
 import org.jetbrains.plugins.scala.project.ProjectExt
 import org.jetbrains.plugins.scala.project.external.JdkByName
-import org.jetbrains.plugins.scala.project.template.FileExt
 import org.jetbrains.sbt.Sbt
 import org.junit.Assert
 import org.junit.Assert.{assertEquals, assertTrue}
@@ -223,7 +222,7 @@ final class SbtProjectStructureImportingTest_ProdTestSourcesSeparatedEnabled ext
       libraries := scalaLibraries :+ managedLibrary
 
       lazy val unmanagedLibrary: library = new library(s"sbt: ${Sbt.UnmanagedLibraryName}") {
-        libClasses += (getTestProjectDir / "lib" / "unmanaged.jar").getAbsolutePath
+        libClasses += (getTestProjectDir.toPath / "lib" / "unmanaged.jar").toAbsolutePath.toString
       }
       val myLibraryDependencies: Seq[library] = unmanagedLibrary +: managedLibrary +: scalaLibraries
 
