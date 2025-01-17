@@ -310,45 +310,45 @@ object ScalaSyntaxHighlighter {
 
       //interpolated string highlighting
       registerLayer(
-        new LayeredLexer(new ScalaInterpolatedStringLiteralLexer(
+        new ScalaInterpolatedStringLiteralLexer(
           StringLiteralLexer.NO_QUOTE_CHAR,
           tINTERPOLATED_STRING,
           isRawLiteral = false,
           isMultiline = false,
           noUnicodeEscapesInRawStrings = noUnicodeEscapesInRawStrings,
-        )),
+        ),
         tINTERPOLATED_STRING
       )
       registerLayer(
-        new LayeredLexer(new ScalaInterpolatedStringLiteralLexer(
+        new ScalaInterpolatedStringLiteralLexer(
           StringLiteralLexer.NO_QUOTE_CHAR,
           tINTERPOLATED_STRING,
           isRawLiteral = true,
           isMultiline = false,
           noUnicodeEscapesInRawStrings = noUnicodeEscapesInRawStrings,
-        )),
+        ),
         tINTERPOLATED_RAW_STRING
       )
 
       //multiline interpolated string highlighting
       registerLayer(
-        new LayeredLexer(new ScalaInterpolatedStringLiteralLexer(
+        new ScalaInterpolatedStringLiteralLexer(
           StringLiteralLexer.NO_QUOTE_CHAR,
           tINTERPOLATED_MULTILINE_STRING,
           isRawLiteral = false,
           isMultiline = true,
           noUnicodeEscapesInRawStrings = noUnicodeEscapesInRawStrings,
-        )),
+        ),
         tINTERPOLATED_MULTILINE_STRING
       )
       registerLayer(
-        new LayeredLexer(new ScalaInterpolatedStringLiteralLexer(
+        new ScalaInterpolatedStringLiteralLexer(
           StringLiteralLexer.NO_QUOTE_CHAR,
           tINTERPOLATED_MULTILINE_STRING,
           isRawLiteral = true,
           isMultiline = true,
           noUnicodeEscapesInRawStrings = noUnicodeEscapesInRawStrings,
-        )),
+        ),
         tINTERPOLATED_MULTILINE_RAW_STRING
       )
 
