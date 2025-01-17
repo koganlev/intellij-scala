@@ -8,17 +8,21 @@ import org.jetbrains.plugins.scala.lang.psi.types.api.NamedTupleType
 import org.jetbrains.plugins.scala.lang.psi.types.result.TypeResult
 
 class ScNamedTuplePatternImpl(node: ASTNode) extends ScalaPsiElementImpl(node) with ScPatternImpl with ScNamedTuplePattern {
-  override def isIrrefutableForImpl(t: Option[ScType]): Boolean =
-    t.exists {
-      case NamedTupleType(comps) =>
-        val patternComps = this.components
 
-        patternComps.corresponds(comps) {
-          case (comp, (NamedTupleType.NameType(name), ty)) =>
-            comp.name == name &&
-              comp.subPattern.forall(_.isIrrefutableFor(Some(ty)))
-        }
-    }
+  override def isIrrefutableForImpl(t: Option[ScType]): Boolean = t.exists {
+    case NamedTupleType(incomingComps) =>
+      incomingComps.corresponds(components) {
+        case (
+              (NamedTupleType.NameType(incomingName), incomingTy),
+              ScNamedTuplePatternComponent(expectedName, expectedPattern)
+            ) if incomingName == expectedName =>
+
+          expectedPattern.isIrrefutableFor(Some(incomingTy))
+        case _ =>
+          false
+      }
+    case _ => false
+  }
 
   override def subpatterns: Seq[ScPattern] = components.flatMap(_.subPattern)
 

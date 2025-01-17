@@ -233,4 +233,18 @@ class IrrefutabilityTest_Scala3 extends IrrefutabilityTestBase {
     // check nothing
     assertIsIrrefutable("??? match { case (x = 1, y = 2) => }")
   }
+
+  def testNamedTuplePattern2(): Unit = {
+    assertIsIrrefutable("(a = A, b = B) match { case (a = a, b = b) => }")
+    assertIsIrrefutable("(a = A, b = A -> B) match { case (a = a, b = b) => }")
+    assertIsIrrefutable("(a = A, b = A -> B) match { case (a = a, b = (a2, b)) => }")
+    assertIsIrrefutable("(a = A, b = A -> B) match { case (a = a:A, b = (a2:A, b: B)) => }")
+
+    assertIsNotIrrefutable("A match { case (a, b) => }")
+    assertIsNotIrrefutable("(a = A, b = B, c = B) match { case (a = a, b = b) => }")
+    assertIsNotIrrefutable("(a = B, b = A) match { case (a = a: A, b = b: B) => }")
+    assertIsNotIrrefutable("(a = A, b = B) match { case (b = b, a = A) => }")
+    assertIsNotIrrefutable("(a = A, b = B -> A) match { case (a = _, b = (a: A, b: B)) => }")
+    assertIsNotIrrefutable("(A, B) match { case (b = _, a = _) => }")
+  }
 }
