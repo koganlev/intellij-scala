@@ -1,5 +1,7 @@
 package org.jetbrains.sbt.project
 
+import com.intellij.build.FilePosition
+import com.intellij.build.events.EventResult
 import com.intellij.notification.NotificationType
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.externalSystem.model.project.{ProjectData => ESProjectData, _}

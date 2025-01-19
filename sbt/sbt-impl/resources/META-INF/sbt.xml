@@ -186,6 +186,10 @@
         <action id="Scala.Sbt.RunCommand" class="org.jetbrains.sbt.shell.action.RunCommandAction"/>
         <action id="Scala.Sbt.Help" class="org.jetbrains.sbt.shell.action.SbtHelpAction"/>
 
+        <action id="Scala.Sbt.GenerateManagedSources" class="org.jetbrains.sbt.actions.SbtGenerateManagedSourcesAction">
+            <add-to-group group-id="ExternalSystemView.ActionsToolbar.LeftPanel" anchor="after" relative-to-action="ExternalSystem.RefreshAllProjects"/>
+        </action>
+
         <group id="Scala.Sbt.TaskMenu" popup="true">
             <reference ref="RunContextGroup"/>
             <separator/>

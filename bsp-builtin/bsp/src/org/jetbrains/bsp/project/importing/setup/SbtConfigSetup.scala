@@ -49,7 +49,7 @@ object SbtConfigSetup {
       baseDir, jdkExe, vmArgs,
       Map.empty, sbtLauncher, Seq.empty, sbtLauncherArgs, sbtCommands,
       BspBundle.message("bsp.resolver.creating.sbt.configuration"), passParentEnvironment = true
-    )(reporter)
+    )(indicator = null)(reporter)
     new SbtConfigSetup(dumper, runInit)
   }
 }

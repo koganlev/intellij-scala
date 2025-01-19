@@ -58,7 +58,7 @@ object BloopPreImporter {
         baseDir, jdkExe, vmArgs,
         Map.empty, sbtLauncher, Seq.empty, sbtLauncherArgs, sbtCommands,
         BspBundle.message("bsp.resolver.creating.bloop.configuration.from.sbt"), passParentEnvironment = true
-      )
+      )(indicator = null)
       new BloopPreImporter(dumper, runDump)
     } finally {
       settingsFile.delete()

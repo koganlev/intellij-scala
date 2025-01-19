@@ -7,9 +7,10 @@ import com.intellij.execution.process.OSProcessHandler
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.externalSystem.model.ExternalSystemException
+import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.SystemInfo
-import org.jetbrains.annotations.{Nls, NonNls}
+import org.jetbrains.annotations.{Nls, NonNls, Nullable}
 import org.jetbrains.plugins.scala.build.BuildMessages.EventId
 import org.jetbrains.plugins.scala.build.{BuildMessages, BuildReporter, ExternalSystemNotificationReporter}
 import org.jetbrains.plugins.scala.extensions.LoggerExt
@@ -107,7 +108,7 @@ class SbtStructureDump {
       directory, vmExecutable, vmOptions, environment,
       sbtLauncher, sbtOptions, Seq.empty, sbtCommands,
       SbtBundle.message("sbt.extracting.project.structure.from.sbt"), passParentEnvironment
-    )
+    )(indicator = null)
   }
 
   private def makeOptionsStringLiteral(options: Seq[String]): String =
@@ -160,6 +161,7 @@ class SbtStructureDump {
              @Nls reportMessage: String,
              passParentEnvironment: Boolean
             )
+            (@Nullable indicator: ProgressIndicator)
             (implicit reporter: BuildReporter)
   : Try[BuildMessages] = {
 
@@ -230,7 +232,7 @@ class SbtStructureDump {
           // exit needs to be in a separate command, otherwise it will never execute when a previous command in the chain errors
           writer.println(ignoreInShellHistory("exit"))
           writer.flush()
-          handle(process, dumpTaskId, reporter)
+          handle(process, dumpTaskId, reporter, indicator)
         }
       }
       .recoverWith {
@@ -265,7 +267,8 @@ class SbtStructureDump {
 
   private def handle(process: Process,
                      dumpTaskId: EventId,
-                     reporter: BuildReporter
+                     reporter: BuildReporter,
+                     @Nullable indicator: ProgressIndicator
                     ): Try[BuildMessages] = {
 
     var messages = BuildMessages.empty
@@ -324,6 +327,10 @@ class SbtStructureDump {
       var processEnded = false
       while (!processEnded && !cancellationFlag.get()) {
         processEnded = handler.waitFor(SBT_PROCESS_CHECK_TIMEOUT_MS)
+
+        if ((indicator ne null) && indicator.isCanceled) {
+          cancellationFlag.set(true)
+        }
 
         val importIsTooLong = isUnitTest && System.currentTimeMillis() - start > MaxImportDurationInUnitTests.toMillis
         if (importIsTooLong) {
