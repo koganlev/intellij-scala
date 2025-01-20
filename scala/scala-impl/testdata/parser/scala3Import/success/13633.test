@@ -1210,11 +1210,6 @@ ScalaFile
                 MatchType: O match
         case true  => (true *: EmptyTuple)
         case false => EmptyTuple
-    case (EmptyTuple, B)          => IncT[B, O]
-    case (A, EmptyTuple)          => IncT[A, O]
-    case (a *: as, b *: bs)       =>
-      PlusTri[a, b, O] match
-        case (x, y) => y *: PlusLoop[as, bs, x]
                   SimpleType: O
                     CodeReferenceElement: O
                       PsiElement(identifier)('O')
@@ -1258,174 +1253,174 @@ ScalaFile
                       SimpleType: EmptyTuple
                         CodeReferenceElement: EmptyTuple
                           PsiElement(identifier)('EmptyTuple')
-                    PsiWhiteSpace('\n    ')
+              PsiWhiteSpace('\n    ')
+              ScMatchTypeCaseImpl(match type case)
+                PsiElement(case)('case')
+                PsiWhiteSpace(' ')
+                TupleType: (EmptyTuple, B)
+                  PsiElement(()('(')
+                  TypesList
+                    SimpleType: EmptyTuple
+                      CodeReferenceElement: EmptyTuple
+                        PsiElement(identifier)('EmptyTuple')
+                    PsiElement(,)(',')
+                    PsiWhiteSpace(' ')
+                    SimpleType: B
+                      CodeReferenceElement: B
+                        PsiElement(identifier)('B')
+                  PsiElement())(')')
+                PsiWhiteSpace('          ')
+                PsiElement(=>)('=>')
+                PsiWhiteSpace(' ')
+                ParametrizedType: IncT[B, O]
+                  SimpleType: IncT
+                    CodeReferenceElement: IncT
+                      PsiElement(identifier)('IncT')
+                  TypeArgumentsList
+                    PsiElement([)('[')
+                    SimpleType: B
+                      CodeReferenceElement: B
+                        PsiElement(identifier)('B')
+                    PsiElement(,)(',')
+                    PsiWhiteSpace(' ')
+                    SimpleType: O
+                      CodeReferenceElement: O
+                        PsiElement(identifier)('O')
+                    PsiElement(])(']')
+              PsiWhiteSpace('\n    ')
+              ScMatchTypeCaseImpl(match type case)
+                PsiElement(case)('case')
+                PsiWhiteSpace(' ')
+                TupleType: (A, EmptyTuple)
+                  PsiElement(()('(')
+                  TypesList
+                    SimpleType: A
+                      CodeReferenceElement: A
+                        PsiElement(identifier)('A')
+                    PsiElement(,)(',')
+                    PsiWhiteSpace(' ')
+                    SimpleType: EmptyTuple
+                      CodeReferenceElement: EmptyTuple
+                        PsiElement(identifier)('EmptyTuple')
+                  PsiElement())(')')
+                PsiWhiteSpace('          ')
+                PsiElement(=>)('=>')
+                PsiWhiteSpace(' ')
+                ParametrizedType: IncT[A, O]
+                  SimpleType: IncT
+                    CodeReferenceElement: IncT
+                      PsiElement(identifier)('IncT')
+                  TypeArgumentsList
+                    PsiElement([)('[')
+                    SimpleType: A
+                      CodeReferenceElement: A
+                        PsiElement(identifier)('A')
+                    PsiElement(,)(',')
+                    PsiWhiteSpace(' ')
+                    SimpleType: O
+                      CodeReferenceElement: O
+                        PsiElement(identifier)('O')
+                    PsiElement(])(']')
+              PsiWhiteSpace('\n    ')
+              ScMatchTypeCaseImpl(match type case)
+                PsiElement(case)('case')
+                PsiWhiteSpace(' ')
+                TupleType: (a *: as, b *: bs)
+                  PsiElement(()('(')
+                  TypesList
+                    InfixType: a *: as
+                      TypeVariable: a
+                        PsiElement(identifier)('a')
+                      PsiWhiteSpace(' ')
+                      CodeReferenceElement: *:
+                        PsiElement(identifier)('*:')
+                      PsiWhiteSpace(' ')
+                      SimpleType: as
+                        CodeReferenceElement: as
+                          PsiElement(identifier)('as')
+                    PsiElement(,)(',')
+                    PsiWhiteSpace(' ')
+                    InfixType: b *: bs
+                      TypeVariable: b
+                        PsiElement(identifier)('b')
+                      PsiWhiteSpace(' ')
+                      CodeReferenceElement: *:
+                        PsiElement(identifier)('*:')
+                      PsiWhiteSpace(' ')
+                      TypeVariable: bs
+                        PsiElement(identifier)('bs')
+                  PsiElement())(')')
+                PsiWhiteSpace('       ')
+                PsiElement(=>)('=>')
+                PsiWhiteSpace('\n      ')
+                MatchType: PlusTri[a, b, O] match
+        case (x, y) => y *: PlusLoop[as, bs, x]
+                  ParametrizedType: PlusTri[a, b, O]
+                    SimpleType: PlusTri
+                      CodeReferenceElement: PlusTri
+                        PsiElement(identifier)('PlusTri')
+                    TypeArgumentsList
+                      PsiElement([)('[')
+                      SimpleType: a
+                        CodeReferenceElement: a
+                          PsiElement(identifier)('a')
+                      PsiElement(,)(',')
+                      PsiWhiteSpace(' ')
+                      SimpleType: b
+                        CodeReferenceElement: b
+                          PsiElement(identifier)('b')
+                      PsiElement(,)(',')
+                      PsiWhiteSpace(' ')
+                      SimpleType: O
+                        CodeReferenceElement: O
+                          PsiElement(identifier)('O')
+                      PsiElement(])(']')
+                  PsiWhiteSpace(' ')
+                  PsiElement(match)('match')
+                  PsiWhiteSpace('\n        ')
+                  ScMatchTypeCasesImpl(match type cases)
                     ScMatchTypeCaseImpl(match type case)
                       PsiElement(case)('case')
                       PsiWhiteSpace(' ')
-                      TupleType: (EmptyTuple, B)
+                      TupleType: (x, y)
                         PsiElement(()('(')
                         TypesList
-                          SimpleType: EmptyTuple
-                            CodeReferenceElement: EmptyTuple
-                              PsiElement(identifier)('EmptyTuple')
+                          SimpleType: x
+                            CodeReferenceElement: x
+                              PsiElement(identifier)('x')
                           PsiElement(,)(',')
                           PsiWhiteSpace(' ')
-                          SimpleType: B
-                            CodeReferenceElement: B
-                              PsiElement(identifier)('B')
+                          TypeVariable: y
+                            PsiElement(identifier)('y')
                         PsiElement())(')')
-                      PsiWhiteSpace('          ')
+                      PsiWhiteSpace(' ')
                       PsiElement(=>)('=>')
                       PsiWhiteSpace(' ')
-                      ParametrizedType: IncT[B, O]
-                        SimpleType: IncT
-                          CodeReferenceElement: IncT
-                            PsiElement(identifier)('IncT')
-                        TypeArgumentsList
-                          PsiElement([)('[')
-                          SimpleType: B
-                            CodeReferenceElement: B
-                              PsiElement(identifier)('B')
-                          PsiElement(,)(',')
-                          PsiWhiteSpace(' ')
-                          SimpleType: O
-                            CodeReferenceElement: O
-                              PsiElement(identifier)('O')
-                          PsiElement(])(']')
-                    PsiWhiteSpace('\n    ')
-                    ScMatchTypeCaseImpl(match type case)
-                      PsiElement(case)('case')
-                      PsiWhiteSpace(' ')
-                      TupleType: (A, EmptyTuple)
-                        PsiElement(()('(')
-                        TypesList
-                          SimpleType: A
-                            CodeReferenceElement: A
-                              PsiElement(identifier)('A')
-                          PsiElement(,)(',')
-                          PsiWhiteSpace(' ')
-                          SimpleType: EmptyTuple
-                            CodeReferenceElement: EmptyTuple
-                              PsiElement(identifier)('EmptyTuple')
-                        PsiElement())(')')
-                      PsiWhiteSpace('          ')
-                      PsiElement(=>)('=>')
-                      PsiWhiteSpace(' ')
-                      ParametrizedType: IncT[A, O]
-                        SimpleType: IncT
-                          CodeReferenceElement: IncT
-                            PsiElement(identifier)('IncT')
-                        TypeArgumentsList
-                          PsiElement([)('[')
-                          SimpleType: A
-                            CodeReferenceElement: A
-                              PsiElement(identifier)('A')
-                          PsiElement(,)(',')
-                          PsiWhiteSpace(' ')
-                          SimpleType: O
-                            CodeReferenceElement: O
-                              PsiElement(identifier)('O')
-                          PsiElement(])(']')
-                    PsiWhiteSpace('\n    ')
-                    ScMatchTypeCaseImpl(match type case)
-                      PsiElement(case)('case')
-                      PsiWhiteSpace(' ')
-                      TupleType: (a *: as, b *: bs)
-                        PsiElement(()('(')
-                        TypesList
-                          InfixType: a *: as
-                            TypeVariable: a
-                              PsiElement(identifier)('a')
-                            PsiWhiteSpace(' ')
-                            CodeReferenceElement: *:
-                              PsiElement(identifier)('*:')
-                            PsiWhiteSpace(' ')
+                      InfixType: y *: PlusLoop[as, bs, x]
+                        SimpleType: y
+                          CodeReferenceElement: y
+                            PsiElement(identifier)('y')
+                        PsiWhiteSpace(' ')
+                        CodeReferenceElement: *:
+                          PsiElement(identifier)('*:')
+                        PsiWhiteSpace(' ')
+                        ParametrizedType: PlusLoop[as, bs, x]
+                          SimpleType: PlusLoop
+                            CodeReferenceElement: PlusLoop
+                              PsiElement(identifier)('PlusLoop')
+                          TypeArgumentsList
+                            PsiElement([)('[')
                             SimpleType: as
                               CodeReferenceElement: as
                                 PsiElement(identifier)('as')
-                          PsiElement(,)(',')
-                          PsiWhiteSpace(' ')
-                          InfixType: b *: bs
-                            TypeVariable: b
-                              PsiElement(identifier)('b')
-                            PsiWhiteSpace(' ')
-                            CodeReferenceElement: *:
-                              PsiElement(identifier)('*:')
-                            PsiWhiteSpace(' ')
-                            TypeVariable: bs
-                              PsiElement(identifier)('bs')
-                        PsiElement())(')')
-                      PsiWhiteSpace('       ')
-                      PsiElement(=>)('=>')
-                      PsiWhiteSpace('\n      ')
-                      MatchType: PlusTri[a, b, O] match
-        case (x, y) => y *: PlusLoop[as, bs, x]
-                        ParametrizedType: PlusTri[a, b, O]
-                          SimpleType: PlusTri
-                            CodeReferenceElement: PlusTri
-                              PsiElement(identifier)('PlusTri')
-                          TypeArgumentsList
-                            PsiElement([)('[')
-                            SimpleType: a
-                              CodeReferenceElement: a
-                                PsiElement(identifier)('a')
                             PsiElement(,)(',')
                             PsiWhiteSpace(' ')
-                            SimpleType: b
-                              CodeReferenceElement: b
-                                PsiElement(identifier)('b')
+                            SimpleType: bs
+                              CodeReferenceElement: bs
+                                PsiElement(identifier)('bs')
                             PsiElement(,)(',')
                             PsiWhiteSpace(' ')
-                            SimpleType: O
-                              CodeReferenceElement: O
-                                PsiElement(identifier)('O')
+                            SimpleType: x
+                              CodeReferenceElement: x
+                                PsiElement(identifier)('x')
                             PsiElement(])(']')
-                        PsiWhiteSpace(' ')
-                        PsiElement(match)('match')
-                        PsiWhiteSpace('\n        ')
-                        ScMatchTypeCasesImpl(match type cases)
-                          ScMatchTypeCaseImpl(match type case)
-                            PsiElement(case)('case')
-                            PsiWhiteSpace(' ')
-                            TupleType: (x, y)
-                              PsiElement(()('(')
-                              TypesList
-                                SimpleType: x
-                                  CodeReferenceElement: x
-                                    PsiElement(identifier)('x')
-                                PsiElement(,)(',')
-                                PsiWhiteSpace(' ')
-                                TypeVariable: y
-                                  PsiElement(identifier)('y')
-                              PsiElement())(')')
-                            PsiWhiteSpace(' ')
-                            PsiElement(=>)('=>')
-                            PsiWhiteSpace(' ')
-                            InfixType: y *: PlusLoop[as, bs, x]
-                              SimpleType: y
-                                CodeReferenceElement: y
-                                  PsiElement(identifier)('y')
-                              PsiWhiteSpace(' ')
-                              CodeReferenceElement: *:
-                                PsiElement(identifier)('*:')
-                              PsiWhiteSpace(' ')
-                              ParametrizedType: PlusLoop[as, bs, x]
-                                SimpleType: PlusLoop
-                                  CodeReferenceElement: PlusLoop
-                                    PsiElement(identifier)('PlusLoop')
-                                TypeArgumentsList
-                                  PsiElement([)('[')
-                                  SimpleType: as
-                                    CodeReferenceElement: as
-                                      PsiElement(identifier)('as')
-                                  PsiElement(,)(',')
-                                  PsiWhiteSpace(' ')
-                                  SimpleType: bs
-                                    CodeReferenceElement: bs
-                                      PsiElement(identifier)('bs')
-                                  PsiElement(,)(',')
-                                  PsiWhiteSpace(' ')
-                                  SimpleType: x
-                                    CodeReferenceElement: x
-                                      PsiElement(identifier)('x')
-                                  PsiElement(])(']')

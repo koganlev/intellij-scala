@@ -394,7 +394,6 @@ ScalaFile
           MatchType: StripSuffix[t, Suffix] match
     case Some[x] => Some[h :: x]
     case _ => None.type
-  case _      => None.type
             ParametrizedType: StripSuffix[t, Suffix]
               SimpleType: StripSuffix
                 CodeReferenceElement: StripSuffix
@@ -461,20 +460,20 @@ ScalaFile
                     PsiElement(identifier)('None')
                   PsiElement(.)('.')
                   PsiElement(type)('type')
-              PsiWhiteSpace('\n  ')
-              ScMatchTypeCaseImpl(match type case)
-                PsiElement(case)('case')
-                PsiWhiteSpace(' ')
-                WildcardType: _
-                  PsiElement(_)('_')
-                PsiWhiteSpace('      ')
-                PsiElement(=>)('=>')
-                PsiWhiteSpace(' ')
-                SimpleType: None.type
-                  CodeReferenceElement: None
-                    PsiElement(identifier)('None')
-                  PsiElement(.)('.')
-                  PsiElement(type)('type')
+        PsiWhiteSpace('\n  ')
+        ScMatchTypeCaseImpl(match type case)
+          PsiElement(case)('case')
+          PsiWhiteSpace(' ')
+          WildcardType: _
+            PsiElement(_)('_')
+          PsiWhiteSpace('      ')
+          PsiElement(=>)('=>')
+          PsiWhiteSpace(' ')
+          SimpleType: None.type
+            CodeReferenceElement: None
+              PsiElement(identifier)('None')
+            PsiElement(.)('.')
+            PsiElement(type)('type')
   PsiWhiteSpace('\n\n')
   ScTrait: TailSwitch
     DocComment
