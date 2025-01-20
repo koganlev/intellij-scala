@@ -13,6 +13,7 @@ import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.openapi.vfs.{VirtualFile, VirtualFileManager}
 import com.intellij.psi.PsiManager
 import org.jetbrains.plugins.scala.extensions.{PathExt, invokeLater}
+import org.jetbrains.plugins.scala.project.template.{DefaultModuleContentEntryFolders, FileExt, ModuleBuilderUtil}
 import org.jetbrains.plugins.scala.util.ScalaPluginUtils
 import org.jetbrains.sbt.Sbt
 
