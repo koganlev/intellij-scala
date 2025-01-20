@@ -1,16 +1,19 @@
 package org.jetbrains.plugins.scala.lang.parser.parsing.builder
 
 import com.intellij.lang.PsiBuilderFactory
+import com.intellij.psi.impl.DebugUtil.psiToString
 import com.intellij.psi.impl.source.DummyHolderFactory
 import com.intellij.psi.impl.source.tree.FileElement
+import org.jetbrains.annotations.Nullable
 import org.jetbrains.plugins.scala.base.SimpleTestCase
 import org.jetbrains.plugins.scala.lang.lexer.ScalaLexer
 import org.jetbrains.plugins.scala.lang.parser.ScalaElementType
 import org.jetbrains.plugins.scala.util.assertions.AssertionMatchers.AssertMatchersExt
 import org.jetbrains.plugins.scala.{NlsString, ScalaLanguage}
+import org.junit.Assert.assertEquals
 
 class ErrorTrackingMarkerTest extends SimpleTestCase {
-  private def checkErrorCount(expectedErrorCount: Int)(f: ScalaPsiBuilder => Unit): Unit = {
+  private def checkErrorCount(expectedErrorCount: Int, @Nullable expectedPsi: String = null)(f: ScalaPsiBuilder => Unit): Unit = {
     val context = parseScalaFile("")
     val holder: FileElement = DummyHolderFactory.createHolder(context.getManager, context).getTreeElement
     val builder: ScalaPsiBuilderImpl = {
@@ -18,16 +21,26 @@ class ErrorTrackingMarkerTest extends SimpleTestCase {
       new ScalaPsiBuilderImpl(delegate, isScala3 = false)
     }
 
-    val marker = builder.mark()
+    val doneMarker = builder.mark()
+    val dropMarker = builder.mark()
     val (errors, _) = builder.countDoneErrorsIn {
       f(builder)
     }
-    marker.drop()
+    dropMarker.drop()
+    doneMarker.done(ScalaElementType.BLOCK)
+
+    val node = builder.getTreeBuilt
 
     errors shouldBe expectedErrorCount
+
+    Option(expectedPsi).foreach { expectedPsiText =>
+      val resultTree = psiToString(node.getPsi, true)
+      assertEquals(expectedPsiText.trim, resultTree.trim)
+    }
   }
 
-  private def someError: String = NlsString.force("")
+  private def someError: String = NlsString.force("someError")
+  private def someError2: String = NlsString.force("someError2")
 
   def testRootError(): Unit = checkErrorCount(1) { builder =>
     builder.error(someError)
@@ -49,12 +62,19 @@ class ErrorTrackingMarkerTest extends SimpleTestCase {
     marker.rollbackTo()
   }
 
-  def testErrorInDoneMarker(): Unit = checkErrorCount(2) { builder =>
-    builder.error(someError)
-
+  def testErrorInDoneMarker(): Unit = checkErrorCount(
+    expectedErrorCount = 1,
+    expectedPsi =
+      """
+        |BlockOfExpressions
+        |  ConstructorInvocation
+        |    PsiErrorElement:someError
+        |      <empty list>
+        |""".stripMargin
+  ) { builder =>
     val marker = builder.mark()
     builder.error(someError)
-    marker.done(ScalaElementType.TYPE)
+    marker.done(ScalaElementType.CONSTRUCTOR)
   }
 
   def testErrorInDoneMarkerWithRollback(): Unit = checkErrorCount(1) { builder =>
@@ -79,10 +99,32 @@ class ErrorTrackingMarkerTest extends SimpleTestCase {
     outer.done(ScalaElementType.TYPE)
   }
 
-  def testErrorOnMarkerAndThenDrop(): Unit = checkErrorCount(1) { builder =>
+  def testErrorOnMarkerAndThenDrop(): Unit = checkErrorCount(
+    expectedErrorCount = 1,
+    expectedPsi =
+      """
+        |BlockOfExpressions
+        |  PsiErrorElement:someError
+        |    <empty list>
+        |""".stripMargin
+  ) { builder =>
+    val marker = builder.mark()
+    marker.error(someError2)  // no
+    builder.error(someError) // yes
+    marker.drop()
+  }
+
+  def testErrorOnMarkerAndThenRollback(): Unit = checkErrorCount(
+    expectedErrorCount = 0,
+    expectedPsi =
+      """
+        |BlockOfExpressions
+        |  <empty list>
+        |""".stripMargin
+  ) { builder =>
     val marker = builder.mark()
     builder.error(someError) // yes
     marker.error(someError)  // no
-    marker.drop()
+    marker.rollbackTo()
   }
 }
