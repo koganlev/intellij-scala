@@ -1850,6 +1850,12 @@ package object extensions {
      * Note: even though IDEA suggests replacing `new String(Files.readAllBytes(path), cs)` with [[Files.readString]],
      *       there are some files that result in [[java.nio.charset.MalformedInputException]] with the latter and are
      *       loaded successfully with the former.
+     *
+     * See [[java.lang.String#String(byte[], java.nio.charset.Charset)]] - always replaces malformed-input and
+     *     unmappable-character sequences with this charset's default replacement string
+     *
+     * See [[java.nio.file.Files#readString(java.nio.file.Path, java.nio.charset.Charset)]] - throws exception
+     *     if malformed or unmappable byte sequence is read
      */
     def readAllBytesToString(charset: Charset = Charset.defaultCharset): String =
       new String(Files.readAllBytes(path), charset)
