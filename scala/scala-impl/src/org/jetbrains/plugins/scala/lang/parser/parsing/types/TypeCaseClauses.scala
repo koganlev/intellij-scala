@@ -4,6 +4,7 @@ import org.jetbrains.plugins.scala.lang.lexer.ScalaTokenTypes
 import org.jetbrains.plugins.scala.lang.parser.ScalaElementType
 import org.jetbrains.plugins.scala.lang.parser.parsing.ParsingRule
 import org.jetbrains.plugins.scala.lang.parser.parsing.builder.ScalaPsiBuilder
+import org.jetbrains.plugins.scala.lang.parser.parsing.expressions.CaseClausesInIndentationRegion
 
 /**
  * TypeCaseClauses ::= TypeCaseClause { TypeCaseClause }
@@ -19,7 +20,7 @@ object TypeCaseClauses extends ParsingRule {
       if (builder.getTokenType == ScalaTokenTypes.tSEMICOLON) {
         builder.advanceLexer()
       }
-      while (TypeCaseClause()) {
+      while (!builder.isOutdentHere && TypeCaseClause()) {
         if (builder.getTokenType == ScalaTokenTypes.tSEMICOLON) {
           builder.advanceLexer()
         }
@@ -28,4 +29,11 @@ object TypeCaseClauses extends ParsingRule {
       true
     }
   }
+}
+
+object TypeCaseClausesInIndentationRegion extends CaseClausesInIndentationRegion {
+  override def allowExprCaseClause: Boolean = false
+
+  override def parseCaseClausesWithoutBraces()(implicit builder: ScalaPsiBuilder): Boolean =
+    TypeCaseClauses()
 }

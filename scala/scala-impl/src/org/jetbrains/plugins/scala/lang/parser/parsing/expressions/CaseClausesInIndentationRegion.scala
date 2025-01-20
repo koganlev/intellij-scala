@@ -15,6 +15,8 @@ abstract class CaseClausesInIndentationRegion extends ParsingRule {
    */
   def allowExprCaseClause: Boolean
 
+  def parseCaseClausesWithoutBraces()(implicit builder: ScalaPsiBuilder): Boolean
+
   override def parse(implicit builder: ScalaPsiBuilder): Boolean = {
     if (!builder.isScala3  || builder.getTokenType != ScalaTokenTypes.kCASE) {
       return false
@@ -30,7 +32,7 @@ abstract class CaseClausesInIndentationRegion extends ParsingRule {
     // we are at `case`
     if (builder.isScala3IndentationBasedSyntaxEnabled && builder.hasPrecedingIndentation && !builder.isOutdentHere) {
       builder.withIndentationRegion(builder.newCaseClausesRegionHere.orElse(builder.newBracelessIndentationRegionHere)) {
-        CaseClausesWithoutBraces()
+        parseCaseClausesWithoutBraces()
       }
     } else if (allowExprCaseClause) {
       // Something like
@@ -44,8 +46,16 @@ abstract class CaseClausesInIndentationRegion extends ParsingRule {
 
 object CaseClausesInIndentationRegion extends CaseClausesInIndentationRegion {
   override def allowExprCaseClause: Boolean = false
+
+  def parseCaseClausesWithoutBraces()(implicit builder: ScalaPsiBuilder): Boolean = {
+    CaseClausesWithoutBraces()
+  }
 }
 
 object CaseClausesOrExprCaseClause extends CaseClausesInIndentationRegion {
   override def allowExprCaseClause: Boolean = true
+
+  def parseCaseClausesWithoutBraces()(implicit builder: ScalaPsiBuilder): Boolean = {
+    CaseClausesWithoutBraces()
+  }
 }

@@ -719,4 +719,294 @@ class MatchParserTest extends SimpleScala3ParserTestBase {
       |  PsiWhiteSpace('\n')
       |""".stripMargin
   )
+
+  // SCL-23439
+  def testCaseClassAfterCase(): Unit = checkTree(
+    """object ExampleOk:
+      |  aExpr match
+      |    case aPattern => ???
+      |    case aPattern => ???
+      |  case class A()
+      |
+      |  val b = bExpr match
+      |    case bPattern => ???
+      |    case bPattern => ???
+      |  case class B()
+      |
+      |  type C = cType match
+      |    case c => c
+      |    case c => c
+      |  case class C()
+      |
+      |  type D =
+      |    cType match
+      |    case d => d
+      |    case d => d
+      |  case class D()
+      |""".stripMargin,
+    """
+      |ScalaFile
+      |  ScObject: ExampleOk
+      |    AnnotationsList
+      |      <empty list>
+      |    Modifiers
+      |      <empty list>
+      |    PsiElement(object)('object')
+      |    PsiWhiteSpace(' ')
+      |    PsiElement(identifier)('ExampleOk')
+      |    ExtendsBlock
+      |      ScTemplateBody
+      |        PsiElement(:)(':')
+      |        PsiWhiteSpace('\n  ')
+      |        MatchStatement
+      |          ReferenceExpression: aExpr
+      |            PsiElement(identifier)('aExpr')
+      |          PsiWhiteSpace(' ')
+      |          PsiElement(match)('match')
+      |          PsiWhiteSpace('\n    ')
+      |          CaseClauses
+      |            CaseClause
+      |              PsiElement(case)('case')
+      |              PsiWhiteSpace(' ')
+      |              ReferencePattern: aPattern
+      |                PsiElement(identifier)('aPattern')
+      |              PsiWhiteSpace(' ')
+      |              PsiElement(=>)('=>')
+      |              PsiWhiteSpace(' ')
+      |              BlockOfExpressions
+      |                ReferenceExpression: ???
+      |                  PsiElement(identifier)('???')
+      |            PsiWhiteSpace('\n    ')
+      |            CaseClause
+      |              PsiElement(case)('case')
+      |              PsiWhiteSpace(' ')
+      |              ReferencePattern: aPattern
+      |                PsiElement(identifier)('aPattern')
+      |              PsiWhiteSpace(' ')
+      |              PsiElement(=>)('=>')
+      |              PsiWhiteSpace(' ')
+      |              BlockOfExpressions
+      |                ReferenceExpression: ???
+      |                  PsiElement(identifier)('???')
+      |        PsiWhiteSpace('\n  ')
+      |        ScClass: A
+      |          AnnotationsList
+      |            <empty list>
+      |          Modifiers
+      |            PsiElement(case)('case')
+      |          PsiWhiteSpace(' ')
+      |          PsiElement(class)('class')
+      |          PsiWhiteSpace(' ')
+      |          PsiElement(identifier)('A')
+      |          PrimaryConstructor
+      |            AnnotationsList
+      |              <empty list>
+      |            Modifiers
+      |              <empty list>
+      |            Parameters
+      |              ParametersClause
+      |                PsiElement(()('(')
+      |                PsiElement())(')')
+      |          ExtendsBlock
+      |            <empty list>
+      |        PsiWhiteSpace('\n\n  ')
+      |        ScPatternDefinition: b
+      |          AnnotationsList
+      |            <empty list>
+      |          Modifiers
+      |            <empty list>
+      |          PsiElement(val)('val')
+      |          PsiWhiteSpace(' ')
+      |          ListOfPatterns
+      |            ReferencePattern: b
+      |              PsiElement(identifier)('b')
+      |          PsiWhiteSpace(' ')
+      |          PsiElement(=)('=')
+      |          PsiWhiteSpace(' ')
+      |          MatchStatement
+      |            ReferenceExpression: bExpr
+      |              PsiElement(identifier)('bExpr')
+      |            PsiWhiteSpace(' ')
+      |            PsiElement(match)('match')
+      |            PsiWhiteSpace('\n    ')
+      |            CaseClauses
+      |              CaseClause
+      |                PsiElement(case)('case')
+      |                PsiWhiteSpace(' ')
+      |                ReferencePattern: bPattern
+      |                  PsiElement(identifier)('bPattern')
+      |                PsiWhiteSpace(' ')
+      |                PsiElement(=>)('=>')
+      |                PsiWhiteSpace(' ')
+      |                BlockOfExpressions
+      |                  ReferenceExpression: ???
+      |                    PsiElement(identifier)('???')
+      |              PsiWhiteSpace('\n    ')
+      |              CaseClause
+      |                PsiElement(case)('case')
+      |                PsiWhiteSpace(' ')
+      |                ReferencePattern: bPattern
+      |                  PsiElement(identifier)('bPattern')
+      |                PsiWhiteSpace(' ')
+      |                PsiElement(=>)('=>')
+      |                PsiWhiteSpace(' ')
+      |                BlockOfExpressions
+      |                  ReferenceExpression: ???
+      |                    PsiElement(identifier)('???')
+      |        PsiWhiteSpace('\n  ')
+      |        ScClass: B
+      |          AnnotationsList
+      |            <empty list>
+      |          Modifiers
+      |            PsiElement(case)('case')
+      |          PsiWhiteSpace(' ')
+      |          PsiElement(class)('class')
+      |          PsiWhiteSpace(' ')
+      |          PsiElement(identifier)('B')
+      |          PrimaryConstructor
+      |            AnnotationsList
+      |              <empty list>
+      |            Modifiers
+      |              <empty list>
+      |            Parameters
+      |              ParametersClause
+      |                PsiElement(()('(')
+      |                PsiElement())(')')
+      |          ExtendsBlock
+      |            <empty list>
+      |        PsiWhiteSpace('\n\n  ')
+      |        ScTypeAliasDefinition: C
+      |          AnnotationsList
+      |            <empty list>
+      |          Modifiers
+      |            <empty list>
+      |          PsiElement(type)('type')
+      |          PsiWhiteSpace(' ')
+      |          PsiElement(identifier)('C')
+      |          PsiWhiteSpace(' ')
+      |          PsiElement(=)('=')
+      |          PsiWhiteSpace(' ')
+      |          MatchType: cType match
+      |    case c => c
+      |    case c => c
+      |            SimpleType: cType
+      |              CodeReferenceElement: cType
+      |                PsiElement(identifier)('cType')
+      |            PsiWhiteSpace(' ')
+      |            PsiElement(match)('match')
+      |            PsiWhiteSpace('\n    ')
+      |            ScMatchTypeCasesImpl(match type cases)
+      |              ScMatchTypeCaseImpl(match type case)
+      |                PsiElement(case)('case')
+      |                PsiWhiteSpace(' ')
+      |                TypeVariable: c
+      |                  PsiElement(identifier)('c')
+      |                PsiWhiteSpace(' ')
+      |                PsiElement(=>)('=>')
+      |                PsiWhiteSpace(' ')
+      |                SimpleType: c
+      |                  CodeReferenceElement: c
+      |                    PsiElement(identifier)('c')
+      |              PsiWhiteSpace('\n    ')
+      |              ScMatchTypeCaseImpl(match type case)
+      |                PsiElement(case)('case')
+      |                PsiWhiteSpace(' ')
+      |                TypeVariable: c
+      |                  PsiElement(identifier)('c')
+      |                PsiWhiteSpace(' ')
+      |                PsiElement(=>)('=>')
+      |                PsiWhiteSpace(' ')
+      |                SimpleType: c
+      |                  CodeReferenceElement: c
+      |                    PsiElement(identifier)('c')
+      |        PsiWhiteSpace('\n  ')
+      |        ScClass: C
+      |          AnnotationsList
+      |            <empty list>
+      |          Modifiers
+      |            PsiElement(case)('case')
+      |          PsiWhiteSpace(' ')
+      |          PsiElement(class)('class')
+      |          PsiWhiteSpace(' ')
+      |          PsiElement(identifier)('C')
+      |          PrimaryConstructor
+      |            AnnotationsList
+      |              <empty list>
+      |            Modifiers
+      |              <empty list>
+      |            Parameters
+      |              ParametersClause
+      |                PsiElement(()('(')
+      |                PsiElement())(')')
+      |          ExtendsBlock
+      |            <empty list>
+      |        PsiWhiteSpace('\n\n  ')
+      |        ScTypeAliasDefinition: D
+      |          AnnotationsList
+      |            <empty list>
+      |          Modifiers
+      |            <empty list>
+      |          PsiElement(type)('type')
+      |          PsiWhiteSpace(' ')
+      |          PsiElement(identifier)('D')
+      |          PsiWhiteSpace(' ')
+      |          PsiElement(=)('=')
+      |          PsiWhiteSpace('\n    ')
+      |          MatchType: cType match
+      |    case d => d
+      |    case d => d
+      |            SimpleType: cType
+      |              CodeReferenceElement: cType
+      |                PsiElement(identifier)('cType')
+      |            PsiWhiteSpace(' ')
+      |            PsiElement(match)('match')
+      |            PsiWhiteSpace('\n    ')
+      |            ScMatchTypeCasesImpl(match type cases)
+      |              ScMatchTypeCaseImpl(match type case)
+      |                PsiElement(case)('case')
+      |                PsiWhiteSpace(' ')
+      |                TypeVariable: d
+      |                  PsiElement(identifier)('d')
+      |                PsiWhiteSpace(' ')
+      |                PsiElement(=>)('=>')
+      |                PsiWhiteSpace(' ')
+      |                SimpleType: d
+      |                  CodeReferenceElement: d
+      |                    PsiElement(identifier)('d')
+      |              PsiWhiteSpace('\n    ')
+      |              ScMatchTypeCaseImpl(match type case)
+      |                PsiElement(case)('case')
+      |                PsiWhiteSpace(' ')
+      |                TypeVariable: d
+      |                  PsiElement(identifier)('d')
+      |                PsiWhiteSpace(' ')
+      |                PsiElement(=>)('=>')
+      |                PsiWhiteSpace(' ')
+      |                SimpleType: d
+      |                  CodeReferenceElement: d
+      |                    PsiElement(identifier)('d')
+      |        PsiWhiteSpace('\n  ')
+      |        ScClass: D
+      |          AnnotationsList
+      |            <empty list>
+      |          Modifiers
+      |            PsiElement(case)('case')
+      |          PsiWhiteSpace(' ')
+      |          PsiElement(class)('class')
+      |          PsiWhiteSpace(' ')
+      |          PsiElement(identifier)('D')
+      |          PrimaryConstructor
+      |            AnnotationsList
+      |              <empty list>
+      |            Modifiers
+      |              <empty list>
+      |            Parameters
+      |              ParametersClause
+      |                PsiElement(()('(')
+      |                PsiElement())(')')
+      |          ExtendsBlock
+      |            <empty list>
+      |  PsiWhiteSpace('\n')
+      |""".stripMargin
+  )
 }

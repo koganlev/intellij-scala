@@ -24,11 +24,7 @@ object MatchTypeSuffix extends ParsingRule {
         builder.restoreNewlinesState()
       case InScala3(ScalaTokenTypes.kCASE) =>
 
-        if (!builder.isOutdentHere) {
-          builder.withIndentationRegion(builder.newBracelessIndentationRegionHere) {
-            TypeCaseClauses()
-          }
-        } else {
+        if (!TypeCaseClausesInIndentationRegion()) {
           builder.error(ScalaBundle.message("expected.case.on.a.new.line"))
         }
       case _ =>
