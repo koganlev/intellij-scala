@@ -50,7 +50,12 @@ object ScalaDfaTypeUtils {
     case char: ScCharLiteral => DfTypes.intValue(char.getValue.toInt)
     case string: ScStringLiteral =>
       string.getNonValueType() match {
-        case Right(ty) => DfTypes.constant(string.getValue, scTypeToDfType(ty))
+        case Right(ty) =>
+          scTypeToDfType(ty) match {
+            case refType: DfReferenceType => DfTypes.constant(string.getValue, refType)
+            case ty => ty
+          }
+
         case Left(_) => DfType.TOP
       }
     case _ => DfType.TOP
