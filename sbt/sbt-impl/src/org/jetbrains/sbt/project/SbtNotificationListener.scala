@@ -15,22 +15,24 @@ class SbtNotificationListener extends ExternalSystemTaskNotificationListener {
     }
   }
 
-  override def onStart(id: ExternalSystemTaskId, workingDir: String): Unit = {
+  override def onStart(projectPath: String, id: ExternalSystemTaskId): Unit = {
     if (id.getType != ExternalSystemTaskType.RESOLVE_PROJECT) return
     val project = id.findProject()
     if (project == null) return
 
     val projectConfigService = ScalaProjectConfigurationService.getInstance(project)
+    //noinspection ApiStatus
     projectConfigService.onSyncStarted()
     projectConfigService.refreshEditorNotifications()
   }
 
-  override def onEnd(id: ExternalSystemTaskId): Unit = {
+  override def onEnd(projectPath: String, id: ExternalSystemTaskId): Unit = {
     if (id.getType != ExternalSystemTaskType.RESOLVE_PROJECT) return
     val project = id.findProject()
     if (project == null) return
 
     val projectConfigService = ScalaProjectConfigurationService.getInstance(project)
+    //noinspection ApiStatus
     projectConfigService.onSyncEnded()
     projectConfigService.refreshEditorNotifications()
   }
