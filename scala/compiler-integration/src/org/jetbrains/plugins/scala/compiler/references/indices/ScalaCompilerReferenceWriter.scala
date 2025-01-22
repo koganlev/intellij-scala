@@ -5,14 +5,14 @@ import org.jetbrains.jps.backwardRefs.CompilerReferenceWriter
 import org.jetbrains.jps.backwardRefs.index.CompilerReferenceIndex
 import org.jetbrains.plugins.scala.compiler.references.bytecode.CompiledScalaFile
 
-import java.io.File
+import java.nio.file.Path
 
 private[references] class ScalaCompilerReferenceWriter protected (
   index: ScalaCompilerReferenceIndex
 ) extends CompilerReferenceWriter[CompiledScalaFile](index) {
 
   def close(shouldClearIndex: Boolean): Unit = {
-    if (shouldClearIndex) FileUtil.delete(index.getIndicesDir)
+    if (shouldClearIndex) FileUtil.delete(index.getIndexDir)
     super.close()
   }
 
@@ -30,7 +30,7 @@ private[references] class ScalaCompilerReferenceWriter protected (
 }
 
 private object ScalaCompilerReferenceWriter {
-  def apply(indexDir: File, expectedVersion: Int, isRebuild: Boolean): Option[ScalaCompilerReferenceWriter] = {
+  def apply(indexDir: Path, expectedVersion: Int, isRebuild: Boolean): Option[ScalaCompilerReferenceWriter] = {
     if (CompilerReferenceIndex.versionDiffers(indexDir, expectedVersion)) {
       CompilerReferenceIndex.removeIndexFiles(indexDir)
 

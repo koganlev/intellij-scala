@@ -10,12 +10,13 @@ import com.intellij.util.indexing.ValueContainer.ContainerAction
 import org.jetbrains.jps.backwardRefs.CompilerRef
 import org.jetbrains.plugins.scala.compiler.references.UsagesInFile
 
-import java.io.{File, IOException}
+import java.io.IOException
+import java.nio.file.Path
 import java.util
 import scala.annotation.tailrec
 
 private[references] class ScalaCompilerReferenceReader private[references](
-  buildDir: File
+  buildDir: Path
 ) extends CompilerReferenceReader[ScalaCompilerReferenceIndex](
   buildDir,
   new ScalaCompilerReferenceIndex(buildDir, true)
@@ -28,7 +29,7 @@ private[references] class ScalaCompilerReferenceReader private[references](
   private def findFileByEnumeratorId(id: Int): Option[VirtualFile] = {
     val path = myIndex.getFilePathEnumerator.valueOf(id)
 
-    try Option(VfsUtil.findFileByIoFile(new File(path), false))
+    try Option(VfsUtil.findFile(Path.of(path), false))
     catch { case e: IOException => throw new RuntimeException(e) }
   }
 

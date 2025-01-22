@@ -86,7 +86,7 @@ private object Jps {
         )
       } finally {
         // Save the FS state data to disk, so that we do not corrupt the IDEA JPS process expected data.
-        saveData(fsState, descriptor, descriptor.dataManager.getDataPaths.getDataStorageRoot)
+        saveData(fsState, descriptor, descriptor.dataManager.getDataPaths.getDataStorageDir.toFile) // TODO: SCL-23310
         client.compilationEnd(compiledFiles)
       }
     } finally {
