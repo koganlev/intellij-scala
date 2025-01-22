@@ -170,6 +170,40 @@ final class SbtProjectStructureImportingTest extends SbtProjectStructureImportin
     }
   )
 
+  /**
+   * Open cross-compiled Scala 3 / Scala 2 projects as Scala 2, #SCL-19573
+   */
+  def testCrossCompiledIsScala2(): Unit = runTest(
+    new project("root") {
+      modules := Seq(
+        new module("root"),
+        new module("root.subproject1") {
+          libraryDependencies := ProjectStructureTestUtils.expectedScalaLibraryWithScalaSdkForSbt(useEnv = true)("2.13.14")
+        }, new module("root.subproject2") {
+          libraryDependencies := ProjectStructureTestUtils.expectedScalaLibraryWithScalaSdkForSbt(useEnv = true)("2.13.14")
+        })
+    }
+  )
+
+  /**
+   * "Open cross-compiled Scala 3 / Scala 2 projects as Scala 2" only applies if all modules are compiled both to Scala 3 and Scala 2, #SCL-22619
+   */
+  def testCrossCompiledPart(): Unit = runTest(
+    new project("root") {
+      private val scala3libraries: Seq[library] =
+        ProjectStructureTestUtils.expectedScalaLibraryWithScalaSdkForSbt(useEnv = true)("3.0.2") :+
+          ProjectStructureTestUtils.expectedScalaLibraryForSbt(useEnv = true)("2.13.6") // For Scala 3 SDK
+
+      modules := Seq(
+        new module("root"),
+        new module("root.subproject1") {
+          libraryDependencies := scala3libraries
+        }, new module("root.subproject2") {
+          libraryDependencies := scala3libraries
+        })
+    }
+  )
+
   def testUnmanagedDependency(): Unit = runTest(
     new project("unmanagedDependency") {
       val scalaLibraries: Seq[library] = ProjectStructureTestUtils.expectedScalaLibraryWithScalaSdkForSbt(useEnv = true)("2.13.6")
