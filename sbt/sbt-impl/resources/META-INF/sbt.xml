@@ -12,9 +12,13 @@
         <sbt.sbtVersionProvider implementation="org.jetbrains.sbt.project.SbtSbtVersionProvider"/>
     </extensions>
 
+    <!--suppress PluginXmlValidity -->
     <projectListeners>
         <listener class="org.jetbrains.sbt.project.UpgradeConfigurationImportListener"
                   topic="com.intellij.openapi.externalSystem.service.project.manage.ProjectDataImportListener"/>
+
+        <listener topic="com.intellij.openapi.roots.ModuleRootListener"
+                  class="org.jetbrains.sbt.project.SbtProjectImportStateModuleRootListener"/>
     </projectListeners>
 
     <extensions defaultExtensionNs="com.intellij">

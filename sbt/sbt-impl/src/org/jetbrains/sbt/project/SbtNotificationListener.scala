@@ -35,6 +35,7 @@ class SbtNotificationListener extends ExternalSystemTaskNotificationListener {
     //noinspection ApiStatus
     projectConfigService.onSyncEnded()
     projectConfigService.refreshEditorNotifications()
+    SbtProjectImportStateService.instance(project).reset()
   }
 
   private def processOutput(text: String): Unit = {
