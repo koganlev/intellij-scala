@@ -44,12 +44,21 @@ final class SbtProblemHighlightFilter extends ProblemHighlightFilter {
       //
       //But `file.module` will anyway resolve to a correct `build` module
       val shouldHighlight =
-        isInRootOfContentRoots(file) && file.module.exists(_.isBuildModule) ||
+        SbtProblemHighlightFilter.shouldHighlightSbtFile(file) ||
           ApplicationManager.getApplication.isUnitTestMode && SbtHighlightingUtil.isHighlightingOutsideBuildModuleEnabled(file.getProject)
       shouldHighlight && isImported(file.getProject)
     case _ =>
       true
   }
+
+  private def isImported(project: Project): Boolean =
+    SbtProjectImportStateService.instance(project).isImported
+}
+
+private[sbt] object SbtProblemHighlightFilter {
+
+  def shouldHighlightSbtFile(sbtFile: SbtFile): Boolean =
+    isInRootOfContentRoots(sbtFile) && sbtFile.module.exists(_.isBuildModule)
 
   /** Some checks are similar to [[com.intellij.openapi.roots.JavaProjectRootsUtil.isOutsideJavaSourceRoot]] */
   private def isInRootOfContentRoots(psiFile: PsiFile): Boolean = {
@@ -75,7 +84,4 @@ final class SbtProblemHighlightFilter extends ProblemHighlightFilter {
 
     contentRoot == fileParent.getVirtualFile
   }
-
-  private def isImported(project: Project): Boolean =
-    SbtProjectImportStateService.instance(project).isImported
 }

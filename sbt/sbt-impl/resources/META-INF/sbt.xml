@@ -170,6 +170,8 @@
 
         <problemHighlightFilter implementation="org.jetbrains.sbt.codeInsight.daemon.SbtProblemHighlightFilter"/>
 
+        <editorNotificationProvider implementation="org.jetbrains.sbt.project.SbtProjectImportStateNotificationProvider"/>
+
         <postStartupActivity implementation="org.jetbrains.sbt.project.SbtProjectManagerListener" />
     </extensions>
 
