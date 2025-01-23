@@ -3,7 +3,7 @@ package org.jetbrains.sbt.project
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.module.{Module, ModuleManager}
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.roots.{LibraryOrderEntry, ModuleRootManager, OrderRootType}
+import com.intellij.openapi.roots.{DependencyScope, LibraryOrderEntry, ModuleRootManager, OrderRootType}
 import org.jetbrains.plugins.scala.project.ModuleExt
 import org.jetbrains.sbt.settings.SbtSettings
 
@@ -56,11 +56,9 @@ private[sbt] final class SbtProjectImportStateService(project: Project) {
 
   private def isSbtLibrary(library: LibraryOrderEntry, version: String): Boolean = {
     def expectedName = library.getLibraryName == s"sbt: sbt-$version"
-    def expectedJar = library.getRootFiles(OrderRootType.CLASSES).exists { vf =>
-      val canonicalPath = vf.getCanonicalPath
-      (canonicalPath ne null) && canonicalPath.contains(s"org.scala-sbt/sbt/$version/sbt-$version.jar")
-    }
-    expectedName && expectedJar
+    def expectedDependencyScope = library.getScope == DependencyScope.PROVIDED
+    def expectedJars = library.getRootFiles(OrderRootType.CLASSES).nonEmpty
+    expectedName && expectedDependencyScope && expectedJars
   }
 }
 
