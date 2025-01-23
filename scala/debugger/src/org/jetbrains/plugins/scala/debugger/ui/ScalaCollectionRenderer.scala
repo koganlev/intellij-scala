@@ -117,7 +117,7 @@ class ScalaCollectionRenderer extends ScalaClassRenderer {
     }
 }
 
-private object ScalaCollectionRenderer {
+private[debugger] object ScalaCollectionRenderer {
   private def isView(ct: ClassType): Boolean =
     DebuggerUtils.instanceOf(ct, "scala.collection.View") ||
       DebuggerUtils.instanceOf(ct, "scala.collection.IterableView")
