@@ -73,7 +73,6 @@ object UndefinedType {
   def apply(psiTypeParameter: PsiTypeParameter): UndefinedType =
     FromTypeParameter(TypeParameter(psiTypeParameter))
 
-  //only one overload can have default arguments :(
   def apply(psiTypeParameter: PsiTypeParameter, level: Int): UndefinedType =
     FromTypeParameter(TypeParameter(psiTypeParameter), level)
 

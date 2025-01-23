@@ -83,7 +83,7 @@ class BasicTest extends ApplicabilityTestBase {
       case MissedValueParameter(Parameter("a")) :: MissedValueParameter(Parameter("b")) :: Nil =>
     }
   }
-  
+
   def testTypeMismatch(): Unit = {
     assertProblems("(a: A)", "(B)") {
       case TypeMismatch(Expression("B"), Type("A")) :: Nil =>

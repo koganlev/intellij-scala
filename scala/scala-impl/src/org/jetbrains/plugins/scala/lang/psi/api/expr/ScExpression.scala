@@ -207,11 +207,11 @@ object ScExpression {
 
     private def project = elementScope.projectContext
 
-    def contextFunctionParameters: Seq[LightContextFunctionParameter] =
+    def contextFunctionParameters: Seq[Seq[LightContextFunctionParameter]] =
       expr match {
         case fun: ScFunctionExpr if fun.isContext => Seq.empty
         case _ =>
-          expectedType().toSeq.flatMap {
+          expectedType(fromUnderscore = false).toSeq.flatMap {
             case p: ParameterizedType => p.contextParameters
             case _                    => Seq.empty
           }
@@ -225,11 +225,25 @@ object ScExpression {
 
     def expectedTypes(fromUnderscore: Boolean = true): Seq[ScType] = expectedTypesEx(fromUnderscore).map(_._1).toSeq
 
-    def expectedTypesEx(fromUnderscore: Boolean = true): Array[ParameterType] = cachedWithRecursionGuard("expectedTypesEx", expr, Array.empty[ParameterType], BlockModificationTracker(expr), Tuple1(fromUnderscore)) {
-      ExpectedTypes.instance().expectedExprTypes(expr, fromUnderscore = fromUnderscore)
-    }
+    def expectedTypesEx(fromUnderscore: Boolean = true): Array[ParameterType] =
+      cachedWithRecursionGuard(
+        "expectedTypesEx",
+        expr,
+        Array.empty[ParameterType],
+        BlockModificationTracker(expr),
+        Tuple1(fromUnderscore)
+      ) {
+        ExpectedTypes.instance().expectedExprTypes(expr, fromUnderscore = fromUnderscore)
+      }
 
-    def smartExpectedType(fromUnderscore: Boolean = true): Option[ScType] = cachedWithRecursionGuard("smartExpectedType", expr, Option.empty[ScType], BlockModificationTracker(expr), Tuple1(fromUnderscore)) {
+    def smartExpectedType(fromUnderscore: Boolean = true): Option[ScType] =
+      cachedWithRecursionGuard(
+        "smartExpectedType",
+        expr,
+        Option.empty[ScType],
+        BlockModificationTracker(expr),
+        Tuple1(fromUnderscore)
+      ) {
       ExpectedTypes.instance().smartExpectedType(expr, fromUnderscore)
     }
 
@@ -449,8 +463,10 @@ object ScExpression {
                 }
               })
 
-              val actualParamTypes = expr.contextFunctionParameters.map(_.contextFunctionParameterType.getOrAny)
-              ContextFunctionType((scType, actualParamTypes))
+              val actualParamTypes = expr.contextFunctionParameters.map(_.map(_.contextFunctionParameterType.getOrAny))
+              actualParamTypes.foldRight(scType) {
+                case (params, acc) => ContextFunctionType(acc, params)
+              }
             case _ => scType
           }
     }

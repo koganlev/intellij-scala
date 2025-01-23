@@ -13,7 +13,7 @@ import org.jetbrains.plugins.scala.lang.psi.ScalaPsiUtil._
 import org.jetbrains.plugins.scala.lang.psi.api.ScPackageLike
 import org.jetbrains.plugins.scala.lang.psi.api.base.ScFieldId
 import org.jetbrains.plugins.scala.lang.psi.api.base.patterns.ScBindingPattern
-import org.jetbrains.plugins.scala.lang.psi.api.expr.ScExpression
+import org.jetbrains.plugins.scala.lang.psi.api.expr.{ScBlockExpr, ScExpression}
 import org.jetbrains.plugins.scala.lang.psi.api.statements.params.ScParameter
 import org.jetbrains.plugins.scala.lang.psi.api.statements.{ScExtensionBody, ScFunction, ScTypeAlias, ScTypeAliasDeclaration, ScTypeAliasDefinition}
 import org.jetbrains.plugins.scala.lang.psi.api.toplevel.templates.{ScExtendsBlock, ScTemplateBody}
@@ -114,7 +114,11 @@ abstract class ImplicitProcessor(override protected val getPlace: PsiElement,
           element match {
             case expr: ScExpression =>
               isScala3 &&
-                !expr.contextFunctionParameters.forall(this.execute(_, ScalaResolveState.empty))
+                !expr.contextFunctionParameters.forall(
+                  _.forall(
+                    this.execute(_, ScalaResolveState.empty)
+                  )
+                )
             case _ => false
           }
 

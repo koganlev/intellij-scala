@@ -113,4 +113,43 @@ class ContextFunctionHighlightingTest extends ScalaLightCodeInsightFixtureTestCa
       |  foo.sorted // valid syntax, highlighting fails
       |}""".stripMargin
   )
+
+  def testSCL23387(): Unit = doTest(
+    """
+      |object A {
+      |  trait Context
+      |
+      |  extension [From, To](from: From) {
+      |    def focus(lambda: (Context ?=> From => To)): To = ???
+      |  }
+      |
+      |  object Test {
+      |    def xxxx: Int = ???
+      |  }
+      |
+      |  val z: Int = Test.focus(test => test.xxxx) // does not work
+      |  val zzz = Test.focus(_.xxxx) // does not work
+      |  val zz = Test.focus(_ ?=> _.xxxx) // works
+      |}
+      |""".stripMargin
+  )
+
+  def testContextFunctionSynthesisNested(): Unit = doTest(
+    """
+      |object A {
+      |  def blub(x: Int ?=> Double ?=> String => Boolean) = ???
+      |  blub(s2 => {
+      |    implicitly[Int]
+      |    implicitly[Double]
+      |    false
+      |  })
+      |
+      |  trait Foo
+      |  val xxx: Foo ?=> String => Unit = s => {
+      |    implicitly[Foo]
+      |    ()
+      |  }
+      |}
+      |""".stripMargin
+  )
 }

@@ -23,7 +23,7 @@ class NamedTest extends ApplicabilityTestBase {
     assertProblems("(a: A, b: B)", "(A, b = B)") {
       case Nil =>
     }
-    //TODO compiler allows such calls, they seem to be OK 
+    //TODO compiler allows such calls, they seem to be OK
     //    assertProblems("(a: A, b: B)", "(a = A, b)") {
     //      case Nil =>
     //    }
@@ -67,7 +67,7 @@ class NamedTest extends ApplicabilityTestBase {
               ParameterSpecifiedMultipleTimes(Assignment("b = null")) :: Nil =>
     }
   }
-  
+
   def testUnresolvedParameter(): Unit = {
     assertProblems("()", "(a = A)") {
       case ExcessArgument(Assignment("a = A")) :: Nil =>
@@ -80,7 +80,7 @@ class NamedTest extends ApplicabilityTestBase {
       case ExcessArgument(Assignment("b = B")) :: Nil =>
     }
   }
-  
+
   def testNamedUnresolvedDuplicates(): Unit = {
     assertProblems("(a: A)", "(b = A, b = null)") {
       case ParameterSpecifiedMultipleTimes(Assignment("b = A")) ::
@@ -96,7 +96,7 @@ class NamedTest extends ApplicabilityTestBase {
       case DoesNotTakeParameters() :: Nil =>
     }
   }*/
-  
+
   def testTooManyArguments(): Unit = {
     assertProblems("(a: A)", "(A, a = A)") {
       case ExcessArgument(Expression("a = A")) :: Nil =>
@@ -108,11 +108,11 @@ class NamedTest extends ApplicabilityTestBase {
       case ExcessArgument(Expression("b = B")) :: Nil =>
     }
     assertProblems("(a: A, b: B)", "(A, B, a = A, b = B)") {
-      case ExcessArgument(Expression("a = A")) :: 
+      case ExcessArgument(Expression("a = A")) ::
               ExcessArgument(Expression("b = B")) :: Nil =>
     }
-  }  
-  
+  }
+
   def testTypeMismatch(): Unit = {
     assertProblems("(a: A)", "(a = B)") {
       case TypeMismatch(Expression("B"), Type("A")) :: Nil =>

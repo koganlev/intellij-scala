@@ -18,6 +18,7 @@ import org.jetbrains.plugins.scala.project.{ProjectContext, _}
 import org.jetbrains.plugins.scala.util.ScEquivalenceUtil.areClassesEquivalent
 import org.jetbrains.plugins.scala.util.{CommonQualifiedNames, SAMUtil}
 
+import scala.annotation.tailrec
 import scala.util.control.NoStackTrace
 
 package object types {
@@ -406,10 +407,11 @@ package object types {
     import FunctionTypeMarker._
 
     def unapply(tpe: ScType): Option[(FunctionTypeMarker, ScType, Seq[ScType])] = tpe match {
-      case FunctionType(retTpe, paramTpes)       => (FunctionN, retTpe, paramTpes).toOption
-      case PartialFunctionType(retTpe, paramTpe) => (PF, retTpe, Seq(paramTpe)).toOption
-      case ScAbstractType(_, _, upper)           => unapply(upper)
-      case tpe if place.isSAMEnabled             =>
+      case FunctionType(retTpe, paramTpes)        => (FunctionN, retTpe, paramTpes).toOption
+      case ContextFunctionType(retTpe, paramTpes) => (ContextFunctionN, retTpe, paramTpes).toOption
+      case PartialFunctionType(retTpe, paramTpe)  => (PF, retTpe, Seq(paramTpe)).toOption
+      case ScAbstractType(_, _, upper)            => unapply(upper)
+      case tpe if place.isSAMEnabled              =>
         for {
           (_, retTpe, paramTpes) <- SAMUtil.toSAMType(tpe, place).flatMap(unapply)
           cls                    <- tpe.extractClass
@@ -418,16 +420,26 @@ package object types {
     }
   }
 
+  @tailrec
+  def unwrapContextFunctionType(tp: ScType, recursively: Boolean = true): ScType = tp match {
+    case ContextFunctionType(retTpe, _) =>
+      if (recursively) unwrapContextFunctionType(retTpe)
+      else             retTpe
+    case other => other
+  }
+
   sealed trait FunctionTypeMarker
   object FunctionTypeMarker {
     case object FunctionN         extends FunctionTypeMarker
+    case object ContextFunctionN  extends FunctionTypeMarker
     case object PF                extends FunctionTypeMarker
     case class SAM(cls: PsiClass) extends FunctionTypeMarker
 
     private[this] def priority(marker: FunctionTypeMarker): Int = marker match {
-      case PF        => 2
-      case FunctionN => 1
-      case _: SAM    => 0
+      case PF               => 2
+      case FunctionN        => 1
+      case ContextFunctionN => 1
+      case _: SAM           => 0
     }
 
     implicit val markerOrdering: Ordering[FunctionTypeMarker] = Ordering.by(priority)

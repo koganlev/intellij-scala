@@ -21,7 +21,7 @@ class DefaultTest extends ApplicabilityTestBase {
       case Nil =>
     }
   }
-  
+
   def testMix(): Unit = {
     assertProblems("(a: A, b: B = null)", "(A)") {
       case Nil =>
@@ -33,7 +33,7 @@ class DefaultTest extends ApplicabilityTestBase {
       case Nil =>
     }
   }
-  
+
   def testTooManyArguments(): Unit = {
     assertProblems("(a: A = null)", "(A, B)") {
       case ExcessArgument(Expression("B")) :: Nil =>
@@ -55,7 +55,7 @@ class DefaultTest extends ApplicabilityTestBase {
       case Nil =>
     }
   }
-  
+
   def testMissedParameter(): Unit = {
     assertProblems("(a: A, b: B = null)", "()") {
       case MissedValueParameter(Parameter("a")) :: Nil =>
@@ -82,7 +82,7 @@ class DefaultTest extends ApplicabilityTestBase {
       case MissedValueParameter(Parameter("c")) :: Nil =>
     }
   }
-  
+
   def testTypeMismatch(): Unit = {
     assertProblems("(a: A = null)", "(B)") {
       case TypeMismatch(Expression("B"), Type("A")) :: Nil =>

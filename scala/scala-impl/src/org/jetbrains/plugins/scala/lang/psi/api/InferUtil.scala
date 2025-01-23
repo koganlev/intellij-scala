@@ -345,7 +345,6 @@ object InferUtil {
       case other                                => other
     }
 
-
     @tailrec
     def shouldSearchImplicit(t: ScType, ptConstraints: ConstraintSystem, first: Boolean = true): Boolean = t match {
       case ScMethodType(_, params, isImplicit) if isImplicit =>
@@ -386,7 +385,20 @@ object InferUtil {
       val valueType = sameDepth.inferValueType
 
       val expectedParam = Parameter("", None, expected, expected)
-      val expressionToUpdate = Expression(ScSubstitutor.bind(typeParams)(UndefinedType(_)).apply(valueType))
+
+      val level = {
+        val hasLeveledUndefines = valueType.subtypeExists {
+          case undef: UndefinedType => undef.level > 0
+          case _                    => false
+        }
+
+        if (hasLeveledUndefines) 1
+        else                     0
+      }
+
+      val expressionToUpdate = Expression(
+        ScSubstitutor.bind(typeParams)(UndefinedType(_, level = level)).apply(valueType)
+      )
 
       val (inferredWithExpected, conformanceResult) =
         localTypeInferenceWithApplicabilityExt(

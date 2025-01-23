@@ -23,6 +23,7 @@ import org.jetbrains.plugins.scala.lang.psi.impl.ScalaStubBasedElementImpl
 import org.jetbrains.plugins.scala.lang.psi.impl.statements.params.ParameterExpectedTypesUtil._
 import org.jetbrains.plugins.scala.lang.psi.stubs._
 import org.jetbrains.plugins.scala.lang.psi.stubs.elements.signatures.ScParamElementType
+import org.jetbrains.plugins.scala.lang.psi.types.FunctionTypeMarker.ContextFunctionN
 import org.jetbrains.plugins.scala.lang.psi.types._
 import org.jetbrains.plugins.scala.lang.psi.types.api.{Nothing, TupleType}
 import org.jetbrains.plugins.scala.lang.psi.types.result._
@@ -163,6 +164,7 @@ class ScParameterImpl protected(
         @tailrec
         def extractFromFunctionType(tpe: ScType, checkDeep: Boolean = false): Option[ScType] =
           tpe match {
+            case functionLikeType(ContextFunctionN, retTpe, _) if !fn.isContext => extractFromFunctionType(retTpe, checkDeep)
             case functionLikeType(_, retTpe, _) if checkDeep => extractFromFunctionType(retTpe)
             case functionLikeType(_, _, Seq(TupleType(paramTpes)))
               if this.isInScala3Module && clause.parameters.size == paramTpes.size =>

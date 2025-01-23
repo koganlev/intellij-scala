@@ -74,28 +74,24 @@ object ImplicitSearchScope {
     element.isInstanceOf[ImplicitArgumentsOwner]
 
   private def isImplicitSearchBorder(elem: PsiElement, isScala3: Boolean): Boolean = elem match {
-      //special treatment for case clauses and for comprehensions to
-      //support `implicit0` from betterMonadicFor compiler plugin
-      case _: ScForBinding                                                => isScala3 || elem.betterMonadicForEnabled
-      case _: ScGenerator                                                 => isScala3 || elem.betterMonadicForEnabled
-      case _: ScCaseClause                                                => isScala3 || elem.betterMonadicForEnabled
-      case _: ScFor                                                       => isScala3 || elem.betterMonadicForEnabled
-      case _: ScImportStmt | _: ScPackaging | _: ScExtension | _: ScGiven => true
-      case (_: ScParameters) childOf (m: ScMethodLike)                    => hasImplicitClause(m)
-      case pc: ScPrimaryConstructor                                       => hasImplicitClause(pc)
-      case (ps: ScParameters) childOf (_: ScFunctionExpr)                 => ps.params.exists(_.isImplicit)
-      case polyFun: ScPolyFunctionExpr                                    => polyFun.typeParameters.exists(_.contextBounds.nonEmpty)
-      case p: ScParameter                                                 => p.isImplicit
-      case m: ScMember                                                    => m.hasModifierProperty("implicit")
-      case _: ScTemplateParents                                           => true
-      case (expr: ScExpression) childOf (_: ScArgumentExprList | _: ScFunctionExpr)
-          if isScala3 && expr.contextFunctionParameters.nonEmpty =>
-        true
-      case (block: ScBlockExpr) childOf (_: ScInfixExpr)
-        if isScala3 && block.contextFunctionParameters.nonEmpty =>
-        true
-      case _ => false
-    }
+    //special treatment for case clauses and for comprehensions to
+    //support `implicit0` from betterMonadicFor compiler plugin
+    case _: ScForBinding                                                => isScala3 || elem.betterMonadicForEnabled
+    case _: ScGenerator                                                 => isScala3 || elem.betterMonadicForEnabled
+    case _: ScCaseClause                                                => isScala3 || elem.betterMonadicForEnabled
+    case _: ScFor                                                       => isScala3 || elem.betterMonadicForEnabled
+    case _: ScImportStmt | _: ScPackaging | _: ScExtension | _: ScGiven => true
+    case (_: ScParameters) childOf (m: ScMethodLike)                    => hasImplicitClause(m)
+    case pc: ScPrimaryConstructor                                       => hasImplicitClause(pc)
+    case (ps: ScParameters) childOf (_: ScFunctionExpr)                 => ps.params.exists(_.isImplicit)
+    case polyFun: ScPolyFunctionExpr                                    => polyFun.typeParameters.exists(_.contextBounds.nonEmpty)
+    case p: ScParameter                                                 => p.isImplicit
+    case m: ScMember                                                    => m.hasModifierProperty("implicit")
+    case _: ScTemplateParents                                           => true
+    case expr: ScExpression
+      if isScala3 && expr.contextFunctionParameters.nonEmpty => true
+    case _ => false
+  }
 
   private def hasImplicitClause(m: ScMethodLike): Boolean = m.effectiveParameterClauses.exists(_.isImplicit)
 }

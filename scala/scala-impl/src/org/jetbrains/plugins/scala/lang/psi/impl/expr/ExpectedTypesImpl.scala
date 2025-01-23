@@ -242,21 +242,21 @@ class ExpectedTypesImpl extends ExpectedTypes {
 
     val sameInContext = expr.getDeepSameElementInContext
 
-    def fromFunction(tp: ParameterType): Array[ParameterType] = {
+    def fromFunction(tp: ParameterType, isContextFunction: Boolean): Array[ParameterType] = {
       val functionLikeType = FunctionLikeType(expr)
-      tp._1 match {
+
+      val tpUnwrapped =
+        if (!isContextFunction) unwrapContextFunctionType(tp._1)
+        else                    tp._1
+
+      tpUnwrapped match {
         case functionLikeType(_, retTpe, _) => Array((retTpe, None))
         case _                              => Array.empty
       }
     }
 
-    def extractContextFunctionReturnType(tp: ParameterType): ParameterType = tp match {
-      case (ContextFunctionType(resTpe, _), _) => resTpe -> None
-      case other                               => other
-    }
-
     def expectedTypesUnwrapContextFunction(e: ScExpression, fromUnderscore: Boolean): Array[ParameterType] =
-      e.expectedTypesEx(fromUnderscore).map(extractContextFunctionReturnType)
+      e.expectedTypesEx(fromUnderscore).map(pt => unwrapContextFunctionType(pt._1) -> None)
 
     def mapResolves(resolves: Array[ScalaResolveResult], types: Array[TypeResult]): Array[(TypeResult, Boolean, Boolean)] =
       resolves.zip(types).map {
@@ -377,7 +377,7 @@ class ExpectedTypesImpl extends ExpectedTypes {
         case _ => Array.empty
       }
       //see SLS[6.23]
-      case f: ScFunctionExpr => f.expectedTypesEx(fromUnderscore = true).flatMap(fromFunction)
+      case f: ScFunctionExpr => f.expectedTypesEx(fromUnderscore = true).flatMap(fromFunction(_, f.isContext))
       case t: ScTypedExpression if t.getLastChild.is[ScSequenceArg] =>
         t.expectedTypesEx(fromUnderscore = true)
       //SLS[6.13]

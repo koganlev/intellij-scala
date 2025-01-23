@@ -36,11 +36,19 @@ trait ParameterizedType extends ValueType {
    * For context function types returns synthetic parameters,
    * which are used for implicit resolution inside context function body.
    */
-  lazy val contextParameters: Seq[LightContextFunctionParameter] = this match {
-    case ContextFunctionType(_, paramTypes) =>
-      paramTypes.mapWithIndex((tpe, idx) =>
-        LightContextFunctionParameter(projectContext.project, s"ev$$$idx", tpe))
-    case _ => Seq.empty
+  lazy val contextParameters: Seq[Seq[LightContextFunctionParameter]] = {
+    def aux(tp: ScType, fromIdx: Int): Seq[Seq[LightContextFunctionParameter]] = tp match {
+      case ContextFunctionType(retTpe, paramTypes) =>
+        val outerParams =
+          paramTypes.mapWithIndex((tpe, idx) =>
+            LightContextFunctionParameter(projectContext.project, s"ev$$${idx + fromIdx}", tpe))
+
+        val innerParams = aux(retTpe, fromIdx + outerParams.size)
+        outerParams +: innerParams
+      case _ => Seq.empty
+    }
+
+    aux(this, 0)
   }
 }
 
