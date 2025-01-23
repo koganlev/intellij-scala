@@ -199,7 +199,7 @@ object ScMethodInvocationAnnotator extends ElementAnnotator[MethodInvocation] {
 
         clauses =
           if (!resolveResult.isExtensionCall) fun.effectiveParameterClauses
-          else                            fun.effectiveParameterClauses.dropWhile(_.owner != fun)
+          else                                fun.effectiveParameterClauses.dropWhile(_.owner != fun)
 
         problems = Compatibility.missedParameterClauseProblemsFor(clauses, numArgumentClauses, isConstructorInvocation = false)
         MissedParametersClause(missedClause) <- problems

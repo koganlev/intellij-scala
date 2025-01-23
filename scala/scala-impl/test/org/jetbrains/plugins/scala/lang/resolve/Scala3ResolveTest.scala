@@ -183,4 +183,23 @@ class Scala3ResolveTest extends SimpleResolveTestBase {
        |}
        |""".stripMargin -> "Test.scala"
   )
+
+  def testSCL23491(): Unit = doResolveTest(
+    s"""
+       |trait MyInit {
+       |  def value[A1](value: => A1): MyInitialize[A1] = ???
+       |  trait MyInitialize[T]
+       |  class MySetting[T] extends MyInitialize[T]
+       |}
+       |
+       |object Wrapper {
+       |  object MyDef extends Object with MyInit {
+       |    extension [A1](inline in: MyInitialize[A1])
+       |      inline def va${REFTGT}lue: A1 = ???
+       |  }
+       |
+       |  val setting: MyDef.MySetting[String] = ???
+       |  MyDef.val${REFSRC}ue[String](setting)
+       |""".stripMargin
+  )
 }

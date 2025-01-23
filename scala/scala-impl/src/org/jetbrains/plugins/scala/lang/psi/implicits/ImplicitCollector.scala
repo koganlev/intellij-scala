@@ -299,6 +299,7 @@ class ImplicitCollector(
       case fun: ScFunction =>
         val exportedInExtension = c.exportedInExtension
 
+        if (!forCompletion && extensionData.isEmpty && fun.isExtensionMethod) return None
         if (fun.typeParametersWithExtension(exportedInExtension).isEmpty && withLocalTypeInference) return None
 
         //scala.Predef.$conforms should be excluded

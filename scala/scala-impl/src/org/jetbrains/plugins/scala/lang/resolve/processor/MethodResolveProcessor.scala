@@ -351,13 +351,15 @@ object MethodResolveProcessor {
       //if we are processing constructor proxies, take class type parameters into account
       val typeParamsWithCls = element match {
         case Constructor.ofClass(cls) => typeParams ++ cls.getTypeParameters.toSeq
+        case fun: ScFunction          =>
+          if (c.isExtensionCall) typeParams
+          else                   fun.typeParametersWithExtension(c.exportedInExtension)
         case _                        => typeParams
       }
 
       val typeArgCount         = typeArgElements.length
       val typeParamCount       = typeParamsWithCls.length
       val isAliasedConstructor = c.parentElement.exists(_.is[ScTypeAliasDefinition])
-
       if (!isAliasedConstructor && typeArgCount > 0 && typeArgCount != typeParamCount) {
         if (typeParamCount == 0) problems += DoesNotTakeTypeParameters
         else if (typeParamCount < typeArgCount)

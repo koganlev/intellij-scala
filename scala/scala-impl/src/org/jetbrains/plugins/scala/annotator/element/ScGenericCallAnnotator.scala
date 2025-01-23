@@ -12,10 +12,9 @@ import org.jetbrains.plugins.scala.lang.psi.api.statements.ScFunction.CommonName
 import org.jetbrains.plugins.scala.lang.psi.api.toplevel.ScTypeParametersOwner
 import org.jetbrains.plugins.scala.lang.psi.impl.expr.ApplyOrUpdateInvocation
 import org.jetbrains.plugins.scala.lang.psi.impl.toplevel.synthetic.ScSyntheticFunction
-import org.jetbrains.plugins.scala.lang.psi.types.api.TypeParameter
+import org.jetbrains.plugins.scala.lang.psi.types.api.{PsiTypeParametersExt, TypeParameter, TypeParameterType}
 import org.jetbrains.plugins.scala.lang.psi.types.{DefaultTypeParameterMismatch, TypePresentationContext}
 import org.jetbrains.plugins.scala.lang.resolve.ScalaResolveResult
-import org.jetbrains.plugins.scala.lang.psi.types.api.PsiTypeParametersExt
 
 
 object ScGenericCallAnnotator extends ElementAnnotator[ScGenericCall] {
@@ -53,11 +52,22 @@ object ScGenericCallAnnotator extends ElementAnnotator[ScGenericCall] {
         f match {
           case typeParamOwner: PsiNamedElement with ScTypeParametersOwner if !isKindProjector(genCall) =>
             val typeParams = f match {
-              case ScalaConstructor(cons) => cons.getClassTypeParameters.map(_.typeParameters.map(TypeParameter(_))).getOrElse(Seq.empty)
-              case _                      =>
-                val tps = typeParamOwner.typeParameters.map(TypeParameter(_))
-                if (tps.isEmpty) typeParamsFromInnerApplyCall(rr)
-                else             tps
+              case ScalaConstructor(cons) =>
+                cons
+                  .getClassTypeParameters
+                  .map(
+                    _.typeParameters.map(TypeParameter(_))
+                  ).getOrElse(Seq.empty)
+              case other                  =>
+                val tparams = other match {
+                  case fun: ScFunction =>
+                    val extension = fun.extensionMethodOwner.orElse(rr.exportedInExtension).filter(_ => !rr.isExtensionCall)
+                    extension.fold(fun.typeParameters)(_.typeParameters)
+                  case _ => typeParamOwner.typeParameters
+                }
+
+                if (tparams.isEmpty) typeParamsFromInnerApplyCall(rr)
+                else                 tparams.map(TypeParameter(_))
             }
 
             val stringPresentation = s"method ${typeParamOwner.name}"
