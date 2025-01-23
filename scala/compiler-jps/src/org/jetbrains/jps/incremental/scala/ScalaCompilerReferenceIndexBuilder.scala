@@ -96,8 +96,8 @@ class ScalaCompilerReferenceIndexBuilder extends ModuleLevelBuilder(BuilderCateg
 
       val removedSources = for {
         target      <- chunk.getTargets.asScala.toSet if target != null
-        removedFile <- dirtyFilesHolder.getRemovedFiles(target).asScala
-      } yield new File(removedFile)
+        removedFile <- dirtyFilesHolder.getRemoved(target).asScala
+      } yield removedFile.toFile // TODO: SCL-23310
 
       val data = JpsCompilationInfo(
         affectedModules,

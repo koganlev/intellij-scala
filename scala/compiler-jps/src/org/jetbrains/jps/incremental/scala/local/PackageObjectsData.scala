@@ -1,11 +1,10 @@
 package org.jetbrains.jps.incremental.scala
 package local
 
-import java.io._
-
 import org.jetbrains.jps.incremental.CompileContext
 import org.jetbrains.jps.incremental.messages.{BuildMessage, CompilerMessage}
 
+import java.io._
 import scala.collection.mutable
 import scala.util.Using
 
@@ -46,8 +45,8 @@ object PackageObjectsData {
   private val instances = mutable.HashMap[File, PackageObjectsData]()
 
   private def storageFile(context: CompileContext): File = {
-    val storageRoot = context.getProjectDescriptor.dataManager.getDataPaths.getDataStorageRoot
-    new File(storageRoot, fileName)
+    val storageRoot = context.getProjectDescriptor.dataManager.getDataPaths.getDataStorageDir
+    storageRoot.resolve(fileName).toFile // TODO: SCL-23310
   }
 
   def getFor(context: CompileContext): PackageObjectsData = {

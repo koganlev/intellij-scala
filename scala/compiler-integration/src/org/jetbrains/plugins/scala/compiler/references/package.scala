@@ -13,17 +13,17 @@ import org.jetbrains.plugins.scala.indices.protocol.jps.JpsCompilationInfo
 import org.jetbrains.plugins.scala.indices.protocol.sbt.{Configuration, SbtCompilationInfo}
 import org.jetbrains.sbt.project.data.ModuleNode
 
-import java.io.File
+import java.nio.file.Path
 
 package object references {
-  private def buildDir(project: Project): Option[File] = {
+  private def buildDir(project: Project): Option[Path] = {
     if (project.isDefault)
       None
     else
-      Option(BuildManager.getInstance().getProjectSystemDirectory(project))
+      Option(BuildManager.getInstance().getProjectSystemDirectory(project)).map(_.toPath)
   }
 
-  def indexDir(project: Project): Option[File] = buildDir(project).map(new File(_, "scala-compiler-references"))
+  def indexDir(project: Project): Option[Path] = buildDir(project).map(_.resolve("scala-compiler-references"))
   def removeIndexFiles(project: Project): Unit = indexDir(project).foreach(CompilerReferenceIndex.removeIndexFiles)
 
   final case class UsagesInFile(file: VirtualFile, lines: Seq[Int]) {
@@ -62,7 +62,7 @@ package object references {
   }
 
   def findIdeaModule(project: Project, sbtProjectId: String): Option[Module] = {
-    val projectBaseUri = new File(project.getBasePath).toURI
+    val projectBaseUri = Path.of(project.getBasePath).toUri
     val moduleId = ModuleNode.combinedId(sbtProjectId, Option(projectBaseUri))
 
     ModuleManager.getInstance(project).getModules.find(module =>

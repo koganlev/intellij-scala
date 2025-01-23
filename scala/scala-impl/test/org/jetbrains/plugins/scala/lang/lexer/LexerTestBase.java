@@ -2,7 +2,6 @@ package org.jetbrains.plugins.scala.lang.lexer;
 
 import com.intellij.lang.LanguageParserDefinitions;
 import com.intellij.lexer.Lexer;
-import com.intellij.openapi.editor.ex.util.ValidatingLexerWrapper;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.tree.IElementType;
 import org.jetbrains.annotations.NonNls;
@@ -49,7 +48,7 @@ abstract public class LexerTestBase extends ScalaFileSetTestCase {
     protected String transform(@NotNull String testName,
                                @NotNull String fileText,
                                @NotNull Project project) {
-        final Lexer lexer = new ValidatingLexerWrapper(createLexer(project));
+        final Lexer lexer = createLexer(project);
         lexer.start(fileText);
 
         StringBuilder builder = new StringBuilder();

@@ -15,7 +15,7 @@ import org.jetbrains.plugins.scala.compiler.data.IncrementalityType
 
 import _root_.java.io._
 import _root_.java.nio.charset.StandardCharsets
-import _root_.java.nio.file.Files
+import _root_.java.nio.file.{Files, Path}
 import _root_.java.{util => ju}
 import _root_.scala.jdk.CollectionConverters._
 
@@ -92,22 +92,22 @@ class InitialScalaBuilder extends ModuleLevelBuilder(BuilderCategory.INITIAL) { 
 
   override def getCompilableFileExtensions: ju.List[String] = ju.Arrays.asList("scala", "java")
 
-  private def incrementalityTypeStorageFile(context: CompileContext): File = {
-    val dataStorageRoot = context.getProjectDescriptor.dataManager.getDataPaths.getDataStorageRoot
-    new File(dataStorageRoot, "incrementalType.dat")
+  private def incrementalityTypeStorageFile(context: CompileContext): Path = {
+    val dataStorageRoot = context.getProjectDescriptor.dataManager.getDataPaths.getDataStorageDir
+    dataStorageRoot.resolve("incrementalType.dat")
   }
 
   private def readIncrementalityType(context: CompileContext): Option[IncrementalityType] = {
     val storageFile = incrementalityTypeStorageFile(context)
-    if (!storageFile.exists()) {
+    if (!Files.exists(storageFile)) {
       // This is not necessarily an error, the storage file will be created.
       val projectName = context.getProjectDescriptor.getProject.getName
-      Log.info(s"Incremental compiler project setting storage file does not exist for project $projectName, path: ${storageFile.toPath}")
+      Log.info(s"Incremental compiler project setting storage file does not exist for project $projectName, path: $storageFile")
       return None
     }
 
     val result = try {
-      val bytes = Files.readAllBytes(storageFile.toPath)
+      val bytes = Files.readAllBytes(storageFile)
       val str = new String(bytes, StandardCharsets.UTF_8)
       val incrementality = IncrementalityType.valueOf(str)
       Some(incrementality)
@@ -120,16 +120,15 @@ class InitialScalaBuilder extends ModuleLevelBuilder(BuilderCategory.INITIAL) { 
         None
     }
 
-    if (result.isEmpty) storageFile.delete()
+    if (result.isEmpty) Files.delete(storageFile)
     result
   }
 
   private def writeIncrementalityType(context: CompileContext, incrementalityType: IncrementalityType): Unit = {
-    val storageFile = incrementalityTypeStorageFile(context)
-    val parentDir = storageFile.getParentFile
-    if (!parentDir.exists()) parentDir.mkdirs()
-    val storagePath = storageFile.toPath
+    val storagePath = incrementalityTypeStorageFile(context)
+    val parentDir = storagePath.getParent
     try {
+      if (!Files.exists(parentDir)) Files.createDirectories(parentDir)
       Files.write(storagePath, incrementalityType.name().getBytes(StandardCharsets.UTF_8))
       Log.info(s"Wrote incremental compiler setting $incrementalityType to disk, path: $storagePath")
     }
