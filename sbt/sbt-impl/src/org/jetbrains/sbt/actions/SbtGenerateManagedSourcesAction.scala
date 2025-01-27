@@ -2,7 +2,6 @@ package org.jetbrains.sbt.actions
 
 import com.intellij.build.events.impl.{FailureResultImpl, FinishBuildEventImpl, OutputBuildEventImpl, SkippedResultImpl, StartBuildEventImpl, SuccessResultImpl}
 import com.intellij.build.{DefaultBuildDescriptor, SyncViewManager}
-import com.intellij.icons.AllIcons
 import com.intellij.openapi.actionSystem.{ActionUpdateThread, AnAction, AnActionEvent}
 import com.intellij.openapi.externalSystem.model.task.{ExternalSystemTaskId, ExternalSystemTaskType}
 import com.intellij.openapi.progress.{ProgressIndicator, Task}
@@ -11,6 +10,7 @@ import org.jetbrains.annotations.Nullable
 import org.jetbrains.plugins.scala.build.BuildMessages
 import org.jetbrains.plugins.scala.project.Version
 import org.jetbrains.sbt.buildinfo.BuildInfo
+import org.jetbrains.sbt.icons.Icons
 import org.jetbrains.sbt.project.structure.SbtStructureDump
 import org.jetbrains.sbt.project.{SbtExternalSystemManager, SbtProjectSystem}
 import org.jetbrains.sbt.{SbtBundle, SbtUtil}
@@ -22,7 +22,7 @@ import scala.util.{Failure, Success, Try}
 private final class SbtGenerateManagedSourcesAction extends AnAction(
   SbtBundle.message("sbt.generate.managed.sources.action.title"),
   SbtBundle.message("sbt.generate.managed.sources.action.description"),
-  AllIcons.Actions.GeneratedFolder
+  Icons.SBT_GENERATE_MANAGED_SOURCES
 ) {
 
   override def actionPerformed(e: AnActionEvent): Unit = {

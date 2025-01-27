@@ -11,6 +11,7 @@ public interface Icons {
     Icon SBT_FILE = getIcon("/org/jetbrains/sbt/images/sbtFile.svg", Icons.class);
     Icon SBT_SHELL = getIcon("/org/jetbrains/sbt/images/sbtShell.svg", Icons.class);
     Icon SBT_LOAD_CHANGES = getIcon("/org/jetbrains/sbt/images/sbtLoadChanges.svg", Icons.class);
+    Icon SBT_GENERATE_MANAGED_SOURCES = getIcon("/org/jetbrains/sbt/images/sbtGenerateManagedSources.svg", Icons.class);
 
     @SuppressWarnings("unused") // used from SBT.xml
     Icon SBT_TOOL_WINDOW = findIconNotNull("/org/jetbrains/sbt/images/sbtToolwin.svg");
