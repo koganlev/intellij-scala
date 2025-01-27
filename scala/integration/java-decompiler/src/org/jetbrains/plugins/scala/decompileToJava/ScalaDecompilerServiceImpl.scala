@@ -10,7 +10,7 @@ import org.jetbrains.java.decompiler.main.extern.{IBytecodeProvider, IFernflower
 import org.jetbrains.plugins.scala.extensions.inReadAction
 import org.jetbrains.plugins.scala.lang.psi.api.ScFile
 
-import java.nio.file.Path
+import java.io.File
 import java.util.jar.Manifest
 import scala.collection.mutable
 import scala.jdk.CollectionConverters.MapHasAsJava
@@ -28,12 +28,12 @@ private class ScalaDecompilerServiceImpl extends ScalaDecompilerService {
       val saver = new ScalaResultSaver
 
       val provider: IBytecodeProvider = (externalPath, _) => {
-        val path = Path.of(FileUtil.toSystemIndependentName(externalPath))
+        val path = FileUtil.toSystemIndependentName(externalPath)
         mappings.get(path).map(_.apply()).orNull
       }
       val options: Map[String, AnyRef] = getFernflowerDecompilerOptions
       val decompiler = new BaseDecompiler(provider, saver, options.asJava, new IdeaLogger())
-      mappings.foreach { case (path, _) => decompiler.addSource(path.toFile) }
+      mappings.foreach { case (path, _) => decompiler.addSource(new File(path)) }
       decompiler.decompileContext()
       Success(saver.result)
     } catch {
@@ -49,10 +49,16 @@ private class ScalaDecompilerServiceImpl extends ScalaDecompilerService {
       name == sourceName || name.startsWith(sourceName + "$")
     }
 
-  private[this] def mappingsForClassfile(file: VirtualFile): Map[Path, FileContents] =
+  /**
+   * Using String as a key because the path can reference to a .class file inside a jar.
+   * This is not a valid nio path but rather an URI
+   * Example:<br>
+   * jar:///Users/dmitrii.naumenko/.sbt/boot/scala-2.12.20/org.scala-sbt/sbt/1.10.7/main_2.12-1.10.7.jar!/sbt/nio
+   */
+  private[this] def mappingsForClassfile(file: VirtualFile): Map[String, FileContents] =
     file.getParent.getChildren.iterator.collect {
       case child if isClassGeneratedFrom(file.getNameWithoutExtension, child) =>
-        child.toNioPath -> getFileContents(child)
+        child.getPath -> getFileContents(child)
     }.toMap
 }
 
