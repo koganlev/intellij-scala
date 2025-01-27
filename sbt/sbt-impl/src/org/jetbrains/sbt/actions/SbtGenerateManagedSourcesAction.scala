@@ -58,6 +58,7 @@ private final class SbtGenerateManagedSourcesAction extends AnAction(
           val sbtVersion = Version(SbtUtil.detectSbtVersion(projectBasePath.toFile, launcher))
           val sbtStructurePluginBinVersion = SbtUtil.structurePluginBinaryVersion(sbtVersion)
           val addPluginCommandSupported = SbtUtil.isAddPluginCommandSupported(sbtVersion)
+          val slashSyntaxSupported = sbtVersion >= Version("1.0.0")
 
           if (!addPluginCommandSupported) {
             val notSupportedWord = SbtBundle.message("sbt.generate.managed.sources.action.not.supported")
@@ -85,6 +86,10 @@ private final class SbtGenerateManagedSourcesAction extends AnAction(
           val setupOptions = Seq(s"-addPluginSbtFile=${tmpPluginsSbtFile.toRealPath()}")
           tmpPluginsSbtFile.toFile.deleteOnExit()
 
+          val generateCommand =
+            if (slashSyntaxSupported) "show Global / ideaGenerateAllManagedSources"
+            else "show */*:ideaGenerateAllManagedSources"
+
           val sbtResult = new SbtStructureDump().runSbt(
             projectBasePath.toFile,
             settings.vmExecutable,
@@ -93,7 +98,7 @@ private final class SbtGenerateManagedSourcesAction extends AnAction(
             launcher,
             settings.sbtOptions,
             setupOptions,
-            "show */*:ideaGenerateAllManagedSources",
+            generateCommand,
             SbtBundle.message("sbt.generate.managed.sources.task.progress.title"),
             settings.passParentEnvironment
           )(indicator)(using reporter)
