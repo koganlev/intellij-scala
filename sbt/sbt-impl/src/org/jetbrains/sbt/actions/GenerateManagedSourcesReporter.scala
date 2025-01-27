@@ -11,6 +11,8 @@ private[sbt] final class GenerateManagedSourcesReporter extends BuildReporter {
   private val outputLinesBuffer: mutable.ArrayBuffer[String] = mutable.ArrayBuffer.empty
   private var splitLine: Boolean = false
 
+  private val logLevelPrefixes: Array[String] = Array("[debug]", "[info]", "[warn]", "[error]")
+
   override def start(): Unit = {}
 
   override def finish(messages: BuildMessages): Unit = {}
@@ -28,6 +30,12 @@ private[sbt] final class GenerateManagedSourcesReporter extends BuildReporter {
   override def clear(file: File): Unit = {}
 
   override def log(message: String): Unit = {
+    if (splitLine && logLevelPrefixes.exists(message.startsWith)) {
+      // There are lines printed by sbt after which user input is expected. These do not end with a newline. We do not
+      // want to treat them like split lines.
+      splitLine = false
+    }
+
     // If the last line was split, we need to concatenate the current line to it.
     val prefix = if (splitLine) outputLinesBuffer.last else ""
     val newLine = (prefix ++ message).trim
