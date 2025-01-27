@@ -3,17 +3,17 @@ package org.jetbrains.plugins.scala.lang.parser.scala3.imported
 import com.intellij.openapi.project.Project
 import com.intellij.psi.impl.DebugUtil.psiToString
 import junit.framework.{Test, TestCase}
-import org.jetbrains.plugins.scala.extensions.PsiNamedElementExt
+import org.jetbrains.plugins.scala.extensions.{PathExt, PsiNamedElementExt}
 import org.jetbrains.plugins.scala.util.TestUtils
 import org.junit.Ignore
 
-import java.nio.file.{Files, Paths, StandardCopyOption, StandardOpenOption}
+import java.nio.file.{Files, Path, Paths, StandardCopyOption, StandardOpenOption}
 
 @Ignore("for local running only")
 class Scala3ImportedParserTest_RegeneratePsi extends TestCase
 
 object Scala3ImportedParserTest_RegeneratePsi {
-  val dottyParserTestsSuccessDir: String = Scala3ImportedParserTest_Move_Fixed_Tests.dottyParserTestsSuccessDir
+  val dottyParserTestsSuccessDir: Path = Scala3ImportedParserTest_Move_Fixed_Tests.dottyParserTestsSuccessDir
 
   /**
    * Run this main method to move all scala 3 test files that generate no PsiErrorElements anymore to
@@ -35,10 +35,9 @@ object Scala3ImportedParserTest_RegeneratePsi {
       val interlaced = findInterlacedRanges(file, testName)
 
       if (errors.isEmpty && interlaced.isEmpty) {
-        val pathString = dottyParserTestsSuccessDir + "/" + testName + ".test"
-        val path = Paths.get(pathString)
+        val path = dottyParserTestsSuccessDir / s"$testName.test"
 
-        println("Regenerate " + pathString)
+        println("Regenerate " + path)
         val psiTreeText = psiToString(file, true).replace(": " + file.name, "")
         val content = Files.readString(path)
         val searchString = "-----\n"

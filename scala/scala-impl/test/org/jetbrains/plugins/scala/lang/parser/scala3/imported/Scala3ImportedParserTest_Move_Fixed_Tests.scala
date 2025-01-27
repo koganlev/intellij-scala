@@ -3,18 +3,18 @@ package org.jetbrains.plugins.scala.lang.parser.scala3.imported
 import com.intellij.openapi.project.Project
 import com.intellij.psi.impl.DebugUtil.psiToString
 import junit.framework.{Test, TestCase}
-import org.jetbrains.plugins.scala.extensions.PsiNamedElementExt
+import org.jetbrains.plugins.scala.extensions.{PathExt, PsiNamedElementExt}
 import org.jetbrains.plugins.scala.util.TestUtils
 import org.junit.Ignore
 
-import java.nio.file.{Files, Paths, StandardCopyOption, StandardOpenOption}
+import java.nio.file.{Files, Path, Paths, StandardCopyOption, StandardOpenOption}
 
 @Ignore("for local running only")
 class Scala3ImportedParserTest_Move_Fixed_Tests extends TestCase
 
 object Scala3ImportedParserTest_Move_Fixed_Tests {
-  val dottyParserTestsSuccessDir: String = TestUtils.getTestDataPath + Scala3ImportedParserTest.directory
-  val dottyParserTestsFailDir: String = TestUtils.getTestDataPath +  Scala3ImportedParserTest_Fail.directory
+  val dottyParserTestsSuccessDir: Path = Paths.get(TestUtils.getTestDataPath + Scala3ImportedParserTest.directory)
+  val dottyParserTestsFailDir: Path = Paths.get(TestUtils.getTestDataPath +  Scala3ImportedParserTest_Fail.directory)
 
   /**
    * Run this main method to move all scala 3 test files that generate no PsiErrorElements anymore to
@@ -36,19 +36,19 @@ object Scala3ImportedParserTest_Move_Fixed_Tests {
       val interlaced = findInterlacedRanges(file, testName)
 
       if (errors.isEmpty && interlaced.isEmpty) {
-        val from = dottyParserTestsFailDir + "/" + testName + ".test"
-        val to = dottyParserTestsSuccessDir + "/" + testName + ".test"
+        val from = dottyParserTestsFailDir / s"$testName.test"
+        val to = dottyParserTestsSuccessDir / s"$testName.test"
 
         println("Move " + from)
         println("  to " + to)
         Files.move(
-          Paths.get(from),
-          Paths.get(to),
+          from,
+          to,
           StandardCopyOption.REPLACE_EXISTING
         )
 
         val psiTreeText = psiToString(file, true).replace(": " + file.name, "")
-        Files.writeString(Paths.get(to), psiTreeText, StandardOpenOption.APPEND)
+        Files.writeString(to, psiTreeText, StandardOpenOption.APPEND)
       }
       // all files of failing test have no ast to test against, so return an empty string here
       ""

@@ -3,6 +3,7 @@ package org.jetbrains.plugins.scala.lang.resolveSemanticDb
 package generated
 
 import org.jetbrains.plugins.scala.ScalacTests
+import org.jetbrains.plugins.scala.lang.resolveSemanticDb.configurations.{ReferenceComparisonTestConfig, ReferenceComparisonTestConfig_Scala3_LTS}
 import org.jetbrains.plugins.scala.util.RevertableChange
 import org.junit.experimental.categories.Category
 
@@ -14,7 +15,9 @@ import org.junit.experimental.categories.Category
  */
 //noinspection NameBooleanParameters
 @Category(Array(classOf[ScalacTests]))
-class ReferenceComparisonTest_Scala3 extends ReferenceComparisonTestBase_Scala3 {
+class ReferenceComparisonTest_Scala3_LTS
+  extends ReferenceComparisonTestBase(org.jetbrains.plugins.scala.lang.resolveSemanticDb.configurations.ReferenceComparisonTestConfig_Scala3_LTS)
+{
 
   // Mute "Tree access disabled" exceptions as workaround for #SCL-22994
   override protected def includeScalaLibrarySources: Boolean = false

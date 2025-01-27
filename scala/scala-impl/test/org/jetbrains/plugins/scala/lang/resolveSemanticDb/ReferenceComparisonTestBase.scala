@@ -3,7 +3,7 @@ package org.jetbrains.plugins.scala.lang.resolveSemanticDb
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.pom.java.LanguageLevel
 import com.intellij.psi.PsiNamedElement
-import com.intellij.testFramework.{ErrorLog, TestLoggerKt}
+import com.intellij.testFramework.TestLoggerKt
 import com.jetbrains.rd.util.threading.CompoundThrowable
 import org.jetbrains.plugins.scala.base.libraryLoaders.SmartJDKLoader
 import org.jetbrains.plugins.scala.extensions._
@@ -18,22 +18,15 @@ import org.jetbrains.plugins.scala.lang.psi.api.toplevel.templates.ScDerivesClau
 import org.jetbrains.plugins.scala.lang.psi.api.toplevel.typedef.{ScEnum, ScTrait}
 import org.jetbrains.plugins.scala.lang.psi.api.{ImplicitArgumentsOwner, ScalaFile}
 import org.jetbrains.plugins.scala.lang.resolve.ScalaResolveResult
-import org.jetbrains.plugins.scala.lang.resolveSemanticDb.ComparisonTestBase.outPath
 import org.jetbrains.plugins.scala.lang.resolveSemanticDb.ReferenceComparisonTestBase.RefInfo.{assignmentTarget, opaqueTarget, physicalRefTarget}
 import org.jetbrains.plugins.scala.lang.resolveSemanticDb.ReferenceComparisonTestBase._
+import org.jetbrains.plugins.scala.lang.resolveSemanticDb.configurations.ReferenceComparisonTestConfig
 import org.jetbrains.plugins.scala.util.AliasExports._
-import org.jetbrains.plugins.scala.{LatestScalaVersions, ScalaVersion}
 
 import scala.collection.mutable.ArrayBuffer
-import scala.jdk.CollectionConverters.CollectionHasAsScala
 
-abstract class ReferenceComparisonTestBase_Scala3 extends ReferenceComparisonTestBase {
-  override protected def supportedIn(version: ScalaVersion): Boolean = version >= LatestScalaVersions.Scala_3_6
-  // do not spam on in output in failed tests, we have too much of them currently
+abstract class ReferenceComparisonTestBase(config: ReferenceComparisonTestConfig) extends ComparisonTestBase(config) {
   override protected def reportFailedTestContextDetails: Boolean = false
-}
-
-abstract class ReferenceComparisonTestBase extends ComparisonTestBase {
 
   override protected lazy val projectJdk: Sdk =
     SmartJDKLoader.createFilteredJdk(LanguageLevel.JDK_17, Seq("java.base", "java.compiler", "java.rmi", "java.sql", "java.desktop"))
@@ -51,7 +44,7 @@ abstract class ReferenceComparisonTestBase extends ComparisonTestBase {
 
   protected def runTestToResult(testName: String): Result = {
     val files = setupFiles(testName)
-    val store = SemanticDbStore.fromTextFile(outPath.resolve(testName + ".semdb"))
+    val store = SemanticDbStore.fromTextFile(config.outPath.resolve(testName + ".semdb"))
 
     var problems = Seq.empty[String]
     var refCount = 0

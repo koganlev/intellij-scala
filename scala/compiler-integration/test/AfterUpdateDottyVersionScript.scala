@@ -4,9 +4,12 @@ import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.platform.templates.github.{DownloadUtil, ZipUtil => GithubZipUtil}
 import com.intellij.pom.java.LanguageLevel
 import junit.framework.{TestCase, TestFailure, TestResult, TestSuite}
+import org.gradle.internal.impldep.bsh.commands.dir
 import org.jetbrains.plugins.scala.compiler.ScalaCompilerTestBase
 import org.jetbrains.plugins.scala.extensions.PathExt
 import org.jetbrains.plugins.scala.lang.parser.scala3.imported.{Scala3ImportedParserTest, Scala3ImportedParserTest_Move_Fixed_Tests}
+import org.jetbrains.plugins.scala.lang.resolveSemanticDb.configurations._
+import org.jetbrains.plugins.scala.lang.resolveSemanticDb._
 import org.jetbrains.plugins.scala.lang.resolveSemanticDb.{ComparisonTestBase, ReferenceComparisonTestsGenerator_Scala3, SemanticDbFromScalaMeta}
 import org.jetbrains.plugins.scala.project.VirtualFileExt
 import org.jetbrains.plugins.scala.util.TestUtils
@@ -40,23 +43,16 @@ class AfterUpdateDottyVersionScript {
   @Test def test_1_RecompileMacroPrinter3(): Unit =
     runScript(Script.FromTestCase(classOf[RecompileMacroPrinter3]))
 
-  @Test def test_2_CloneDottyRepository(): Unit = {
-    // we have to clone the repo because it needs a git history
-    //example of release branch: release-3.1.3
-    val branch = "release-3.6.2" //+ ScalaVersion.Latest.Scala_3.minor
-    repoPath = cloneRepository("https://github.com/scala/scala3/", Some(branch)).toPath
-  }
-
   /**
    * NOTE:
    * if it fails because there are compilation errors in [[dotty.tools.dotc.FromTastyTests.posTestFromTasty]]
    * add the failing tests to the patched blacklist file [[AfterUpdateDottyVersionScript.`pos-from-tasty.blacklist`]].
    * See `patchFile` usages.
    */
-  @Test def test_3_Scala3ImportedParserTest_Import_FromDottyDirectory(): Unit =
+  @Test def test_2_Scala3ImportedParserTest_Import_FromDottyDirectory(): Unit =
     runScript(Script.FromTestCase(classOf[Scala3ImportedParserTest_Import_FromDottyDirectory]))
 
-  @Test def test_4_Scala3ImportedParserTest_Move_Fixed_Tests(): Unit =
+  @Test def test_3_Scala3ImportedParserTest_Move_Fixed_Tests(): Unit =
     runScript(Script.FromTestSuite(new Scala3ImportedParserTest_Move_Fixed_Tests.Scala3ImportedParserTest_Move_Fixed_Tests))
 
   /**
@@ -65,24 +61,72 @@ class AfterUpdateDottyVersionScript {
    * add the failing tests to the patched blacklist file [[AfterUpdateDottyVersionScript.`pos-from-tasty.blacklist`]].
    * See `patchFile` usages.
    */
-  @Test def test_5_Scala3ImportedSemanticDbTest_Import_FromDottyDirectory(): Unit =
-    runScript(Script.FromTestCase(classOf[Scala3ImportedSemanticDbTest_Import_FromDottyDirectory]))
+  @Test def test_4_Scala3ImportedSemanticDbTest_Import_FromDottyDirectory_LTS(): Unit =
+    runScript(Script.FromTestCase(classOf[Scala3ImportedSemanticDbTest_Import_FromDottyDirectory_Scala3_LTS]))
 
-  @Test def test_6_ReferenceComparisonTestsGenerator(): Unit =
-    runScript(Script.FromTestCase(classOf[ReferenceComparisonTestsGenerator_Scala3.ScriptTestCase]))
+  @Test def test_5_ReferenceComparisonTestsGenerator_LTS(): Unit =
+    runScript(Script.FromTestCase(classOf[ReferenceComparisonTestsGenerator_Scala3.TestCase_Scala3_LTS]))
 
-  @Test def test_7_UpdateScalacOptionsInfo(): Unit =
+  /**
+   * NOTE:
+   * if it fails because there are compilation errors in [[dotty.tools.dotc.FromTastyTests.posTestFromTasty]]
+   * add the failing tests to the patched blacklist file [[AfterUpdateDottyVersionScript.`pos-from-tasty.blacklist`]].
+   * See `patchFile` usages.
+   */
+  @Test def test_6_Scala3ImportedSemanticDbTest_Import_FromDottyDirectory_Newest(): Unit =
+    runScript(Script.FromTestCase(classOf[Scala3ImportedSemanticDbTest_Import_FromDottyDirectory_Scala3_Newest]))
+
+  @Test def test_7_ReferenceComparisonTestsGenerator_Newest(): Unit =
+    runScript(Script.FromTestCase(classOf[ReferenceComparisonTestsGenerator_Scala3.TestCase_Scala3_Newest]))
+
+  @Test def test_8_UpdateScalacOptionsInfo(): Unit =
     runScript(Script.FromTestCase(classOf[UpdateScalacOptionsInfo.ScriptTestCase]))
 }
 
 object AfterUpdateDottyVersionScript {
-  // this makes it so that the clone dir is persistent and easier to debug
-  val manualCloneDir: Option[Path] = Some(Paths.get(System.getProperty("java.io.tmpdir")) / "aftertupdate-dotty-version-script-repo-download")
+  class ScalaRepository private (branch: String) {
+    lazy val path: Path =
+      Paths.get(System.getProperty("java.io.tmpdir")) / s"aftertupdate-dotty-version-script-repo-download-$branch"
 
-  //Is initialized during one of the tests run
-  private var repoPath: Path = manualCloneDir.orNull
-  private lazy val `pos-from-tasty.blacklist` =
-    repoPath.resolve("compiler/test/dotc/pos-from-tasty.blacklist")
+    lazy val `pos-from-tasty.blacklist`: Path =
+      path.resolve("compiler/test/dotc/pos-from-tasty.blacklist")
+
+    private def prepare(): Path = {
+      if (!Files.isDirectory(path)) {
+        cloneRepository()
+      } else {
+        gitStashChanges(path)
+      }
+      path
+    }
+
+    private def cloneRepository(): Unit = {
+      val url = "https://github.com/scala/scala3/"
+      Files.createDirectories(path)
+      clearDirectory(path)
+
+      println(
+        s"""Clone repository to: $path
+           |Repository : $url
+           |Branch     : $branch
+           |""".stripMargin
+      )
+
+      val commands: Seq[String] =
+        "git" :: "clone" :: "--branch" :: branch :: url :: "." :: "--depth=1" :: Nil
+
+      val rc = Process(commands, path.toFile).!
+      assert(rc == 0, s"Failed ($rc) to clone $url into $path")
+    }
+  }
+
+  object ScalaRepository {
+    def prepareBranch(branch: String): ScalaRepository = {
+      val repo = new ScalaRepository(branch)
+      repo.prepare()
+      repo
+    }
+  }
 
   private var someTestAlreadyFailed = false
 
@@ -125,7 +169,7 @@ object AfterUpdateDottyVersionScript {
 
 
   import Scala3ImportedParserTest_Move_Fixed_Tests.{dottyParserTestsFailDir, dottyParserTestsSuccessDir}
-  private val rangesDirectory: String = TestUtils.getTestDataPath + Scala3ImportedParserTest.rangesDirectory
+  private val rangesDirectory: Path = Paths.get(TestUtils.getTestDataPath + Scala3ImportedParserTest.rangesDirectory)
 
   private def downloadRepository(url: String): File = {
     val repoFile = newTempFile()
@@ -138,38 +182,11 @@ object AfterUpdateDottyVersionScript {
 
   //noinspection ScalaUnusedSymbol
   //might be used during local tests, e.g. if we use to reuse dotty repository and not clone it every time we run tests
-  private def gitStashChanges(repository: File): Unit = {
+  private def gitStashChanges(repository: Path): Unit = {
     //stash any modifications to repository
     val commands: Seq[String] = "git" :: "stash" :: Nil
-    val rc = Process(commands, repository).!
+    val rc = Process(commands, repository.toFile).!
     assert(rc == 0, s"Failed to stash changes in repository $repository")
-  }
-
-  private def cloneRepository(url: String, branchOpt: Option[String]): File = {
-    val cloneDir = manualCloneDir match {
-      case Some(dir) =>
-        Files.createDirectories(dir)
-        clearDirectory(dir.toString)
-        dir.toFile
-      case None => newTempDir()
-    }
-    println(
-      s"""Clone repository to: $cloneDir
-         |Repository : $url
-         |Branch     : ${branchOpt.orNull}
-         |""".stripMargin
-    )
-
-    val branchOption: List[String] = branchOpt match {
-      case Some(branch) => "--branch" :: branch :: Nil
-      case None => Nil
-    }
-    val commands: Seq[String] =
-      "git" :: "clone" :: branchOption ::: url :: "." :: "--depth=1" :: Nil
-
-    val rc = Process(commands, cloneDir).!
-    assert(rc == 0, s"Failed ($rc) to clone $url into $cloneDir")
-    cloneDir
   }
 
   /**
@@ -240,24 +257,24 @@ object AfterUpdateDottyVersionScript {
     extends TestCase {
 
     def test(): Unit = {
-      gitStashChanges(repoPath.toFile)
+      val repo = ScalaRepository.prepareBranch("")
 
-      val srcDir = repoPath.resolve(Paths.get("tests", "pos")).toAbsolutePath.toString
+      val srcDir = repo.path.resolve(Paths.get("tests", "pos")).toAbsolutePath
 
       clearDirectory(dottyParserTestsSuccessDir)
-      clearDirectory(dottyParserTestsFailDir)
+      clearDirectory(dottyParserTestsSuccessDir)
 
       println("srcdir =  " + srcDir)
       println("faildir = " + dottyParserTestsFailDir)
 
-      new File(dottyParserTestsSuccessDir).mkdirs()
-      new File(dottyParserTestsFailDir).mkdirs()
+      Files.createDirectories(dottyParserTestsSuccessDir)
+      Files.createDirectories(dottyParserTestsFailDir)
 
       //val tempRangeSourceDir = Path.of("/home/tobi/desktop/testing/pos")
       val tempRangeSourceDir = newTempDir().toPath.resolve("pos")
       tempRangeSourceDir.toFile.mkdirs()
 
-      patchTestBlacklist()
+      patchTestBlacklist(repo)
 
       // No help.ranges is generated for the source file help.scala.
       // https://github.com/scala/scala3/blob/release-3.4.0/tests/pos/help.scala
@@ -273,15 +290,15 @@ object AfterUpdateDottyVersionScript {
         fileName.endsWith(".scala") && fileName != "help.scala" && fileName != "widen-union.scala"
       }
 
-      val blacklist = loadBlacklist()
+      val blacklist = loadBlacklist(repo)
       var atLeastOneFileProcessed = false
       for (file <- allFilesIn(srcDir) if acceptFile(file) if !blacklist.contains(file.getName))  {
-        val target = dottyParserTestsFailDir + file.toString.substring(srcDir.length).replace(".scala", "++++test")
+        val target = dottyParserTestsFailDir / file.toString.substring(srcDir.toString.length).replace(".scala", "++++test")
         val content = readFile(file.toPath)
           .replaceAll("[-]{5,}", "+") // <- some test files have comment lines with dashes which confuse junit
 
         if (!content.contains("import language.experimental")) {
-          val targetFile = new File(target)
+          val targetFile = target.toFile
 
           val outputFileName = Iterator
             .iterate(targetFile)(_.getParentFile)
@@ -291,12 +308,12 @@ object AfterUpdateDottyVersionScript {
             .toSeq
             .reverse
             .mkString("_")
-          val outputPath = dottyParserTestsFailDir + File.separator + outputFileName
+          val outputPath = dottyParserTestsFailDir / outputFileName
           val outputInRangeDir = tempRangeSourceDir.resolve(outputFileName.replaceFirst("test$", "scala"))
           println(file.toString + " -> " + outputPath)
 
           {
-            val pw = new PrintWriter(outputPath)
+            val pw = new PrintWriter(outputPath.toFile)
             pw.write(content)
             if (content.last != '\n')
               pw.write('\n')
@@ -316,7 +333,7 @@ object AfterUpdateDottyVersionScript {
       if (!atLeastOneFileProcessed)
         throw new AssertionError("No files were processed")
 
-      extractRanges(repoPath, tempRangeSourceDir, rangesDirectory)
+      extractRanges(repo, tempRangeSourceDir, rangesDirectory)
     }
   }
 
@@ -324,21 +341,25 @@ object AfterUpdateDottyVersionScript {
   /**
    * Imports semanticdb tests from the dotty repositiory
    */
-  class Scala3ImportedSemanticDbTest_Import_FromDottyDirectory
+  class Scala3ImportedSemanticDbTest_Import_FromDottyDirectory_Scala3_LTS
+    extends Scala3ImportedSemanticDbTest_Import_FromDottyDirectory(ReferenceComparisonTestConfig_Scala3_LTS, "lts-3.3")
+  class Scala3ImportedSemanticDbTest_Import_FromDottyDirectory_Scala3_Newest
+    extends Scala3ImportedSemanticDbTest_Import_FromDottyDirectory(ReferenceComparisonTestConfig_Scala3_Newest, "3.6.3")
+  abstract class Scala3ImportedSemanticDbTest_Import_FromDottyDirectory(config: ReferenceComparisonTestConfig, branch: String)
     extends TestCase {
 
     def test(): Unit = {
-      gitStashChanges(repoPath.toFile) //stash changes from previous tests run (it modifies some files)
+      val repo = ScalaRepository.prepareBranch(branch)
 
-      clearDirectory(ComparisonTestBase.sourcePath.toString)
-      clearDirectory(ComparisonTestBase.outPath.toString)
+      clearDirectory(config.sourcePath)
+      clearDirectory(config.outPath)
 
-      Files.createDirectories(ComparisonTestBase.sourcePath)
-      Files.createDirectories(ComparisonTestBase.outPath)
+      Files.createDirectories(config.sourcePath)
+      Files.createDirectories(config.outPath)
 
       // we want synthetic symbols and setter symbols as well
       patchFile(
-        repoPath.resolve("compiler/src/dotty/tools/dotc/semanticdb/ExtractSemanticDB.scala"),
+        repo.path.resolve("compiler/src/dotty/tools/dotc/semanticdb/ExtractSemanticDB.scala"),
         """    private def excludeDef(sym: Symbol)(using Context): Boolean =
           |      !sym.exists
           |      || sym.isLocalDummy
@@ -365,7 +386,7 @@ object AfterUpdateDottyVersionScript {
 
       // do not delete test output files
       patchFile(
-        repoPath.resolve("compiler/test/dotty/tools/vulpix/ParallelTesting.scala"),
+        repo.path.resolve("compiler/test/dotty/tools/vulpix/ParallelTesting.scala"),
         """    val generateClassFiles = compileFilesInDir(f, flags0, fromTastyFilter)
           |
           |    new TastyCompilationTest(
@@ -386,7 +407,7 @@ object AfterUpdateDottyVersionScript {
 
       // no need to run the run-tests... posTestFromTasty already creates the semanticdb files
       patchFile(
-        repoPath.resolve("compiler/test/dotty/tools/dotc/FromTastyTests.scala"),
+        repo.path.resolve("compiler/test/dotty/tools/dotc/FromTastyTests.scala"),
         """
           |  @Test def runTestFromTasty: Unit = {
           |    // Can be reproduced with
@@ -415,18 +436,18 @@ object AfterUpdateDottyVersionScript {
           |""".stripMargin
       )
 
-      patchTestBlacklist()
+      patchTestBlacklist(repo)
 
-      runSbt("testCompilation --from-tasty pos", repoPath)
+      runSbt("testCompilation --from-tasty pos", repo.path)
 
-      copyRecursively(repoPath.resolve("tests/pos"), ComparisonTestBase.sourcePath)
+      copyRecursively(repo.path.resolve("tests/pos"), config.sourcePath)
 
-      val posOutDir = repoPath.resolve("out/posTestFromTasty/pos")
+      val posOutDir = repo.path.resolve("out/posTestFromTasty/pos")
       assert(Files.isDirectory(posOutDir))
 
       for (testOutPath <- posOutDir.children()) {
         val dirName = testOutPath.getFileName.toString
-        val storePath = ComparisonTestBase.outPath.resolve(dirName + ".semdb")
+        val storePath = config.outPath.resolve(dirName + ".semdb")
 
         val store = SemanticDbFromScalaMeta.fromSemanticDbPath(testOutPath)
 
@@ -453,17 +474,16 @@ object AfterUpdateDottyVersionScript {
   private def newTempDir(): File =
     FileUtilRt.createTempDirectory("imported-dotty-tests", "", needDeleteTempFileOnExit)
 
-  private def allFilesIn(path: String): Iterator[File] =
-    allFilesIn(new File(path))
-
+  private def allFilesIn(path: Path): Iterator[File] =
+    allFilesIn(path.toFile)
   private def allFilesIn(path: File): Iterator[File] = {
     if (!path.exists) Iterator.empty
     else if (!path.isDirectory) Iterator(path)
     else path.listFiles.iterator.flatMap(allFilesIn)
   }
 
-  private def clearDirectory(path: String): Unit = {
-    val file = new File(path)
+  private def clearDirectory(path: Path): Unit = {
+    val file = path.toFile
     if (file.exists()) {
       assert(file.isDirectory)
       val files = file.listFiles()
@@ -503,7 +523,7 @@ object AfterUpdateDottyVersionScript {
    * @param testFilePath path to a directory that contains all test files
    * @param targetRangeDirectory path where the resulting range files are put into
    */
-  private def extractRanges(repoPath: Path, testFilePath: Path, targetRangeDirectory: String): Unit = {
+  private def extractRanges(repo: ScalaRepository, testFilePath: Path, targetRangeDirectory: Path): Unit = {
     /* not needed anymore?
     // patch test source to not delete tasty files
     patchFile(
@@ -514,7 +534,7 @@ object AfterUpdateDottyVersionScript {
 
     // patch test source to take our own source files
     patchFile(
-      repoPath.resolve("compiler/test/dotty/tools/dotc/FromTastyTests.scala"),
+      repo.path.resolve("compiler/test/dotty/tools/dotc/FromTastyTests.scala"),
       """compileTastyInDir(s"tests${JFile.separator}pos"""",
       s"""compileTastyInDir(${s""""${normalisedPathSeparator1(testFilePath)}""""}"""
     )
@@ -530,7 +550,7 @@ object AfterUpdateDottyVersionScript {
 
     // patch the parse function to output the ranges of the parsed tree
     patchFile(
-      repoPath.resolve("compiler/src/dotty/tools/dotc/parsing/Parsers.scala"),
+      repo.path.resolve("compiler/src/dotty/tools/dotc/parsing/Parsers.scala"),
       """    def parse(): Tree = {
         |      val t = compilationUnit()
         |      accept(EOF)
@@ -570,22 +590,19 @@ object AfterUpdateDottyVersionScript {
          |""".stripMargin.replaceAll("\n", "\n    ")
     )
 
-    patchTestBlacklist()
+    patchTestBlacklist(repo)
 
     {
       println(s"# Ranges directory: $rangesDirectory")
-      val file = new File(rangesDirectory)
-      if (!file.exists()) {
-        assert(file.mkdirs() && file.exists(), "Can't create ranges directory")
-      }
+      Files.createDirectories(rangesDirectory)
       clearDirectory(rangesDirectory)
     }
 
-    runSbt("testCompilation --from-tasty pos", repoPath)
+    runSbt("testCompilation --from-tasty pos", repo.path)
 
     val allFilesInFailed = allFilesIn(dottyParserTestsFailDir).toSet
     val allFilesInRanges = allFilesIn(rangesDirectory).toSet
-    val blacklistedFileNames = loadBlacklist()
+    val blacklistedFileNames = loadBlacklist(repo)
 
     val allFilesInFailedSize = allFilesInFailed.size
     val allFilesInRangesSize = allFilesInRanges.size
@@ -656,8 +673,8 @@ object AfterUpdateDottyVersionScript {
   private def readFile(path: Path): String =
     Using.resource(Source.fromFile(path.toFile))(_.mkString)
 
-  private def loadBlacklist(): Set[String] =
-    linesInFile(`pos-from-tasty.blacklist`)
+  private def loadBlacklist(repo: ScalaRepository): Set[String] =
+    linesInFile(repo.`pos-from-tasty.blacklist`)
       .filterNot(_.isBlank)
       .filterNot(_.startsWith("#"))
       .toSet
@@ -672,10 +689,10 @@ object AfterUpdateDottyVersionScript {
     )
   } // */
 
-  private def patchTestBlacklist(): Unit = {
+  private def patchTestBlacklist(repo: ScalaRepository): Unit = {
     // these files fail in dotty repository but are not added to the blacklist for some reason
     patchFile(
-      `pos-from-tasty.blacklist`,
+      repo.`pos-from-tasty.blacklist`,
       """# Tree is huge and blows stack for printing Text
         |i7034.scala""".stripMargin,
       """# Tree is huge and blows stack for printing Text
