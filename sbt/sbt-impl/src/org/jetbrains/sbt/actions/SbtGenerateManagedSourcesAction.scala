@@ -16,7 +16,8 @@ import org.jetbrains.sbt.project.{SbtExternalSystemManager, SbtProjectSystem}
 import org.jetbrains.sbt.{SbtBundle, SbtUtil}
 
 import java.nio.file.{Files, Path}
-import scala.util.{Failure, Success}
+import scala.util.control.NonFatal
+import scala.util.{Failure, Success, Try}
 
 private final class SbtGenerateManagedSourcesAction extends AnAction(
   SbtBundle.message("sbt.generate.managed.sources.action.title"),
@@ -88,12 +89,12 @@ private final class SbtGenerateManagedSourcesAction extends AnAction(
           settings.passParentEnvironment
         )(indicator)(using reporter)
 
-        def reportFailure(@Nullable exception: Throwable): Unit = {
+        def reportFailure(@Nullable throwable: Throwable): Unit = {
           val sbtOutput = reporter.outputLines.mkString(start = "", sep = System.lineSeparator(), end = System.lineSeparator())
           viewManager.onEvent(taskId, new OutputBuildEventImpl(taskId, null, sbtOutput, true))
           val failureWord = SbtBundle.message("sbt.generate.managed.sources.task.result.failure")
           val failureMessage = SbtBundle.message("sbt.generate.managed.sources.task.result.failure.message")
-          val failureResult = new FailureResultImpl(failureMessage, exception)
+          val failureResult = new FailureResultImpl(failureMessage, throwable)
           val finishEvent = new FinishBuildEventImpl(taskId, null, System.currentTimeMillis(), failureWord, failureResult)
           viewManager.onEvent(taskId, finishEvent)
         }
@@ -115,19 +116,25 @@ private final class SbtGenerateManagedSourcesAction extends AnAction(
             if (containsErrors) {
               reportFailure(null)
             } else {
-              val generatedSources = lines.collect { case s"[info] * $path" => Path.of(path).toRealPath() }
-              val fileManager = VirtualFileManager.getInstance()
-              generatedSources.foreach(fileManager.refreshAndFindFileByNioPath)
-              //noinspection ReferencePassedToNls
-              val output =
-                s"""${SbtBundle.message("sbt.generate.managed.sources.task.result.success.message")}
-                   |${generatedSources.map(path => s"  - $path").mkString(System.lineSeparator())}
-                   |""".stripMargin
-              viewManager.onEvent(taskId, new OutputBuildEventImpl(taskId, null, output, true))
-              val successWord = SbtBundle.message("sbt.generate.managed.sources.task.result.success")
-              val successResult = new SuccessResultImpl()
-              val successEvent = new FinishBuildEventImpl(taskId, null, System.currentTimeMillis(), successWord, successResult)
-              viewManager.onEvent(taskId, successEvent)
+              try {
+                def realFile(path: Path): Boolean = Files.exists(path) && Files.isRegularFile(path)
+                val generatedSources = lines.collect { case s"[info] * $path" => path }
+                  .flatMap(path => Try(Path.of(path).toRealPath()).filter(realFile).toOption)
+                val fileManager = VirtualFileManager.getInstance()
+                generatedSources.foreach(fileManager.refreshAndFindFileByNioPath)
+                //noinspection ReferencePassedToNls
+                val output =
+                  s"""${SbtBundle.message("sbt.generate.managed.sources.task.result.success.message")}
+                     |${generatedSources.map(path => s"  - $path").mkString(System.lineSeparator())}
+                     |""".stripMargin
+                viewManager.onEvent(taskId, new OutputBuildEventImpl(taskId, null, output, true))
+                val successWord = SbtBundle.message("sbt.generate.managed.sources.task.result.success")
+                val successResult = new SuccessResultImpl()
+                val successEvent = new FinishBuildEventImpl(taskId, null, System.currentTimeMillis(), successWord, successResult)
+                viewManager.onEvent(taskId, successEvent)
+              } catch {
+                case NonFatal(t) => reportFailure(t)
+              }
             }
 
           case Failure(exception) => reportFailure(exception)
