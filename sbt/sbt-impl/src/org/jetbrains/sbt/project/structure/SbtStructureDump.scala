@@ -15,6 +15,7 @@ import org.jetbrains.plugins.scala.build.BuildMessages.EventId
 import org.jetbrains.plugins.scala.build.{BuildMessages, BuildReporter, ExternalSystemNotificationReporter}
 import org.jetbrains.plugins.scala.extensions.LoggerExt
 import org.jetbrains.sbt.SbtUtil._
+import org.jetbrains.sbt.actions.GenerateManagedSourcesReporter
 import org.jetbrains.sbt.project.SbtProjectResolver.ImportCancelledException
 import org.jetbrains.sbt.project.structure.SbtOption._
 import org.jetbrains.sbt.project.structure.SbtStructureDump._
@@ -274,17 +275,28 @@ class SbtStructureDump {
     var messages = BuildMessages.empty
 
     def update(typ: OutputType, textRaw: String): Unit = {
-      val text = textRaw.trim
+      reporter match {
+        case _: GenerateManagedSourcesReporter =>
+          // The SbtGenerateManagedSourcesAction is sensitive to the exact output of the sbt process.
+          // In large projects, where many managed sources are generated at once, it can happen that the process
+          // management API splits the sbt output from one line across several lines. This can be detected by
+          // looking at the raw strings reported. The split lines do not have a '\n' newline character at the end.
+          messages = reportEvent(messages, textRaw)
+          reporter.log(textRaw)
 
-      if (text.nonEmpty) {
-        messages = reportEvent(messages, text)
-        reporter.progressTask(dumpTaskId, 1, -1, "", text)
-        (typ, reporter) match {
-          case (OutputType.StdErr, reporter: ExternalSystemNotificationReporter) =>
-            reporter.logErr(text)
-          case _ =>
-            reporter.log(text)
-        }
+        case _ =>
+          val text = textRaw.trim
+
+          if (text.nonEmpty) {
+            messages = reportEvent(messages, text)
+            reporter.progressTask(dumpTaskId, 1, -1, "", text)
+            (typ, reporter) match {
+              case (OutputType.StdErr, reporter: ExternalSystemNotificationReporter) =>
+                reporter.logErr(text)
+              case _ =>
+                reporter.log(text)
+            }
+          }
       }
     }
 
