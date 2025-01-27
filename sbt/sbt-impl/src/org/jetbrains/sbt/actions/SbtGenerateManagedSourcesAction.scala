@@ -30,61 +30,17 @@ private final class SbtGenerateManagedSourcesAction extends AnAction(
 
     val task = new Task.Backgroundable(project, SbtBundle.message("sbt.generate.managed.sources.task.progress.title"), true) {
       override def run(indicator: ProgressIndicator): Unit = {
+        val viewManager = project.getService(classOf[SyncViewManager])
+        val taskId = ExternalSystemTaskId.create(SbtProjectSystem.Id, ExternalSystemTaskType.RESOLVE_PROJECT, project)
+        val reporter = new GenerateManagedSourcesReporter()
+
         val settings = SbtExternalSystemManager.executionSettingsFor(project)
         val projectBasePath = Path.of(settings.realProjectPath)
 
-        val taskId = ExternalSystemTaskId.create(SbtProjectSystem.Id, ExternalSystemTaskType.RESOLVE_PROJECT, project)
-        val viewManager = project.getService(classOf[SyncViewManager])
         val descriptor = new DefaultBuildDescriptor(taskId, SbtBundle.message("sbt.generate.managed.sources.action.title"), projectBasePath.toString, System.currentTimeMillis())
         descriptor.setActivateToolWindowWhenAdded(false)
         descriptor.setActivateToolWindowWhenFailed(true)
         viewManager.onEvent(taskId, new StartBuildEventImpl(descriptor, SbtBundle.message("sbt.generate.managed.sources.action.title")))
-
-        val launcher = settings.customLauncher.getOrElse(SbtUtil.getDefaultLauncher)
-
-        val sbtVersion = Version(SbtUtil.detectSbtVersion(projectBasePath.toFile, launcher))
-        val sbtStructurePluginBinVersion = SbtUtil.structurePluginBinaryVersion(sbtVersion)
-        val addPluginCommandSupported = SbtUtil.isAddPluginCommandSupported(sbtVersion)
-
-        if (!addPluginCommandSupported) {
-          val notSupportedWord = SbtBundle.message("sbt.generate.managed.sources.action.not.supported")
-          val notSupportedMessage = SbtBundle.message("sbt.generate.managed.sources.action.not.supported.message", sbtVersion.presentation)
-          val failureResult = new FailureResultImpl(notSupportedMessage)
-          val finishEvent = new FinishBuildEventImpl(taskId, null, System.currentTimeMillis(), notSupportedWord, failureResult)
-          viewManager.onEvent(taskId, finishEvent)
-          return
-        }
-
-        val repoPath = SbtUtil.normalizePath(SbtUtil.getRepoDir)
-        val pluginsSbt =
-          raw"""resolvers += {
-               |  import sbt.Resolver.mavenStyleBasePattern
-               |  val artifactPatterns = Vector(mavenStyleBasePattern)
-               |  val patterns = Patterns.apply(artifactPatterns, artifactPatterns, true, false, false)
-               |  Resolver.file("Scala Plugin Bundled Repository", file(raw"$repoPath"))(patterns)
-               |}
-               |
-               |addSbtPlugin("org.jetbrains.scala" % "sbt-structure-extractor" % "${BuildInfo.sbtStructureVersion}", "$sbtStructurePluginBinVersion")
-               |""".stripMargin
-
-        val tmpPluginsSbtFile = Files.createTempFile("idea-gen-managed-sources", ".sbt")
-        Files.writeString(tmpPluginsSbtFile, pluginsSbt)
-        val setupOptions = Seq(s"-addPluginSbtFile=${tmpPluginsSbtFile.toRealPath()}")
-        tmpPluginsSbtFile.toFile.deleteOnExit()
-
-        val reporter = new GenerateManagedSourcesReporter()
-        val sbtResult = new SbtStructureDump().runSbt(
-          projectBasePath.toFile,
-          settings.vmExecutable,
-          settings.vmOptions,
-          settings.userSetEnvironment,
-          launcher,
-          settings.sbtOptions,
-          setupOptions,
-          "show */*:ideaGenerateAllManagedSources",
-          SbtBundle.message("sbt.generate.managed.sources.task.progress.title"),
-          settings.passParentEnvironment
-        )(indicator)(using reporter)
 
         def reportFailure(@Nullable throwable: Throwable): Unit = {
           val sbtOutput = reporter.outputLines.mkString(start = "", sep = System.lineSeparator(), end = System.lineSeparator())
@@ -96,41 +52,90 @@ private final class SbtGenerateManagedSourcesAction extends AnAction(
           viewManager.onEvent(taskId, finishEvent)
         }
 
-        sbtResult match {
-          case Success(buildMessages) if buildMessages.status == BuildMessages.Error => reportFailure(null)
+        try {
+          val launcher = settings.customLauncher.getOrElse(SbtUtil.getDefaultLauncher)
 
-          case Success(buildMessages) if buildMessages.status == BuildMessages.Canceled =>
-            val canceledWord = SbtBundle.message("sbt.generate.managed.sources.task.result.canceled")
-            val canceledMessage = SbtBundle.message("sbt.generate.managed.sources.task.result.canceled.message")
-            viewManager.onEvent(taskId, new OutputBuildEventImpl(taskId, null, canceledMessage, true))
-            val finishEvent = new FinishBuildEventImpl(taskId, null, System.currentTimeMillis(), canceledWord, new SkippedResultImpl())
+          val sbtVersion = Version(SbtUtil.detectSbtVersion(projectBasePath.toFile, launcher))
+          val sbtStructurePluginBinVersion = SbtUtil.structurePluginBinaryVersion(sbtVersion)
+          val addPluginCommandSupported = SbtUtil.isAddPluginCommandSupported(sbtVersion)
+
+          if (!addPluginCommandSupported) {
+            val notSupportedWord = SbtBundle.message("sbt.generate.managed.sources.action.not.supported")
+            val notSupportedMessage = SbtBundle.message("sbt.generate.managed.sources.action.not.supported.message", sbtVersion.presentation)
+            val failureResult = new FailureResultImpl(notSupportedMessage)
+            val finishEvent = new FinishBuildEventImpl(taskId, null, System.currentTimeMillis(), notSupportedWord, failureResult)
             viewManager.onEvent(taskId, finishEvent)
+            return
+          }
 
-          case Success(_) =>
-            val lines = reporter.outputLines
-            val containsErrors = lines.exists(_.startsWith("[error]"))
+          val repoPath = SbtUtil.normalizePath(SbtUtil.getRepoDir)
+          val pluginsSbt =
+            raw"""resolvers += {
+                 |  import sbt.Resolver.mavenStyleBasePattern
+                 |  val artifactPatterns = Vector(mavenStyleBasePattern)
+                 |  val patterns = Patterns.apply(artifactPatterns, artifactPatterns, true, false, false)
+                 |  Resolver.file("Scala Plugin Bundled Repository", file(raw"$repoPath"))(patterns)
+                 |}
+                 |
+                 |addSbtPlugin("org.jetbrains.scala" % "sbt-structure-extractor" % "${BuildInfo.sbtStructureVersion}", "$sbtStructurePluginBinVersion")
+                 |""".stripMargin
 
-            if (containsErrors) {
-              reportFailure(null)
-            } else {
-              try {
-                def realFile(path: Path): Boolean = Files.exists(path) && Files.isRegularFile(path)
-                val generatedSources = lines.collect { case s"[info] * $path" => path }
-                  .flatMap(path => Try(Path.of(path).toRealPath()).filter(realFile).toOption)
-                val fileManager = VirtualFileManager.getInstance()
-                generatedSources.foreach(fileManager.refreshAndFindFileByNioPath)
-                val output = lines.mkString(start = "", sep = System.lineSeparator(), end = System.lineSeparator())
-                viewManager.onEvent(taskId, new OutputBuildEventImpl(taskId, null, output, true))
-                val successWord = SbtBundle.message("sbt.generate.managed.sources.task.result.success")
-                val successResult = new SuccessResultImpl()
-                val successEvent = new FinishBuildEventImpl(taskId, null, System.currentTimeMillis(), successWord, successResult)
-                viewManager.onEvent(taskId, successEvent)
-              } catch {
-                case NonFatal(t) => reportFailure(t)
+          val tmpPluginsSbtFile = Files.createTempFile("idea-gen-managed-sources", ".sbt")
+          Files.writeString(tmpPluginsSbtFile, pluginsSbt)
+          val setupOptions = Seq(s"-addPluginSbtFile=${tmpPluginsSbtFile.toRealPath()}")
+          tmpPluginsSbtFile.toFile.deleteOnExit()
+
+          val sbtResult = new SbtStructureDump().runSbt(
+            projectBasePath.toFile,
+            settings.vmExecutable,
+            settings.vmOptions,
+            settings.userSetEnvironment,
+            launcher,
+            settings.sbtOptions,
+            setupOptions,
+            "show */*:ideaGenerateAllManagedSources",
+            SbtBundle.message("sbt.generate.managed.sources.task.progress.title"),
+            settings.passParentEnvironment
+          )(indicator)(using reporter)
+
+          sbtResult match {
+            case Success(buildMessages) if buildMessages.status == BuildMessages.Error => reportFailure(null)
+
+            case Success(buildMessages) if buildMessages.status == BuildMessages.Canceled =>
+              val canceledWord = SbtBundle.message("sbt.generate.managed.sources.task.result.canceled")
+              val canceledMessage = SbtBundle.message("sbt.generate.managed.sources.task.result.canceled.message")
+              viewManager.onEvent(taskId, new OutputBuildEventImpl(taskId, null, canceledMessage, true))
+              val finishEvent = new FinishBuildEventImpl(taskId, null, System.currentTimeMillis(), canceledWord, new SkippedResultImpl())
+              viewManager.onEvent(taskId, finishEvent)
+
+            case Success(_) =>
+              val lines = reporter.outputLines
+              val containsErrors = lines.exists(_.startsWith("[error]"))
+
+              if (containsErrors) {
+                reportFailure(null)
+              } else {
+                try {
+                  def realFile(path: Path): Boolean = Files.exists(path) && Files.isRegularFile(path)
+                  val generatedSources = lines.collect { case s"[info] * $path" => path }
+                    .flatMap(path => Try(Path.of(path).toRealPath()).filter(realFile).toOption)
+                  val fileManager = VirtualFileManager.getInstance()
+                  generatedSources.foreach(fileManager.refreshAndFindFileByNioPath)
+                  val output = lines.mkString(start = "", sep = System.lineSeparator(), end = System.lineSeparator())
+                  viewManager.onEvent(taskId, new OutputBuildEventImpl(taskId, null, output, true))
+                  val successWord = SbtBundle.message("sbt.generate.managed.sources.task.result.success")
+                  val successResult = new SuccessResultImpl()
+                  val successEvent = new FinishBuildEventImpl(taskId, null, System.currentTimeMillis(), successWord, successResult)
+                  viewManager.onEvent(taskId, successEvent)
+                } catch {
+                  case NonFatal(t) => reportFailure(t)
+                }
               }
-            }
 
-          case Failure(exception) => reportFailure(exception)
+            case Failure(exception) => reportFailure(exception)
+          }
+        } catch {
+          case NonFatal(t) => reportFailure(t)
         }
       }
     }
