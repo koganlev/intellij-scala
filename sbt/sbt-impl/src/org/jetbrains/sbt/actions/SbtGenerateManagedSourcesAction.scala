@@ -72,9 +72,6 @@ private final class SbtGenerateManagedSourcesAction extends AnAction(
         val setupOptions = Seq(s"-addPluginSbtFile=${tmpPluginsSbtFile.toRealPath()}")
         tmpPluginsSbtFile.toFile.deleteOnExit()
 
-        //noinspection ScalaExtractStringToBundle,ReferencePassedToNls
-        viewManager.onEvent(taskId, new OutputBuildEventImpl(taskId, null, SbtBundle.message("sbt.generate.managed.sources.task.progress.title") + System.lineSeparator(), true))
-
         val reporter = new GenerateManagedSourcesReporter()
         val sbtResult = new SbtStructureDump().runSbt(
           projectBasePath.toFile,
@@ -122,11 +119,7 @@ private final class SbtGenerateManagedSourcesAction extends AnAction(
                   .flatMap(path => Try(Path.of(path).toRealPath()).filter(realFile).toOption)
                 val fileManager = VirtualFileManager.getInstance()
                 generatedSources.foreach(fileManager.refreshAndFindFileByNioPath)
-                //noinspection ReferencePassedToNls
-                val output =
-                  s"""${SbtBundle.message("sbt.generate.managed.sources.task.result.success.message")}
-                     |${generatedSources.map(path => s"  - $path").mkString(System.lineSeparator())}
-                     |""".stripMargin
+                val output = lines.mkString(start = "", sep = System.lineSeparator(), end = System.lineSeparator())
                 viewManager.onEvent(taskId, new OutputBuildEventImpl(taskId, null, output, true))
                 val successWord = SbtBundle.message("sbt.generate.managed.sources.task.result.success")
                 val successResult = new SuccessResultImpl()
