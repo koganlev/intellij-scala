@@ -32,7 +32,7 @@ class ScalaSyntheticSteppingFilter extends ExtraSteppingFilter {
 
     val method = location.method()
     val name = method.name()
-    if (name.endsWith("$lzycompute")) return false //should step into the body of a lazy val
+    if (ScalaSyntheticProvider.isLzycompute(method)) return false //should step into the body of a lazy val
 
     if (positionManager.shouldSkip(location)) return true
 

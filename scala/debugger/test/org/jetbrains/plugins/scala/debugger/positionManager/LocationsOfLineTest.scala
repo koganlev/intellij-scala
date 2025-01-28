@@ -4,11 +4,11 @@ package positionManager
 
 import java.nio.file.Path
 
-class LocationOfLineTest_2_11 extends LocationsOfLineTestBase {
+class LocationsOfLineTest_2_11 extends LocationsOfLineTestBase {
   override protected def supportedIn(version: ScalaVersion): Boolean = version == ScalaVersion.Latest.Scala_2_11
 }
 
-class LocationOfLineTest_2_12 extends LocationsOfLineTestBase {
+class LocationsOfLineTest_2_12 extends LocationsOfLineTestBase {
   override protected def supportedIn(version: ScalaVersion): Boolean = version == ScalaVersion.Latest.Scala_2_12
 
   override def testLambdas(): Unit = {
@@ -33,7 +33,7 @@ class LocationOfLineTest_2_12 extends LocationsOfLineTestBase {
   }
 }
 
-class LocationOfLineTest_2_13 extends LocationsOfLineTestBase {
+class LocationsOfLineTest_2_13 extends LocationsOfLineTestBase {
   override protected def supportedIn(version: ScalaVersion): Boolean = version == ScalaVersion.Latest.Scala_2_13
 
   override def testSimple(): Unit = {
@@ -79,7 +79,7 @@ class LocationOfLineTest_2_13 extends LocationsOfLineTestBase {
   }
 }
 
-class LocationOfLineTest_3 extends LocationOfLineTest_2_13 {
+class LocationsOfLineTest_3 extends LocationsOfLineTest_2_13 {
   override protected def supportedIn(version: ScalaVersion): Boolean = version == ScalaVersion.Latest.Scala_3
 
   override def testLambdas(): Unit = {
@@ -110,13 +110,44 @@ class LocationOfLineTest_3 extends LocationOfLineTest_2_13 {
       Set(Loc("test.MultilevelClasses$", "main", 20))
     )
   }
+
+  override def testTryCatchInLazyVal(): Unit = {
+    checkLocationsOfLine()(
+      Set(Loc("TryCatchInLazyVal$", "simpleName$lzyINIT1", 3)),
+      Set(Loc("TryCatchInLazyVal$", "simpleName$lzyINIT1", 5)),
+      Set(Loc("TryCatchInLazyVal$", "simpleName$lzyINIT1", 8)),
+      Set(Loc("TryCatchInLazyVal$", "simpleName$lzyINIT1", 9))
+    )
+  }
+
+  override def testTryCatchInLocalLazyValInLazyVal(): Unit = {
+    checkLocationsOfLine()(
+      Set(Loc("TryCatchInLocalLazyValInLazyVal$", "inner$lzyINIT1$1", 4)),
+      Set(Loc("TryCatchInLocalLazyValInLazyVal$", "inner$lzyINIT1$1", 6)),
+      Set(Loc("TryCatchInLocalLazyValInLazyVal$", "inner$lzyINIT1$1", 9)),
+      Set(Loc("TryCatchInLocalLazyValInLazyVal$", "inner$lzyINIT1$1", 10)),
+      Set(Loc("TryCatchInLocalLazyValInLazyVal$", "simpleName$lzyINIT1", 15))
+    )
+  }
 }
 
-class LocationsOfLineTest_3_RC extends LocationOfLineTest_3 {
+class LocationsOfLineTest_3_4 extends LocationsOfLineTest_3 {
+  override protected def supportedIn(version: ScalaVersion): Boolean = version == ScalaVersion.Latest.Scala_3_4
+}
+
+class LocationsOfLineTest_3_5 extends LocationsOfLineTest_3 {
+  override protected def supportedIn(version: ScalaVersion): Boolean = version == ScalaVersion.Latest.Scala_3_5
+}
+
+class LocationsOfLineTest_3_6 extends LocationsOfLineTest_3 {
+  override protected def supportedIn(version: ScalaVersion): Boolean = version == ScalaVersion.Latest.Scala_3_6
+}
+
+class LocationsOfLineTest_3_RC extends LocationsOfLineTest_3 {
   override protected def supportedIn(version: ScalaVersion): Boolean = version == ScalaVersion.Latest.Scala_3_LTS_RC
 }
 
-class LocationsOfLineTest_3_Next_RC extends LocationOfLineTest_3 {
+class LocationsOfLineTest_3_Next_RC extends LocationsOfLineTest_3 {
   override protected def supportedIn(version: ScalaVersion): Boolean = version == ScalaVersion.Latest.Scala_3_Next_RC
 }
 
@@ -261,6 +292,70 @@ abstract class LocationsOfLineTestBase extends PositionManagerTestBase {
       Set(Loc("test.MultilevelClasses$This$1$$anon$1", "run", 10)),
       Set(Loc("test.MultilevelClasses$This$1$$anon$1$$anonfun$1", "apply$mcV$sp", 11)),
       Set(Loc("test.MultilevelClasses$", "main", 20))
+    )
+  }
+
+  addSourceFile("TryCatchInLazyVal.scala",
+    s"""object TryCatchInLazyVal {
+       |  lazy val simpleName: String = {
+       |    ${offsetMarker}val res = "abc"
+       |    try {
+       |      ${offsetMarker}Integer.parseInt("res")
+       |    } catch {
+       |      case e: NumberFormatException => {
+       |        ${offsetMarker}print("test")
+       |        ${offsetMarker}throw e;
+       |      }
+       |    }
+       |    res
+       |  }
+       |
+       |  def main(args: Array[String]): Unit = {
+       |    simpleName $breakpoint
+       |  }
+       |}
+       |""".stripMargin)
+
+  def testTryCatchInLazyVal(): Unit = {
+    checkLocationsOfLine()(
+      Set(Loc("TryCatchInLazyVal$", "simpleName$lzycompute", 3)),
+      Set(Loc("TryCatchInLazyVal$", "liftedTree1$1", 5)),
+      Set(Loc("TryCatchInLazyVal$", "liftedTree1$1", 8)),
+      Set(Loc("TryCatchInLazyVal$", "liftedTree1$1", 9))
+    )
+  }
+
+  addSourceFile("TryCatchInLocalLazyValInLazyVal.scala",
+    s"""object TryCatchInLocalLazyValInLazyVal {
+       |  lazy val simpleName: String = {
+       |    lazy val inner = {
+       |      ${offsetMarker}val res = "abc"
+       |      try {
+       |        ${offsetMarker}Integer.parseInt("res")
+       |      } catch {
+       |        case e: NumberFormatException => {
+       |          ${offsetMarker}print("test")
+       |          ${offsetMarker}throw e;
+       |        }
+       |      }
+       |      res
+       |    }
+       |    ${offsetMarker}inner
+       |  }
+       |
+       |  def main(args: Array[String]): Unit = {
+       |    simpleName $breakpoint
+       |  }
+       |}
+       |""".stripMargin)
+
+  def testTryCatchInLocalLazyValInLazyVal(): Unit = {
+    checkLocationsOfLine()(
+      Set(Loc("TryCatchInLocalLazyValInLazyVal$", "inner$lzycompute$1", 4)),
+      Set(Loc("TryCatchInLocalLazyValInLazyVal$", "liftedTree1$1", 6)),
+      Set(Loc("TryCatchInLocalLazyValInLazyVal$", "liftedTree1$1", 9)),
+      Set(Loc("TryCatchInLocalLazyValInLazyVal$", "liftedTree1$1", 10)),
+      Set(Loc("TryCatchInLocalLazyValInLazyVal$", "simpleName$lzycompute", 15))
     )
   }
 }

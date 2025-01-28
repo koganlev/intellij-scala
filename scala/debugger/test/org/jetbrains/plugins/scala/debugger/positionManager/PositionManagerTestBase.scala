@@ -70,7 +70,7 @@ abstract class PositionManagerTestBase extends ScalaDebuggerTestCase {
     val manager = PsiManager.getInstance(getProject)
     val path = srcPath.resolve(filePath)
     val virtualFile = VfsUtil.findFile(path, true)
-    val psiFile = inReadAction(manager.findFile(virtualFile))
+    val psiFile = manager.findFile(virtualFile)
     sourcePositionOffsets.result().map { offset =>
       val fromOffset = SourcePosition.createFromOffset(psiFile, offset)
       SourcePosition.createFromLine(psiFile, fromOffset.getLine)

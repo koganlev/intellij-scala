@@ -2,13 +2,6 @@ package org.jetbrains.plugins.scala
 package debugger
 package breakpoints
 
-import org.jetbrains.plugins.scala.extensions.inReadAction
-import org.junit.Assert.{assertTrue, fail}
-
-import java.util.concurrent.ConcurrentLinkedQueue
-import java.util.stream.Collectors
-import scala.jdk.CollectionConverters._
-
 class LambdaBreakpointsTest_2_11 extends LambdaBreakpointsTestBase {
   override protected def supportedIn(version: ScalaVersion): Boolean = version == ScalaVersion.Latest.Scala_2_11
 }
@@ -394,46 +387,7 @@ class LambdaBreakpointsTest_3_Next_RC extends LambdaBreakpointsTest_3_RC {
   override protected def supportedIn(version: ScalaVersion): Boolean = version == ScalaVersion.Latest.Scala_3_Next_RC
 }
 
-abstract class LambdaBreakpointsTestBase extends ScalaDebuggerTestCase {
-
-  private val expectedLineQueue: ConcurrentLinkedQueue[(Int, String)] = new ConcurrentLinkedQueue()
-
-  override protected def tearDown(): Unit = {
-    try {
-      if (!expectedLineQueue.isEmpty) {
-        val remaining =
-          expectedLineQueue.stream().collect(Collectors.toList[(Int, String)]).asScala.toList
-        fail(s"The debugger did not stop on all expected lines. Remaining: $remaining")
-      }
-    } finally {
-      super.tearDown()
-    }
-  }
-
-  protected def breakpointsTest(className: String = getTestName(false))(linesAndMethods: (Int, String)*): Unit = {
-    assertTrue("The test should stop on at least 1 breakpoint", linesAndMethods.nonEmpty)
-    expectedLineQueue.addAll(linesAndMethods.asJava)
-
-    createLocalProcess(className)
-
-    val debugProcess = getDebugProcess
-    val positionManager = ScalaPositionManager.instance(debugProcess).getOrElse(new ScalaPositionManager(debugProcess))
-
-    onEveryBreakpoint { implicit ctx =>
-      val loc = ctx.getFrameProxy.location()
-      val srcPos = inReadAction(positionManager.getSourcePosition(loc))
-      val actualLine = srcPos.getLine
-      val actualMethod = loc.method().name()
-      Option(expectedLineQueue.poll()) match {
-        case None =>
-          fail(s"The debugger stopped on line $actualLine and method $actualMethod, but there were no more expected lines")
-        case Some((line, method)) =>
-          assertEquals(line, actualLine)
-          assertEquals(method, actualMethod)
-          resume(ctx)
-      }
-    }
-  }
+abstract class LambdaBreakpointsTestBase extends BreakpointsTestBase {
 
   addSourceFile("LambdaInClassConstructor.scala",
     s"""

@@ -12,6 +12,7 @@ import java.util.concurrent.ConcurrentMap
 import scala.collection.mutable
 import scala.jdk.CollectionConverters._
 import scala.util.Try
+import scala.util.matching.Regex
 
 class ScalaSyntheticProvider extends SyntheticTypeComponentProvider {
   override def isSynthetic(typeComponent: TypeComponent): Boolean = ScalaSyntheticProvider.isSynthetic(typeComponent)
@@ -24,6 +25,10 @@ class ScalaSyntheticProvider extends SyntheticTypeComponentProvider {
 
 object ScalaSyntheticProvider {
   private val cache: ConcurrentMap[TypeComponent, java.lang.Boolean] = ContainerUtil.createConcurrentWeakMap()
+
+  private val lzycomputeRegex: Regex = ".*\\$lzycompute(\\$\\d+)*$".r
+
+  private val liftedTreeRegex: Regex = "liftedTree(\\d+)\\$(\\d+)".r
 
   def isSynthetic(typeComponent: TypeComponent): Boolean = {
     if (typeComponent == null) return true
@@ -41,6 +46,8 @@ object ScalaSyntheticProvider {
       case m: Method if isDefaultArg(m) => true
       case m: Method if isForwarder(m) => true
       case m: Method if m.name().endsWith("$adapted") => true
+      case m: Method if isLzycompute(m) => false
+      case m: Method if liftedTreeRegex.matches(m.name()) => false
       case m: Method if ScalaPositionManager.isIndyLambda(m) => false
       case m: Method if isAccessorInDelayedInit(m) => true
       case f: Field if f.name().startsWith("bitmap$") => true
@@ -66,6 +73,8 @@ object ScalaSyntheticProvider {
       case _ => false
     }
   }
+
+  private[debugger] def isLzycompute(m: Method): Boolean = lzycomputeRegex.matches(m.name())
 
   private def isSyntheticConstructor(m: Method): Boolean =
     (m.isConstructor || m.isStaticInitializer) &&
