@@ -1,12 +1,12 @@
 Document tests/pos/pos_valueclasses/nullAsInstanceOfVC.scala
 (7:21..7:27) scala/Double#
 (7:37..7:43) scala/AnyVal#
+(8:29..8:30) scala/StringContext#s().
 (8:36..8:37) nullAsInstanceOfVC/VCNull.Foo#d. -> 7:18
-(8:38..8:39) scala/StringContext#s().
 (10:21..10:27) scala/Predef.String#
 (10:37..10:43) scala/AnyVal#
+(11:29..11:30) scala/StringContext#s().
 (11:36..11:37) nullAsInstanceOfVC/VCNull.Bar#s. -> 10:18
-(11:38..11:39) scala/StringContext#s().
 (14:21..14:25) scala/Unit#
 (15:20..15:23) nullAsInstanceOfVC/VCNull.Foo# -> 7:14
 (15:31..15:43) scala/Any#asInstanceOf().

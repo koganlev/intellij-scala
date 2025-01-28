@@ -48,6 +48,7 @@ Document tests/pos/i8927.scala
 (15:62..15:63) _empty_/DPair#[V] -> 11:46
 (15:64..15:65) _empty_/DPair#extract().[B] -> 15:21
 (15:70..15:73) _empty_/DPair#key. -> 13:7
+(15:74..15:78) _empty_/Eq#isEq(). -> 4:43
 (15:79..15:80) _empty_/DPair#extract().(k) -> 15:29
 (16:13..16:15) _empty_/Eq. -> 6:8
 (16:16..16:19) _empty_/Eq.GEQ.

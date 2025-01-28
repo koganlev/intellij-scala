@@ -59,6 +59,7 @@ Document tests/pos/i13460.scala
 (34:25..34:37) scala/Any#asInstanceOf().
 (34:38..34:45) scala/Product#
 (35:9..35:27) local1 -> 31:9
+(36:12..36:16) scala/IArray$package.IArray.view().
 (37:12..37:24) scala/collection/IterableOps#zipWithIndex().
 (38:12..38:15) scala/collection/IterableOps#map().
 (39:22..39:25) local5

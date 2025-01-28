@@ -23,15 +23,18 @@ Document tests/pos/i14653.scala
 (13:20..13:26) _empty_/i14653$package.Amount. -> 2:8
 (14:12..14:18) _empty_/i14653$package.Amount# -> 1:6
 (14:21..14:23) local0 -> 11:7
+(14:24..14:25) _empty_/i14653$package.Amount.`+`(). -> 8:16
 (14:26..14:28) local1 -> 12:7
 (15:12..15:18) _empty_/i14653$package.Amount# -> 1:6
 (15:21..15:23) local0 -> 11:7
+(15:24..15:25) _empty_/i14653$package.Amount.`+`(). -> 8:16
 (15:26..15:28) local1 -> 12:7
+(15:29..15:30) _empty_/i14653$package.Amount.`+`(). -> 8:16
 (15:31..15:33) local2 -> 13:7
 (17:3..17:10) scala/Predef.println(+1).
+(17:11..17:12) scala/StringContext#s().
 (17:25..17:28) local3 -> 14:7
-(17:29..17:30) scala/StringContext#s().
 (18:3..18:10) scala/Predef.println(+1).
+(18:11..18:12) scala/StringContext#s().
 (18:25..18:28) local4 -> 15:7
-(18:29..18:30) scala/StringContext#s().
 

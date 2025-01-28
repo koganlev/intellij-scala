@@ -181,6 +181,7 @@ Document tests/pos/i11243.scala
 (99:13..99:14) _empty_/WriterTest.transformerMonad#flatMap().(f) -> 96:19
 (99:15..99:16) local11 -> 98:16
 (99:18..99:25) _empty_/WriterTest.Transformer#wrapped. -> 89:45
+(99:26..99:29) _empty_/WriterTest.Applicative#map(). -> 19:11
 (101:17..101:18) local13 -> 100:20
 (105:9..105:20) _empty_/WriterTest.Transformer.
 (105:21..105:24) local14 -> 97:13

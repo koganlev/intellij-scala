@@ -70,17 +70,15 @@ Document tests/pos/not-looping-implicit.scala
 (26:40..26:41) local13 -> 25:12
 (26:42..26:60) scala/deriving/Mirror#MirroredElemLabels#
 (26:62..26:63) local13 -> 25:12
-(27:13..27:19) _empty_/Schema# -> 6:7
-(27:20..27:21) _empty_/Schema.derived().[A] -> 23:22
+(27:9..27:12) scala/Predef.`???`().
 (28:15..28:21) scala/deriving/Mirror.
 (28:22..28:31) scala/deriving/Mirror.ProductOf#
 (28:32..28:33) _empty_/Schema.derived().[A] -> 23:22
 (29:37..29:44) _empty_/Schema.recurse(). -> 14:14
-(29:45..29:46) local17 -> 28:12
+(29:45..29:46) local15 -> 28:12
 (29:47..29:65) scala/deriving/Mirror#MirroredElemLabels#
-(29:67..29:68) local17 -> 28:12
-(30:13..30:19) _empty_/Schema# -> 6:7
-(30:20..30:21) _empty_/Schema.derived().[A] -> 23:22
+(29:67..29:68) local15 -> 28:12
+(30:9..30:12) scala/Predef.`???`().
 (33:24..33:30) _empty_/Schema# -> 6:7
 (33:31..33:32) _empty_/Schema.gen().[A] -> 33:20
 (33:36..33:43) _empty_/Schema.derived(). -> 23:14

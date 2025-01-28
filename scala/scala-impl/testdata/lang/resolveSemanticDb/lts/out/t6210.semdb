@@ -19,8 +19,8 @@ Document tests/pos/t6210.scala
 (15:26..15:33) scala/Boolean#
 (15:38..15:43) _empty_/TBool.
 (17:52..17:61) scala/package.Exception#
+(17:62..17:63) scala/StringContext#s().
 (17:92..17:95) _empty_/Foo.checkExpr().(ast) -> 11:17
 (17:96..17:104) scala/Any#getClass().
-(17:106..17:107) scala/StringContext#s().
 (19:5..19:10) local3 -> 12:9
 

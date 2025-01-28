@@ -18,9 +18,9 @@ Document tests/pos/i13900.scala
 (7:14..7:19) local0 -> 7:5
 (8:4..8:14) scala/annotation/targetName#
 (9:26..9:36) scala/Conversion#
-(9:37..9:41) _empty_/i13900$package.Inlined.fromValue().[Wide] -> 9:19
+(9:37..9:41) _empty_/i13900$package.Inlined.fromValue(+1).[Wide] -> 9:19
 (9:43..9:50) _empty_/i13900$package.Inlined# -> 3:13
-(9:51..9:55) _empty_/i13900$package.Inlined.fromValue().[Wide] -> 9:19
+(9:51..9:55) _empty_/i13900$package.Inlined.fromValue(+1).[Wide] -> 9:19
 (9:69..9:74) local1 -> 9:60
 (11:24..11:27) scala/Any#
 (11:30..11:37) _empty_/i13900$package.Inlined# -> 3:13

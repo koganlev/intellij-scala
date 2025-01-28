@@ -16,9 +16,9 @@ Document tests/pos/test-typers.scala
 (14:29..14:30) local2 -> 13:17
 (16:19..16:23) scala/Char#
 (16:26..16:32) scala/Predef.String#
+(16:35..16:36) scala/StringContext#s().
 (16:38..16:39) test/typers.Inference.double().(x) -> 16:16
 (16:40..16:41) test/typers.Inference.double().(x) -> 16:16
-(16:41..16:42) scala/StringContext#s().
 (18:11..18:18) scala/collection/StringOps#flatMap(+1).
 (18:19..18:25) test/typers.Inference.double(). -> 16:9
 (23:16..23:19) scala/Int#

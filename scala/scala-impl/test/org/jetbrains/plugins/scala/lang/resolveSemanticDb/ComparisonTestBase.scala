@@ -2,6 +2,7 @@ package org.jetbrains.plugins.scala.lang.resolveSemanticDb
 
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.psi.PsiFile
+import org.jetbrains.plugins.scala.ScalaVersion
 import org.jetbrains.plugins.scala.base.ScalaLightCodeInsightFixtureTestCase
 import org.jetbrains.plugins.scala.extensions.PathExt
 import org.jetbrains.plugins.scala.lang.resolveSemanticDb.configurations.ReferenceComparisonTestConfig
@@ -11,6 +12,7 @@ import java.nio.charset.StandardCharsets
 import java.nio.file.Path
 
 abstract class ComparisonTestBase(config: ReferenceComparisonTestConfig) extends ScalaLightCodeInsightFixtureTestCase {
+  override protected def supportedIn(version: ScalaVersion): Boolean = version == config.scalaTargetVersion
 
   def doTest(testName: String, succeeds: Boolean): Unit
 

@@ -83,9 +83,12 @@ Document tests/pos/consume.scala
 (34:61..34:63) _empty_/Test3.consume().(xs) -> 34:27
 (35:12..35:14) scala/package.`::`.
 (35:22..35:27) _empty_/Test3.consume().(limit) -> 34:40
+(35:28..35:29) _empty_/math3.Ord#`>`(). -> 21:26
+(35:32..35:39) _empty_/math3.Numeric#numeric(). -> 27:28
 (35:43..35:50) _empty_/Test3.consume(). -> 34:7
 (35:51..35:54) local6 -> 35:15
 (35:56..35:61) _empty_/Test3.consume().(limit) -> 34:40
+(35:62..35:63) _empty_/math3.Numeric#`-`(). -> 26:26
 (35:64..35:65) local5 -> 35:10
 (36:15..36:17) _empty_/Test3.consume().(xs) -> 34:27
 (38:18..38:25) _empty_/math3.Numeric# -> 24:9
@@ -97,9 +100,12 @@ Document tests/pos/consume.scala
 (38:69..38:71) _empty_/Test3.consume(+1).(xs) -> 38:27
 (39:12..39:15) scala/package.`#::`.
 (39:23..39:28) _empty_/Test3.consume(+1).(limit) -> 38:44
+(39:29..39:30) _empty_/math3.Ord#`>`(). -> 21:26
+(39:33..39:40) _empty_/math3.Numeric#numeric(). -> 27:28
 (39:44..39:51) _empty_/Test3.consume(+1). -> 38:7
 (39:52..39:55) local8 -> 39:16
 (39:57..39:62) _empty_/Test3.consume(+1).(limit) -> 38:44
+(39:63..39:64) _empty_/math3.Numeric#`-`(). -> 26:26
 (39:65..39:66) local7 -> 39:10
 (40:15..40:17) _empty_/Test3.consume(+1).(xs) -> 38:27
 (42:18..42:25) _empty_/math3.Numeric# -> 24:9
@@ -114,6 +120,8 @@ Document tests/pos/consume.scala
 (43:55..43:56) _empty_/Test3.consume(+2).[T] -> 42:15
 (43:59..43:62) scala/Int#
 (44:10..44:15) local11 -> 43:48
+(44:16..44:17) _empty_/math3.Ord#`>`(). -> 21:26
+(44:20..44:27) _empty_/math3.Numeric#numeric(). -> 27:28
 (44:28..44:30) scala/Boolean#`&&`().
 (44:31..44:33) local9 -> 43:19
 (44:34..44:41) scala/collection/Iterator#hasNext().
@@ -122,6 +130,7 @@ Document tests/pos/consume.scala
 (44:61..44:66) local10 -> 43:36
 (44:67..44:68) scala/Int#`+`(+4).
 (44:72..44:77) local11 -> 43:48
+(44:78..44:79) _empty_/math3.Numeric#`-`(). -> 26:26
 (44:80..44:82) local9 -> 43:19
 (44:83..44:87) scala/collection/Iterator#next().
 (45:12..45:17) local10 -> 43:36
@@ -137,10 +146,13 @@ Document tests/pos/consume.scala
 (48:51..48:52) _empty_/Test3.consume(+3).[T] -> 48:15
 (48:55..48:63) scala/package.Iterable#
 (48:64..48:65) _empty_/Test3.consume(+3).[T] -> 48:15
+(49:17..49:24) _empty_/math3.Numeric#numeric(). -> 27:28
 (50:5..50:7) _empty_/Test3.consume(+3).(xs) -> 48:27
 (50:8..50:17) scala/collection/IterableOps#dropWhile().
 (51:11..51:14) local13 -> 49:9
+(51:15..51:17) _empty_/math3.Ord#`<=`(). -> 22:26
 (51:18..51:23) _empty_/Test3.consume(+3).(limit) -> 48:44
+(51:32..51:35) _empty_/math3.Numeric#`+`(). -> 25:26
 (51:32..51:35) local13 -> 49:9
 (51:39..51:40) local14 -> 50:20
 (54:19..54:26) _empty_/math3.Numeric# -> 24:9

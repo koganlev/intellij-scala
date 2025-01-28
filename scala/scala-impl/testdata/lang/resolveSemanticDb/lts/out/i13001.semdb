@@ -17,6 +17,7 @@ Document tests/pos/i13001/Main_1.scala
 (14:27..14:28) _empty_/DerivedGenInstances#derived().[A] -> 13:24
 (14:32..14:35) scala/Predef.`???`().
 (15:5..15:8) _empty_/DerivedGenInstances#derived().(gen) -> 13:33
+(15:9..15:15) _empty_/K0.derive(). -> 26:16
 (15:16..15:21) local0 -> 14:9
 (15:23..15:28) local0 -> 14:9
 (18:8..18:13) scala/
