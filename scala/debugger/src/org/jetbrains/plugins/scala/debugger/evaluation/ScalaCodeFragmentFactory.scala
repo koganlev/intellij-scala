@@ -14,8 +14,8 @@ import com.intellij.xdebugger.impl.XDebugSessionImpl
 import com.intellij.xdebugger.impl.ui.tree.ValueMarkup
 import com.intellij.xdebugger.{XDebugSession, XDebuggerManager}
 import com.sun.jdi.{ObjectReference, Value}
-import org.jetbrains.plugins.scala.lang.completion.ScalaBasicCompletionProvider
 import org.jetbrains.plugins.scala.extensions.ObjectExt
+import org.jetbrains.plugins.scala.lang.completion.ScalaBasicCompletionProvider
 import org.jetbrains.plugins.scala.lang.psi.api.ScalaRecursiveElementVisitor
 import org.jetbrains.plugins.scala.lang.psi.api.expr.ScExpression
 import org.jetbrains.plugins.scala.lang.psi.api.statements.ScPatternDefinition
@@ -24,6 +24,7 @@ import org.jetbrains.plugins.scala.lang.psi.types.{ScType, ScalaType}
 import org.jetbrains.plugins.scala.{ScalaFileType, ScalaLanguage}
 
 import java.util.concurrent.atomic.AtomicReference
+import scala.annotation.nowarn
 import scala.collection.mutable
 import scala.jdk.CollectionConverters._
 
@@ -51,7 +52,7 @@ class ScalaCodeFragmentFactory extends CodeFragmentFactory {
             semaphore.up()
           }
         }
-        debuggerContext.getDebugProcess.getManagerThread.invoke(worker)
+        debuggerContext.getDebugProcess.getManagerThread.invoke(worker): @nowarn("cat=deprecation")
         var i: Int = 0
         while (i < 50 && !semaphore.waitFor(20)) {
           ProgressManager.checkCanceled()
