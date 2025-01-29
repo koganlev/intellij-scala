@@ -17,6 +17,7 @@ import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.ui.RawCommandLineEditor
 import org.jdom.Element
 import org.jetbrains.annotations.Nls
+import org.jetbrains.plugins.scala.extensions.PathExt
 import org.jetbrains.plugins.scala.worksheet.WorksheetBundle
 import org.jetbrains.plugins.scala.worksheet.ammonite.AmmoniteScriptWrappersHolder
 import org.jetbrains.plugins.scala.worksheet.ammonite.runconfiguration.AmmoniteRunConfiguration.{AmmNotFoundException, MyEditor}
@@ -69,7 +70,7 @@ class AmmoniteRunConfiguration(project: Project, factory: ConfigurationFactory) 
         execName match {
           case Some(exec) =>
             val exFile = Path.of(exec)
-            if (Files.exists(exFile)) cmd.setExePath(exFile.toRealPath().toString) else cmd.setExePath(exec)
+            if (Files.exists(exFile)) cmd.setExePath(exFile.toCanonicalPath.toString) else cmd.setExePath(exec)
           case None =>
             cmd.setExePath("/usr/local/bin/amm")
         }
@@ -160,7 +161,7 @@ class AmmoniteRunConfiguration(project: Project, factory: ConfigurationFactory) 
       Files.writeString(tempFile, s"repl.frontEnd() = ammonite.repl.FrontEnd.${if (SystemInfo.isWindows) "JLineWindows" else "JLineUnix"}")
     }
 
-    tempFile.toRealPath().toString
+    tempFile.toCanonicalPath.toString
   }
 
   private def isRepl = fileName.isEmpty

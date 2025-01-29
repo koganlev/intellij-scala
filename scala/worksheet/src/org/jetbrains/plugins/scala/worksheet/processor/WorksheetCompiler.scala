@@ -10,12 +10,11 @@ import com.intellij.openapi.editor.{Document, Editor}
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.progress.{ProgressIndicator, ProgressManager, Task}
 import com.intellij.openapi.project.{DumbService, Project}
-import com.intellij.openapi.util.io.FileUtil
 import org.jetbrains.annotations.Nls
 import org.jetbrains.jps.incremental.scala.Client.PosInfo
 import org.jetbrains.jps.incremental.scala.{Client, DelegateClient, MessageKind}
 import org.jetbrains.plugins.scala.compiler.{CompileServerLauncher, JDK}
-import org.jetbrains.plugins.scala.extensions.LoggerExt
+import org.jetbrains.plugins.scala.extensions.{LoggerExt, PathExt}
 import org.jetbrains.plugins.scala.lang.psi.api.{FileDeclarationsContributor, ScalaFile}
 import org.jetbrains.plugins.scala.project.{ModuleExt, ScalaSdkNotConfiguredException}
 import org.jetbrains.plugins.scala.settings.{ScalaCompileServerSettings, ScalaProjectSettings}
@@ -214,7 +213,7 @@ class WorksheetCompiler(
           makeType match {
             case OutOfProcessServer =>
               val plainArgs = args.asInstanceOf[PlainModeArgs]
-              WorksheetCompilerLocalEvaluator.executeWorksheet(virtualFile, plainArgs.className, plainArgs.outputDir.toRealPath().toString)(callback, printer)(module)
+              WorksheetCompilerLocalEvaluator.executeWorksheet(virtualFile, plainArgs.className, plainArgs.outputDir.toCanonicalPath.toString)(callback, printer)(module)
             case _ =>
               callback(WorksheetCompilerResult.CompiledAndEvaluated)
           }

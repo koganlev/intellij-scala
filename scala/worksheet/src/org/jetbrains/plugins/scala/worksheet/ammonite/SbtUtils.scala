@@ -74,7 +74,7 @@ private object SbtUtils {
     val pluginRootFolder = pluginLibFolder.getParent
     val launcher = pluginRootFolder / "launcher" / "sbt-launch.jar"
     if (Files.exists(launcher))
-      Seq("-jar", launcher.toRealPath().toString, "< " + path)
+      Seq("-jar", launcher.toCanonicalPath.toString, "< " + path)
     else
       throw new FileNotFoundException("Jar file not found for class: " + launcher.toAbsolutePath.toString)
   }

@@ -9,6 +9,7 @@ import com.intellij.util.SystemProperties
 import org.apache.commons.lang3.SystemUtils
 import org.jetbrains.plugins.scala.components.libextensions.JarPathStringExt
 import org.jetbrains.plugins.scala.editor.importOptimizer.ImportInfo
+import org.jetbrains.plugins.scala.extensions.PathExt
 import org.jetbrains.plugins.scala.extensions.implementation.iterator.ParentsIterator
 import org.jetbrains.plugins.scala.lang.psi.api.base.{ScReference, ScStableCodeReference}
 import org.jetbrains.plugins.scala.lang.psi.api.toplevel.imports.usages.ImportUsed
@@ -156,7 +157,7 @@ object AmmoniteUtil {
               !name.endsWith("-sources.jar") &&
               !name.endsWith("-javadoc.jar")
           }
-          res <- Option(JarFileSystem.getInstance().findFileByPath(jarModuleRoot.toRealPath().toString.withJarSeparator))
+          res <- Option(JarFileSystem.getInstance().findFileByPath(jarModuleRoot.toCanonicalPath.toString.withJarSeparator))
         } yield res
     }
   }

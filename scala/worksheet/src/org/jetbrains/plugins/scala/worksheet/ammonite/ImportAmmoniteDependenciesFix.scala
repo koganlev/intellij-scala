@@ -12,7 +12,7 @@ import com.intellij.openapi.vfs.JarFileSystem
 import com.intellij.psi.PsiFile
 import org.jetbrains.annotations.Nls
 import org.jetbrains.plugins.scala.components.libextensions.JarPathStringExt
-import org.jetbrains.plugins.scala.extensions.{inWriteAction, invokeLater}
+import org.jetbrains.plugins.scala.extensions.{PathExt, inWriteAction, invokeLater}
 import org.jetbrains.plugins.scala.lang.psi.api.ScFile
 import org.jetbrains.plugins.scala.project.Version
 import org.jetbrains.plugins.scala.project.template.Artifact
@@ -97,7 +97,7 @@ object ImportAmmoniteDependenciesFix {
                   for {
                     file <- filesFiltered
 
-                    rootFile = jarFileSystem.findFileByPath(file.toRealPath().toString.withJarSeparator)
+                    rootFile = jarFileSystem.findFileByPath(file.toCanonicalPath.toString.withJarSeparator)
                     if rootFile != null
 
                     library = tableModel.createLibrary(file.getFileName.toString)
