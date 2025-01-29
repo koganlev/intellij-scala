@@ -53,7 +53,7 @@ abstract class InspectionBasedHighlightingPass(file: ScalaFile, document: Option
   private def profile: InspectionProfileImpl = InspectionProjectProfileManager.getInstance(myProject).getCurrentProfile
 
   def isEnabled(element: PsiElement): Boolean = {
-    if (!EditorArea.isNativeHighlightingEnabled || EditorArea.isIncrementalHighlightingEnabled) return false
+    if (!EditorArea.isNativeHighlightingEnabled || EditorArea.isIncrementalHighlightingEnabledIn(file.getProject)) return false
 
     profile.isToolEnabled(highlightKey, element) && !inspectionSuppressor.isSuppressedFor(element, inspection.getShortName)
   }

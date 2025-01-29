@@ -26,7 +26,7 @@ final class ScalaRefCountVisitor(project: Project) extends HighlightVisitor {
   private var analyzedWholeFile = false
 
   override def suitableForFile(file: PsiFile): Boolean = {
-    if (!EditorArea.isNativeHighlightingEnabled || EditorArea.isIncrementalHighlightingEnabled) return false
+    if (!EditorArea.isNativeHighlightingEnabled || EditorArea.isIncrementalHighlightingEnabledIn(project)) return false
 
     HighlightingAdvisor.shouldInspect(file)
   }

@@ -16,6 +16,7 @@ import com.intellij.psi.{PsiDocumentManager, PsiElement, PsiManager}
 import com.intellij.ui.{Gray, JBColor}
 import org.jetbrains.plugins.scala.EditorArea._
 import org.jetbrains.plugins.scala.project.ProjectExt
+import org.jetbrains.plugins.scala.settings.ScalaProjectSettings
 import org.jetbrains.plugins.scala.startup.ProjectActivity
 
 import java.awt.{Color, Point}
@@ -26,9 +27,9 @@ class EditorArea extends EditorFactoryListener with ProjectActivity with Highlig
   private var previousVisibleRange: TextRange = _
 
   override def accept(highlightInfo: HighlightInfo): Boolean = {
-    if (!isIncrementalHighlightingEnabled) return true
-
     if (editor == null) return true
+
+    if (!isIncrementalHighlightingEnabledIn(editor.getProject)) return true
 
     val visibleRange = editor.getUserData(VISIBLE_RANGE_KEY)
     if (visibleRange == null) return true
@@ -97,9 +98,10 @@ class EditorArea extends EditorFactoryListener with ProjectActivity with Highlig
   }
 
   override def editorCreated(event: EditorFactoryEvent): Unit = {
-    if (!isIncrementalHighlightingEnabled) return
-
     val editor = event.getEditor
+
+    if (!isIncrementalHighlightingEnabledIn(editor.getProject)) return
+
     val file = editor.getVirtualFile
     if (file == null || file.getExtension != "scala" && file.getExtension != "sc" && file.getExtension != "sbt") return
 
@@ -107,9 +109,11 @@ class EditorArea extends EditorFactoryListener with ProjectActivity with Highlig
   }
 
   override def editorReleased(event: EditorFactoryEvent): Unit = {
-    if (!isIncrementalHighlightingEnabled) return
+    val editor = event.getEditor
 
-    event.getEditor.getScrollingModel.removeVisibleAreaListener(visibleAreaListener)
+    if (!isIncrementalHighlightingEnabledIn(editor.getProject)) return
+
+    editor.getScrollingModel.removeVisibleAreaListener(visibleAreaListener)
   }
 
   override def execute(project: Project): Unit = {
@@ -131,14 +135,14 @@ object EditorArea {
 
   private def isNativeHighlightingTracingEnabled: Boolean = Registry.is("scala.native.highlighting.tracing")
 
-  def isIncrementalHighlightingEnabled: Boolean = Registry.is("scala.incremental.highlighting")
+  def isIncrementalHighlightingEnabledIn(project: Project): Boolean = project != null && ScalaProjectSettings.in(project).isIncrementalHighlighting
 
   private def incrementalHighlightingLookaround: Int = Registry.intValue("scala.incremental.highlighting.lookaround")
 
   def isVisible(e: PsiElement): Boolean = {
     if (!isNativeHighlightingEnabled) return false
 
-    if (!isIncrementalHighlightingEnabled) return true
+    if (!isIncrementalHighlightingEnabledIn(e.getProject)) return true
 
     val editor = editorFor(e)
     if (editor == null) return false
