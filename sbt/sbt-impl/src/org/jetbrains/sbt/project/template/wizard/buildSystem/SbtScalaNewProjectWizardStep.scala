@@ -5,14 +5,12 @@ import com.intellij.ide.projectWizard.NewProjectWizardCollector.BuildSystem.{INS
 import com.intellij.ide.wizard.AbstractNewProjectWizardStep
 import com.intellij.openapi.externalSystem.model.ExternalSystemDataKeys
 import com.intellij.openapi.externalSystem.service.project.manage.ExternalProjectsManagerImpl
-import com.intellij.openapi.module.{ModuleManager, StdModuleTypes}
+import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.observable.properties.{GraphProperty, ObservableProperty, PropertyGraph}
 import com.intellij.openapi.observable.util.BindUtil
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.projectRoots.impl.DependentSdkType
-import com.intellij.openapi.projectRoots.{JavaSdkType, Sdk, SdkTypeId}
 import com.intellij.openapi.roots.ui.configuration.projectRoot.{LibrariesContainer, LibrariesContainerFactory}
-import com.intellij.openapi.roots.ui.configuration.{JdkComboBox, ProjectStructureConfigurable}
+import com.intellij.openapi.roots.ui.configuration.ProjectStructureConfigurable
 import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.ui.UIBundle
 import com.intellij.ui.components.JBTextField
@@ -21,11 +19,10 @@ import com.intellij.ui.dsl.gridLayout.HorizontalAlign
 import com.intellij.ui.layout.ValidationInfoBuilder
 import kotlin.Unit.{INSTANCE => KUnit}
 import org.jetbrains.annotations.TestOnly
-import org.jetbrains.plugins.scala.extensions.{ObjectExt, ToNullSafe}
+import org.jetbrains.plugins.scala.extensions.ToNullSafe
 import org.jetbrains.plugins.scala.project.Versions
 import org.jetbrains.plugins.scala.project.template.ScalaSDKStepLike
 import org.jetbrains.plugins.scala.util.ui.extensions.JComboBoxOps
-import org.jetbrains.sbt.project.template.wizard.kotlin_interop.{ComboBoxKt_Wrapper, JdkComboBoxKt_Interop}
 import org.jetbrains.sbt.project.template.wizard.{SbtModuleStepLike, ScalaNewProjectWizardMultiStep, ScalaVersionStepLike}
 import org.jetbrains.sbt.project.template.{SbtModuleBuilder, SbtModuleBuilderSelections}
 
@@ -38,10 +35,8 @@ final class SbtScalaNewProjectWizardStep(parent: ScalaNewProjectWizardMultiStep)
     with SbtScalaNewProjectWizardData
     with ScalaSampleCodeNewProjectWizardData
     with ScalaSDKStepLike
-    with SbtModuleStepLike {
-
-  private var sdkComboBox: Cell[JdkComboBox] = _
-  private val sdkProperty: GraphProperty[Sdk] = propertyGraph.property(null)
+    with SbtModuleStepLike
+    with JDKStepLike {
 
   override protected val librariesContainer: LibrariesContainer =
     LibrariesContainerFactory.createContainer(parent.getContext.getProject)
@@ -68,8 +63,6 @@ final class SbtScalaNewProjectWizardStep(parent: ScalaNewProjectWizardMultiStep)
   @TestOnly override private[project] def setSbtVersion(version: String): Unit = sbtVersionComboBox.setSelectedItemEnsuring(version)
   @TestOnly override private[project] def setPackagePrefix(prefix: String): Unit = packagePrefixTextField.setText(prefix)
 
-  private def getSdk: Option[Sdk] = Option(sdkProperty.get())
-
   private def getModuleName: String = moduleNameProperty.get()
 
   override protected val selections: SbtModuleBuilderSelections = SbtModuleBuilderSelections.default
@@ -90,7 +83,7 @@ final class SbtScalaNewProjectWizardStep(parent: ScalaNewProjectWizardMultiStep)
     val projectRoot = getContext.getProjectDirectory.toAbsolutePath
     builder.setContentEntryPath(projectRoot.toString)
 
-    setProjectOrModuleSdk(project, parent, builder, getSdk)
+    setProjectOrModuleSdk(project, parent, builder, sdk)
 
     ExternalProjectsManagerImpl.setupCreatedProject(project)
     /** NEWLY_CREATED_PROJECT must be set up to prevent the call of markDirtyAllExternalProjects in ExternalProjectsDataStorage#load.
@@ -110,17 +103,12 @@ final class SbtScalaNewProjectWizardStep(parent: ScalaNewProjectWizardMultiStep)
       builder.openFileEditorAfterProjectOpened = files
     }
 
+    startJdkDownloadIfNeeded(project)
     builder.commit(project)
   }
 
   override def setupUI(panel: Panel): Unit = {
-    panel.row(JavaUiBundle.message("label.project.wizard.new.project.jdk"), (row: Row) => {
-      val javaSdkFilter: kotlin.jvm.functions.Function1[SdkTypeId, java.lang.Boolean] =
-        (it: SdkTypeId) => it.isInstanceOf[JavaSdkType] && !it.is[DependentSdkType]
-      sdkComboBox = JdkComboBoxKt_Interop.sdkComboBox(row, getContext, sdkProperty, StdModuleTypes.JAVA.getId, javaSdkFilter, null, null, null, null)
-      ComboBoxKt_Wrapper.columns(sdkComboBox, TextFieldKt.COLUMNS_MEDIUM)
-      KUnit
-    })
+    setupJavaSdkUI(panel)
 
     panel.row(sbtLabelText, (row: Row) => {
       row.layout(RowLayout.PARENT_GRID)

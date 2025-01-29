@@ -106,6 +106,7 @@ object SbtModuleBuilder {
       Option(sbtVersionPanel.getParent).foreach(patchProjectLabels)
     }
 
+    // TODO: obsolete? the same behaviour is in the SdkSettingsStep
     override def updateDataModel(): Unit = {
       settingsStep.getContext.setProjectJdk(myJdkComboBox.getSelectedJdk)
     }
