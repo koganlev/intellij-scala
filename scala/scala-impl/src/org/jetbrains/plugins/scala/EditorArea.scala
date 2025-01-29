@@ -146,6 +146,7 @@ object EditorArea {
     val elementRange = e.getTextRange
 
     val visibleRange = editor.getUserData(VISIBLE_RANGE_KEY)
+    if (visibleRange == null) return true // Not yet computed (a safeguard, shouldn't normally happen)
     if (!elementRange.intersects(visibleRange)) return false
 
     val foldingModel = editor.getFoldingModel
