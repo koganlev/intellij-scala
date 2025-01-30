@@ -23,8 +23,8 @@ import java.awt.{Color, Point}
 import java.util
 import javax.swing.Timer
 
-class EditorArea extends EditorFactoryListener with ProjectActivity with HighlightInfoPostFilter {
-  private var previousVisibleRange: TextRange = _
+class PostFilter extends HighlightInfoPostFilter {
+  import EditorArea.editor
 
   override def accept(highlightInfo: HighlightInfo): Boolean = {
     if (editor == null) return true
@@ -38,6 +38,12 @@ class EditorArea extends EditorFactoryListener with ProjectActivity with Highlig
 
     highlightRange.intersects(visibleRange)
   }
+}
+
+class FactoryListener extends EditorFactoryListener {
+  import EditorArea.editor
+
+  private var previousVisibleRange: TextRange = _
 
   private val timer = new Timer(200, _ => {
     val visibleRange = editor.getUserData(VISIBLE_RANGE_KEY)
@@ -116,6 +122,9 @@ class EditorArea extends EditorFactoryListener with ProjectActivity with Highlig
     editor.getScrollingModel.removeVisibleAreaListener(visibleAreaListener)
   }
 
+}
+
+class StartupActivity extends ProjectActivity {
   override def execute(project: Project): Unit = {
     val connection = project.getMessageBus.connect(project.unloadAwareDisposable)
     connection.subscribe(DaemonCodeAnalyzer.DAEMON_EVENT_TOPIC, new HighlightingListener(project))
@@ -123,11 +132,11 @@ class EditorArea extends EditorFactoryListener with ProjectActivity with Highlig
 }
 
 object EditorArea {
-  private var editor: Editor = _
+  private[incremental] var editor: Editor = _
 
-  private val VISIBLE_RANGE_KEY: Key[TextRange] = Key.create[TextRange]("editor_visible_range")
+  private[incremental] val VISIBLE_RANGE_KEY: Key[TextRange] = Key.create[TextRange]("editor_visible_range")
 
-  private val ErrorStripeMarkColorKey = Key.create[Color]("error_stripe_mark_color")
+  private[incremental] val ErrorStripeMarkColorKey = Key.create[Color]("error_stripe_mark_color")
 
   def isNativeHighlightingEnabled: Boolean = Registry.is("scala.native.highlighting")
 
@@ -137,7 +146,7 @@ object EditorArea {
 
   def isIncrementalHighlightingEnabledIn(project: Project): Boolean = project != null && ScalaProjectSettings.in(project).isIncrementalHighlighting
 
-  private def incrementalHighlightingLookaround: Int = Registry.intValue("scala.incremental.highlighting.lookaround")
+  private[incremental] def incrementalHighlightingLookaround: Int = Registry.intValue("scala.incremental.highlighting.lookaround")
 
   def isVisible(e: PsiElement): Boolean = {
     if (!isNativeHighlightingEnabled) return false
@@ -172,7 +181,7 @@ object EditorArea {
     editors.head
   }
 
-  private def visibleRangeIn(editor: Editor, lookaround: Int): TextRange = {
+  private[incremental] def visibleRangeIn(editor: Editor, lookaround: Int): TextRange = {
     val visibleRectangle = editor.getScrollingModel.getVisibleArea
 
     val startOffset = {
@@ -219,7 +228,7 @@ object EditorArea {
     }
   }
 
-  private class HighlightingListener(project: Project) extends DaemonListener {
+  private[incremental] class HighlightingListener(project: Project) extends DaemonListener {
     private var startTime = 0L
 
     override def daemonStarting(fileEditors: util.Collection[_ <: FileEditor]): Unit = if (EditorArea.isNativeHighlightingTracingEnabled) {
