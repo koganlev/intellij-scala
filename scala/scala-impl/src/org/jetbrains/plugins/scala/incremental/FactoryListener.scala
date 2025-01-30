@@ -2,13 +2,16 @@ package org.jetbrains.plugins.scala.incremental
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer
 import com.intellij.codeInsight.daemon.impl.{DaemonCodeAnalyzerEx, DaemonCodeAnalyzerImpl, FileStatusMap}
-import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.event.{EditorFactoryEvent, EditorFactoryListener, VisibleAreaEvent, VisibleAreaListener}
 import com.intellij.openapi.editor.ex.EditorEx
-import com.intellij.openapi.util.TextRange
+import com.intellij.openapi.editor.{Document, Editor, LogicalPosition}
+import com.intellij.openapi.util.registry.Registry
+import com.intellij.openapi.util.{Key, TextRange}
 import com.intellij.psi.PsiManager
-import org.jetbrains.plugins.scala.incremental.EditorArea.{ErrorStripeMarkColorKey, VISIBLE_RANGE_KEY, incrementalHighlightingLookaround, isIncrementalHighlightingEnabledIn, visibleRangeIn}
+import org.jetbrains.plugins.scala.incremental.EditorArea.{VISIBLE_RANGE_KEY, isIncrementalHighlightingEnabledIn}
+import org.jetbrains.plugins.scala.incremental.FactoryListener.{ErrorStripeMarkColorKey, incrementalHighlightingLookaround, visibleRangeIn}
 
+import java.awt.{Color, Point}
 import javax.swing.Timer
 
 class FactoryListener extends EditorFactoryListener {
@@ -91,5 +94,29 @@ class FactoryListener extends EditorFactoryListener {
     if (!isIncrementalHighlightingEnabledIn(editor.getProject)) return
 
     editor.getScrollingModel.removeVisibleAreaListener(visibleAreaListener)
+  }
+}
+
+object FactoryListener {
+  private val ErrorStripeMarkColorKey = Key.create[Color]("error_stripe_mark_color")
+
+  private def incrementalHighlightingLookaround: Int = Registry.intValue("scala.incremental.highlighting.lookaround")
+
+  private def visibleRangeIn(editor: Editor, lookaround: Int): TextRange = {
+    val visibleRectangle = editor.getScrollingModel.getVisibleArea
+
+    val startOffset = {
+      val position = editor.xyToLogicalPosition(visibleRectangle.getLocation)
+      val adjustedPosition = new LogicalPosition((position.line - lookaround).max(0), 0)
+      editor.logicalPositionToOffset(adjustedPosition)
+    }
+
+    val endOffset = {
+      val position = editor.xyToLogicalPosition(new Point(visibleRectangle.x + visibleRectangle.width, visibleRectangle.y + visibleRectangle.height))
+      val adjustedPosition = new LogicalPosition(position.line + lookaround + 1, 0)
+      editor.logicalPositionToOffset(adjustedPosition)
+    }
+
+    TextRange.create(startOffset, startOffset.max(endOffset))
   }
 }
