@@ -9,7 +9,6 @@ import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.wm.WindowManager
 import com.intellij.psi.PsiElement
 import com.intellij.ui.{Gray, JBColor}
-import org.jetbrains.plugins.scala.incremental.EditorArea.editorFor
 import org.jetbrains.plugins.scala.project.ProjectExt
 import org.jetbrains.plugins.scala.startup.ProjectActivity
 
@@ -41,7 +40,7 @@ object Tracing {
   }
 
   def trace(e: PsiElement, reason: String): Unit = if (isNativeHighlightingTracingEnabled) {
-    val editor = editorFor(e)
+    val editor = EditorArea.editorFor(e)
     if (editor == null) return
 
     val text = reason + ": " + {
@@ -56,6 +55,6 @@ object Tracing {
     highlighter.setThinErrorStripeMark(true)
     highlighter.setErrorStripeTooltip(text)
 
-    println(text)
+//    println(text)
   }
 }

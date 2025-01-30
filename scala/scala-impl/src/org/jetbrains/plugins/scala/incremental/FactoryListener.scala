@@ -8,8 +8,7 @@ import com.intellij.openapi.editor.{Document, Editor, LogicalPosition}
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.{Key, TextRange}
 import com.intellij.psi.PsiManager
-import org.jetbrains.plugins.scala.incremental.EditorArea.{VISIBLE_RANGE_KEY, isIncrementalHighlightingEnabledIn}
-import org.jetbrains.plugins.scala.incremental.FactoryListener.{ErrorStripeMarkColorKey, incrementalHighlightingLookaround, visibleRangeIn}
+import org.jetbrains.plugins.scala.incremental.FactoryListener._
 
 import java.awt.{Color, Point}
 import javax.swing.Timer
@@ -20,7 +19,7 @@ class FactoryListener extends EditorFactoryListener {
   private var previousVisibleRange: TextRange = _
 
   private val timer = new Timer(200, _ => {
-    val visibleRange = editor.getUserData(VISIBLE_RANGE_KEY)
+    val visibleRange = editor.getUserData(EditorArea.VISIBLE_RANGE_KEY)
 
     val markupModel = editor.asInstanceOf[EditorEx].getFilteredDocumentMarkupModel
     markupModel.processRangeHighlightersOutside(visibleRange.getStartOffset, visibleRange.getEndOffset, highlighter => {
@@ -59,8 +58,8 @@ class FactoryListener extends EditorFactoryListener {
   private val visibleAreaListener = new VisibleAreaListener {
     override def visibleAreaChanged(e: VisibleAreaEvent): Unit = {
       editor = e.getEditor
-      val visibleRange = visibleRangeIn(editor, incrementalHighlightingLookaround)
-      editor.putUserData(VISIBLE_RANGE_KEY, visibleRange)
+      val visibleRange = visibleRangeIn(editor, lookaround)
+      editor.putUserData(EditorArea.VISIBLE_RANGE_KEY, visibleRange)
       timer.restart()
     }
   }
@@ -80,7 +79,7 @@ class FactoryListener extends EditorFactoryListener {
   override def editorCreated(event: EditorFactoryEvent): Unit = {
     val editor = event.getEditor
 
-    if (!isIncrementalHighlightingEnabledIn(editor.getProject)) return
+    if (!EditorArea.isIncrementalHighlightingEnabledIn(editor.getProject)) return
 
     val file = editor.getVirtualFile
     if (file == null || file.getExtension != "scala" && file.getExtension != "sc" && file.getExtension != "sbt") return
@@ -91,7 +90,7 @@ class FactoryListener extends EditorFactoryListener {
   override def editorReleased(event: EditorFactoryEvent): Unit = {
     val editor = event.getEditor
 
-    if (!isIncrementalHighlightingEnabledIn(editor.getProject)) return
+    if (!EditorArea.isIncrementalHighlightingEnabledIn(editor.getProject)) return
 
     editor.getScrollingModel.removeVisibleAreaListener(visibleAreaListener)
   }
@@ -100,7 +99,7 @@ class FactoryListener extends EditorFactoryListener {
 object FactoryListener {
   private val ErrorStripeMarkColorKey = Key.create[Color]("error_stripe_mark_color")
 
-  private def incrementalHighlightingLookaround: Int = Registry.intValue("scala.incremental.highlighting.lookaround")
+  private def lookaround: Int = Registry.intValue("scala.incremental.highlighting.lookaround")
 
   private def visibleRangeIn(editor: Editor, lookaround: Int): TextRange = {
     val visibleRectangle = editor.getScrollingModel.getVisibleArea
