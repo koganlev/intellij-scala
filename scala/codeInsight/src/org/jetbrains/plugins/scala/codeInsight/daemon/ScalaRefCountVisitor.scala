@@ -8,7 +8,6 @@ import com.intellij.lang.injection.InjectedLanguageManager
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.Project
 import com.intellij.psi._
-import org.jetbrains.plugins.scala.EditorArea.isVisible
 import org.jetbrains.plugins.scala.annotator.{HighlightingAdvisor, ScalaAnnotator}
 import org.jetbrains.plugins.scala.annotator.hints.AnnotatorHints
 import org.jetbrains.plugins.scala.annotator.usageTracker.ScalaRefCountHolder
@@ -26,14 +25,14 @@ final class ScalaRefCountVisitor(project: Project) extends HighlightVisitor {
   private val LOG = Logger.getInstance(classOf[ScalaRefCountVisitor])
   private var analyzedWholeFile = false
 
-  override def suitableForFile(file: PsiFile): Boolean =
+  override def suitableForFile(file: PsiFile): Boolean = {
+    if (!EditorArea.isNativeHighlightingEnabled || EditorArea.isIncrementalHighlightingEnabledIn(project)) return false
+
     HighlightingAdvisor.shouldInspect(file)
-
-  override def visit(element: PsiElement): Unit = {
-    if (!isVisible(element)) return
-
-    registerElementsAndImportsUsed(element)
   }
+
+  override def visit(element: PsiElement): Unit =
+    registerElementsAndImportsUsed(element)
 
   override def analyze(file: PsiFile,
                        updateWholeFile: Boolean,

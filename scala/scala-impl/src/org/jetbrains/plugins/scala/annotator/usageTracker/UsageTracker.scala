@@ -54,7 +54,7 @@ object UsageTracker {
       mutable.ArrayBuffer.empty
 
     val importHolders: Iterator[ScImportsHolder] =
-      file.elements(isVisible).filterByType[ScImportsHolder]
+      file.elements.filterByType[ScImportsHolder]
 
     val isSource3 = file.isSource3Enabled
 
