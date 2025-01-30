@@ -4,6 +4,7 @@ import com.intellij.lang.{DependentLanguage, Language}
 import com.intellij.openapi.application.{ApplicationManager, Experiments}
 import com.intellij.openapi.project.ProjectManager
 import org.jetbrains.annotations.Nullable
+import org.jetbrains.plugins.scala.incremental.EditorArea
 import org.jetbrains.plugins.scala.lang.psi.api.base.ScReference
 import org.jetbrains.uast.UElement
 
@@ -18,7 +19,7 @@ package object uast {
   }
 
   private[uast] def isEnabled: Boolean = {
-    if (!EditorArea.isNativeHighlightingEnabled || ProjectManager.getInstance.getOpenProjects.exists(EditorArea.isIncrementalHighlightingEnabledIn)) return false
+    if (ProjectManager.getInstance.getOpenProjects.exists(EditorArea.isIncrementalHighlightingEnabledIn)) return false
 
     ApplicationManager.getApplication.isUnitTestMode ||
       Experiments.getInstance().isFeatureEnabled("scala.uast.enabled")

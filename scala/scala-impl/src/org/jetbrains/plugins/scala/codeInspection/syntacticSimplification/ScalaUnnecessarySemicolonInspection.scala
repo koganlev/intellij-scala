@@ -3,7 +3,7 @@ package org.jetbrains.plugins.scala.codeInspection.syntacticSimplification
 import com.intellij.codeInspection.{LocalInspectionTool, ProblemHighlightType, ProblemsHolder}
 import com.intellij.openapi.project.{DumbAware, Project}
 import com.intellij.psi.{PsiElement, PsiElementVisitor}
-import org.jetbrains.plugins.scala.EditorArea.isVisible
+import org.jetbrains.plugins.scala.incremental.EditorArea.isVisible
 import org.jetbrains.plugins.scala.codeInspection.{AbstractFixOnPsiElement, ScalaInspectionBundle}
 import org.jetbrains.plugins.scala.extensions._
 import org.jetbrains.plugins.scala.lang.lexer.ScalaTokenTypes

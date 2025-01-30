@@ -57,14 +57,14 @@ object Tracing {
     if (parameters.resolve) {
       trace("Resolve: " + reference.asText + " → " + result.map(_.asText).mkString(", "))
     }
-    EditorArea.trace(reference, "Resolve")
+    incremental.Tracing.trace(reference, "Resolve")
   }
 
   def inference(expression: ScExpression, result: ExpressionTypeResult): Unit = {
     if (parameters.inference) {
       trace("Inference: " + expression.asText + " → " + result.asText)
     }
-    EditorArea.trace(expression, "Inference")
+    incremental.Tracing.trace(expression, "Inference")
   }
 
   private val psiTreeChangeListener = new PsiTreeChangeAdapter {

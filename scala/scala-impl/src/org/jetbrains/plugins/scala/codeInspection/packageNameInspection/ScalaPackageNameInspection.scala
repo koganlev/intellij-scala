@@ -8,7 +8,7 @@ import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.psi._
 import org.jetbrains.annotations.Nls
-import org.jetbrains.plugins.scala.EditorArea.isVisible
+import org.jetbrains.plugins.scala.incremental.EditorArea.isVisible
 import org.jetbrains.plugins.scala.codeInspection.ScalaInspectionBundle
 import org.jetbrains.plugins.scala.extensions._
 import org.jetbrains.plugins.scala.lang.psi.api.ScalaFile

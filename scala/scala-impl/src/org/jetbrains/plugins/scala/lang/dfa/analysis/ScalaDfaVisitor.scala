@@ -1,6 +1,6 @@
 package org.jetbrains.plugins.scala.lang.dfa.analysis
 
-import org.jetbrains.plugins.scala.EditorArea.isVisible
+import org.jetbrains.plugins.scala.incremental.EditorArea.isVisible
 import org.jetbrains.plugins.scala.lang.dfa.analysis.framework._
 import org.jetbrains.plugins.scala.lang.psi.api.ScalaElementVisitor
 import org.jetbrains.plugins.scala.lang.psi.api.statements.ScFunctionDefinition

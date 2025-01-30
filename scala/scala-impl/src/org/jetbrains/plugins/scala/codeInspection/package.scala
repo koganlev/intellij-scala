@@ -5,7 +5,7 @@ import com.intellij.openapi.fileEditor.{FileEditorManager, TextEditor}
 import com.intellij.openapi.project.Project
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.{PsiClass, PsiElement, PsiElementVisitor}
-import org.jetbrains.plugins.scala.EditorArea.isVisible
+import org.jetbrains.plugins.scala.incremental.EditorArea.isVisible
 import org.jetbrains.plugins.scala.extensions._
 import org.jetbrains.plugins.scala.lang.psi.ElementScope
 import org.jetbrains.plugins.scala.lang.psi.api.base.patterns.{ScCaseClause, ScCaseClauses}

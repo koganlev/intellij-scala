@@ -9,7 +9,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.{Disposer, Key}
 import com.intellij.psi.{PsiElement, PsiFile, PsiNamedElement}
 import org.jetbrains.annotations.Nls
-import org.jetbrains.plugins.scala.EditorArea.isVisible
+import org.jetbrains.plugins.scala.incremental.EditorArea.isVisible
 import org.jetbrains.plugins.scala.annotator.hints.Hint.MenuProvider
 import org.jetbrains.plugins.scala.annotator.hints.Text
 import org.jetbrains.plugins.scala.codeInsight.hints.rangeHints.RangeInlayHintsPass._

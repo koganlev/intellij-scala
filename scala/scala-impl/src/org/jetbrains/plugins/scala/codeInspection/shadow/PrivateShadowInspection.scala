@@ -10,7 +10,7 @@ import com.intellij.psi.search.searches.ReferencesSearch
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.{PsiElement, PsiElementVisitor}
 import org.jetbrains.annotations.{Nls, NonNls}
-import org.jetbrains.plugins.scala.EditorArea.isVisible
+import org.jetbrains.plugins.scala.incremental.EditorArea.isVisible
 import org.jetbrains.plugins.scala.codeInspection.ScalaInspectionBundle
 import org.jetbrains.plugins.scala.codeInspection.quickfix.RenameElementQuickfix
 import org.jetbrains.plugins.scala.codeInspection.ui.CompilerInspectionOptions._

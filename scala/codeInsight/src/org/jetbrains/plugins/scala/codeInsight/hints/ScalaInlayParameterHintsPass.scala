@@ -9,7 +9,7 @@ import com.intellij.openapi.actionSystem.{ActionGroup, ActionManager, ActionUpda
 import com.intellij.openapi.editor.Editor
 import com.intellij.psi.{PsiElement, PsiMethod}
 import com.intellij.util.containers.ContainerUtil
-import org.jetbrains.plugins.scala.EditorArea.isVisible
+import org.jetbrains.plugins.scala.incremental.EditorArea.isVisible
 import org.jetbrains.plugins.scala.ScalaLanguage.{INSTANCE => ScalaLanguage}
 import org.jetbrains.plugins.scala.annotator.hints.Hint.MenuProvider
 import org.jetbrains.plugins.scala.annotator.hints.{Hint, Text}

@@ -5,7 +5,7 @@ import com.intellij.icons.AllIcons
 import com.intellij.openapi.editor.markup.GutterIconRenderer
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.psi.PsiElement
-import org.jetbrains.plugins.scala.EditorArea.isVisible
+import org.jetbrains.plugins.scala.incremental.EditorArea.isVisible
 import org.jetbrains.plugins.scala.ScalaBundle
 import org.jetbrains.plugins.scala.extensions.{ChildOf, PsiElementExt}
 import org.jetbrains.plugins.scala.lang.lexer.ScalaTokenTypes

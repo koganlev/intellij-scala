@@ -11,7 +11,7 @@ import com.intellij.pom.Navigatable
 import com.intellij.psi.PsiElement
 import com.intellij.util.DocumentUtil
 import org.jetbrains.annotations.Nls
-import org.jetbrains.plugins.scala.EditorArea.isVisible
+import org.jetbrains.plugins.scala.incremental.EditorArea.isVisible
 import org.jetbrains.plugins.scala.annotator.HighlightingAdvisor
 import org.jetbrains.plugins.scala.annotator.hints._
 import org.jetbrains.plugins.scala.autoImport.quickFix.{ImportImplicitInstanceFix, PopupPosition}
