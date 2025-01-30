@@ -1,12 +1,10 @@
 package org.jetbrains.plugins.scala.incremental
 
-import com.intellij.openapi.editor.markup.{HighlighterLayer, HighlighterTargetArea}
 import com.intellij.openapi.editor.{Editor, EditorFactory, LogicalPosition}
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.{Key, TextRange}
 import com.intellij.psi.{PsiDocumentManager, PsiElement}
-import com.intellij.ui.{Gray, JBColor}
 import org.jetbrains.plugins.scala.settings.ScalaProjectSettings
 
 import java.awt.{Color, Point}
@@ -17,8 +15,6 @@ object EditorArea {
   private[incremental] val VISIBLE_RANGE_KEY: Key[TextRange] = Key.create[TextRange]("editor_visible_range")
 
   private[incremental] val ErrorStripeMarkColorKey = Key.create[Color]("error_stripe_mark_color")
-
-  private[incremental] def isNativeHighlightingTracingEnabled: Boolean = Registry.is("scala.highlighting.tracing")
 
   def isIncrementalHighlightingEnabledIn(project: Project): Boolean = project != null && ScalaProjectSettings.in(project).isIncrementalHighlighting
 
@@ -42,7 +38,7 @@ object EditorArea {
     region1 == null || region1 != region2
   }
 
-  private def editorFor(e: PsiElement): Editor = {
+  private[incremental] def editorFor(e: PsiElement): Editor = {
     val psiFile = e.getContainingFile
     if (psiFile == null) return null
 
@@ -71,24 +67,5 @@ object EditorArea {
     }
 
     TextRange.create(startOffset, startOffset.max(endOffset))
-  }
-
-  def trace(e: PsiElement, reason: String): Unit = if (isNativeHighlightingTracingEnabled) {
-    val editor = editorFor(e)
-    if (editor == null) return
-
-    val text = reason + ": " + {
-      val s = e.getText.replace('\n', '↵').replaceAll(" {2,}", " ")
-      if (s.length > 120) s.substring(0, 120) + "…" else s
-    }
-
-    val highlighter = editor.getMarkupModel.addRangeHighlighter(
-      e.getTextRange.getStartOffset, e.getTextRange.getEndOffset, HighlighterLayer.ADDITIONAL_SYNTAX, null, HighlighterTargetArea.EXACT_RANGE)
-
-    highlighter.setErrorStripeMarkColor(new JBColor(Gray._170, Gray._80))
-    highlighter.setThinErrorStripeMark(true)
-    highlighter.setErrorStripeTooltip(text)
-
-    println(text)
   }
 }

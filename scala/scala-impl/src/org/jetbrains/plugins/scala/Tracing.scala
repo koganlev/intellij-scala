@@ -10,7 +10,6 @@ import com.intellij.openapi.project.Project
 import com.intellij.psi.{PsiElement, PsiManager, PsiTreeChangeAdapter, PsiTreeChangeEvent}
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.scala.extensions._
-import org.jetbrains.plugins.scala.incremental.EditorArea
 import org.jetbrains.plugins.scala.lang.parser.parsing.builder.ScalaPsiBuilder
 import org.jetbrains.plugins.scala.lang.psi.api.base.ScReference
 import org.jetbrains.plugins.scala.lang.psi.api.expr.ScExpression
@@ -58,14 +57,14 @@ object Tracing {
     if (parameters.resolve) {
       trace("Resolve: " + reference.asText + " → " + result.map(_.asText).mkString(", "))
     }
-    EditorArea.trace(reference, "Resolve")
+    incremental.Tracing.trace(reference, "Resolve")
   }
 
   def inference(expression: ScExpression, result: ExpressionTypeResult): Unit = {
     if (parameters.inference) {
       trace("Inference: " + expression.asText + " → " + result.asText)
     }
-    EditorArea.trace(expression, "Inference")
+    incremental.Tracing.trace(expression, "Inference")
   }
 
   private val psiTreeChangeListener = new PsiTreeChangeAdapter {
