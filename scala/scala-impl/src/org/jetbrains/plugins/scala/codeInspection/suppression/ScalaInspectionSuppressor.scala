@@ -2,7 +2,7 @@ package org.jetbrains.plugins.scala.codeInspection.suppression
 
 import com.intellij.codeInspection.{InspectionSuppressor, SuppressQuickFix}
 import com.intellij.psi.PsiElement
-import org.jetbrains.plugins.scala.EditorArea.isVisible
+import org.jetbrains.plugins.scala.incremental.EditorArea.isVisible
 
 class ScalaInspectionSuppressor extends InspectionSuppressor {
   override def isSuppressedFor(element: PsiElement, toolId: String): Boolean = {

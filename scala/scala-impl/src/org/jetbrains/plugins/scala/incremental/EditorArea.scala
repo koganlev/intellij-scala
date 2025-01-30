@@ -1,4 +1,4 @@
-package org.jetbrains.plugins.scala
+package org.jetbrains.plugins.scala.incremental
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer.DaemonListener
@@ -14,7 +14,7 @@ import com.intellij.openapi.util.{Key, TextRange}
 import com.intellij.openapi.wm.WindowManager
 import com.intellij.psi.{PsiDocumentManager, PsiElement, PsiManager}
 import com.intellij.ui.{Gray, JBColor}
-import org.jetbrains.plugins.scala.EditorArea._
+import org.jetbrains.plugins.scala.incremental.EditorArea._
 import org.jetbrains.plugins.scala.project.ProjectExt
 import org.jetbrains.plugins.scala.settings.ScalaProjectSettings
 import org.jetbrains.plugins.scala.startup.ProjectActivity

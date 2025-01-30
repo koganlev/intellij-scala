@@ -10,6 +10,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.psi.{PsiElement, PsiManager, PsiTreeChangeAdapter, PsiTreeChangeEvent}
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.scala.extensions._
+import org.jetbrains.plugins.scala.incremental.EditorArea
 import org.jetbrains.plugins.scala.lang.parser.parsing.builder.ScalaPsiBuilder
 import org.jetbrains.plugins.scala.lang.psi.api.base.ScReference
 import org.jetbrains.plugins.scala.lang.psi.api.expr.ScExpression

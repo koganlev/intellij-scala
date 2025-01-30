@@ -159,9 +159,9 @@
         <fileType name="Scala" language="Scala" extensions="scala;mill"
                   implementationClass="org.jetbrains.plugins.scala.ScalaFileType" fieldName="INSTANCE" />
 
-        <editorFactoryListener implementation="org.jetbrains.plugins.scala.EditorArea"/>
-        <postStartupActivity implementation="org.jetbrains.plugins.scala.EditorArea"/>
-        <highlightInfoPostFilter implementation="org.jetbrains.plugins.scala.EditorArea"/>
+        <editorFactoryListener implementation="org.jetbrains.plugins.scala.incremental.EditorArea"/>
+        <postStartupActivity implementation="org.jetbrains.plugins.scala.incremental.EditorArea"/>
+        <highlightInfoPostFilter implementation="org.jetbrains.plugins.scala.incremental.EditorArea"/>
         <registryKey key="scala.native.highlighting" defaultValue="true" description="Enable built-in highlighting"/>
         <registryKey key="scala.native.highlighting.synchronized" defaultValue="false" description="Blocking resolve and type inference computations"/>
         <registryKey key="scala.native.highlighting.tracing" defaultValue="false" description="Trace resolve and type inference"/>

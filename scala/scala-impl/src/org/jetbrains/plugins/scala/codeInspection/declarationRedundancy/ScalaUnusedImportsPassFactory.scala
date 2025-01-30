@@ -6,7 +6,7 @@ import com.intellij.codeInsight.daemon.impl.{FileStatusMap, HighlightInfoProcess
 import com.intellij.openapi.editor.{Document, Editor}
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiFile
-import org.jetbrains.plugins.scala.EditorArea
+import org.jetbrains.plugins.scala.incremental.EditorArea
 
 final class ScalaUnusedImportsPassFactory
   extends TextEditorHighlightingPassFactory

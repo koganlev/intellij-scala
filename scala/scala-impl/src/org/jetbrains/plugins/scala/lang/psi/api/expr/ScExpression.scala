@@ -3,7 +3,7 @@ package org.jetbrains.plugins.scala.lang.psi.api.expr
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.psi._
 import com.intellij.psi.impl.source.codeStyle.CodeEditUtil
-import org.jetbrains.plugins.scala.EditorArea.synchronizedOn
+import org.jetbrains.plugins.scala.incremental.EditorArea.synchronizedOn
 import org.jetbrains.plugins.scala.caches.{BlockModificationTracker, cachedWithRecursionGuard}
 import org.jetbrains.plugins.scala.extensions._
 import org.jetbrains.plugins.scala.lang.psi.ScalaPsiUtil.{MethodValue, isAnonymousExpression}

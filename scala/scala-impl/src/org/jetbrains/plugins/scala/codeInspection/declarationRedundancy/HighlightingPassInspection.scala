@@ -5,8 +5,8 @@ import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.util.text.HtmlChunk
 import com.intellij.psi.{PsiElement, PsiElementVisitor}
 import org.jetbrains.annotations.Nls
-import org.jetbrains.plugins.scala.EditorArea
 import org.jetbrains.plugins.scala.codeInspection.ScalaInspectionBundle
+import org.jetbrains.plugins.scala.incremental.EditorArea
 
 trait HighlightingPassInspection extends LocalInspectionTool {
   override final def buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): PsiElementVisitor = {

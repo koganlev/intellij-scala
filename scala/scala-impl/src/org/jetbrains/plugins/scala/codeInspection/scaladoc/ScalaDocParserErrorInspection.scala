@@ -3,7 +3,7 @@ package org.jetbrains.plugins.scala.codeInspection.scaladoc
 import com.intellij.codeInspection._
 import com.intellij.openapi.project.DumbAware
 import com.intellij.psi.{PsiElement, PsiElementVisitor, PsiErrorElement}
-import org.jetbrains.plugins.scala.EditorArea.isVisible
+import org.jetbrains.plugins.scala.incremental.EditorArea.isVisible
 import org.jetbrains.plugins.scala.lang.psi.api.{ScalaElementVisitor, ScalaPsiElement}
 import org.jetbrains.plugins.scala.lang.scaladoc.psi.api.ScDocComment
 
