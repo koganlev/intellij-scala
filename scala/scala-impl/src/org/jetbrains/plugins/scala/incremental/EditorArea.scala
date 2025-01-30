@@ -15,6 +15,7 @@ import com.intellij.openapi.wm.WindowManager
 import com.intellij.psi.{PsiDocumentManager, PsiElement, PsiManager}
 import com.intellij.ui.{Gray, JBColor}
 import org.jetbrains.plugins.scala.incremental.EditorArea._
+import org.jetbrains.plugins.scala.incremental.StartupActivity._
 import org.jetbrains.plugins.scala.project.ProjectExt
 import org.jetbrains.plugins.scala.settings.ScalaProjectSettings
 import org.jetbrains.plugins.scala.startup.ProjectActivity
@@ -131,6 +132,23 @@ class StartupActivity extends ProjectActivity {
   }
 }
 
+object StartupActivity {
+  private class HighlightingListener(project: Project) extends DaemonListener {
+    private var startTime = 0L
+
+    override def daemonStarting(fileEditors: util.Collection[_ <: FileEditor]): Unit = if (EditorArea.isNativeHighlightingTracingEnabled) {
+      startTime = System.nanoTime()
+      statusBar.setInfo("Highlighting...")
+    }
+
+    override def daemonFinished(fileEditors: util.Collection[_ <: FileEditor]): Unit = if (EditorArea.isNativeHighlightingTracingEnabled) {
+      statusBar.setInfo("Highlighted: " + (System.nanoTime() - startTime) / 1000000 + " ms")
+    }
+
+    private def statusBar = WindowManager.getInstance.getStatusBar(project)
+  }
+}
+
 object EditorArea {
   private[incremental] var editor: Editor = _
 
@@ -142,7 +160,7 @@ object EditorArea {
 
   private def isNativeHighlightingSynchronized: Boolean = Registry.is("scala.native.highlighting.synchronized")
 
-  private def isNativeHighlightingTracingEnabled: Boolean = Registry.is("scala.native.highlighting.tracing")
+  private[incremental] def isNativeHighlightingTracingEnabled: Boolean = Registry.is("scala.native.highlighting.tracing")
 
   def isIncrementalHighlightingEnabledIn(project: Project): Boolean = project != null && ScalaProjectSettings.in(project).isIncrementalHighlighting
 
@@ -226,20 +244,5 @@ object EditorArea {
     } else {
       f
     }
-  }
-
-  private[incremental] class HighlightingListener(project: Project) extends DaemonListener {
-    private var startTime = 0L
-
-    override def daemonStarting(fileEditors: util.Collection[_ <: FileEditor]): Unit = if (EditorArea.isNativeHighlightingTracingEnabled) {
-      startTime = System.nanoTime()
-      statusBar.setInfo("Highlighting...")
-    }
-
-    override def daemonFinished(fileEditors: util.Collection[_ <: FileEditor]): Unit = if (EditorArea.isNativeHighlightingTracingEnabled) {
-      statusBar.setInfo("Highlighted: " + (System.nanoTime() - startTime) / 1000000 + " ms")
-    }
-
-    private def statusBar = WindowManager.getInstance.getStatusBar(project)
   }
 }
