@@ -20,8 +20,6 @@ object EditorArea {
 
   def isNativeHighlightingEnabled: Boolean = Registry.is("scala.native.highlighting")
 
-  private def isNativeHighlightingSynchronized: Boolean = Registry.is("scala.native.highlighting.synchronized")
-
   private[incremental] def isNativeHighlightingTracingEnabled: Boolean = Registry.is("scala.native.highlighting.tracing")
 
   def isIncrementalHighlightingEnabledIn(project: Project): Boolean = project != null && ScalaProjectSettings.in(project).isIncrementalHighlighting
@@ -96,15 +94,5 @@ object EditorArea {
     highlighter.setErrorStripeTooltip(text)
 
     println(text)
-  }
-
-  def synchronizedOn[T](e: PsiElement)(f: => T): T = {
-    if (isNativeHighlightingSynchronized) {
-      e.synchronized {
-        f
-      }
-    } else {
-      f
-    }
   }
 }

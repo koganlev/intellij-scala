@@ -163,7 +163,6 @@
         <postStartupActivity implementation="org.jetbrains.plugins.scala.incremental.StartupActivity"/>
         <highlightInfoPostFilter implementation="org.jetbrains.plugins.scala.incremental.PostFilter"/>
         <registryKey key="scala.native.highlighting" defaultValue="true" description="Enable built-in highlighting"/>
-        <registryKey key="scala.native.highlighting.synchronized" defaultValue="false" description="Blocking resolve and type inference computations"/>
         <registryKey key="scala.native.highlighting.tracing" defaultValue="false" description="Trace resolve and type inference"/>
         <registryKey key="scala.incremental.highlighting.lookaround" defaultValue="0" description="Number of lines to highlight beyond the visible area"/>
 
