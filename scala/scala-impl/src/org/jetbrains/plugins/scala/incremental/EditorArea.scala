@@ -18,8 +18,6 @@ object EditorArea {
 
   private[incremental] val ErrorStripeMarkColorKey = Key.create[Color]("error_stripe_mark_color")
 
-  def isNativeHighlightingEnabled: Boolean = Registry.is("scala.native.highlighting")
-
   private[incremental] def isNativeHighlightingTracingEnabled: Boolean = Registry.is("scala.native.highlighting.tracing")
 
   def isIncrementalHighlightingEnabledIn(project: Project): Boolean = project != null && ScalaProjectSettings.in(project).isIncrementalHighlighting
@@ -27,8 +25,6 @@ object EditorArea {
   private[incremental] def incrementalHighlightingLookaround: Int = Registry.intValue("scala.incremental.highlighting.lookaround")
 
   def isVisible(e: PsiElement): Boolean = {
-    if (!isNativeHighlightingEnabled) return false
-
     if (!isIncrementalHighlightingEnabledIn(e.getProject)) return true
 
     val editor = editorFor(e)

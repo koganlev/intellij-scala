@@ -19,7 +19,7 @@ package object uast {
   }
 
   private[uast] def isEnabled: Boolean = {
-    if (!EditorArea.isNativeHighlightingEnabled || ProjectManager.getInstance.getOpenProjects.exists(EditorArea.isIncrementalHighlightingEnabledIn)) return false
+    if (ProjectManager.getInstance.getOpenProjects.exists(EditorArea.isIncrementalHighlightingEnabledIn)) return false
 
     ApplicationManager.getApplication.isUnitTestMode ||
       Experiments.getInstance().isFeatureEnabled("scala.uast.enabled")
