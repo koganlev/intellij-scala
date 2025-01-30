@@ -3,6 +3,9 @@ package org.jetbrains.sbt.project.template.wizard
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.ui.components.JBCheckBox
+import com.intellij.ui.dsl.builder.{Panel, Row, RowLayout}
+import kotlin.Unit.{INSTANCE => KUnit}
+import org.jetbrains.annotations.Nls
 import org.jetbrains.plugins.scala.extensions.applyTo
 import org.jetbrains.plugins.scala.isUnitTestMode
 import org.jetbrains.plugins.scala.project.Versions
@@ -34,11 +37,23 @@ trait ScalaVersionStepLike extends AsynchronousVersionsDownloading {
     }
   }
 
+  @Nls
   protected val scalaLabelText: String = SbtBundle.message("sbt.settings.scala")
 
   protected val downloadScalaSourcesCheckbox: JBCheckBox = applyTo(new JBCheckBox(SbtBundle.message("sbt.module.step.download.sources")))(
     _.setToolTipText(SbtBundle.message("sbt.download.scala.standard.library.sources"))
   )
+
+  protected def setUpScalaUI(panel: Panel, downloadSourcesCheckbox: Boolean): Unit =
+    panel.row(scalaLabelText, (row: Row) => {
+      row.layout(RowLayout.PARENT_GRID)
+      row.cell(scalaVersionComboBox)
+      if (downloadSourcesCheckbox) {
+        row.cell(downloadScalaSourcesCheckbox)
+      }
+      KUnit
+    })
+
 
   /**
    * Initializes selections and UI elements only once
