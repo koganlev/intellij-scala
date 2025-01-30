@@ -18,7 +18,7 @@ object EditorArea {
 
   private[incremental] val ErrorStripeMarkColorKey = Key.create[Color]("error_stripe_mark_color")
 
-  private[incremental] def isNativeHighlightingTracingEnabled: Boolean = Registry.is("scala.native.highlighting.tracing")
+  private[incremental] def isNativeHighlightingTracingEnabled: Boolean = Registry.is("scala.highlighting.tracing")
 
   def isIncrementalHighlightingEnabledIn(project: Project): Boolean = project != null && ScalaProjectSettings.in(project).isIncrementalHighlighting
 

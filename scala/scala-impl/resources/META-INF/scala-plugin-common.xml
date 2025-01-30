@@ -162,7 +162,7 @@
         <editorFactoryListener implementation="org.jetbrains.plugins.scala.incremental.FactoryListener"/>
         <postStartupActivity implementation="org.jetbrains.plugins.scala.incremental.StartupActivity"/>
         <highlightInfoPostFilter implementation="org.jetbrains.plugins.scala.incremental.PostFilter"/>
-        <registryKey key="scala.native.highlighting.tracing" defaultValue="false" description="Trace resolve and type inference"/>
+        <registryKey key="scala.highlighting.tracing" defaultValue="false" description="Trace resolve and type inference"/>
         <registryKey key="scala.incremental.highlighting.lookaround" defaultValue="0" description="Number of lines to highlight beyond the visible area"/>
 
         <highlightingPassFactory implementation="org.jetbrains.plugins.scala.codeInspection.declarationRedundancy.ScalaLocalVarCouldBeValPassFactory"/>
