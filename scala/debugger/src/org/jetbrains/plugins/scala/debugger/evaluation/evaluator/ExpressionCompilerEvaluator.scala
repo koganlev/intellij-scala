@@ -25,7 +25,6 @@ import org.jetbrains.plugins.scala.settings.ScalaCompileServerSettings
 import java.io.IOException
 import java.nio.file.attribute.BasicFileAttributes
 import java.nio.file.{FileVisitResult, Files, Path, SimpleFileVisitor}
-import scala.annotation.nowarn
 import scala.concurrent.duration.Duration
 import scala.jdk.CollectionConverters._
 import scala.util.control.NonFatal
@@ -121,7 +120,7 @@ private[evaluation] final class ExpressionCompilerEvaluator(codeFragment: PsiEle
       val localVariableNamesEvaluator: Evaluator = { ctx =>
         val arrayType = ctx.getDebugProcess.findClass(ctx, "java.lang.String[]", ctx.getClassLoader).asInstanceOf[ArrayType]
         val array = DebuggerUtilsEx.mirrorOfArray(arrayType, localVariableNames.length, ctx)
-        array.setValues(localVariableNames.map(DebuggerUtilsEx.mirrorOfString(_, ctx.getDebugProcess.getVirtualMachineProxy, ctx): @nowarn("cat=deprecation")).asJava)
+        array.setValues(localVariableNames.map(DebuggerUtilsEx.mirrorOfString(_, ctx)).asJava)
         array
       }
 
@@ -185,7 +184,7 @@ private[evaluation] final class ExpressionCompilerEvaluator(codeFragment: PsiEle
     val thread = context.getFrameProxy.getStackFrame.thread()
     val classLoader = context.getClassLoader
 
-    val pathURL = DebuggerUtilsEx.mirrorOfString(outDir.toUri.toURL.toString, process.getVirtualMachineProxy, context): @nowarn("cat=deprecation")
+    val pathURL = DebuggerUtilsEx.mirrorOfString(outDir.toUri.toURL.toString, context)
     val urlType = process.findClass(context, "java.net.URL", classLoader).asInstanceOf[ClassType]
     val urlConstructor = urlType.concreteMethodByName("<init>", "(Ljava/lang/String;)V")
     val url = urlType.newInstance(thread, urlConstructor, List(pathURL).asJava, ObjectReference.INVOKE_SINGLE_THREADED)
