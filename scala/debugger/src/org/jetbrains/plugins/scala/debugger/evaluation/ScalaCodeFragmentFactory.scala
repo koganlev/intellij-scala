@@ -29,7 +29,7 @@ import scala.collection.mutable
 import scala.jdk.CollectionConverters._
 
 class ScalaCodeFragmentFactory extends CodeFragmentFactory {
-  override def createCodeFragment(item: TextWithImports, context: PsiElement, project: Project): JavaCodeFragment = {
+  override def createPsiCodeFragment(item: TextWithImports, context: PsiElement, project: Project): JavaCodeFragment = {
     implicit val p: Project = project
     val fragment = createCodeFragmentInner(item, wrapContext(context))
 
@@ -78,8 +78,8 @@ class ScalaCodeFragmentFactory extends CodeFragmentFactory {
     fragment
   }
 
-  override def createPresentationCodeFragment(item: TextWithImports, context: PsiElement, project: Project): JavaCodeFragment = {
-    createCodeFragment(item, context, project)
+  override def createPresentationPsiCodeFragment(item: TextWithImports, context: PsiElement, project: Project): JavaCodeFragment = {
+    createPsiCodeFragment(item, context, project)
   }
 
   override def isContextAccepted(contextElement: PsiElement): Boolean = {

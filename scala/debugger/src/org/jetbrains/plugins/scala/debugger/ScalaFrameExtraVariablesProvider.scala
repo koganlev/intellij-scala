@@ -105,7 +105,7 @@ class ScalaFrameExtraVariablesProvider extends FrameExtraVariablesProvider {
       Try {
         val evaluator = inReadAction {
           val twi = toTextWithImports(name)
-          val codeFragment = new ScalaCodeFragmentFactory().createCodeFragment(twi, place, evaluationContext.getProject)
+          val codeFragment = new ScalaCodeFragmentFactory().createPsiCodeFragment(twi, place, evaluationContext.getProject)
           val location = evaluationContext.getFrameProxy.location()
           val sourcePosition = ScalaPositionManager.instance(evaluationContext.getDebugProcess).map(_.getSourcePosition(location))
           if (sourcePosition.isEmpty) throw EvaluationException(DebuggerBundle.message("debug.process.is.detached"))
