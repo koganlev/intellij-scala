@@ -25,10 +25,15 @@ object EditorArea {
     if (visibleRange == null) return true // Not yet computed (a safeguard, shouldn't normally happen)
     if (!elementRange.intersects(visibleRange)) return false
 
+    !isFolded(editor, elementRange)
+  }
+
+  private def isFolded(editor: Editor, range: TextRange): Boolean = {
     val foldingModel = editor.getFoldingModel
-    val region1 = foldingModel.getCollapsedRegionAtOffset(elementRange.getStartOffset)
-    val region2 = foldingModel.getCollapsedRegionAtOffset(elementRange.getEndOffset - 1)
-    region1 == null || region1 != region2
+    val region1 = foldingModel.getCollapsedRegionAtOffset(range.getStartOffset)
+    if (region1 == null) return false
+    val region2 = foldingModel.getCollapsedRegionAtOffset(range.getEndOffset - 1)
+    region1 == region2
   }
 
   private[incremental] def editorFor(e: PsiElement): Editor = {
