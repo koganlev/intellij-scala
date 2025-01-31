@@ -43,7 +43,7 @@ class FactoryListener extends EditorFactoryListener {
   }
 }
 
-object FactoryListener {
+private object FactoryListener {
   private def lookaround: Int = Registry.intValue("scala.incremental.highlighting.lookaround")
 
   private def visibleRangeIn(editor: Editor, lookaround: Int): TextRange = {
