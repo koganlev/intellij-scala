@@ -36,15 +36,11 @@ private class Updater(editor: Editor) {
     concealMarksOutside(visibleRange, markupModel)
     revealMarksInside(visibleRange, markupModel)
 
-    val visibleRangeDelta: TextRange = if (previousVisibleRange == null) visibleRange else {
-      // TODO optimize
-      val r = Range(visibleRange.getStartOffset, visibleRange.getEndOffset).toSet.diff(Range(previousVisibleRange.getStartOffset, previousVisibleRange.getEndOffset).toSet)
-      if (r.isEmpty) TextRange.EMPTY_RANGE else new TextRange(r.min, r.max + 1)
-    }
+    val newlyVisibleRange = if (previousVisibleRange == null) visibleRange else visibleRange.diff(previousVisibleRange)
 
     val document = PsiManager.getInstance(editor.getProject).findFile(editor.getVirtualFile).getViewProvider.getDocument
     val daemon = DaemonCodeAnalyzer.getInstance(editor.getProject)
-    daemon.combineDirtyScopes(document, visibleRangeDelta)
+    daemon.combineDirtyScopes(document, newlyVisibleRange)
     daemon.stopProcess(true)
 
     previousVisibleRange = visibleRange

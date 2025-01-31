@@ -31,4 +31,13 @@ package object incremental {
       stopProcessMethod.invoke(daemon, toRestartAlarm, Reason)
     }
   }
+
+  private[incremental] implicit class TextRangeExt(private val a: TextRange) extends AnyVal {
+    def diff(b: TextRange): TextRange = {
+      if (a.isEmpty || b.contains(a)) return TextRange.EMPTY_RANGE
+      if (!b.intersects(a) || (b.getStartOffset > a.getStartOffset && b.getEndOffset < a.getEndOffset)) return a
+      if (b.getStartOffset <= a.getStartOffset) new TextRange(b.getEndOffset, a.getEndOffset)
+      else new TextRange(a.getStartOffset, b.getStartOffset)
+    }
+  }
 }
