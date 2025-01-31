@@ -7,7 +7,7 @@ import com.intellij.psi.{PsiDocumentManager, PsiElement}
 import org.jetbrains.plugins.scala.settings.ScalaProjectSettings
 
 object EditorArea {
-  private[incremental] var editor: Editor = _
+  private[incremental] var currentEditor: Editor = _
 
   private[incremental] val VISIBLE_RANGE_KEY = Key.create[TextRange]("editor_visible_range")
 
@@ -16,16 +16,12 @@ object EditorArea {
   def isVisible(e: PsiElement): Boolean = {
     if (!isIncrementalHighlightingEnabledIn(e.getProject)) return true
 
-    val editor = editorFor(e)
-    if (editor == null) return false
-
     val elementRange = e.getTextRange
 
-    val visibleRange = editor.getUserData(VISIBLE_RANGE_KEY)
-    if (visibleRange == null) return true // Not yet computed (a safeguard, shouldn't normally happen)
-    if (!elementRange.intersects(visibleRange)) return false
-
-    !isFolded(editor, elementRange)
+    editorsFor(e).exists { editor =>
+      val visibleRange = editor.getUserData(VISIBLE_RANGE_KEY)
+      visibleRange == null || elementRange.intersects(visibleRange) && !isFolded(editor, elementRange)
+    }
   }
 
   private def isFolded(editor: Editor, range: TextRange): Boolean = {
@@ -36,16 +32,13 @@ object EditorArea {
     region1 == region2
   }
 
-  private[incremental] def editorFor(e: PsiElement): Editor = {
+  private[incremental] def editorsFor(e: PsiElement): Seq[Editor] = {
     val psiFile = e.getContainingFile
-    if (psiFile == null) return null
+    if (psiFile == null) return Seq.empty
 
     val document = PsiDocumentManager.getInstance(e.getProject).getDocument(psiFile)
-    if (document == null) return null
+    if (document == null) return Seq.empty
 
-    val editors = EditorFactory.getInstance.getEditors(document)
-    if (editors.isEmpty) return null
-
-    editors.head
+    EditorFactory.getInstance.getEditors(document).toSeq
   }
 }

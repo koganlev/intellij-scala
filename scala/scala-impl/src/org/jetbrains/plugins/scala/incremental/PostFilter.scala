@@ -4,9 +4,9 @@ import com.intellij.codeInsight.daemon.impl.{HighlightInfo, HighlightInfoPostFil
 import com.intellij.openapi.util.TextRange
 
 class PostFilter extends HighlightInfoPostFilter {
-  import EditorArea.editor
-
   override def accept(highlightInfo: HighlightInfo): Boolean = {
+    val editor = EditorArea.currentEditor
+
     if (editor == null) return true
 
     if (!EditorArea.isIncrementalHighlightingEnabledIn(editor.getProject)) return true

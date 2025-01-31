@@ -13,53 +13,64 @@ import java.awt.{Color, Point}
 import javax.swing.Timer
 
 class FactoryListener extends EditorFactoryListener {
-  import EditorArea.editor
+  private var updaters = Map.empty[Editor, Updater]
 
-  private var previousVisibleRange: TextRange = _
+  private class Updater(editor: Editor) {
+    private val timer = new Timer(200, _ => doUpdate())
+    timer.setRepeats(false)
 
-  private val timer = new Timer(200, _ => {
-    val visibleRange = editor.getUserData(EditorArea.VISIBLE_RANGE_KEY)
+    private var previousVisibleRange: TextRange = _
 
-    val markupModel = editor.asInstanceOf[EditorEx].getFilteredDocumentMarkupModel
-    markupModel.processRangeHighlightersOutside(visibleRange.getStartOffset, visibleRange.getEndOffset, highlighter => {
-      val actualColor = highlighter.getErrorStripeMarkColor(editor.getColorsScheme)
-      if (!highlighter.isThinErrorStripeMark && actualColor != null) {
-        highlighter.putUserData(ErrorStripeMarkColorKey, actualColor)
-        highlighter.setErrorStripeMarkColor(null)
-      }
-      true
-    })
-    markupModel.processRangeHighlightersOverlappingWith(visibleRange.getStartOffset, visibleRange.getEndOffset, highlighter => {
-      val savedColor = highlighter.getUserData(ErrorStripeMarkColorKey)
-      if (savedColor != null) {
-        highlighter.setErrorStripeMarkColor(savedColor)
-        highlighter.putUserData(ErrorStripeMarkColorKey, null)
-      }
-      true
-    })
-
-    val visibleRangeDelta: TextRange = if (previousVisibleRange == null) visibleRange else {
-      // TODO optimize
-      val r = Range(visibleRange.getStartOffset, visibleRange.getEndOffset).toSet.diff(Range(previousVisibleRange.getStartOffset, previousVisibleRange.getEndOffset).toSet)
-      if (r.isEmpty) TextRange.EMPTY_RANGE else new TextRange(r.min, r.max + 1)
+    def update(): Unit = {
+      timer.restart()
     }
 
-    val document = PsiManager.getInstance(editor.getProject).findFile(editor.getVirtualFile).getViewProvider.getDocument
-    val daemon = DaemonCodeAnalyzer.getInstance(editor.getProject)
-    daemon.combineDirtyScopes(document, visibleRangeDelta)
-    daemon.stopProcess(true)
+    private def doUpdate(): Unit = {
+      val visibleRange = editor.getUserData(EditorArea.VISIBLE_RANGE_KEY)
 
-    previousVisibleRange = visibleRange
-  })
+      val markupModel = editor.asInstanceOf[EditorEx].getFilteredDocumentMarkupModel
+      markupModel.processRangeHighlightersOutside(visibleRange.getStartOffset, visibleRange.getEndOffset, highlighter => {
+        val actualColor = highlighter.getErrorStripeMarkColor(editor.getColorsScheme)
+        if (!highlighter.isThinErrorStripeMark && actualColor != null) {
+          highlighter.putUserData(ErrorStripeMarkColorKey, actualColor)
+          highlighter.setErrorStripeMarkColor(null)
+        }
+        true
+      })
+      markupModel.processRangeHighlightersOverlappingWith(visibleRange.getStartOffset, visibleRange.getEndOffset, highlighter => {
+        val savedColor = highlighter.getUserData(ErrorStripeMarkColorKey)
+        if (savedColor != null) {
+          highlighter.setErrorStripeMarkColor(savedColor)
+          highlighter.putUserData(ErrorStripeMarkColorKey, null)
+        }
+        true
+      })
 
-  timer.setRepeats(false)
+      val visibleRangeDelta: TextRange = if (previousVisibleRange == null) visibleRange else {
+        // TODO optimize
+        val r = Range(visibleRange.getStartOffset, visibleRange.getEndOffset).toSet.diff(Range(previousVisibleRange.getStartOffset, previousVisibleRange.getEndOffset).toSet)
+        if (r.isEmpty) TextRange.EMPTY_RANGE else new TextRange(r.min, r.max + 1)
+      }
+
+      val document = PsiManager.getInstance(editor.getProject).findFile(editor.getVirtualFile).getViewProvider.getDocument
+      val daemon = DaemonCodeAnalyzer.getInstance(editor.getProject)
+      daemon.combineDirtyScopes(document, visibleRangeDelta)
+      daemon.stopProcess(true)
+
+      previousVisibleRange = visibleRange
+    }
+  }
 
   private val visibleAreaListener = new VisibleAreaListener {
     override def visibleAreaChanged(e: VisibleAreaEvent): Unit = {
-      editor = e.getEditor
+      val editor = e.getEditor
+
       val visibleRange = visibleRangeIn(editor, lookaround)
       editor.putUserData(EditorArea.VISIBLE_RANGE_KEY, visibleRange)
-      timer.restart()
+
+      EditorArea.currentEditor = editor
+
+      updaters(editor).update()
     }
   }
 
@@ -68,6 +79,7 @@ class FactoryListener extends EditorFactoryListener {
 
     if (!EditorArea.isIncrementalHighlightingEnabledIn(editor.getProject) || !isScalaIn(editor)) return
 
+    updaters += editor -> new Updater(editor)
     editor.getScrollingModel.addVisibleAreaListener(visibleAreaListener)
   }
 
@@ -77,6 +89,7 @@ class FactoryListener extends EditorFactoryListener {
     if (!EditorArea.isIncrementalHighlightingEnabledIn(editor.getProject) || !isScalaIn(editor)) return
 
     editor.getScrollingModel.removeVisibleAreaListener(visibleAreaListener)
+    updaters -= editor
   }
 }
 
