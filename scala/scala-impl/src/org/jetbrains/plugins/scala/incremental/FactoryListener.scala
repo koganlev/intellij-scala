@@ -1,10 +1,12 @@
 package org.jetbrains.plugins.scala.incremental
 
 import com.intellij.openapi.editor.event.{EditorFactoryEvent, EditorFactoryListener, VisibleAreaEvent, VisibleAreaListener}
-import com.intellij.openapi.editor.{Editor, LogicalPosition}
+import com.intellij.openapi.editor.ex.{FoldingListener, FoldingModelEx}
+import com.intellij.openapi.editor.{Editor, FoldRegion, LogicalPosition}
 import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.util.registry.Registry
 import org.jetbrains.plugins.scala.incremental.FactoryListener._
+import org.jetbrains.plugins.scala.project.ProjectExt
 
 import java.awt.Point
 
@@ -15,12 +17,19 @@ class FactoryListener extends EditorFactoryListener {
     override def visibleAreaChanged(e: VisibleAreaEvent): Unit = {
       val editor = e.getEditor
 
-      val visibleRange = visibleRangeIn(editor, lookaround)
-      editor.putUserData(EditorArea.VISIBLE_RANGE_KEY, visibleRange)
+      EditorArea.currentEditor = editor
+
+      updaters(editor).update(visibleRangeIn(editor, lookaround), delta = true)
+    }
+  }
+
+  private val foldingListener = new FoldingListener {
+    override def onFoldRegionStateChange(r: FoldRegion): Unit = {
+      val editor = r.getEditor
 
       EditorArea.currentEditor = editor
 
-      updaters(editor).update()
+      updaters(editor).update(visibleRangeIn(editor, lookaround), delta = false)
     }
   }
 
@@ -31,6 +40,7 @@ class FactoryListener extends EditorFactoryListener {
 
     updaters += editor -> new Updater(editor)
     editor.getScrollingModel.addVisibleAreaListener(visibleAreaListener)
+    editor.getFoldingModel.asInstanceOf[FoldingModelEx].addListener(foldingListener, editor.getProject.unloadAwareDisposable)
   }
 
   override def editorReleased(event: EditorFactoryEvent): Unit = {

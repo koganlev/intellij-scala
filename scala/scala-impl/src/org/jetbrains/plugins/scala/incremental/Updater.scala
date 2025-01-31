@@ -19,7 +19,13 @@ private class Updater(editor: Editor) {
 
   private var previousVisibleRange: TextRange = _
 
-  def update(): Unit = {
+  def update(visibleRange: TextRange, delta: Boolean): Unit = {
+    editor.putUserData(EditorArea.VISIBLE_RANGE_KEY, visibleRange)
+
+    if (!delta) {
+      previousVisibleRange = null
+    }
+
     updateTimer.restart()
   }
 
