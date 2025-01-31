@@ -9,7 +9,7 @@ import org.jetbrains.plugins.scala.settings.ScalaProjectSettings
 object EditorArea {
   private[incremental] var editor: Editor = _
 
-  private[incremental] val VISIBLE_RANGE_KEY: Key[TextRange] = Key.create[TextRange]("editor_visible_range")
+  private[incremental] val VISIBLE_RANGE_KEY = Key.create[TextRange]("editor_visible_range")
 
   def isIncrementalHighlightingEnabledIn(project: Project): Boolean = project != null && ScalaProjectSettings.in(project).isIncrementalHighlighting
 

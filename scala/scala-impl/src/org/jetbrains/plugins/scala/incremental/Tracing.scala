@@ -22,24 +22,24 @@ object Tracing {
     }
   }
 
-  private def isNativeHighlightingTracingEnabled: Boolean = Registry.is("scala.highlighting.tracing")
+  private def isHighlightingTracingEnabled: Boolean = Registry.is("scala.highlighting.tracing")
 
   private class HighlightingListener(project: Project) extends DaemonListener {
     private var startTime = 0L
 
-    override def daemonStarting(fileEditors: util.Collection[_ <: FileEditor]): Unit = if (isNativeHighlightingTracingEnabled) {
+    override def daemonStarting(fileEditors: util.Collection[_ <: FileEditor]): Unit = if (isHighlightingTracingEnabled) {
       startTime = System.nanoTime()
       statusBar.setInfo("Highlighting...")
     }
 
-    override def daemonFinished(fileEditors: util.Collection[_ <: FileEditor]): Unit = if (isNativeHighlightingTracingEnabled) {
+    override def daemonFinished(fileEditors: util.Collection[_ <: FileEditor]): Unit = if (isHighlightingTracingEnabled) {
       statusBar.setInfo("Highlighted: " + (System.nanoTime() - startTime) / 1000000 + " ms")
     }
 
     private def statusBar = WindowManager.getInstance.getStatusBar(project)
   }
 
-  def trace(e: PsiElement, reason: String): Unit = if (isNativeHighlightingTracingEnabled) {
+  def trace(e: PsiElement, reason: String): Unit = if (isHighlightingTracingEnabled) {
     val editor = EditorArea.editorFor(e)
     if (editor == null) return
 
