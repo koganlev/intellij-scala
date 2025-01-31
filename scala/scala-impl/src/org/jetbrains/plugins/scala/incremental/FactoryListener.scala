@@ -66,10 +66,7 @@ class FactoryListener extends EditorFactoryListener {
   override def editorCreated(event: EditorFactoryEvent): Unit = {
     val editor = event.getEditor
 
-    if (!EditorArea.isIncrementalHighlightingEnabledIn(editor.getProject)) return
-
-    val file = editor.getVirtualFile
-    if (file == null || file.getExtension != "scala" && file.getExtension != "sc" && file.getExtension != "sbt") return
+    if (!EditorArea.isIncrementalHighlightingEnabledIn(editor.getProject) || !isScalaIn(editor)) return
 
     editor.getScrollingModel.addVisibleAreaListener(visibleAreaListener)
   }
@@ -77,7 +74,7 @@ class FactoryListener extends EditorFactoryListener {
   override def editorReleased(event: EditorFactoryEvent): Unit = {
     val editor = event.getEditor
 
-    if (!EditorArea.isIncrementalHighlightingEnabledIn(editor.getProject)) return
+    if (!EditorArea.isIncrementalHighlightingEnabledIn(editor.getProject) || !isScalaIn(editor)) return
 
     editor.getScrollingModel.removeVisibleAreaListener(visibleAreaListener)
   }
@@ -104,5 +101,10 @@ object FactoryListener {
     }
 
     TextRange.create(startOffset, startOffset.max(endOffset))
+  }
+
+  private def isScalaIn(editor: Editor): Boolean = {
+    val file = editor.getVirtualFile
+    file != null && (file.getExtension == "scala" || file.getExtension == "sc" || file.getExtension == "sbt")
   }
 }
