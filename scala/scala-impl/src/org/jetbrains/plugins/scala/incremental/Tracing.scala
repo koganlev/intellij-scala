@@ -2,9 +2,11 @@ package org.jetbrains.plugins.scala.incremental
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer.DaemonListener
+import com.intellij.openapi.editor.EditorFactory
 import com.intellij.openapi.editor.markup.{HighlighterLayer, HighlighterTargetArea}
 import com.intellij.openapi.fileEditor.FileEditor
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.wm.WindowManager
 import com.intellij.psi.PsiElement
@@ -21,6 +23,8 @@ object Tracing {
       connection.subscribe(DaemonCodeAnalyzer.DAEMON_EVENT_TOPIC, new HighlightingListener(project))
     }
   }
+
+  private val TRACING_HIGHLIGHTER_KEY = Key.create[AnyRef]("tracing_highlighter_key")
 
   private def isHighlightingTracingEnabled: Boolean = Registry.is("scala.highlighting.tracing")
 
@@ -54,7 +58,14 @@ object Tracing {
     highlighter.setErrorStripeMarkColor(new JBColor(Gray._170, Gray._80))
     highlighter.setThinErrorStripeMark(true)
     highlighter.setErrorStripeTooltip(text)
+    highlighter.putUserData(TRACING_HIGHLIGHTER_KEY, "")
 
 //    println(text)
+  }
+
+  def clean(): Unit = if (isHighlightingTracingEnabled) {
+    EditorFactory.getInstance.getAllEditors.foreach { editor =>
+      editor.getMarkupModel.getAllHighlighters.filter(_.getUserData(TRACING_HIGHLIGHTER_KEY) != null).foreach(_.dispose())
+    }
   }
 }
