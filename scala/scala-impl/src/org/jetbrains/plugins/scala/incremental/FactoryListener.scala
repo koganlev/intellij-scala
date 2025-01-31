@@ -1,10 +1,9 @@
 package org.jetbrains.plugins.scala.incremental
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer
-import com.intellij.codeInsight.daemon.impl.{DaemonCodeAnalyzerEx, DaemonCodeAnalyzerImpl, FileStatusMap}
 import com.intellij.openapi.editor.event.{EditorFactoryEvent, EditorFactoryListener, VisibleAreaEvent, VisibleAreaListener}
 import com.intellij.openapi.editor.ex.EditorEx
-import com.intellij.openapi.editor.{Document, Editor, LogicalPosition}
+import com.intellij.openapi.editor.{Editor, LogicalPosition}
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.{Key, TextRange}
 import com.intellij.psi.PsiManager
@@ -46,9 +45,9 @@ class FactoryListener extends EditorFactoryListener {
     }
 
     val document = PsiManager.getInstance(editor.getProject).findFile(editor.getVirtualFile).getViewProvider.getDocument
-    val daemon = DaemonCodeAnalyzer.getInstance(editor.getProject).asInstanceOf[DaemonCodeAnalyzerEx]
-    combineDirtyScopesMethod.invoke(daemon.getFileStatusMap, document, visibleRangeDelta, "Incremental highlighting")
-    stopProcessMethod.invoke(daemon, true, "Incremental highlighting")
+    val daemon = DaemonCodeAnalyzer.getInstance(editor.getProject)
+    daemon.combineDirtyScopes(document, visibleRangeDelta)
+    daemon.stopProcess(true)
 
     previousVisibleRange = visibleRange
   })
@@ -62,18 +61,6 @@ class FactoryListener extends EditorFactoryListener {
       editor.putUserData(EditorArea.VISIBLE_RANGE_KEY, visibleRange)
       timer.restart()
     }
-  }
-
-  private lazy val combineDirtyScopesMethod = {
-    val m = classOf[FileStatusMap].getDeclaredMethod("combineDirtyScopes", classOf[Document], classOf[TextRange], classOf[Object])
-    m.setAccessible(true)
-    m
-  }
-
-  private lazy val stopProcessMethod = {
-    val m = classOf[DaemonCodeAnalyzerImpl].getDeclaredMethod("stopProcess", classOf[Boolean], classOf[String])
-    m.setAccessible(true)
-    m
   }
 
   override def editorCreated(event: EditorFactoryEvent): Unit = {
