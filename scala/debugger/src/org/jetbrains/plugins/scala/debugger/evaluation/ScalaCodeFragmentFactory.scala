@@ -24,7 +24,6 @@ import org.jetbrains.plugins.scala.lang.psi.types.{ScType, ScalaType}
 import org.jetbrains.plugins.scala.{ScalaFileType, ScalaLanguage}
 
 import java.util.concurrent.atomic.AtomicReference
-import scala.annotation.nowarn
 import scala.collection.mutable
 import scala.jdk.CollectionConverters._
 
@@ -52,7 +51,7 @@ class ScalaCodeFragmentFactory extends CodeFragmentFactory {
             semaphore.up()
           }
         }
-        debuggerContext.getDebugProcess.getManagerThread.invoke(worker): @nowarn("cat=deprecation")
+        debuggerContext.getDebugProcess.getManagerThread.schedule(worker)
         var i: Int = 0
         while (i < 50 && !semaphore.waitFor(20)) {
           ProgressManager.checkCanceled()
