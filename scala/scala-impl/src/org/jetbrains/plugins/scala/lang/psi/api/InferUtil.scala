@@ -386,18 +386,8 @@ object InferUtil {
 
       val expectedParam = Parameter("", None, expected, expected)
 
-      val level = {
-        val hasLeveledUndefines = valueType.subtypeExists {
-          case undef: UndefinedType => undef.level > 0
-          case _                    => false
-        }
-
-        if (hasLeveledUndefines) 1
-        else                     0
-      }
-
       val expressionToUpdate = Expression(
-        ScSubstitutor.bind(typeParams)(UndefinedType(_, level = level)).apply(valueType)
+        ScSubstitutor.bind(typeParams)(UndefinedType(_)).apply(valueType)
       )
 
       val (inferredWithExpected, conformanceResult) =
