@@ -6,7 +6,7 @@ import com.intellij.openapi.util.text.HtmlChunk
 import com.intellij.psi.{PsiElement, PsiElementVisitor}
 import org.jetbrains.annotations.Nls
 import org.jetbrains.plugins.scala.codeInspection.ScalaInspectionBundle
-import org.jetbrains.plugins.scala.incremental.EditorArea
+import org.jetbrains.plugins.scala.incremental
 
 trait HighlightingPassInspection extends LocalInspectionTool {
   override final def buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): PsiElementVisitor = {
@@ -31,7 +31,7 @@ trait HighlightingPassInspection extends LocalInspectionTool {
   def shouldProcessElement(elem: PsiElement): Boolean
 
   override def getDescriptionAddendum: HtmlChunk =
-    if (ProjectManager.getInstance.getOpenProjects.exists(EditorArea.isIncrementalHighlightingEnabledIn))
+    if (ProjectManager.getInstance.getOpenProjects.exists(incremental.Highlighting.enabledIn))
       HtmlChunk.text(ScalaInspectionBundle.message("suppressed.in.incremental.highlighting.mode")).wrapWith("sup").wrapWith("p")
     else
       HtmlChunk.empty

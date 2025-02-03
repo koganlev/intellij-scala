@@ -14,7 +14,6 @@ import org.jetbrains.plugins.scala.annotator.usageTracker.ScalaRefCountHolder
 import org.jetbrains.plugins.scala.annotator.usageTracker.UsageTracker._
 import org.jetbrains.plugins.scala.caches.CachesUtil.fileModCount
 import org.jetbrains.plugins.scala.extensions.{ObjectExt, PsiElementExt, PsiFileExt, PsiNamedElementExt}
-import org.jetbrains.plugins.scala.incremental.EditorArea
 import org.jetbrains.plugins.scala.lang.psi.ScalaPsiUtil
 import org.jetbrains.plugins.scala.lang.psi.api.ImplicitArgumentsOwner
 import org.jetbrains.plugins.scala.lang.psi.api.base.ScReference
@@ -27,7 +26,7 @@ final class ScalaRefCountVisitor(project: Project) extends HighlightVisitor {
   private var analyzedWholeFile = false
 
   override def suitableForFile(file: PsiFile): Boolean = {
-    if (EditorArea.isIncrementalHighlightingEnabledIn(project)) return false
+    if (incremental.Highlighting.enabledIn(project)) return false
 
     HighlightingAdvisor.shouldInspect(file)
   }

@@ -12,16 +12,14 @@ import javax.swing.Timer
 
 private class Updater(editor: Editor) {
   private val updateTimer = {
-    val timer = new Timer(200, _ => doUpdate())
+    val timer = new Timer(UPDATE_DELAY, _ => update())
     timer.setRepeats(false)
     timer
   }
 
   private var previousVisibleRange: TextRange = _
 
-  def update(visibleRange: TextRange, delta: Boolean): Unit = {
-    editor.putUserData(EditorArea.VISIBLE_RANGE_KEY, visibleRange)
-
+  def scheduleUpdate(delta: Boolean): Unit = {
     if (!delta) {
       previousVisibleRange = null
     }
@@ -29,8 +27,8 @@ private class Updater(editor: Editor) {
     updateTimer.restart()
   }
 
-  private def doUpdate(): Unit = {
-    val visibleRange = editor.getUserData(EditorArea.VISIBLE_RANGE_KEY)
+  private def update(): Unit = {
+    val visibleRange = VisibleRange.in(editor)
 
     concealErrorStripeMarksOutside(visibleRange, editor)
     revealErrorStripeMarksInside(visibleRange, editor)
@@ -47,6 +45,8 @@ private class Updater(editor: Editor) {
 }
 
 private object Updater {
+  private val UPDATE_DELAY = 200 // ms
+
   private val ERROR_STRIPE_MARK_COLOR_KEY = Key.create[Color]("error_stripe_mark_color")
 
   private def concealErrorStripeMarksOutside(visibleRange: TextRange, editor: Editor) = {

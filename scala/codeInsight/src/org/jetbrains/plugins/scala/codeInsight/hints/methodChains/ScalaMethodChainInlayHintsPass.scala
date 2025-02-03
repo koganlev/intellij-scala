@@ -7,7 +7,7 @@ import com.intellij.openapi.editor.{Document, Editor, InlayModel}
 import com.intellij.openapi.util.Disposer
 import com.intellij.psi.{PsiElement, PsiFile, PsiPackage}
 import com.intellij.util.ui.JBUI
-import org.jetbrains.plugins.scala.incremental.EditorArea.isVisible
+import org.jetbrains.plugins.scala.incremental.Highlighting._
 import org.jetbrains.plugins.scala.annotator.hints.Hint.MenuProvider
 import org.jetbrains.plugins.scala.annotator.hints.{AnnotatorHints, Text}
 import org.jetbrains.plugins.scala.codeInsight.hints.methodChains.ScalaMethodChainInlayHintsPass.{hasObviousReturnType, isFollowedByLineEnd, isUnqualifiedReference, methodChainContextMenu, removeLastIfHasTypeMismatch}
@@ -47,7 +47,7 @@ private[codeInsight] trait ScalaMethodChainInlayHintsPass {
     val builder = Seq.newBuilder[(Seq[AlignedHintTemplate], ScExpression)]
 
     def gatherFor(elem: PsiElement): Set[Int] = {
-      if (!isVisible(elem)) return Set.empty
+      if (!elem.isVisible) return Set.empty
 
       var occupiedLines = Set.empty[Int]
       for (child <- elem.children)

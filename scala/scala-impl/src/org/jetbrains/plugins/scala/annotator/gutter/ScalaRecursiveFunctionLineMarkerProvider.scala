@@ -3,7 +3,7 @@ package org.jetbrains.plugins.scala.annotator.gutter
 import com.intellij.codeInsight.daemon.{LineMarkerInfo, LineMarkerProvider}
 import com.intellij.openapi.editor.markup.GutterIconRenderer.Alignment
 import com.intellij.psi.PsiElement
-import org.jetbrains.plugins.scala.incremental.EditorArea.isVisible
+import org.jetbrains.plugins.scala.incremental.Highlighting._
 import org.jetbrains.plugins.scala.ScalaBundle
 import org.jetbrains.plugins.scala.icons.Icons
 import org.jetbrains.plugins.scala.lang.lexer.ScalaTokenTypes
@@ -20,7 +20,7 @@ final class ScalaRecursiveFunctionLineMarkerProvider extends LineMarkerProvider 
       return null
     }
 
-    if (!isVisible(element)) return null
+    if (!element.isVisible) return null
 
     element.getParent match {
       case function: ScFunctionDefinition if element.getNode.getElementType == ScalaTokenTypes.tIDENTIFIER =>

@@ -51,7 +51,7 @@ object Tracing {
   }
 
   def trace(e: PsiElement, reason: String): Unit = if (isHighlightingTracingEnabled) {
-    EditorArea.editorsFor(e).foreach { editor =>
+    VisibleRange.editorsFor(e).foreach { editor =>
       val text = reason + ": " + {
         val s = e.getText.replace('\n', '↵').replaceAll(" {2,}", " ")
         if (s.length > 120) s.substring(0, 120) + "…" else s

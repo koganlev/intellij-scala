@@ -10,7 +10,7 @@ import com.intellij.psi.search.searches.ReferencesSearch
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.{PsiElement, PsiElementVisitor}
 import org.jetbrains.annotations.{Nls, NonNls}
-import org.jetbrains.plugins.scala.incremental.EditorArea.isVisible
+import org.jetbrains.plugins.scala.incremental.Highlighting._
 import org.jetbrains.plugins.scala.codeInspection.ScalaInspectionBundle
 import org.jetbrains.plugins.scala.codeInspection.quickfix.RenameElementQuickfix
 import org.jetbrains.plugins.scala.codeInspection.ui.CompilerInspectionOptions._
@@ -30,7 +30,7 @@ final class PrivateShadowInspection extends LocalInspectionTool {
 
   override def buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): PsiElementVisitor = new PsiElementVisitor {
     override def visitElement(element: PsiElement): Unit = {
-      if (!isVisible(element)) return
+      if (!element.isVisible) return
 
       element match {
         case elem: ScNamedElement if
