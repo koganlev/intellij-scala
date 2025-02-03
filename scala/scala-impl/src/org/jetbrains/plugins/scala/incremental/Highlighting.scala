@@ -4,6 +4,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 import org.jetbrains.plugins.scala.settings.ScalaProjectSettings
 
+// SCL-23216
 object Highlighting {
   def enabledIn(project: Project): Boolean =
     project != null && ScalaProjectSettings.in(project).isIncrementalHighlighting
