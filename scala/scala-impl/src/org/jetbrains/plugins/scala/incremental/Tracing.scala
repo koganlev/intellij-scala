@@ -18,8 +18,13 @@ import com.intellij.ui.{Gray, JBColor}
 
 import java.util
 import scala.jdk.CollectionConverters.CollectionHasAsScala
+import scala.util.matching.Regex
 
 object Tracing {
+  private val MaxLength = 120
+
+  private val MultipleSpaces = new Regex(" {2,}")
+
   class StartupActivity extends ProjectActivity {
     override def execute(project: Project): Unit = {
       val connection = project.getMessageBus.connect(project.unloadAwareDisposable)
@@ -55,8 +60,10 @@ object Tracing {
   def trace(e: PsiElement, reason: String): Unit = if (isHighlightingTracingEnabled) {
     VisibleRange.editorsFor(e).foreach { editor =>
       val text = reason + ": " + {
-        val s = e.getText.replace('\n', '↵').replaceAll(" {2,}", " ")
-        if (s.length > 120) s.substring(0, 120) + "…" else s
+        val range = e.getTextRange
+        val charSequence = editor.getDocument.getCharsSequence.subSequence(range.getStartOffset, range.getEndOffset.min(range.getStartOffset + MaxLength))
+        val s = MultipleSpaces.replaceAllIn(charSequence.toString.replace('\n', '↵'), " ")
+        if (range.getLength > MaxLength) s + "…" else s
       }
 
       val highlighter = editor.getMarkupModel.addRangeHighlighter(
