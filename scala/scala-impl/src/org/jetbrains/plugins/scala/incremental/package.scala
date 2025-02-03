@@ -1,4 +1,5 @@
-package org.jetbrains.plugins.scala
+package org.jetbrains.plugins
+package scala
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer
 import com.intellij.codeInsight.daemon.impl.{DaemonCodeAnalyzerEx, DaemonCodeAnalyzerImpl, FileStatusMap}

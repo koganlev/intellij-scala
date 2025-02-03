@@ -1,8 +1,10 @@
-package org.jetbrains.plugins.scala.incremental
+package org.jetbrains.plugins.scala
+package incremental
+
+import settings.ScalaProjectSettings
 
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
-import org.jetbrains.plugins.scala.settings.ScalaProjectSettings
 
 // SCL-23216
 object Highlighting {

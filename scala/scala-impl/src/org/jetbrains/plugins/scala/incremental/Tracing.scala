@@ -1,4 +1,8 @@
-package org.jetbrains.plugins.scala.incremental
+package org.jetbrains.plugins.scala
+package incremental
+
+import project.ProjectExt
+import startup.ProjectActivity
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer.DaemonListener
@@ -11,8 +15,6 @@ import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.wm.WindowManager
 import com.intellij.psi.PsiElement
 import com.intellij.ui.{Gray, JBColor}
-import org.jetbrains.plugins.scala.project.ProjectExt
-import org.jetbrains.plugins.scala.startup.ProjectActivity
 
 import java.util
 import scala.jdk.CollectionConverters.CollectionHasAsScala

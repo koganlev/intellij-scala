@@ -1,10 +1,10 @@
-package org.jetbrains.plugins.scala.incremental
+package org.jetbrains.plugins.scala
+package incremental
 
 import com.intellij.openapi.editor.{Editor, EditorFactory, LogicalPosition}
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.{Key, TextRange}
 import com.intellij.psi.{PsiDocumentManager, PsiElement}
-import org.jetbrains.plugins.scala.incremental.Highlighting.enabledIn
 
 import java.awt.Point
 
@@ -14,7 +14,7 @@ private object VisibleRange {
   private def lookaround: Int = Registry.intValue("scala.incremental.highlighting.lookaround")
 
   def isVisible(e: PsiElement): Boolean = {
-    if (!enabledIn(e.getProject)) return true
+    if (!incremental.Highlighting.enabledIn(e.getProject)) return true
 
     val elementRange = e.getTextRange
 

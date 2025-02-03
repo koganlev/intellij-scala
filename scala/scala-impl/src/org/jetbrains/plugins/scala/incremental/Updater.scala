@@ -1,11 +1,13 @@
-package org.jetbrains.plugins.scala.incremental
+package org.jetbrains.plugins.scala
+package incremental
+
+import incremental.Updater._
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.util.{Key, TextRange}
 import com.intellij.psi.PsiManager
-import org.jetbrains.plugins.scala.incremental.Updater._
 
 import java.awt.Color
 import javax.swing.Timer

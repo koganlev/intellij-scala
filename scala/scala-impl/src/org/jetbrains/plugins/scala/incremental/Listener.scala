@@ -1,11 +1,12 @@
-package org.jetbrains.plugins.scala.incremental
+package org.jetbrains.plugins.scala
+package incremental
+
+import incremental.Listener._
+import project.ProjectExt
 
 import com.intellij.openapi.editor.event.{EditorFactoryEvent, EditorFactoryListener, VisibleAreaEvent, VisibleAreaListener}
 import com.intellij.openapi.editor.ex.{FoldingListener, FoldingModelEx}
 import com.intellij.openapi.editor.{Editor, FoldRegion}
-import org.jetbrains.plugins.scala.incremental.Highlighting.enabledIn
-import org.jetbrains.plugins.scala.incremental.Listener._
-import org.jetbrains.plugins.scala.project.ProjectExt
 
 class Listener extends EditorFactoryListener {
   private var updaters = Map.empty[Editor, Updater]
@@ -31,7 +32,7 @@ class Listener extends EditorFactoryListener {
   override def editorCreated(event: EditorFactoryEvent): Unit = {
     val editor = event.getEditor
 
-    if (!enabledIn(editor.getProject) || !isScalaIn(editor)) return
+    if (!incremental.Highlighting.enabledIn(editor.getProject) || !isScalaIn(editor)) return
 
     updaters += editor -> new Updater(editor)
     editor.getScrollingModel.addVisibleAreaListener(visibleAreaListener)
@@ -41,7 +42,7 @@ class Listener extends EditorFactoryListener {
   override def editorReleased(event: EditorFactoryEvent): Unit = {
     val editor = event.getEditor
 
-    if (!enabledIn(editor.getProject) || !isScalaIn(editor)) return
+    if (!incremental.Highlighting.enabledIn(editor.getProject) || !isScalaIn(editor)) return
 
     editor.getScrollingModel.removeVisibleAreaListener(visibleAreaListener)
     updaters -= editor
