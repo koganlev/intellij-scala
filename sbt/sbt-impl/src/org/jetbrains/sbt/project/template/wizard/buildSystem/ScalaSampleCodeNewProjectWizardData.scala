@@ -2,13 +2,16 @@ package org.jetbrains.sbt.project.template.wizard.buildSystem
 
 import com.intellij.ide.wizard.NewProjectWizardStep
 import com.intellij.openapi.util.Key
-import org.jetbrains.annotations.{Nullable, TestOnly}
+import org.jetbrains.annotations.{ApiStatus, Nullable, TestOnly}
 
 trait ScalaSampleCodeNewProjectWizardData {
   @TestOnly
   private[project] def setAddSampleCode(value: java.lang.Boolean): Unit
+
   @TestOnly
-  private[project] def setGenerateOnboardingTips(value: java.lang.Boolean): Unit
+  @ApiStatus.ScheduledForRemoval(inVersion = "2025.2")
+  @deprecated("The onboarding tips are generated unconditionally with the sample code")
+  private[project] def setGenerateOnboardingTips(value: java.lang.Boolean): Unit = {}
 }
 
 object ScalaSampleCodeNewProjectWizardData {

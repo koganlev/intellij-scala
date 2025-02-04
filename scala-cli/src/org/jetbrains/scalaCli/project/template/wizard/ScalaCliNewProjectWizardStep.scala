@@ -1,6 +1,6 @@
 package org.jetbrains.scalaCli.project.template.wizard
 
-import com.intellij.ide.projectWizard.NewProjectWizardCollector.BuildSystem.{INSTANCE => BSLog}
+import com.intellij.ide.projectWizard.NewProjectWizardCollector
 import com.intellij.ide.wizard.{AbstractNewProjectWizardStep, CommitStepException}
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.externalSystem.model.ExternalSystemDataKeys
@@ -10,19 +10,18 @@ import com.intellij.openapi.observable.util.BindUtil
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ui.configuration.projectRoot.{LibrariesContainer, LibrariesContainerFactory}
 import com.intellij.ui.UIBundle
-import kotlin.Unit.{INSTANCE => KUnit}
 import com.intellij.ui.dsl.builder.{ButtonKt, Panel, Row, TopGap}
+import kotlin.Unit.{INSTANCE => KUnit}
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.plugins.scala.project.Versions
 import org.jetbrains.plugins.scala.project.template.ScalaSDKStepLike
 import org.jetbrains.plugins.scala.util.ui.extensions.JComboBoxOps
-import org.jetbrains.sbt.project.template.wizard.buildSystem.{ScalaNewProjectWizardData, ScalaSampleCodeNewProjectWizardData, addScalaSampleCode}
 import org.jetbrains.sbt.project.template.ScalaModuleBuilderSelections
+import org.jetbrains.sbt.project.template.wizard.buildSystem.{ScalaNewProjectWizardData, ScalaSampleCodeNewProjectWizardData, addScalaSampleCode}
 import org.jetbrains.sbt.project.template.wizard.{ScalaNewProjectWizardMultiStep, ScalaVersionStepLike}
 import org.jetbrains.scalaCli.{ScalaCliBundle, ScalaCliUtils}
 
 import javax.swing.JLabel
-import scala.annotation.nowarn
 
 /** inspired by [[com.intellij.ide.projectWizard.generators.IntelliJJavaNewProjectWizard]] */
 final class ScalaCliNewProjectWizardStep(parent: ScalaNewProjectWizardMultiStep)
@@ -48,7 +47,6 @@ final class ScalaCliNewProjectWizardStep(parent: ScalaNewProjectWizardMultiStep)
 
   @TestOnly override def setScalaVersion(version: String): Unit = scalaVersionComboBox.setSelectedItemEnsuring(version)
   @TestOnly override def setAddSampleCode(value: java.lang.Boolean): Unit = addSampleCodeProperty.set(value)
-  @TestOnly override def setGenerateOnboardingTips(value: java.lang.Boolean): Unit = ()
 
   override protected val selections: ScalaModuleBuilderSelections = ScalaModuleBuilderSelections.default
 
@@ -107,7 +105,7 @@ final class ScalaCliNewProjectWizardStep(parent: ScalaNewProjectWizardMultiStep)
       val cb = row.checkBox(UIBundle.message("label.project.wizard.new.project.add.sample.code"))
       ButtonKt.bindSelected(cb, addSampleCodeProperty: com.intellij.openapi.observable.properties.ObservableMutableProperty[java.lang.Boolean])
       ButtonKt.whenStateChangedFromUi(cb, null, value => {
-        BSLog.logAddSampleCodeChanged(parent, value): @nowarn("cat=deprecation")
+        NewProjectWizardCollector.Base.INSTANCE.logAddSampleCodeChanged(parent, value)
         KUnit
       })
       KUnit

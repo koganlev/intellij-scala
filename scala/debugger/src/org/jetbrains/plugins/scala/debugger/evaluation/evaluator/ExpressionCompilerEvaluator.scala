@@ -117,18 +117,22 @@ private[evaluation] final class ExpressionCompilerEvaluator(codeFragment: PsiEle
       val className = s"${prefix}CompiledExpression"
       autoLoadContext.getDebugProcess.findClass(autoLoadContext, className, classLoader)
 
-      val localVariableNamesEvaluator: Evaluator = { ctx =>
-        val arrayType = ctx.getDebugProcess.findClass(ctx, "java.lang.String[]", ctx.getClassLoader).asInstanceOf[ArrayType]
-        val array = DebuggerUtilsEx.mirrorOfArray(arrayType, localVariableNames.length, ctx)
-        array.setValues(localVariableNames.map(DebuggerUtilsEx.mirrorOfString(_, ctx)).asJava)
-        array
+      val localVariableNamesEvaluator: Evaluator = new Evaluator {
+        override def evaluate(ctx: EvaluationContextImpl): AnyRef = {
+          val arrayType = ctx.getDebugProcess.findClass(ctx, "java.lang.String[]", ctx.getClassLoader).asInstanceOf[ArrayType]
+          val array = DebuggerUtilsEx.mirrorOfArray(arrayType, localVariableNames.length, ctx)
+          array.setValues(localVariableNames.map(DebuggerUtilsEx.mirrorOfString(_, ctx)).asJava)
+          array
+        }
       }
 
-      val localVariableValuesEvaluator: Evaluator = { ctx =>
-        val arrayType = ctx.getDebugProcess.findClass(ctx, "java.lang.Object[]", ctx.getClassLoader).asInstanceOf[ArrayType]
-        val array = DebuggerUtilsEx.mirrorOfArray(arrayType, localVariableValues.length, ctx)
-        array.setValues(localVariableValues.map(ScalaBoxingEvaluator.box(_, ctx).asInstanceOf[Value]).asJava)
-        array
+      val localVariableValuesEvaluator: Evaluator = new Evaluator {
+        override def evaluate(ctx: EvaluationContextImpl): AnyRef = {
+          val arrayType = ctx.getDebugProcess.findClass(ctx, "java.lang.Object[]", ctx.getClassLoader).asInstanceOf[ArrayType]
+          val array = DebuggerUtilsEx.mirrorOfArray(arrayType, localVariableValues.length, ctx)
+          array.setValues(localVariableValues.map(ScalaBoxingEvaluator.box(_, ctx).asInstanceOf[Value]).asJava)
+          array
+        }
       }
 
       val thisEvaluator = new IdentityEvaluator(thisObject)

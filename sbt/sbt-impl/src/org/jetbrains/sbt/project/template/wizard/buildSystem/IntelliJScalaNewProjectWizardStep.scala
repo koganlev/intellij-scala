@@ -54,7 +54,7 @@ final class IntelliJScalaNewProjectWizardStep(parent: ScalaNewProjectWizardMulti
           path = s"$getContentRoot/src",
           isScala3 = isScala3SdkLibrary(librarySettings.getSelectedLibrary),
           packagePrefix = builder.packagePrefix,
-          withOnboardingTips = getGenerateOnboardingTips
+          withOnboardingTips = true
         )
     builder.commit(project)
   }
@@ -72,7 +72,6 @@ final class IntelliJScalaNewProjectWizardStep(parent: ScalaNewProjectWizardMulti
     setupScalaSdkUI(panel)
     setupPackagePrefixUI(panel)
     setupSampleCodeUI(panel)
-    setupSampleCodeWithOnBoardingTipsUI(panel)
   }
 
   private def setupScalaSdkUI(panel: Panel): Unit = {

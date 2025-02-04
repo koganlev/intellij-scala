@@ -1,7 +1,7 @@
 package org.jetbrains.sbt.project.template.wizard.buildSystem
 
-import com.intellij.ide.{JavaUiBundle, RecentProjectsManagerBase}
-import com.intellij.ide.projectWizard.NewProjectWizardCollector.BuildSystem.{INSTANCE => BSLog}
+import com.intellij.ide.JavaUiBundle
+import com.intellij.ide.projectWizard.NewProjectWizardCollector
 import com.intellij.ide.wizard.AbstractNewProjectWizardStep
 import com.intellij.openapi.externalSystem.model.ExternalSystemDataKeys
 import com.intellij.openapi.externalSystem.service.project.manage.ExternalProjectsManagerImpl
@@ -9,8 +9,8 @@ import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.observable.properties.{GraphProperty, ObservableProperty, PropertyGraph}
 import com.intellij.openapi.observable.util.BindUtil
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.roots.ui.configuration.projectRoot.{LibrariesContainer, LibrariesContainerFactory}
 import com.intellij.openapi.roots.ui.configuration.ProjectStructureConfigurable
+import com.intellij.openapi.roots.ui.configuration.projectRoot.{LibrariesContainer, LibrariesContainerFactory}
 import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.ui.UIBundle
 import com.intellij.ui.components.JBTextField
@@ -23,7 +23,7 @@ import org.jetbrains.plugins.scala.extensions.ToNullSafe
 import org.jetbrains.plugins.scala.project.Versions
 import org.jetbrains.plugins.scala.project.template.ScalaSDKStepLike
 import org.jetbrains.plugins.scala.util.ui.extensions.JComboBoxOps
-import org.jetbrains.sbt.project.template.wizard.{SbtModuleStepLike, ScalaNewProjectWizardMultiStep, ScalaVersionStepLike}
+import org.jetbrains.sbt.project.template.wizard.{SbtModuleStepLike, ScalaNewProjectWizardMultiStep}
 import org.jetbrains.sbt.project.template.{SbtModuleBuilder, SbtModuleBuilderSelections}
 
 import javax.swing.JLabel
@@ -52,12 +52,6 @@ final class SbtScalaNewProjectWizardStep(parent: ScalaNewProjectWizardMultiStep)
   private def needToAddSampleCode: Boolean = addSampleCodeProperty.get()
 
   @TestOnly override private[project] def setAddSampleCode(value: java.lang.Boolean): Unit = addSampleCodeProperty.set(value)
-
-  private val generateOnboardingTipsProperty: GraphProperty[java.lang.Boolean] =
-    propertyGraph.property(RecentProjectsManagerBase.getInstanceEx.getRecentPaths.isEmpty)
-  BindUtil.bindBooleanStorage(generateOnboardingTipsProperty,"NewProjectWizard.generateOnboardingTips")
-  @TestOnly override private[project] def setGenerateOnboardingTips(value: java.lang.Boolean): Unit = generateOnboardingTipsProperty.set(value)
-  private def needToGenerateOnboardingTips: Boolean = needToAddSampleCode && generateOnboardingTipsProperty.get()
 
   @TestOnly override def setScalaVersion(version: String): Unit = scalaVersionComboBox.setSelectedItemEnsuring(version)
   @TestOnly override private[project] def setSbtVersion(version: String): Unit = sbtVersionComboBox.setSelectedItemEnsuring(version)
@@ -98,7 +92,7 @@ final class SbtScalaNewProjectWizardStep(parent: ScalaNewProjectWizardMultiStep)
         path = s"$projectRoot/src/main/scala",
         isScala3 = this.selections.scalaVersion.exists(_.startsWith("3.")),
         packagePrefix = this.selections.packagePrefix,
-        withOnboardingTips = needToGenerateOnboardingTips
+        withOnboardingTips = true
       )
       builder.openFileEditorAfterProjectOpened = files
     }
@@ -125,26 +119,11 @@ final class SbtScalaNewProjectWizardStep(parent: ScalaNewProjectWizardMultiStep)
       val cb = row.checkBox(UIBundle.message("label.project.wizard.new.project.add.sample.code"))
       ButtonKt.bindSelected(cb, addSampleCodeProperty: com.intellij.openapi.observable.properties.ObservableMutableProperty[java.lang.Boolean])
       ButtonKt.whenStateChangedFromUi(cb, null, value => {
-        BSLog.logAddSampleCodeChanged(parent, value): @nowarn("cat=deprecation")
+        NewProjectWizardCollector.Base.INSTANCE.logAddSampleCodeChanged(parent, value)
         KUnit
       })
       KUnit
     }).topGap(TopGap.SMALL)
-
-    panel.indent((p: Panel) => {
-      p.row(null: JLabel, (row: Row) => {
-        val cb = row.checkBox(UIBundle.message("label.project.wizard.new.project.generate.onboarding.tips"))
-        ButtonKt.bindSelected(cb, generateOnboardingTipsProperty: com.intellij.openapi.observable.properties.ObservableMutableProperty[java.lang.Boolean])
-        ButtonKt.whenStateChangedFromUi(cb, null, value => {
-          BSLog.logAddSampleCodeChanged(parent, value): @nowarn("cat=deprecation")
-          KUnit
-        })
-        KUnit
-      }).enabledIf(addSampleCodeProperty)
-      KUnit
-    })
-
-    generateOnboardingTipsProperty.set(false)
 
     panel.collapsibleGroup(UIBundle.message("label.project.wizard.new.project.advanced.settings"), true, (panel: Panel) => {
       if (getContext.isCreatingNewProject) {

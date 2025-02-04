@@ -7,6 +7,7 @@ import com.intellij.lang.java.JavaLanguage
 import com.intellij.openapi.diagnostic.ControlFlowException
 import com.intellij.psi._
 import org.jetbrains.annotations.Nls
+import org.jetbrains.plugins.scala.debugger.DebuggerBundle
 import org.jetbrains.plugins.scala.debugger.evaluation.evaluator._
 import org.jetbrains.plugins.scala.extensions._
 import org.jetbrains.plugins.scala.lang.psi.api.base._
@@ -22,7 +23,6 @@ import org.jetbrains.plugins.scala.project.{ProjectContext, ProjectContextOwner}
 import org.jetbrains.plugins.scala.statistics.ScalaDebuggerUsagesCollector
 import org.jetbrains.plugins.scala.util.AnonymousFunction
 import org.jetbrains.plugins.scala.{NlsString, Scala3Language}
-import org.jetbrains.plugins.scala.debugger.DebuggerBundle
 
 object ScalaEvaluatorBuilder extends EvaluatorBuilder {
   override def build(codeFragment: PsiElement, position: SourcePosition): ExpressionEvaluator = {
@@ -54,7 +54,10 @@ object ScalaEvaluatorBuilder extends EvaluatorBuilder {
         val simple = new ScalaEvaluatorBuilder(scalaFragment, position).getEvaluator
         val evaluator =
           if (codeFragment.getLanguage.is(Scala3Language.INSTANCE)) {
-            val shim: Evaluator = new ExpressionCompilerEvaluator(codeFragment, position).evaluate(_)
+            val shim: Evaluator = new Evaluator {
+              override def evaluate(context: EvaluationContextImpl): AnyRef =
+                new ExpressionCompilerEvaluator(codeFragment, position).evaluate(context)
+            }
             ScalaDuplexEvaluator(simple, shim)
           } else simple
 

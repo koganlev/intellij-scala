@@ -5,6 +5,8 @@ import com.intellij.debugger.engine.evaluation.EvaluationContextImpl
 import com.intellij.debugger.engine.evaluation.expression.{Evaluator, Modifier}
 import org.jetbrains.plugins.scala.debugger.evaluation.EvaluationException
 
+import scala.annotation.nowarn
+
 /**
  * Tries to use first evaluator first. If gets exception or null, uses second one.
  */
@@ -16,13 +18,13 @@ case class ScalaDuplexEvaluator(first: Evaluator, second: Evaluator) extends Eva
     var result: AnyRef = null
     try {
       result = first.evaluate(context)
-      myModifier = first.getModifier
+      myModifier = first.getModifier: @nowarn("cat=deprecation") // IDEA-366620
     }
     catch {
       case e1: Exception if first != second =>
         try {
           result = second.evaluate(context)
-          myModifier = second.getModifier
+          myModifier = second.getModifier: @nowarn("cat=deprecation") // IDEA-366620
         }
         catch {
           case e2: Exception =>
