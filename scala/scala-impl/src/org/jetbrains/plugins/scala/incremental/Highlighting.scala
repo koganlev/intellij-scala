@@ -11,8 +11,10 @@ import com.intellij.psi.PsiElement
 object Highlighting {
   private[incremental] var editor: Editor = _
 
+  private[incremental] var suppress: Boolean = false
+
   def enabledIn(project: Project): Boolean =
-    project != null && ScalaProjectSettings.in(project).isIncrementalHighlighting
+    !suppress && project != null && ScalaProjectSettings.in(project).isIncrementalHighlighting
 
   implicit class ElementHighlightingExt(private val e: PsiElement) extends AnyVal {
     def isVisible: Boolean = VisibleRange.isVisible(e)
