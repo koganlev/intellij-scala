@@ -32,7 +32,7 @@ class Listener extends EditorFactoryListener {
   override def editorCreated(event: EditorFactoryEvent): Unit = {
     val editor = event.getEditor
 
-    if (!incremental.Highlighting.enabledIn(editor.getProject) || !isScalaIn(editor)) return
+    if (!incremental.Highlighting.enabledIn(editor.getProject) || !isScalaIn(editor.getVirtualFile)) return
 
     updaters += editor -> new Updater(editor)
     editor.getScrollingModel.addVisibleAreaListener(visibleAreaListener)
@@ -42,7 +42,7 @@ class Listener extends EditorFactoryListener {
   override def editorReleased(event: EditorFactoryEvent): Unit = {
     val editor = event.getEditor
 
-    if (!incremental.Highlighting.enabledIn(editor.getProject) || !isScalaIn(editor)) return
+    if (!incremental.Highlighting.enabledIn(editor.getProject) || !isScalaIn(editor.getVirtualFile)) return
 
     editor.getScrollingModel.removeVisibleAreaListener(visibleAreaListener)
     updaters -= editor
@@ -51,9 +51,4 @@ class Listener extends EditorFactoryListener {
 
 private object Listener {
   var currentEditor: Editor = _
-
-  private def isScalaIn(editor: Editor): Boolean = {
-    val file = editor.getVirtualFile
-    file != null && (file.getExtension == "scala" || file.getExtension == "sc" || file.getExtension == "sbt")
-  }
 }

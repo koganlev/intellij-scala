@@ -41,13 +41,16 @@ object Tracing {
     private var durations = Seq.empty[Long]
 
     override def daemonStarting(fileEditors: util.Collection[_ <: FileEditor]): Unit = if (isHighlightingTracingEnabled) {
-      startInstants ++= fileEditors.asScala.map(editor => editor -> System.nanoTime())
+      val editors = fileEditors.asScala.filter(e => isScalaIn(e.getFile))
+      if (editors.isEmpty) return
+      startInstants ++= editors.map(editor => editor -> System.nanoTime())
       durations = Seq.empty
       statusBar.setInfo("Highlighting...")
     }
 
     override def daemonFinished(fileEditors: util.Collection[_ <: FileEditor]): Unit = if (isHighlightingTracingEnabled) {
-      val editors = fileEditors.asScala
+      val editors = fileEditors.asScala.filter(e => isScalaIn(e.getFile))
+      if (editors.isEmpty) return
       val ds = editors.map(editor => (System.nanoTime() - startInstants(editor)) / 1000000)
       statusBar.setInfo("Highlighted: " + (durations ++ ds).map(x => s"$x ms").mkString(", "))
       startInstants --= editors.toSet
