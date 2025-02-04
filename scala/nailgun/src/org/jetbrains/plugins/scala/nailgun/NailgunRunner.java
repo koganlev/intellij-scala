@@ -4,7 +4,6 @@ import com.facebook.nailgun.Alias;
 import com.facebook.nailgun.NGConstants;
 import com.facebook.nailgun.NGServer;
 
-import java.io.File;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.net.MalformedURLException;
@@ -110,13 +109,13 @@ public class NailgunRunner {
   public static URLClassLoader constructClassLoader(String classpath) {
     Function<String, URL> pathToUrl = path -> {
       try {
-        return new File(path).toURI().toURL();
+        return Paths.get(path).toUri().toURL();
       } catch (MalformedURLException e) {
         throw new RuntimeException(e);
       }
     };
 
-    URL[] urls = Stream.of(classpath.split(File.pathSeparator))
+    URL[] urls = Stream.of(classpath.split(java.io.File.pathSeparator))
             .map(pathToUrl)
             .toArray(URL[]::new);
 
@@ -217,12 +216,10 @@ public class NailgunRunner {
 
     @SuppressWarnings("ResultOfMethodCallIgnored")
     static void writeTokenTo(Path path, UUID uuid) throws IOException {
-      File directory = path.getParent().toFile();
+      Path directory = path.getParent();
 
-      if (!directory.exists()) {
-        if (!directory.mkdirs()) {
-          throw new IOException("Cannot create directory: " + directory);
-        }
+      if (!Files.exists(directory)) {
+        Files.createDirectories(directory);
       }
 
       final boolean isPosix = path.getFileSystem().supportedFileAttributeViews().contains("posix");
@@ -233,7 +230,9 @@ public class NailgunRunner {
         ));
       } else {
         // Windows
-        final File file = path.toFile();
+        // Using `java.io.File` here is unavoidable, as Windows is not compatible with `PosixFilePermission`
+        // and throws exceptions at runtime.
+        final java.io.File file = path.toFile();
         file.createNewFile();
         file.setExecutable(false);
         file.setReadable(/* readable */ true, /* ownerOnly */ true);
@@ -244,9 +243,17 @@ public class NailgunRunner {
     }
 
     public static void deleteTokenFor(Path scalaCompileServerSystemDir, int port) {
-      File tokenFile = tokenPathFor(scalaCompileServerSystemDir, port).toFile();
-      if (!tokenFile.delete()) {
-        tokenFile.deleteOnExit();
+      Path path = tokenPathFor(scalaCompileServerSystemDir, port);
+      if (!deleteFile(path)) {
+        path.toFile().deleteOnExit();
+      }
+    }
+
+    private static boolean deleteFile(Path path) {
+      try {
+        return Files.deleteIfExists(path);
+      } catch (IOException ignored) {
+        return false;
       }
     }
   }
