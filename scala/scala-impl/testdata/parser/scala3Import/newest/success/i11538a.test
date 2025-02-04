@@ -3,7 +3,7 @@ package a:
   trait Printer[A]:
     def print(a: A): Unit
 
-  given Printer[String] with
+  given Printer[String]:
     def print(s: String) = println(s)
 
 package b:
@@ -99,10 +99,9 @@ ScalaFile
                   CodeReferenceElement: String
                     PsiElement(identifier)('String')
                 PsiElement(])(']')
-        PsiWhiteSpace(' ')
-        PsiElement(with)('with')
-        PsiWhiteSpace('\n    ')
         ScTemplateBody
+          PsiElement(:)(':')
+          PsiWhiteSpace('\n    ')
           ScFunctionDefinition: print
             AnnotationsList
               <empty list>

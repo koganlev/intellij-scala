@@ -8,7 +8,7 @@ trait TokenParser[Token, R]
 package p1 {
 
   object TextParser {
-    given TP: TokenParser[Char, Position[CharSequence]] with {}
+    given TP: TokenParser[Char, Position[CharSequence]]()
 
     def f
       (using TokenParser[Char, Position[CharSequence]]) = ???
@@ -85,11 +85,11 @@ package p3 {
 package p4 {
   class TC
 
-  given A: TC with {}
+  given A: TC()
 
-  given B[X[_], Y]: TC with {}
+  given B: [X[_], Y] => TC()
 
-  given C(using TC): TC with {}
+  given C: TC => TC()
 }
 -----
 ScalaFile
@@ -211,12 +211,9 @@ ScalaFile
                                 PsiElement(identifier)('CharSequence')
                             PsiElement(])(']')
                         PsiElement(])(']')
-                PsiWhiteSpace(' ')
-                PsiElement(with)('with')
-                PsiWhiteSpace(' ')
-                ScTemplateBody
-                  PsiElement({)('{')
-                  PsiElement(})('}')
+                    ArgumentList
+                      PsiElement(()('(')
+                      PsiElement())(')')
             PsiWhiteSpace('\n\n    ')
             ScFunctionDefinition: f
               AnnotationsList
@@ -1546,12 +1543,9 @@ ScalaFile
               SimpleType: TC
                 CodeReferenceElement: TC
                   PsiElement(identifier)('TC')
-          PsiWhiteSpace(' ')
-          PsiElement(with)('with')
-          PsiWhiteSpace(' ')
-          ScTemplateBody
-            PsiElement({)('{')
-            PsiElement(})('}')
+              ArgumentList
+                PsiElement(()('(')
+                PsiElement())(')')
       PsiWhiteSpace('\n\n  ')
       ScGivenDefinition: B
         AnnotationsList
@@ -1561,6 +1555,8 @@ ScalaFile
         PsiElement(given)('given')
         PsiWhiteSpace(' ')
         PsiElement(identifier)('B')
+        PsiElement(:)(':')
+        PsiWhiteSpace(' ')
         TypeParameterClause
           PsiElement([)('[')
           TypeParameter: X
@@ -1575,7 +1571,8 @@ ScalaFile
           TypeParameter: Y
             PsiElement(identifier)('Y')
           PsiElement(])(']')
-        PsiElement(:)(':')
+        PsiWhiteSpace(' ')
+        PsiElement(=>)('=>')
         Parameters
           <empty list>
         PsiWhiteSpace(' ')
@@ -1585,12 +1582,9 @@ ScalaFile
               SimpleType: TC
                 CodeReferenceElement: TC
                   PsiElement(identifier)('TC')
-          PsiWhiteSpace(' ')
-          PsiElement(with)('with')
-          PsiWhiteSpace(' ')
-          ScTemplateBody
-            PsiElement({)('{')
-            PsiElement(})('}')
+              ArgumentList
+                PsiElement(()('(')
+                PsiElement())(')')
       PsiWhiteSpace('\n\n  ')
       ScGivenDefinition: C
         AnnotationsList
@@ -1600,18 +1594,17 @@ ScalaFile
         PsiElement(given)('given')
         PsiWhiteSpace(' ')
         PsiElement(identifier)('C')
+        PsiElement(:)(':')
+        PsiWhiteSpace(' ')
         Parameters
           ParametersClause
-            PsiElement(()('(')
-            PsiElement(using)('using')
-            PsiWhiteSpace(' ')
             Parameter: <anonymous>
               ParameterType
                 SimpleType: TC
                   CodeReferenceElement: TC
                     PsiElement(identifier)('TC')
-            PsiElement())(')')
-        PsiElement(:)(':')
+          PsiWhiteSpace(' ')
+          PsiElement(=>)('=>')
         PsiWhiteSpace(' ')
         ExtendsBlock
           TemplateParents
@@ -1619,11 +1612,8 @@ ScalaFile
               SimpleType: TC
                 CodeReferenceElement: TC
                   PsiElement(identifier)('TC')
-          PsiWhiteSpace(' ')
-          PsiElement(with)('with')
-          PsiWhiteSpace(' ')
-          ScTemplateBody
-            PsiElement({)('{')
-            PsiElement(})('}')
+              ArgumentList
+                PsiElement(()('(')
+                PsiElement())(')')
       PsiWhiteSpace('\n')
       PsiElement(})('}')

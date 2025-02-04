@@ -7,7 +7,7 @@ class Test
 object Test:
 
   @methOnly
-  given test2[T]: Test with {}
+  given test2: [T] => Test()
 -----
 ScalaFile
   ScImportStatement
@@ -106,12 +106,15 @@ ScalaFile
           PsiElement(given)('given')
           PsiWhiteSpace(' ')
           PsiElement(identifier)('test2')
+          PsiElement(:)(':')
+          PsiWhiteSpace(' ')
           TypeParameterClause
             PsiElement([)('[')
             TypeParameter: T
               PsiElement(identifier)('T')
             PsiElement(])(']')
-          PsiElement(:)(':')
+          PsiWhiteSpace(' ')
+          PsiElement(=>)('=>')
           Parameters
             <empty list>
           PsiWhiteSpace(' ')
@@ -121,9 +124,6 @@ ScalaFile
                 SimpleType: Test
                   CodeReferenceElement: Test
                     PsiElement(identifier)('Test')
-            PsiWhiteSpace(' ')
-            PsiElement(with)('with')
-            PsiWhiteSpace(' ')
-            ScTemplateBody
-              PsiElement({)('{')
-              PsiElement(})('}')
+                ArgumentList
+                  PsiElement(()('(')
+                  PsiElement())(')')

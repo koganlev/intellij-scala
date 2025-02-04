@@ -1,4 +1,4 @@
-//> using options -Ykind-projector
+//> using options -Xkind-projector
 
 package kind_projector
 
@@ -53,7 +53,7 @@ class BackticksAreFine6 extends FooPlus[BazPlus[Int => `-*`, `-*`, Int]]
 class BackticksAreFine7 extends Foo[λ[`-x` => BazPlus[x => `-*`, Int, x]]]
 class BackticksAreFine8 extends Foo[λ[`x` => BazPlus[x => `*`, Int, x]]]
 
-// https://github.com/lampepfl/dotty/issues/13141
+// https://github.com/scala/scala3/issues/13141
 // i13141
 object A {
   class X { type Blah = Int }
@@ -69,7 +69,7 @@ ScalaFile
     PsiWhiteSpace(' ')
     ScDirectiveToken(tDIRECTIVE_KEY)('options')
     PsiWhiteSpace(' ')
-    ScDirectiveToken(tDIRECTIVE_VALUE)('-Ykind-projector')
+    ScDirectiveToken(tDIRECTIVE_VALUE)('-Xkind-projector')
   PsiWhiteSpace('\n\n')
   ScPackaging
     PsiElement(package)('package')
@@ -2048,7 +2048,7 @@ ScalaFile
                 PsiElement(])(']')
     PsiWhiteSpace('\n\n')
     ScObject: A
-      PsiComment(comment)('// https://github.com/lampepfl/dotty/issues/13141')
+      PsiComment(comment)('// https://github.com/scala/scala3/issues/13141')
       PsiWhiteSpace('\n')
       PsiComment(comment)('// i13141')
       PsiWhiteSpace('\n')

@@ -1,4 +1,4 @@
-// https://github.com/lampepfl/dotty/issues/14278
+// https://github.com/scala/scala3/issues/14278
 class Foo
 
 extension (foo: Foo)
@@ -7,7 +7,7 @@ extension (foo: Foo)
 -----
 ScalaFile
   ScClass: Foo
-    PsiComment(comment)('// https://github.com/lampepfl/dotty/issues/14278')
+    PsiComment(comment)('// https://github.com/scala/scala3/issues/14278')
     PsiWhiteSpace('\n')
     AnnotationsList
       <empty list>

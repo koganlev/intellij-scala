@@ -93,9 +93,9 @@
 [680,700]: ValDef
 [691,696]: Ident
 [699,700]: Number
-[706,724]: ValDef
+[706,723]: ValDef
 [716,719]: Ident
-[722,724]: Ident
+[722,723]: Ident
 [728,728]: TypeTree
 [731,747]: Block
 [737,743]: Apply

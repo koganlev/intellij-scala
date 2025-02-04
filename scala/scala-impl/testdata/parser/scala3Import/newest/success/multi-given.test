@@ -8,6 +8,8 @@ def foo(implicit a: A, b: B, c: C) = "foo"
 given A() with B
 
 given ops: A() with B()
+
+given ops2: A(), B
 -----
 ScalaFile
   ScTrait: A
@@ -220,3 +222,31 @@ ScalaFile
           ArgumentList
             PsiElement(()('(')
             PsiElement())(')')
+  PsiWhiteSpace('\n\n')
+  ScGivenDefinition: ops2
+    AnnotationsList
+      <empty list>
+    Modifiers
+      <empty list>
+    PsiElement(given)('given')
+    PsiWhiteSpace(' ')
+    PsiElement(identifier)('ops2')
+    PsiElement(:)(':')
+    Parameters
+      <empty list>
+    PsiWhiteSpace(' ')
+    ExtendsBlock
+      TemplateParents
+        ConstructorInvocation
+          SimpleType: A
+            CodeReferenceElement: A
+              PsiElement(identifier)('A')
+          ArgumentList
+            PsiElement(()('(')
+            PsiElement())(')')
+        PsiElement(,)(',')
+        PsiWhiteSpace(' ')
+        ConstructorInvocation
+          SimpleType: B
+            CodeReferenceElement: B
+              PsiElement(identifier)('B')

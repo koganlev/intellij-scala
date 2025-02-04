@@ -3,10 +3,10 @@ import scala.annotation.targetName
 opaque type Inlined[T] = T
 object Inlined:
   extension [T](inlined: Inlined[T]) def value: T = inlined
-  inline given fromValue[T <: Singleton]: Conversion[T, Inlined[T]] =
+  inline given fromValue: [T <: Singleton] => Conversion[T, Inlined[T]] =
     value => value
   @targetName("fromValueWide")
-  given fromValue[Wide]: Conversion[Wide, Inlined[Wide]] = value => value
+  given fromValue: [Wide] => Conversion[Wide, Inlined[Wide]] = value => value
 
   def forced[T](value: Any): Inlined[T] = value.asInstanceOf[T]
   extension [T <: Int](lhs: Inlined[T])
@@ -139,6 +139,8 @@ ScalaFile
           PsiElement(given)('given')
           PsiWhiteSpace(' ')
           PsiElement(identifier)('fromValue')
+          PsiElement(:)(':')
+          PsiWhiteSpace(' ')
           TypeParameterClause
             PsiElement([)('[')
             TypeParameter: T
@@ -150,7 +152,8 @@ ScalaFile
                 CodeReferenceElement: Singleton
                   PsiElement(identifier)('Singleton')
             PsiElement(])(']')
-          PsiElement(:)(':')
+          PsiWhiteSpace(' ')
+          PsiElement(=>)('=>')
           Parameters
             <empty list>
           PsiWhiteSpace(' ')
@@ -210,12 +213,15 @@ ScalaFile
           PsiElement(given)('given')
           PsiWhiteSpace(' ')
           PsiElement(identifier)('fromValue')
+          PsiElement(:)(':')
+          PsiWhiteSpace(' ')
           TypeParameterClause
             PsiElement([)('[')
             TypeParameter: Wide
               PsiElement(identifier)('Wide')
             PsiElement(])(']')
-          PsiElement(:)(':')
+          PsiWhiteSpace(' ')
+          PsiElement(=>)('=>')
           Parameters
             <empty list>
           PsiWhiteSpace(' ')

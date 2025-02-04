@@ -1,7 +1,8 @@
-trait Monad[T]
+trait Monad[T]:
+  def id: String
 class Foo
 object Foo {
-  given Monad[Foo] with {}
+  given Monad[Foo] { def id = "Foo" }
 }
 
 opaque type Bar = Foo
@@ -9,9 +10,9 @@ object Bar {
   given Monad[Bar] = summon[Monad[Foo]]
 }
 
-object Test {
-  val mf = summon[Monad[Foo]]
-  val mb = summon[Monad[Bar]]
+object Test extends App {
+  println(summon[Monad[Foo]].id)
+  println(summon[Monad[Bar]].id)
 }
 -----
 ScalaFile
@@ -29,7 +30,24 @@ ScalaFile
         PsiElement(identifier)('T')
       PsiElement(])(']')
     ExtendsBlock
-      <empty list>
+      ScTemplateBody
+        PsiElement(:)(':')
+        PsiWhiteSpace('\n  ')
+        ScFunctionDeclaration: id
+          AnnotationsList
+            <empty list>
+          Modifiers
+            <empty list>
+          PsiElement(def)('def')
+          PsiWhiteSpace(' ')
+          PsiElement(identifier)('id')
+          Parameters
+            <empty list>
+          PsiElement(:)(':')
+          PsiWhiteSpace(' ')
+          SimpleType: String
+            CodeReferenceElement: String
+              PsiElement(identifier)('String')
   PsiWhiteSpace('\n')
   ScClass: Foo
     AnnotationsList
@@ -85,10 +103,25 @@ ScalaFile
                         PsiElement(identifier)('Foo')
                     PsiElement(])(']')
             PsiWhiteSpace(' ')
-            PsiElement(with)('with')
-            PsiWhiteSpace(' ')
             ScTemplateBody
               PsiElement({)('{')
+              PsiWhiteSpace(' ')
+              ScFunctionDefinition: id
+                AnnotationsList
+                  <empty list>
+                Modifiers
+                  <empty list>
+                PsiElement(def)('def')
+                PsiWhiteSpace(' ')
+                PsiElement(identifier)('id')
+                Parameters
+                  <empty list>
+                PsiWhiteSpace(' ')
+                PsiElement(=)('=')
+                PsiWhiteSpace(' ')
+                StringLiteral
+                  PsiElement(string content)('"Foo"')
+              PsiWhiteSpace(' ')
               PsiElement(})('}')
         PsiWhiteSpace('\n')
         PsiElement(})('}')
@@ -173,67 +206,67 @@ ScalaFile
     PsiElement(identifier)('Test')
     PsiWhiteSpace(' ')
     ExtendsBlock
+      PsiElement(extends)('extends')
+      PsiWhiteSpace(' ')
+      TemplateParents
+        ConstructorInvocation
+          SimpleType: App
+            CodeReferenceElement: App
+              PsiElement(identifier)('App')
+      PsiWhiteSpace(' ')
       ScTemplateBody
         PsiElement({)('{')
         PsiWhiteSpace('\n  ')
-        ScPatternDefinition: mf
-          AnnotationsList
-            <empty list>
-          Modifiers
-            <empty list>
-          PsiElement(val)('val')
-          PsiWhiteSpace(' ')
-          ListOfPatterns
-            ReferencePattern: mf
-              PsiElement(identifier)('mf')
-          PsiWhiteSpace(' ')
-          PsiElement(=)('=')
-          PsiWhiteSpace(' ')
-          GenericCall
-            ReferenceExpression: summon
-              PsiElement(identifier)('summon')
-            TypeArgumentsList
-              PsiElement([)('[')
-              ParametrizedType: Monad[Foo]
-                SimpleType: Monad
-                  CodeReferenceElement: Monad
-                    PsiElement(identifier)('Monad')
+        MethodCall
+          ReferenceExpression: println
+            PsiElement(identifier)('println')
+          ArgumentList
+            PsiElement(()('(')
+            ReferenceExpression: summon[Monad[Foo]].id
+              GenericCall
+                ReferenceExpression: summon
+                  PsiElement(identifier)('summon')
                 TypeArgumentsList
                   PsiElement([)('[')
-                  SimpleType: Foo
-                    CodeReferenceElement: Foo
-                      PsiElement(identifier)('Foo')
+                  ParametrizedType: Monad[Foo]
+                    SimpleType: Monad
+                      CodeReferenceElement: Monad
+                        PsiElement(identifier)('Monad')
+                    TypeArgumentsList
+                      PsiElement([)('[')
+                      SimpleType: Foo
+                        CodeReferenceElement: Foo
+                          PsiElement(identifier)('Foo')
+                      PsiElement(])(']')
                   PsiElement(])(']')
-              PsiElement(])(']')
+              PsiElement(.)('.')
+              PsiElement(identifier)('id')
+            PsiElement())(')')
         PsiWhiteSpace('\n  ')
-        ScPatternDefinition: mb
-          AnnotationsList
-            <empty list>
-          Modifiers
-            <empty list>
-          PsiElement(val)('val')
-          PsiWhiteSpace(' ')
-          ListOfPatterns
-            ReferencePattern: mb
-              PsiElement(identifier)('mb')
-          PsiWhiteSpace(' ')
-          PsiElement(=)('=')
-          PsiWhiteSpace(' ')
-          GenericCall
-            ReferenceExpression: summon
-              PsiElement(identifier)('summon')
-            TypeArgumentsList
-              PsiElement([)('[')
-              ParametrizedType: Monad[Bar]
-                SimpleType: Monad
-                  CodeReferenceElement: Monad
-                    PsiElement(identifier)('Monad')
+        MethodCall
+          ReferenceExpression: println
+            PsiElement(identifier)('println')
+          ArgumentList
+            PsiElement(()('(')
+            ReferenceExpression: summon[Monad[Bar]].id
+              GenericCall
+                ReferenceExpression: summon
+                  PsiElement(identifier)('summon')
                 TypeArgumentsList
                   PsiElement([)('[')
-                  SimpleType: Bar
-                    CodeReferenceElement: Bar
-                      PsiElement(identifier)('Bar')
+                  ParametrizedType: Monad[Bar]
+                    SimpleType: Monad
+                      CodeReferenceElement: Monad
+                        PsiElement(identifier)('Monad')
+                    TypeArgumentsList
+                      PsiElement([)('[')
+                      SimpleType: Bar
+                        CodeReferenceElement: Bar
+                          PsiElement(identifier)('Bar')
+                      PsiElement(])(']')
                   PsiElement(])(']')
-              PsiElement(])(']')
+              PsiElement(.)('.')
+              PsiElement(identifier)('id')
+            PsiElement())(')')
         PsiWhiteSpace('\n')
         PsiElement(})('}')

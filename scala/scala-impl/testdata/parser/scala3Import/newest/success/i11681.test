@@ -1,4 +1,4 @@
-// https://github.com/lampepfl/dotty/issues/11681
+// https://github.com/scala/scala3/issues/11681
 
 import scala.collection.Factory
 
@@ -28,7 +28,7 @@ object example:
   def test = take
 -----
 ScalaFile
-  PsiComment(comment)('// https://github.com/lampepfl/dotty/issues/11681')
+  PsiComment(comment)('// https://github.com/scala/scala3/issues/11681')
   PsiWhiteSpace('\n\n')
   ScImportStatement
     PsiElement(import)('import')

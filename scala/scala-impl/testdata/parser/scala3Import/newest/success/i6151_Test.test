@@ -1,5 +1,5 @@
 import Expect.*
-@Outcome(ExpectVal)
+@Outcome(enm = ExpectVal)
 class SimpleTest
 -----
 ScalaFile
@@ -23,8 +23,14 @@ ScalaFile
                 PsiElement(identifier)('Outcome')
             ArgumentList
               PsiElement(()('(')
-              ReferenceExpression: ExpectVal
-                PsiElement(identifier)('ExpectVal')
+              AssignStatement
+                ReferenceExpression: enm
+                  PsiElement(identifier)('enm')
+                PsiWhiteSpace(' ')
+                PsiElement(=)('=')
+                PsiWhiteSpace(' ')
+                ReferenceExpression: ExpectVal
+                  PsiElement(identifier)('ExpectVal')
               PsiElement())(')')
     Modifiers
       <empty list>

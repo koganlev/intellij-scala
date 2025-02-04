@@ -2,14 +2,14 @@ trait Foo[A] {
   inline def foo(): Unit
 }
 
-inline given FooA[A]: Foo[A] with {
+inline given FooA: [A] => Foo[A]:
   inline def foo(): Unit = println()
-}
+
 def test1 = FooA.foo()
 
-inline given FooInt: Foo[Int] with {
+inline given FooInt: Foo[Int]:
   inline def foo(): Unit = println()
-}
+
 def test2 = FooInt.foo()
 -----
 ScalaFile
@@ -61,12 +61,15 @@ ScalaFile
     PsiElement(given)('given')
     PsiWhiteSpace(' ')
     PsiElement(identifier)('FooA')
+    PsiElement(:)(':')
+    PsiWhiteSpace(' ')
     TypeParameterClause
       PsiElement([)('[')
       TypeParameter: A
         PsiElement(identifier)('A')
       PsiElement(])(']')
-    PsiElement(:)(':')
+    PsiWhiteSpace(' ')
+    PsiElement(=>)('=>')
     Parameters
       <empty list>
     PsiWhiteSpace(' ')
@@ -83,11 +86,8 @@ ScalaFile
                 CodeReferenceElement: A
                   PsiElement(identifier)('A')
               PsiElement(])(']')
-      PsiWhiteSpace(' ')
-      PsiElement(with)('with')
-      PsiWhiteSpace(' ')
       ScTemplateBody
-        PsiElement({)('{')
+        PsiElement(:)(':')
         PsiWhiteSpace('\n  ')
         ScFunctionDefinition: foo
           AnnotationsList
@@ -116,9 +116,7 @@ ScalaFile
             ArgumentList
               PsiElement(()('(')
               PsiElement())(')')
-        PsiWhiteSpace('\n')
-        PsiElement(})('}')
-  PsiWhiteSpace('\n')
+  PsiWhiteSpace('\n\n')
   ScFunctionDefinition: test1
     AnnotationsList
       <empty list>
@@ -168,11 +166,8 @@ ScalaFile
                 CodeReferenceElement: Int
                   PsiElement(identifier)('Int')
               PsiElement(])(']')
-      PsiWhiteSpace(' ')
-      PsiElement(with)('with')
-      PsiWhiteSpace(' ')
       ScTemplateBody
-        PsiElement({)('{')
+        PsiElement(:)(':')
         PsiWhiteSpace('\n  ')
         ScFunctionDefinition: foo
           AnnotationsList
@@ -201,9 +196,7 @@ ScalaFile
             ArgumentList
               PsiElement(()('(')
               PsiElement())(')')
-        PsiWhiteSpace('\n')
-        PsiElement(})('}')
-  PsiWhiteSpace('\n')
+  PsiWhiteSpace('\n\n')
   ScFunctionDefinition: test2
     AnnotationsList
       <empty list>

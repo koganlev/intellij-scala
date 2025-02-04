@@ -1,3 +1,4 @@
+import language.`3.7`
 object priority:
     // lower number = higher priority
     class Prio0 extends Prio1
@@ -30,13 +31,14 @@ object repro:
     // if you import these don't import from 'context' above
     object qcontext:
         // base defs, like what you would get from cats
+        given ga: A[Int] = new B[Int] // added so that we don't get an ambiguity in test2
         given gb: B[Int] = new B[Int]
         given gc: C[Int] = new C[Int]
 
         // these seem like they should work but don't
-        given gcq[V](using p0: priority.Prio0)(using c: C[V]): C[Q[V]] = new C[Q[V]]
-        given gbq[V](using p1: priority.Prio1)(using b: B[V]): B[Q[V]] = new B[Q[V]]
-        given gaq[V](using p2: priority.Prio2)(using a: A[V]): A[Q[V]] = new A[Q[V]]
+        given gcq: [V] => priority.Prio0 => C[V] => C[Q[V]] = new C[Q[V]]
+        given gbq: [V] => priority.Prio1 => B[V] => B[Q[V]] = new B[Q[V]]
+        given gaq: [V] => priority.Prio2 => A[V] => A[Q[V]] = new A[Q[V]]
 
 object test1:
     import repro.*
@@ -45,14 +47,24 @@ object test1:
     // these will work
     val a = summon[A[Int]]
 
+
 object test2:
     import repro.*
     import repro.qcontext.given
 
-    // this one will fail as ambiguous - prios aren't having an effect
     val a = summon[A[Q[Int]]]
 -----
 ScalaFile
+  ScImportStatement
+    PsiElement(import)('import')
+    PsiWhiteSpace(' ')
+    ImportExpression
+      CodeReferenceElement: language.`3.7`
+        CodeReferenceElement: language
+          PsiElement(identifier)('language')
+        PsiElement(.)('.')
+        PsiElement(identifier)('`3.7`')
+  PsiWhiteSpace('\n')
   ScObject: priority
     AnnotationsList
       <empty list>
@@ -595,9 +607,53 @@ ScalaFile
             ScTemplateBody
               PsiElement(:)(':')
               PsiWhiteSpace('\n        ')
-              ScGivenAliasDefinition: gb
+              ScGivenAliasDefinition: ga
                 PsiComment(comment)('// base defs, like what you would get from cats')
                 PsiWhiteSpace('\n        ')
+                AnnotationsList
+                  <empty list>
+                Modifiers
+                  <empty list>
+                PsiElement(given)('given')
+                PsiWhiteSpace(' ')
+                PsiElement(identifier)('ga')
+                PsiElement(:)(':')
+                Parameters
+                  <empty list>
+                PsiWhiteSpace(' ')
+                ParametrizedType: A[Int]
+                  SimpleType: A
+                    CodeReferenceElement: A
+                      PsiElement(identifier)('A')
+                  TypeArgumentsList
+                    PsiElement([)('[')
+                    SimpleType: Int
+                      CodeReferenceElement: Int
+                        PsiElement(identifier)('Int')
+                    PsiElement(])(']')
+                PsiWhiteSpace(' ')
+                PsiElement(=)('=')
+                PsiWhiteSpace(' ')
+                ScNewTemplateDefinition: <anonymous>
+                  PsiElement(new)('new')
+                  PsiWhiteSpace(' ')
+                  ExtendsBlock
+                    TemplateParents
+                      ConstructorInvocation
+                        ParametrizedType: B[Int]
+                          SimpleType: B
+                            CodeReferenceElement: B
+                              PsiElement(identifier)('B')
+                          TypeArgumentsList
+                            PsiElement([)('[')
+                            SimpleType: Int
+                              CodeReferenceElement: Int
+                                PsiElement(identifier)('Int')
+                            PsiElement(])(']')
+              PsiWhiteSpace(' ')
+              PsiComment(comment)('// added so that we don't get an ambiguity in test2')
+              PsiWhiteSpace('\n        ')
+              ScGivenAliasDefinition: gb
                 AnnotationsList
                   <empty list>
                 Modifiers
@@ -691,24 +747,19 @@ ScalaFile
                 PsiElement(given)('given')
                 PsiWhiteSpace(' ')
                 PsiElement(identifier)('gcq')
+                PsiElement(:)(':')
+                PsiWhiteSpace(' ')
                 TypeParameterClause
                   PsiElement([)('[')
                   TypeParameter: V
                     PsiElement(identifier)('V')
                   PsiElement(])(']')
+                PsiWhiteSpace(' ')
+                PsiElement(=>)('=>')
+                PsiWhiteSpace(' ')
                 Parameters
                   ParametersClause
-                    PsiElement(()('(')
-                    PsiElement(using)('using')
-                    PsiWhiteSpace(' ')
-                    Parameter: p0
-                      AnnotationsList
-                        <empty list>
-                      Modifiers
-                        <empty list>
-                      PsiElement(identifier)('p0')
-                      PsiElement(:)(':')
-                      PsiWhiteSpace(' ')
+                    Parameter: <anonymous>
                       ParameterType
                         SimpleType: priority.Prio0
                           CodeReferenceElement: priority.Prio0
@@ -716,19 +767,11 @@ ScalaFile
                               PsiElement(identifier)('priority')
                             PsiElement(.)('.')
                             PsiElement(identifier)('Prio0')
-                    PsiElement())(')')
+                  PsiWhiteSpace(' ')
+                  PsiElement(=>)('=>')
+                  PsiWhiteSpace(' ')
                   ParametersClause
-                    PsiElement(()('(')
-                    PsiElement(using)('using')
-                    PsiWhiteSpace(' ')
-                    Parameter: c
-                      AnnotationsList
-                        <empty list>
-                      Modifiers
-                        <empty list>
-                      PsiElement(identifier)('c')
-                      PsiElement(:)(':')
-                      PsiWhiteSpace(' ')
+                    Parameter: <anonymous>
                       ParameterType
                         ParametrizedType: C[V]
                           SimpleType: C
@@ -740,8 +783,8 @@ ScalaFile
                               CodeReferenceElement: V
                                 PsiElement(identifier)('V')
                             PsiElement(])(']')
-                    PsiElement())(')')
-                PsiElement(:)(':')
+                  PsiWhiteSpace(' ')
+                  PsiElement(=>)('=>')
                 PsiWhiteSpace(' ')
                 ParametrizedType: C[Q[V]]
                   SimpleType: C
@@ -795,24 +838,19 @@ ScalaFile
                 PsiElement(given)('given')
                 PsiWhiteSpace(' ')
                 PsiElement(identifier)('gbq')
+                PsiElement(:)(':')
+                PsiWhiteSpace(' ')
                 TypeParameterClause
                   PsiElement([)('[')
                   TypeParameter: V
                     PsiElement(identifier)('V')
                   PsiElement(])(']')
+                PsiWhiteSpace(' ')
+                PsiElement(=>)('=>')
+                PsiWhiteSpace(' ')
                 Parameters
                   ParametersClause
-                    PsiElement(()('(')
-                    PsiElement(using)('using')
-                    PsiWhiteSpace(' ')
-                    Parameter: p1
-                      AnnotationsList
-                        <empty list>
-                      Modifiers
-                        <empty list>
-                      PsiElement(identifier)('p1')
-                      PsiElement(:)(':')
-                      PsiWhiteSpace(' ')
+                    Parameter: <anonymous>
                       ParameterType
                         SimpleType: priority.Prio1
                           CodeReferenceElement: priority.Prio1
@@ -820,19 +858,11 @@ ScalaFile
                               PsiElement(identifier)('priority')
                             PsiElement(.)('.')
                             PsiElement(identifier)('Prio1')
-                    PsiElement())(')')
+                  PsiWhiteSpace(' ')
+                  PsiElement(=>)('=>')
+                  PsiWhiteSpace(' ')
                   ParametersClause
-                    PsiElement(()('(')
-                    PsiElement(using)('using')
-                    PsiWhiteSpace(' ')
-                    Parameter: b
-                      AnnotationsList
-                        <empty list>
-                      Modifiers
-                        <empty list>
-                      PsiElement(identifier)('b')
-                      PsiElement(:)(':')
-                      PsiWhiteSpace(' ')
+                    Parameter: <anonymous>
                       ParameterType
                         ParametrizedType: B[V]
                           SimpleType: B
@@ -844,8 +874,8 @@ ScalaFile
                               CodeReferenceElement: V
                                 PsiElement(identifier)('V')
                             PsiElement(])(']')
-                    PsiElement())(')')
-                PsiElement(:)(':')
+                  PsiWhiteSpace(' ')
+                  PsiElement(=>)('=>')
                 PsiWhiteSpace(' ')
                 ParametrizedType: B[Q[V]]
                   SimpleType: B
@@ -899,24 +929,19 @@ ScalaFile
                 PsiElement(given)('given')
                 PsiWhiteSpace(' ')
                 PsiElement(identifier)('gaq')
+                PsiElement(:)(':')
+                PsiWhiteSpace(' ')
                 TypeParameterClause
                   PsiElement([)('[')
                   TypeParameter: V
                     PsiElement(identifier)('V')
                   PsiElement(])(']')
+                PsiWhiteSpace(' ')
+                PsiElement(=>)('=>')
+                PsiWhiteSpace(' ')
                 Parameters
                   ParametersClause
-                    PsiElement(()('(')
-                    PsiElement(using)('using')
-                    PsiWhiteSpace(' ')
-                    Parameter: p2
-                      AnnotationsList
-                        <empty list>
-                      Modifiers
-                        <empty list>
-                      PsiElement(identifier)('p2')
-                      PsiElement(:)(':')
-                      PsiWhiteSpace(' ')
+                    Parameter: <anonymous>
                       ParameterType
                         SimpleType: priority.Prio2
                           CodeReferenceElement: priority.Prio2
@@ -924,19 +949,11 @@ ScalaFile
                               PsiElement(identifier)('priority')
                             PsiElement(.)('.')
                             PsiElement(identifier)('Prio2')
-                    PsiElement())(')')
+                  PsiWhiteSpace(' ')
+                  PsiElement(=>)('=>')
+                  PsiWhiteSpace(' ')
                   ParametersClause
-                    PsiElement(()('(')
-                    PsiElement(using)('using')
-                    PsiWhiteSpace(' ')
-                    Parameter: a
-                      AnnotationsList
-                        <empty list>
-                      Modifiers
-                        <empty list>
-                      PsiElement(identifier)('a')
-                      PsiElement(:)(':')
-                      PsiWhiteSpace(' ')
+                    Parameter: <anonymous>
                       ParameterType
                         ParametrizedType: A[V]
                           SimpleType: A
@@ -948,8 +965,8 @@ ScalaFile
                               CodeReferenceElement: V
                                 PsiElement(identifier)('V')
                             PsiElement(])(']')
-                    PsiElement())(')')
-                PsiElement(:)(':')
+                  PsiWhiteSpace(' ')
+                  PsiElement(=>)('=>')
                 PsiWhiteSpace(' ')
                 ParametrizedType: A[Q[V]]
                   SimpleType: A
@@ -1061,7 +1078,7 @@ ScalaFile
                       PsiElement(identifier)('Int')
                   PsiElement(])(']')
               PsiElement(])(']')
-  PsiWhiteSpace('\n\n')
+  PsiWhiteSpace('\n\n\n')
   ScObject: test2
     AnnotationsList
       <empty list>
@@ -1098,8 +1115,6 @@ ScalaFile
                 PsiElement(given)('given')
         PsiWhiteSpace('\n\n    ')
         ScPatternDefinition: a
-          PsiComment(comment)('// this one will fail as ambiguous - prios aren't having an effect')
-          PsiWhiteSpace('\n    ')
           AnnotationsList
             <empty list>
           Modifiers

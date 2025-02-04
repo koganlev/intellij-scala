@@ -1,4 +1,4 @@
-given Conversion[Int, String] with
+given Conversion[Int, String]:
   def apply(x: Int) = ""
 end given
 -----
@@ -30,10 +30,9 @@ ScalaFile
                 CodeReferenceElement: String
                   PsiElement(identifier)('String')
               PsiElement(])(']')
-      PsiWhiteSpace(' ')
-      PsiElement(with)('with')
-      PsiWhiteSpace('\n  ')
       ScTemplateBody
+        PsiElement(:)(':')
+        PsiWhiteSpace('\n  ')
         ScFunctionDefinition: apply
           AnnotationsList
             <empty list>

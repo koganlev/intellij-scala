@@ -1,16 +1,18 @@
+//> using options -experimental
+
 trait Wrappable[T] { }
-given Wrappable[Float] with { }
+given Wrappable[Float]()
 
 case class Wrapped[T: Wrappable](value: T)
 
 trait Wrapper[T] { type WrappedT }
 object Wrapper { type Aux[T <: Tuple, WrappedT0 <: Tuple] = Wrapper[T] { type WrappedT = WrappedT0 } }
 
-given Wrapper[EmptyTuple] with { type WrappedT = EmptyTuple }
+given Wrapper[EmptyTuple] { type WrappedT = EmptyTuple }
 
-given [T: Wrappable]: Wrapper[T] with { type WrappedT = Wrapped[T] }
+given [T: Wrappable] => Wrapper[T] { type WrappedT = Wrapped[T] }
 
-given [H: Wrappable, T <: Tuple, WrappedT0 <: Tuple](using Wrapper.Aux[T, WrappedT0]): Wrapper[H *: T] with {
+given [H: Wrappable, T <: Tuple, WrappedT0 <: Tuple] => Wrapper.Aux[T, WrappedT0] => Wrapper[H *: T] {
   type WrappedT = Wrapped[H] *: WrappedT0
 }
 
@@ -37,6 +39,15 @@ object WrapperTest {
 }
 -----
 ScalaFile
+  PsiElement(SCALA_DIRECTIVE)
+    ScDirectiveToken(tDIRECTIVE_PREFIX)('//>')
+    PsiWhiteSpace(' ')
+    ScDirectiveToken(tDIRECTIVE_COMMAND)('using')
+    PsiWhiteSpace(' ')
+    ScDirectiveToken(tDIRECTIVE_KEY)('options')
+    PsiWhiteSpace(' ')
+    ScDirectiveToken(tDIRECTIVE_VALUE)('-experimental')
+  PsiWhiteSpace('\n\n')
   ScTrait: Wrappable
     AnnotationsList
       <empty list>
@@ -79,13 +90,9 @@ ScalaFile
                 CodeReferenceElement: Float
                   PsiElement(identifier)('Float')
               PsiElement(])(']')
-      PsiWhiteSpace(' ')
-      PsiElement(with)('with')
-      PsiWhiteSpace(' ')
-      ScTemplateBody
-        PsiElement({)('{')
-        PsiWhiteSpace(' ')
-        PsiElement(})('}')
+          ArgumentList
+            PsiElement(()('(')
+            PsiElement())(')')
   PsiWhiteSpace('\n\n')
   ScClass: Wrapped
     AnnotationsList
@@ -262,8 +269,6 @@ ScalaFile
                   PsiElement(identifier)('EmptyTuple')
               PsiElement(])(']')
       PsiWhiteSpace(' ')
-      PsiElement(with)('with')
-      PsiWhiteSpace(' ')
       ScTemplateBody
         PsiElement({)('{')
         PsiWhiteSpace(' ')
@@ -302,7 +307,8 @@ ScalaFile
             CodeReferenceElement: Wrappable
               PsiElement(identifier)('Wrappable')
       PsiElement(])(']')
-    PsiElement(:)(':')
+    PsiWhiteSpace(' ')
+    PsiElement(=>)('=>')
     Parameters
       <empty list>
     PsiWhiteSpace(' ')
@@ -319,8 +325,6 @@ ScalaFile
                 CodeReferenceElement: T
                   PsiElement(identifier)('T')
               PsiElement(])(']')
-      PsiWhiteSpace(' ')
-      PsiElement(with)('with')
       PsiWhiteSpace(' ')
       ScTemplateBody
         PsiElement({)('{')
@@ -387,11 +391,11 @@ ScalaFile
           CodeReferenceElement: Tuple
             PsiElement(identifier)('Tuple')
       PsiElement(])(']')
+    PsiWhiteSpace(' ')
+    PsiElement(=>)('=>')
+    PsiWhiteSpace(' ')
     Parameters
       ParametersClause
-        PsiElement(()('(')
-        PsiElement(using)('using')
-        PsiWhiteSpace(' ')
         Parameter: <anonymous>
           ParameterType
             ParametrizedType: Wrapper.Aux[T, WrappedT0]
@@ -412,8 +416,8 @@ ScalaFile
                   CodeReferenceElement: WrappedT0
                     PsiElement(identifier)('WrappedT0')
                 PsiElement(])(']')
-        PsiElement())(')')
-    PsiElement(:)(':')
+      PsiWhiteSpace(' ')
+      PsiElement(=>)('=>')
     PsiWhiteSpace(' ')
     ExtendsBlock
       TemplateParents
@@ -436,8 +440,6 @@ ScalaFile
                   CodeReferenceElement: T
                     PsiElement(identifier)('T')
               PsiElement(])(']')
-      PsiWhiteSpace(' ')
-      PsiElement(with)('with')
       PsiWhiteSpace(' ')
       ScTemplateBody
         PsiElement({)('{')

@@ -4,13 +4,13 @@ sealed trait Decoder[T]
 object Decoder {
   given Decoder[Double] = ???
 
-  inline given summonEmptyTuple[H]: Tuple.Map[EmptyTuple.type, Decoder] =
+  inline given summonEmptyTuple: [H] => Tuple.Map[EmptyTuple.type, Decoder] =
     EmptyTuple
 
-  inline given summonTuple[H, T <: Tuple](using hd: Decoder[H], td: Tuple.Map[T, Decoder]): Tuple.Map[H *: T, Decoder] =
+  inline given summonTuple: [H, T <: Tuple] => (hd: Decoder[H], td: Tuple.Map[T, Decoder]) => Tuple.Map[H *: T, Decoder] =
     hd *: td
 
-  inline given derived[T](using m: Mirror.Of[T], d: Tuple.Map[m.MirroredElemTypes, Decoder]): Decoder[T] = ???
+  inline given derived: [T] => (m: Mirror.Of[T], d: Tuple.Map[m.MirroredElemTypes, Decoder]) => Decoder[T] = ???
 }
 -----
 ScalaFile
@@ -90,12 +90,15 @@ ScalaFile
           PsiElement(given)('given')
           PsiWhiteSpace(' ')
           PsiElement(identifier)('summonEmptyTuple')
+          PsiElement(:)(':')
+          PsiWhiteSpace(' ')
           TypeParameterClause
             PsiElement([)('[')
             TypeParameter: H
               PsiElement(identifier)('H')
             PsiElement(])(']')
-          PsiElement(:)(':')
+          PsiWhiteSpace(' ')
+          PsiElement(=>)('=>')
           Parameters
             <empty list>
           PsiWhiteSpace(' ')
@@ -134,6 +137,8 @@ ScalaFile
           PsiElement(given)('given')
           PsiWhiteSpace(' ')
           PsiElement(identifier)('summonTuple')
+          PsiElement(:)(':')
+          PsiWhiteSpace(' ')
           TypeParameterClause
             PsiElement([)('[')
             TypeParameter: H
@@ -149,11 +154,12 @@ ScalaFile
                 CodeReferenceElement: Tuple
                   PsiElement(identifier)('Tuple')
             PsiElement(])(']')
+          PsiWhiteSpace(' ')
+          PsiElement(=>)('=>')
+          PsiWhiteSpace(' ')
           Parameters
             ParametersClause
               PsiElement(()('(')
-              PsiElement(using)('using')
-              PsiWhiteSpace(' ')
               Parameter: hd
                 AnnotationsList
                   <empty list>
@@ -203,7 +209,8 @@ ScalaFile
                           PsiElement(identifier)('Decoder')
                       PsiElement(])(']')
               PsiElement())(')')
-          PsiElement(:)(':')
+            PsiWhiteSpace(' ')
+            PsiElement(=>)('=>')
           PsiWhiteSpace(' ')
           ParametrizedType: Tuple.Map[H *: T, Decoder]
             SimpleType: Tuple.Map
@@ -253,16 +260,19 @@ ScalaFile
           PsiElement(given)('given')
           PsiWhiteSpace(' ')
           PsiElement(identifier)('derived')
+          PsiElement(:)(':')
+          PsiWhiteSpace(' ')
           TypeParameterClause
             PsiElement([)('[')
             TypeParameter: T
               PsiElement(identifier)('T')
             PsiElement(])(']')
+          PsiWhiteSpace(' ')
+          PsiElement(=>)('=>')
+          PsiWhiteSpace(' ')
           Parameters
             ParametersClause
               PsiElement(()('(')
-              PsiElement(using)('using')
-              PsiWhiteSpace(' ')
               Parameter: m
                 AnnotationsList
                   <empty list>
@@ -318,7 +328,8 @@ ScalaFile
                           PsiElement(identifier)('Decoder')
                       PsiElement(])(']')
               PsiElement())(')')
-          PsiElement(:)(':')
+            PsiWhiteSpace(' ')
+            PsiElement(=>)('=>')
           PsiWhiteSpace(' ')
           ParametrizedType: Decoder[T]
             SimpleType: Decoder

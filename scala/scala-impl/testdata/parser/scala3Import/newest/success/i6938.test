@@ -1,8 +1,8 @@
 trait Foo[T]
 object Foo:
-  given [T]: Foo[Tuple1[T]] with {}
-  given [T, U]: Foo[(T, U)] with {}
-  given [T, U, V]: Foo[(T, U, V)] with {}
+  given [T] => Foo[Tuple1[T]]()
+  given [T, U] => Foo[(T, U)]()
+  given [T, U, V] => Foo[(T, U, V)]()
 -----
 ScalaFile
   ScTrait: Foo
@@ -45,7 +45,8 @@ ScalaFile
             TypeParameter: T
               PsiElement(identifier)('T')
             PsiElement(])(']')
-          PsiElement(:)(':')
+          PsiWhiteSpace(' ')
+          PsiElement(=>)('=>')
           Parameters
             <empty list>
           PsiWhiteSpace(' ')
@@ -69,12 +70,9 @@ ScalaFile
                             PsiElement(identifier)('T')
                         PsiElement(])(']')
                     PsiElement(])(']')
-            PsiWhiteSpace(' ')
-            PsiElement(with)('with')
-            PsiWhiteSpace(' ')
-            ScTemplateBody
-              PsiElement({)('{')
-              PsiElement(})('}')
+                ArgumentList
+                  PsiElement(()('(')
+                  PsiElement())(')')
         PsiWhiteSpace('\n  ')
         ScGivenDefinition: given_Foo_T_U
           AnnotationsList
@@ -92,7 +90,8 @@ ScalaFile
             TypeParameter: U
               PsiElement(identifier)('U')
             PsiElement(])(']')
-          PsiElement(:)(':')
+          PsiWhiteSpace(' ')
+          PsiElement(=>)('=>')
           Parameters
             <empty list>
           PsiWhiteSpace(' ')
@@ -118,12 +117,9 @@ ScalaFile
                             PsiElement(identifier)('U')
                       PsiElement())(')')
                     PsiElement(])(']')
-            PsiWhiteSpace(' ')
-            PsiElement(with)('with')
-            PsiWhiteSpace(' ')
-            ScTemplateBody
-              PsiElement({)('{')
-              PsiElement(})('}')
+                ArgumentList
+                  PsiElement(()('(')
+                  PsiElement())(')')
         PsiWhiteSpace('\n  ')
         ScGivenDefinition: given_Foo_T_U_V
           AnnotationsList
@@ -145,7 +141,8 @@ ScalaFile
             TypeParameter: V
               PsiElement(identifier)('V')
             PsiElement(])(']')
-          PsiElement(:)(':')
+          PsiWhiteSpace(' ')
+          PsiElement(=>)('=>')
           Parameters
             <empty list>
           PsiWhiteSpace(' ')
@@ -176,9 +173,6 @@ ScalaFile
                             PsiElement(identifier)('V')
                       PsiElement())(')')
                     PsiElement(])(']')
-            PsiWhiteSpace(' ')
-            PsiElement(with)('with')
-            PsiWhiteSpace(' ')
-            ScTemplateBody
-              PsiElement({)('{')
-              PsiElement(})('}')
+                ArgumentList
+                  PsiElement(()('(')
+                  PsiElement())(')')

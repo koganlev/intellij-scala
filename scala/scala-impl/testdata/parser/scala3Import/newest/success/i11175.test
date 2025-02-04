@@ -10,10 +10,10 @@ object A
 
 object B
 
-given Printer[A.type] with
+given Printer[A.type]:
    def print(a:A.type):String = "a"
 
-given Printer[B.type] with
+given Printer[B.type]:
    def print(b:B.type):String = "b"
 
 
@@ -208,10 +208,9 @@ ScalaFile
                   PsiElement(.)('.')
                   PsiElement(type)('type')
                 PsiElement(])(']')
-        PsiWhiteSpace(' ')
-        PsiElement(with)('with')
-        PsiWhiteSpace('\n   ')
         ScTemplateBody
+          PsiElement(:)(':')
+          PsiWhiteSpace('\n   ')
           ScFunctionDefinition: print
             AnnotationsList
               <empty list>
@@ -271,10 +270,9 @@ ScalaFile
                   PsiElement(.)('.')
                   PsiElement(type)('type')
                 PsiElement(])(']')
-        PsiWhiteSpace(' ')
-        PsiElement(with)('with')
-        PsiWhiteSpace('\n   ')
         ScTemplateBody
+          PsiElement(:)(':')
+          PsiWhiteSpace('\n   ')
           ScFunctionDefinition: print
             AnnotationsList
               <empty list>

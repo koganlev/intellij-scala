@@ -23,11 +23,10 @@
 [131,131]: TypeTree
 [131,186]: DefDef
 [141,152]: TypeDef
-[142,152]: ContextBounds
-[142,142]: TypeBoundsTree
-[142,152]: AppliedTypeTree
+[144,152]: ContextBounds
+[144,144]: TypeBoundsTree
+[144,152]: ContextBoundTypeTree
 [144,152]: Ident
-[152,152]: Ident
 [154,160]: ValDef
 [158,160]: PostfixOp
 [158,159]: Ident
@@ -80,10 +79,9 @@
 [403,428]: ContextBounds
 [403,412]: TypeBoundsTree
 [406,412]: Ident
-[413,428]: AppliedTypeTree
+[415,428]: ContextBoundTypeTree
 [415,428]: Select
 [415,419]: Ident
-[428,428]: Ident
 [430,443]: ValDef
 [434,443]: AppliedTypeTree
 [434,440]: Ident

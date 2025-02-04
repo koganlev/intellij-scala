@@ -26,11 +26,11 @@ end Common
 
 object Instances extends Common:
 
-  given intOrd: Ord[Int] with
+  given intOrd: Ord[Int]:
     extension (x: Int) def compareTo(y: Int) =
       if (x < y) -1 else if (x > y) +1 else 0
 
-  given listOrd[T](using Ord[T]): Ord[List[T]] with
+  given listOrd: [T] => Ord[T] => Ord[List[T]]:
     extension (xs: List[T]) def compareTo(ys: List[T]): Int = (xs, ys) match
       case (Nil, Nil) => 0
       case (Nil, _) => -1
@@ -49,13 +49,13 @@ object Instances extends Common:
     def second = xs.tail.head
     def third = xs.tail.tail.head
 
-  given listMonad: Monad[List] with
+  given listMonad: Monad[List]:
     extension [A](xs: List[A]) def flatMap[B](f: A => List[B]): List[B] =
       xs.flatMap(f)
     def pure[A](x: A): List[A] =
       List(x)
 
-  given readerMonad[Ctx]: Monad[[X] =>> Ctx => X] with
+  given readerMonad: [Ctx] => Monad[[X] =>> Ctx => X]:
     extension [A](r: Ctx => A) def flatMap[B](f: A => Ctx => B): Ctx => B =
       ctx => f(r(ctx))(ctx)
     def pure[A](x: A): Ctx => A =
@@ -93,7 +93,7 @@ object Instances extends Common:
 
   object TastyImpl extends TastyAPI:
     type Symbol = String
-    given symDeco: SymDeco with
+    given symDeco: SymDeco:
       extension (sym: Symbol) def name = sym
 
   class D[T]
@@ -122,7 +122,7 @@ object Instances extends Common:
   class Token(str: String)
 
   object Token:
-    given StringToToken: Conversion[String, Token] with
+    given StringToToken: Conversion[String, Token]:
       def apply(str: String): Token = new Token(str)
 
   val x: Token = "if"
@@ -140,11 +140,11 @@ object PostConditions:
 end PostConditions
 
 object AnonymousInstances extends Common:
-  given Ord[Int] with
+  given Ord[Int]:
     extension (x: Int) def compareTo(y: Int) =
       if (x < y) -1 else if (x > y) +1 else 0
 
-  given [T: Ord]: Ord[List[T]] with
+  given [T: Ord] => Ord[List[T]]:
     extension (xs: List[T]) def compareTo(ys: List[T]): Int = (xs, ys).match
       case (Nil, Nil) => 0
       case (Nil, _) => -1
@@ -165,7 +165,7 @@ object AnonymousInstances extends Common:
       : Convertible[List[From], List[To]] with
     extension (x: List[From]) def convert: List[To] = x.map(c.convert)
 
-  given Monoid[String] with
+  given Monoid[String]:
     extension (x: String) def combine(y: String): String = x.concat(y)
     def unit: String = ""
 
@@ -1053,10 +1053,9 @@ ScalaFile
                       CodeReferenceElement: Int
                         PsiElement(identifier)('Int')
                     PsiElement(])(']')
-            PsiWhiteSpace(' ')
-            PsiElement(with)('with')
-            PsiWhiteSpace('\n    ')
             ScTemplateBody
+              PsiElement(:)(':')
+              PsiWhiteSpace('\n    ')
               Extension on Int
                 PsiElement(extension)('extension')
                 PsiWhiteSpace(' ')
@@ -1160,16 +1159,18 @@ ScalaFile
           PsiElement(given)('given')
           PsiWhiteSpace(' ')
           PsiElement(identifier)('listOrd')
+          PsiElement(:)(':')
+          PsiWhiteSpace(' ')
           TypeParameterClause
             PsiElement([)('[')
             TypeParameter: T
               PsiElement(identifier)('T')
             PsiElement(])(']')
+          PsiWhiteSpace(' ')
+          PsiElement(=>)('=>')
+          PsiWhiteSpace(' ')
           Parameters
             ParametersClause
-              PsiElement(()('(')
-              PsiElement(using)('using')
-              PsiWhiteSpace(' ')
               Parameter: <anonymous>
                 ParameterType
                   ParametrizedType: Ord[T]
@@ -1182,8 +1183,8 @@ ScalaFile
                         CodeReferenceElement: T
                           PsiElement(identifier)('T')
                       PsiElement(])(']')
-              PsiElement())(')')
-          PsiElement(:)(':')
+            PsiWhiteSpace(' ')
+            PsiElement(=>)('=>')
           PsiWhiteSpace(' ')
           ExtendsBlock
             TemplateParents
@@ -1205,10 +1206,9 @@ ScalaFile
                             PsiElement(identifier)('T')
                         PsiElement(])(']')
                     PsiElement(])(']')
-            PsiWhiteSpace(' ')
-            PsiElement(with)('with')
-            PsiWhiteSpace('\n    ')
             ScTemplateBody
+              PsiElement(:)(':')
+              PsiWhiteSpace('\n    ')
               Extension on List[T]
                 PsiElement(extension)('extension')
                 PsiWhiteSpace(' ')
@@ -1663,10 +1663,9 @@ ScalaFile
                       CodeReferenceElement: List
                         PsiElement(identifier)('List')
                     PsiElement(])(']')
-            PsiWhiteSpace(' ')
-            PsiElement(with)('with')
-            PsiWhiteSpace('\n    ')
             ScTemplateBody
+              PsiElement(:)(':')
+              PsiWhiteSpace('\n    ')
               Extension on List[A]
                 PsiElement(extension)('extension')
                 PsiWhiteSpace(' ')
@@ -1831,12 +1830,15 @@ ScalaFile
           PsiElement(given)('given')
           PsiWhiteSpace(' ')
           PsiElement(identifier)('readerMonad')
+          PsiElement(:)(':')
+          PsiWhiteSpace(' ')
           TypeParameterClause
             PsiElement([)('[')
             TypeParameter: Ctx
               PsiElement(identifier)('Ctx')
             PsiElement(])(']')
-          PsiElement(:)(':')
+          PsiWhiteSpace(' ')
+          PsiElement(=>)('=>')
           Parameters
             <empty list>
           PsiWhiteSpace(' ')
@@ -1869,10 +1871,9 @@ ScalaFile
                           CodeReferenceElement: X
                             PsiElement(identifier)('X')
                     PsiElement(])(']')
-            PsiWhiteSpace(' ')
-            PsiElement(with)('with')
-            PsiWhiteSpace('\n    ')
             ScTemplateBody
+              PsiElement(:)(':')
+              PsiWhiteSpace('\n    ')
               Extension on Ctx => A
                 PsiElement(extension)('extension')
                 PsiWhiteSpace(' ')
@@ -2875,10 +2876,9 @@ ScalaFile
                       SimpleType: SymDeco
                         CodeReferenceElement: SymDeco
                           PsiElement(identifier)('SymDeco')
-                  PsiWhiteSpace(' ')
-                  PsiElement(with)('with')
-                  PsiWhiteSpace('\n      ')
                   ScTemplateBody
+                    PsiElement(:)(':')
+                    PsiWhiteSpace('\n      ')
                     Extension on Symbol
                       PsiElement(extension)('extension')
                       PsiWhiteSpace(' ')
@@ -3323,10 +3323,9 @@ ScalaFile
                             CodeReferenceElement: Token
                               PsiElement(identifier)('Token')
                           PsiElement(])(']')
-                  PsiWhiteSpace(' ')
-                  PsiElement(with)('with')
-                  PsiWhiteSpace('\n      ')
                   ScTemplateBody
+                    PsiElement(:)(':')
+                    PsiWhiteSpace('\n      ')
                     ScFunctionDefinition: apply
                       AnnotationsList
                         <empty list>
@@ -3622,10 +3621,9 @@ ScalaFile
                       CodeReferenceElement: Int
                         PsiElement(identifier)('Int')
                     PsiElement(])(']')
-            PsiWhiteSpace(' ')
-            PsiElement(with)('with')
-            PsiWhiteSpace('\n    ')
             ScTemplateBody
+              PsiElement(:)(':')
+              PsiWhiteSpace('\n    ')
               Extension on Int
                 PsiElement(extension)('extension')
                 PsiWhiteSpace(' ')
@@ -3739,7 +3737,8 @@ ScalaFile
                   CodeReferenceElement: Ord
                     PsiElement(identifier)('Ord')
             PsiElement(])(']')
-          PsiElement(:)(':')
+          PsiWhiteSpace(' ')
+          PsiElement(=>)('=>')
           Parameters
             <empty list>
           PsiWhiteSpace(' ')
@@ -3763,10 +3762,9 @@ ScalaFile
                             PsiElement(identifier)('T')
                         PsiElement(])(']')
                     PsiElement(])(']')
-            PsiWhiteSpace(' ')
-            PsiElement(with)('with')
-            PsiWhiteSpace('\n    ')
             ScTemplateBody
+              PsiElement(:)(':')
+              PsiWhiteSpace('\n    ')
               Extension on List[T]
                 PsiElement(extension)('extension')
                 PsiWhiteSpace(' ')
@@ -4341,10 +4339,9 @@ ScalaFile
                       CodeReferenceElement: String
                         PsiElement(identifier)('String')
                     PsiElement(])(']')
-            PsiWhiteSpace(' ')
-            PsiElement(with)('with')
-            PsiWhiteSpace('\n    ')
             ScTemplateBody
+              PsiElement(:)(':')
+              PsiWhiteSpace('\n    ')
               Extension on String
                 PsiElement(extension)('extension')
                 PsiWhiteSpace(' ')

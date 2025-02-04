@@ -1,17 +1,17 @@
 class T
 
-inline given fail1: T with
+inline given fail1: T:
   val cs = scala.compiletime.summonAll[EmptyTuple]
-inline given fail2[X]: T with
+inline given fail2: [X] => T:
   val cs = scala.compiletime.summonAll[EmptyTuple]
-inline given fail3(using DummyImplicit): T with
+inline given fail3: () => T:
   val cs = scala.compiletime.summonAll[EmptyTuple]
 
 inline given ok1: T = new T:
   val cs = scala.compiletime.summonAll[EmptyTuple]
-inline given ok2[X]: T = new T:
+inline given ok2: [X] => T = new T:
   val cs = scala.compiletime.summonAll[EmptyTuple]
-inline given ok3(using DummyImplicit): T = new T:
+inline given ok3: () => T = new T:
   val cs = scala.compiletime.summonAll[EmptyTuple]
 -----
 ScalaFile
@@ -52,10 +52,9 @@ ScalaFile
           SimpleType: T
             CodeReferenceElement: T
               PsiElement(identifier)('T')
-      PsiWhiteSpace(' ')
-      PsiElement(with)('with')
-      PsiWhiteSpace('\n  ')
       ScTemplateBody
+        PsiElement(:)(':')
+        PsiWhiteSpace('\n  ')
         ScPatternDefinition: cs
           AnnotationsList
             <empty list>
@@ -94,12 +93,15 @@ ScalaFile
     PsiElement(given)('given')
     PsiWhiteSpace(' ')
     PsiElement(identifier)('fail2')
+    PsiElement(:)(':')
+    PsiWhiteSpace(' ')
     TypeParameterClause
       PsiElement([)('[')
       TypeParameter: X
         PsiElement(identifier)('X')
       PsiElement(])(']')
-    PsiElement(:)(':')
+    PsiWhiteSpace(' ')
+    PsiElement(=>)('=>')
     Parameters
       <empty list>
     PsiWhiteSpace(' ')
@@ -109,10 +111,9 @@ ScalaFile
           SimpleType: T
             CodeReferenceElement: T
               PsiElement(identifier)('T')
-      PsiWhiteSpace(' ')
-      PsiElement(with)('with')
-      PsiWhiteSpace('\n  ')
       ScTemplateBody
+        PsiElement(:)(':')
+        PsiWhiteSpace('\n  ')
         ScPatternDefinition: cs
           AnnotationsList
             <empty list>
@@ -151,18 +152,14 @@ ScalaFile
     PsiElement(given)('given')
     PsiWhiteSpace(' ')
     PsiElement(identifier)('fail3')
+    PsiElement(:)(':')
+    PsiWhiteSpace(' ')
     Parameters
       ParametersClause
         PsiElement(()('(')
-        PsiElement(using)('using')
-        PsiWhiteSpace(' ')
-        Parameter: <anonymous>
-          ParameterType
-            SimpleType: DummyImplicit
-              CodeReferenceElement: DummyImplicit
-                PsiElement(identifier)('DummyImplicit')
         PsiElement())(')')
-    PsiElement(:)(':')
+      PsiWhiteSpace(' ')
+      PsiElement(=>)('=>')
     PsiWhiteSpace(' ')
     ExtendsBlock
       TemplateParents
@@ -170,10 +167,9 @@ ScalaFile
           SimpleType: T
             CodeReferenceElement: T
               PsiElement(identifier)('T')
-      PsiWhiteSpace(' ')
-      PsiElement(with)('with')
-      PsiWhiteSpace('\n  ')
       ScTemplateBody
+        PsiElement(:)(':')
+        PsiWhiteSpace('\n  ')
         ScPatternDefinition: cs
           AnnotationsList
             <empty list>
@@ -272,12 +268,15 @@ ScalaFile
     PsiElement(given)('given')
     PsiWhiteSpace(' ')
     PsiElement(identifier)('ok2')
+    PsiElement(:)(':')
+    PsiWhiteSpace(' ')
     TypeParameterClause
       PsiElement([)('[')
       TypeParameter: X
         PsiElement(identifier)('X')
       PsiElement(])(']')
-    PsiElement(:)(':')
+    PsiWhiteSpace(' ')
+    PsiElement(=>)('=>')
     Parameters
       <empty list>
     PsiWhiteSpace(' ')
@@ -337,18 +336,14 @@ ScalaFile
     PsiElement(given)('given')
     PsiWhiteSpace(' ')
     PsiElement(identifier)('ok3')
+    PsiElement(:)(':')
+    PsiWhiteSpace(' ')
     Parameters
       ParametersClause
         PsiElement(()('(')
-        PsiElement(using)('using')
-        PsiWhiteSpace(' ')
-        Parameter: <anonymous>
-          ParameterType
-            SimpleType: DummyImplicit
-              CodeReferenceElement: DummyImplicit
-                PsiElement(identifier)('DummyImplicit')
         PsiElement())(')')
-    PsiElement(:)(':')
+      PsiWhiteSpace(' ')
+      PsiElement(=>)('=>')
     PsiWhiteSpace(' ')
     SimpleType: T
       CodeReferenceElement: T

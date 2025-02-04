@@ -1,6 +1,6 @@
 class MyType()
 trait Candidate[R]
-given Candidate[MyType] with {}
+given Candidate[MyType]()
 class Fuzzy[W]()
 class Fuzzy1()
 class Bear()
@@ -73,12 +73,9 @@ ScalaFile
                 CodeReferenceElement: MyType
                   PsiElement(identifier)('MyType')
               PsiElement(])(']')
-      PsiWhiteSpace(' ')
-      PsiElement(with)('with')
-      PsiWhiteSpace(' ')
-      ScTemplateBody
-        PsiElement({)('{')
-        PsiElement(})('}')
+          ArgumentList
+            PsiElement(()('(')
+            PsiElement())(')')
   PsiWhiteSpace('\n')
   ScClass: Fuzzy
     AnnotationsList

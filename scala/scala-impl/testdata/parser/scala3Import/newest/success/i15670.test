@@ -5,8 +5,8 @@ trait Read[T]
 trait Codec[T] extends Read[T]
 trait CodecTypeProjection[C[_]]
 object JsonTransform  {
-  given SetCodec[T, C[_]: CodecTypeProjection]: scala.Conversion[C[T], C[Set[T]]] = ???
-  given SetCodecExp[T, C[_]: CodecTypeProjection](using codec: C[T]): C[Set[T]] = codec
+  given SetCodec: [T, C[_]: CodecTypeProjection] => scala.Conversion[C[T], C[Set[T]]] = ???
+  given SetCodecExp: [T, C[_]: CodecTypeProjection] => (codec: C[T]) => C[Set[T]] = codec
   given Codec[String] = ???
   given CodecTypeProjection[Read] = ???
 }
@@ -188,6 +188,8 @@ ScalaFile
           PsiElement(given)('given')
           PsiWhiteSpace(' ')
           PsiElement(identifier)('SetCodec')
+          PsiElement(:)(':')
+          PsiWhiteSpace(' ')
           TypeParameterClause
             PsiElement([)('[')
             TypeParameter: T
@@ -208,7 +210,8 @@ ScalaFile
                   CodeReferenceElement: CodecTypeProjection
                     PsiElement(identifier)('CodecTypeProjection')
             PsiElement(])(']')
-          PsiElement(:)(':')
+          PsiWhiteSpace(' ')
+          PsiElement(=>)('=>')
           Parameters
             <empty list>
           PsiWhiteSpace(' ')
@@ -265,6 +268,8 @@ ScalaFile
           PsiElement(given)('given')
           PsiWhiteSpace(' ')
           PsiElement(identifier)('SetCodecExp')
+          PsiElement(:)(':')
+          PsiWhiteSpace(' ')
           TypeParameterClause
             PsiElement([)('[')
             TypeParameter: T
@@ -285,11 +290,12 @@ ScalaFile
                   CodeReferenceElement: CodecTypeProjection
                     PsiElement(identifier)('CodecTypeProjection')
             PsiElement(])(']')
+          PsiWhiteSpace(' ')
+          PsiElement(=>)('=>')
+          PsiWhiteSpace(' ')
           Parameters
             ParametersClause
               PsiElement(()('(')
-              PsiElement(using)('using')
-              PsiWhiteSpace(' ')
               Parameter: codec
                 AnnotationsList
                   <empty list>
@@ -310,7 +316,8 @@ ScalaFile
                           PsiElement(identifier)('T')
                       PsiElement(])(']')
               PsiElement())(')')
-          PsiElement(:)(':')
+            PsiWhiteSpace(' ')
+            PsiElement(=>)('=>')
           PsiWhiteSpace(' ')
           ParametrizedType: C[Set[T]]
             SimpleType: C

@@ -1,3 +1,5 @@
+//> using options -experimental
+
 import scala.util.TupledFunction
 object Test {
   def main(args: Array[String]): Unit = {
@@ -68,6 +70,15 @@ object Test {
 }
 -----
 ScalaFile
+  PsiElement(SCALA_DIRECTIVE)
+    ScDirectiveToken(tDIRECTIVE_PREFIX)('//>')
+    PsiWhiteSpace(' ')
+    ScDirectiveToken(tDIRECTIVE_COMMAND)('using')
+    PsiWhiteSpace(' ')
+    ScDirectiveToken(tDIRECTIVE_KEY)('options')
+    PsiWhiteSpace(' ')
+    ScDirectiveToken(tDIRECTIVE_VALUE)('-experimental')
+  PsiWhiteSpace('\n\n')
   ScImportStatement
     PsiElement(import)('import')
     PsiWhiteSpace(' ')

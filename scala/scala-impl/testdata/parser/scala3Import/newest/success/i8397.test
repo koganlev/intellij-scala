@@ -1,4 +1,4 @@
-given foo(using x: Int): AnyRef with
+given foo: (x: Int) => AnyRef:
   type T = x.type
 
 // #7859
@@ -6,19 +6,19 @@ given foo(using x: Int): AnyRef with
 trait Lub2[A, B]:
   type Output
 
-given [A <: C, B <: C, C]: Lub2[A, B] with
+given [A <: C, B <: C, C] => Lub2[A, B]:
   type Output = C
 
 trait Lub[Union]:
   type Output
 
-given [A]: Lub[A] with
+given [A] => Lub[A]:
   type Output = A
 
-given [Left, Right](
-    using lubLeft: Lub[Right], lubRight: Lub[Right])(
-    using lub2: Lub2[lubLeft.Output, lubRight.Output])
-  : Lub[Left | Right] with
+given [Left, Right]
+    => (lubLeft: Lub[Right], lubRight: Lub[Right])
+    => (lub2: Lub2[lubLeft.Output, lubRight.Output])
+    => Lub[Left | Right]:
   type Output = lub2.Output
 -----
 ScalaFile
@@ -30,11 +30,11 @@ ScalaFile
     PsiElement(given)('given')
     PsiWhiteSpace(' ')
     PsiElement(identifier)('foo')
+    PsiElement(:)(':')
+    PsiWhiteSpace(' ')
     Parameters
       ParametersClause
         PsiElement(()('(')
-        PsiElement(using)('using')
-        PsiWhiteSpace(' ')
         Parameter: x
           AnnotationsList
             <empty list>
@@ -48,7 +48,8 @@ ScalaFile
               CodeReferenceElement: Int
                 PsiElement(identifier)('Int')
         PsiElement())(')')
-    PsiElement(:)(':')
+      PsiWhiteSpace(' ')
+      PsiElement(=>)('=>')
     PsiWhiteSpace(' ')
     ExtendsBlock
       TemplateParents
@@ -56,10 +57,9 @@ ScalaFile
           SimpleType: AnyRef
             CodeReferenceElement: AnyRef
               PsiElement(identifier)('AnyRef')
-      PsiWhiteSpace(' ')
-      PsiElement(with)('with')
-      PsiWhiteSpace('\n  ')
       ScTemplateBody
+        PsiElement(:)(':')
+        PsiWhiteSpace('\n  ')
         ScTypeAliasDefinition: T
           AnnotationsList
             <empty list>
@@ -141,7 +141,8 @@ ScalaFile
       TypeParameter: C
         PsiElement(identifier)('C')
       PsiElement(])(']')
-    PsiElement(:)(':')
+    PsiWhiteSpace(' ')
+    PsiElement(=>)('=>')
     Parameters
       <empty list>
     PsiWhiteSpace(' ')
@@ -163,10 +164,9 @@ ScalaFile
                 CodeReferenceElement: B
                   PsiElement(identifier)('B')
               PsiElement(])(']')
-      PsiWhiteSpace(' ')
-      PsiElement(with)('with')
-      PsiWhiteSpace('\n  ')
       ScTemplateBody
+        PsiElement(:)(':')
+        PsiWhiteSpace('\n  ')
         ScTypeAliasDefinition: Output
           AnnotationsList
             <empty list>
@@ -220,7 +220,8 @@ ScalaFile
       TypeParameter: A
         PsiElement(identifier)('A')
       PsiElement(])(']')
-    PsiElement(:)(':')
+    PsiWhiteSpace(' ')
+    PsiElement(=>)('=>')
     Parameters
       <empty list>
     PsiWhiteSpace(' ')
@@ -237,10 +238,9 @@ ScalaFile
                 CodeReferenceElement: A
                   PsiElement(identifier)('A')
               PsiElement(])(']')
-      PsiWhiteSpace(' ')
-      PsiElement(with)('with')
-      PsiWhiteSpace('\n  ')
       ScTemplateBody
+        PsiElement(:)(':')
+        PsiWhiteSpace('\n  ')
         ScTypeAliasDefinition: Output
           AnnotationsList
             <empty list>
@@ -272,12 +272,12 @@ ScalaFile
       TypeParameter: Right
         PsiElement(identifier)('Right')
       PsiElement(])(']')
+    PsiWhiteSpace('\n    ')
+    PsiElement(=>)('=>')
+    PsiWhiteSpace(' ')
     Parameters
       ParametersClause
         PsiElement(()('(')
-        PsiWhiteSpace('\n    ')
-        PsiElement(using)('using')
-        PsiWhiteSpace(' ')
         Parameter: lubLeft
           AnnotationsList
             <empty list>
@@ -319,11 +319,11 @@ ScalaFile
                     PsiElement(identifier)('Right')
                 PsiElement(])(']')
         PsiElement())(')')
+      PsiWhiteSpace('\n    ')
+      PsiElement(=>)('=>')
+      PsiWhiteSpace(' ')
       ParametersClause
         PsiElement(()('(')
-        PsiWhiteSpace('\n    ')
-        PsiElement(using)('using')
-        PsiWhiteSpace(' ')
         Parameter: lub2
           AnnotationsList
             <empty list>
@@ -355,8 +355,8 @@ ScalaFile
                     PsiElement(identifier)('Output')
                 PsiElement(])(']')
         PsiElement())(')')
-    PsiWhiteSpace('\n  ')
-    PsiElement(:)(':')
+      PsiWhiteSpace('\n    ')
+      PsiElement(=>)('=>')
     PsiWhiteSpace(' ')
     ExtendsBlock
       TemplateParents
@@ -379,10 +379,9 @@ ScalaFile
                   CodeReferenceElement: Right
                     PsiElement(identifier)('Right')
               PsiElement(])(']')
-      PsiWhiteSpace(' ')
-      PsiElement(with)('with')
-      PsiWhiteSpace('\n  ')
       ScTemplateBody
+        PsiElement(:)(':')
+        PsiWhiteSpace('\n  ')
         ScTypeAliasDefinition: Output
           AnnotationsList
             <empty list>

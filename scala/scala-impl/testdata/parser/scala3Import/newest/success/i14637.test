@@ -3,7 +3,7 @@
 class C
 
 object Givens:
-  given cOrdering: Ordering[C] with
+  given cOrdering: Ordering[C]:
     override def compare(c0: C, c1: C) = 0
   val greeting = "we love Givens"
 -----
@@ -76,10 +76,9 @@ ScalaFile
                       CodeReferenceElement: C
                         PsiElement(identifier)('C')
                     PsiElement(])(']')
-            PsiWhiteSpace(' ')
-            PsiElement(with)('with')
-            PsiWhiteSpace('\n    ')
             ScTemplateBody
+              PsiElement(:)(':')
+              PsiWhiteSpace('\n    ')
               ScFunctionDefinition: compare
                 AnnotationsList
                   <empty list>

@@ -49,11 +49,10 @@
 [167,176]: LambdaTypeTree
 [167,168]: TypeDef
 [167,167]: TypeBoundsTree
-[169,176]: ContextBounds
-[169,169]: TypeBoundsTree
-[169,176]: AppliedTypeTree
+[171,176]: ContextBounds
+[171,171]: TypeBoundsTree
+[171,176]: ContextBoundTypeTree
 [171,176]: Ident
-[176,176]: Ident
 [178,179]: TypeDef
 [178,178]: TypeBoundsTree
 [182,216]: AppliedTypeTree

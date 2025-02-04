@@ -1,13 +1,11 @@
 trait TC[T] { def x: Int; def y: Int = 0 }
 
-given [T]: TC[T] with {
+given [T] => TC[T]:
   inline val x = 1
-}
 
-given TC[Int] with {
+given TC[Int]:
   inline val x = 2
   inline override val y = 3
-}
 
 object Test extends App {
   val z: 2 = summon[TC[Int]].x
@@ -85,7 +83,8 @@ ScalaFile
       TypeParameter: T
         PsiElement(identifier)('T')
       PsiElement(])(']')
-    PsiElement(:)(':')
+    PsiWhiteSpace(' ')
+    PsiElement(=>)('=>')
     Parameters
       <empty list>
     PsiWhiteSpace(' ')
@@ -102,11 +101,8 @@ ScalaFile
                 CodeReferenceElement: T
                   PsiElement(identifier)('T')
               PsiElement(])(']')
-      PsiWhiteSpace(' ')
-      PsiElement(with)('with')
-      PsiWhiteSpace(' ')
       ScTemplateBody
-        PsiElement({)('{')
+        PsiElement(:)(':')
         PsiWhiteSpace('\n  ')
         ScPatternDefinition: x
           AnnotationsList
@@ -124,8 +120,6 @@ ScalaFile
           PsiWhiteSpace(' ')
           IntegerLiteral
             PsiElement(integer)('1')
-        PsiWhiteSpace('\n')
-        PsiElement(})('}')
   PsiWhiteSpace('\n\n')
   ScGivenDefinition: given_TC_Int
     AnnotationsList
@@ -149,11 +143,8 @@ ScalaFile
                 CodeReferenceElement: Int
                   PsiElement(identifier)('Int')
               PsiElement(])(']')
-      PsiWhiteSpace(' ')
-      PsiElement(with)('with')
-      PsiWhiteSpace(' ')
       ScTemplateBody
-        PsiElement({)('{')
+        PsiElement(:)(':')
         PsiWhiteSpace('\n  ')
         ScPatternDefinition: x
           AnnotationsList
@@ -190,8 +181,6 @@ ScalaFile
           PsiWhiteSpace(' ')
           IntegerLiteral
             PsiElement(integer)('3')
-        PsiWhiteSpace('\n')
-        PsiElement(})('}')
   PsiWhiteSpace('\n\n')
   ScObject: Test
     AnnotationsList

@@ -4,13 +4,13 @@ trait Arbitrary[T]
 trait Gen[+T]
 
 object ArbitraryDerivation:
-  given deriveArb[A](using gen: DerivedGen[A]): Arbitrary[A] = ???
+  given deriveArb: [A] => (gen: DerivedGen[A]) => Arbitrary[A] = ???
 
 opaque type DerivedGen[A] = Gen[A]
 object DerivedGen extends DerivedGenInstances
 
 sealed abstract class DerivedGenInstances:
-  inline given derived[A](using gen: K0.Generic[A]): DerivedGen[A] =
+  inline given derived: [A] => (gen: K0.Generic[A]) => DerivedGen[A] =
     val dummy: DerivedGen[A] = ???
     gen.derive(dummy, dummy)
 
@@ -117,16 +117,19 @@ ScalaFile
           PsiElement(given)('given')
           PsiWhiteSpace(' ')
           PsiElement(identifier)('deriveArb')
+          PsiElement(:)(':')
+          PsiWhiteSpace(' ')
           TypeParameterClause
             PsiElement([)('[')
             TypeParameter: A
               PsiElement(identifier)('A')
             PsiElement(])(']')
+          PsiWhiteSpace(' ')
+          PsiElement(=>)('=>')
+          PsiWhiteSpace(' ')
           Parameters
             ParametersClause
               PsiElement(()('(')
-              PsiElement(using)('using')
-              PsiWhiteSpace(' ')
               Parameter: gen
                 AnnotationsList
                   <empty list>
@@ -147,7 +150,8 @@ ScalaFile
                           PsiElement(identifier)('A')
                       PsiElement(])(']')
               PsiElement())(')')
-          PsiElement(:)(':')
+            PsiWhiteSpace(' ')
+            PsiElement(=>)('=>')
           PsiWhiteSpace(' ')
           ParametrizedType: Arbitrary[A]
             SimpleType: Arbitrary
@@ -242,16 +246,19 @@ ScalaFile
           PsiElement(given)('given')
           PsiWhiteSpace(' ')
           PsiElement(identifier)('derived')
+          PsiElement(:)(':')
+          PsiWhiteSpace(' ')
           TypeParameterClause
             PsiElement([)('[')
             TypeParameter: A
               PsiElement(identifier)('A')
             PsiElement(])(']')
+          PsiWhiteSpace(' ')
+          PsiElement(=>)('=>')
+          PsiWhiteSpace(' ')
           Parameters
             ParametersClause
               PsiElement(()('(')
-              PsiElement(using)('using')
-              PsiWhiteSpace(' ')
               Parameter: gen
                 AnnotationsList
                   <empty list>
@@ -275,7 +282,8 @@ ScalaFile
                           PsiElement(identifier)('A')
                       PsiElement(])(']')
               PsiElement())(')')
-          PsiElement(:)(':')
+            PsiWhiteSpace(' ')
+            PsiElement(=>)('=>')
           PsiWhiteSpace(' ')
           ParametrizedType: DerivedGen[A]
             SimpleType: DerivedGen

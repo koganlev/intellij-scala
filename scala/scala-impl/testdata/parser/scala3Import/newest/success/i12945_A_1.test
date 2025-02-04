@@ -3,7 +3,7 @@ object Lie:
   trait TC[-T]:
     type Out
   object TC:
-    given [W <: Int]: TC[Lie[W]] with
+    given [W <: Int] => TC[Lie[W]]:
       type Out = W
 
 val x  = summon[Lie.TC[Lie[7]]]
@@ -106,7 +106,8 @@ ScalaFile
                       CodeReferenceElement: Int
                         PsiElement(identifier)('Int')
                   PsiElement(])(']')
-                PsiElement(:)(':')
+                PsiWhiteSpace(' ')
+                PsiElement(=>)('=>')
                 Parameters
                   <empty list>
                 PsiWhiteSpace(' ')
@@ -130,10 +131,9 @@ ScalaFile
                                   PsiElement(identifier)('W')
                               PsiElement(])(']')
                           PsiElement(])(']')
-                  PsiWhiteSpace(' ')
-                  PsiElement(with)('with')
-                  PsiWhiteSpace('\n      ')
                   ScTemplateBody
+                    PsiElement(:)(':')
+                    PsiWhiteSpace('\n      ')
                     ScTypeAliasDefinition: Out
                       AnnotationsList
                         <empty list>

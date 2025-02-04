@@ -26,8 +26,8 @@
 [134,134]: TypeBoundsTree
 [150,163]: ValDef
 [157,163]: Ident
-[169,183]: ValDef
-[176,183]: Ident
+[169,182]: ValDef
+[176,182]: Ident
 [192,219]: AppliedTypeTree
 [192,203]: Ident
 [204,210]: Ident

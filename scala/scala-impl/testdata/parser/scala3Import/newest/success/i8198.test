@@ -6,7 +6,7 @@ trait Eq[A] {
 
 case class Id[T](id: T)
 
-given idEq[A](using eqA: Eq[A]): Eq[Id[A]] = new {
+given idEq: [A] => (eqA: Eq[A]) => Eq[Id[A]] = new {
   extension (i1: Id[A]) def === (i2: Id[A]) = !(i1.id /== i2.id)
 }
 -----
@@ -178,16 +178,19 @@ ScalaFile
     PsiElement(given)('given')
     PsiWhiteSpace(' ')
     PsiElement(identifier)('idEq')
+    PsiElement(:)(':')
+    PsiWhiteSpace(' ')
     TypeParameterClause
       PsiElement([)('[')
       TypeParameter: A
         PsiElement(identifier)('A')
       PsiElement(])(']')
+    PsiWhiteSpace(' ')
+    PsiElement(=>)('=>')
+    PsiWhiteSpace(' ')
     Parameters
       ParametersClause
         PsiElement(()('(')
-        PsiElement(using)('using')
-        PsiWhiteSpace(' ')
         Parameter: eqA
           AnnotationsList
             <empty list>
@@ -208,7 +211,8 @@ ScalaFile
                     PsiElement(identifier)('A')
                 PsiElement(])(']')
         PsiElement())(')')
-    PsiElement(:)(':')
+      PsiWhiteSpace(' ')
+      PsiElement(=>)('=>')
     PsiWhiteSpace(' ')
     ParametrizedType: Eq[Id[A]]
       SimpleType: Eq

@@ -1,4 +1,4 @@
-//> using options -Xfatal-warnings -deprecation -feature
+//> using options -Xfatal-warnings -deprecation -feature -source:3.3
 
 class TC { type T }
 
@@ -29,6 +29,8 @@ ScalaFile
     ScDirectiveToken(tDIRECTIVE_VALUE)('-deprecation')
     PsiWhiteSpace(' ')
     ScDirectiveToken(tDIRECTIVE_VALUE)('-feature')
+    PsiWhiteSpace(' ')
+    ScDirectiveToken(tDIRECTIVE_VALUE)('-source:3.3')
   PsiWhiteSpace('\n\n')
   ScClass: TC
     AnnotationsList

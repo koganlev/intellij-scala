@@ -1,7 +1,7 @@
 object Test {
   import scala.CanEqual
 
-  given [X, Y](using CanEqual[X, Y]): CanEqual[List[X], List[Y]] = CanEqual.derived
+  given [X, Y] => CanEqual[X, Y] => CanEqual[List[X], List[Y]] = CanEqual.derived
 
   val b: Byte = 1
   val c: Char = 2
@@ -69,11 +69,11 @@ ScalaFile
             TypeParameter: Y
               PsiElement(identifier)('Y')
             PsiElement(])(']')
+          PsiWhiteSpace(' ')
+          PsiElement(=>)('=>')
+          PsiWhiteSpace(' ')
           Parameters
             ParametersClause
-              PsiElement(()('(')
-              PsiElement(using)('using')
-              PsiWhiteSpace(' ')
               Parameter: <anonymous>
                 ParameterType
                   ParametrizedType: CanEqual[X, Y]
@@ -91,8 +91,8 @@ ScalaFile
                         CodeReferenceElement: Y
                           PsiElement(identifier)('Y')
                       PsiElement(])(']')
-              PsiElement())(')')
-          PsiElement(:)(':')
+            PsiWhiteSpace(' ')
+            PsiElement(=>)('=>')
           PsiWhiteSpace(' ')
           ParametrizedType: CanEqual[List[X], List[Y]]
             SimpleType: CanEqual

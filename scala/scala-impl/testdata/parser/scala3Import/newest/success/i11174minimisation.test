@@ -20,7 +20,7 @@ object EnumerateNames {
 class MainClass {
   enum Shape:
     case Point
-  inline given auto[T]: EnumerateNames[T] = EnumerateNames.derived[T]
+  inline given auto: [T] => EnumerateNames[T] = EnumerateNames.derived[T]
   def shapeNames: EnumerateNames[Shape] = EnumerateNames.derived[Shape]
 }
 -----
@@ -369,12 +369,15 @@ ScalaFile
           PsiElement(given)('given')
           PsiWhiteSpace(' ')
           PsiElement(identifier)('auto')
+          PsiElement(:)(':')
+          PsiWhiteSpace(' ')
           TypeParameterClause
             PsiElement([)('[')
             TypeParameter: T
               PsiElement(identifier)('T')
             PsiElement(])(']')
-          PsiElement(:)(':')
+          PsiWhiteSpace(' ')
+          PsiElement(=>)('=>')
           Parameters
             <empty list>
           PsiWhiteSpace(' ')

@@ -17,8 +17,8 @@
 [57,66]: AppliedTypeTree
 [57,63]: Ident
 [64,65]: Ident
-[73,88]: ValDef
-[81,88]: AppliedTypeTree
+[73,87]: ValDef
+[81,87]: AppliedTypeTree
 [81,84]: Ident
 [85,86]: Ident
 [100,112]: ValDef

@@ -3,9 +3,9 @@ package example
 trait Show[-A]:
   extension (a: A) def show: String
 
-given (using rec: Show[String]): Show[String] = ??? // must be Show[String] as the argument
+given Show[String] => Show[String] = ??? // must be Show[String] as the argument
 
-given (using rec: => Show[String]): Show[Option[String]] = ??? // must be byname argument
+given (rec: => Show[String]) => Show[Option[String]] = ??? // must be byname argument
 
 def test = Option("").show
 -----
@@ -80,17 +80,7 @@ ScalaFile
       PsiWhiteSpace(' ')
       Parameters
         ParametersClause
-          PsiElement(()('(')
-          PsiElement(using)('using')
-          PsiWhiteSpace(' ')
-          Parameter: rec
-            AnnotationsList
-              <empty list>
-            Modifiers
-              <empty list>
-            PsiElement(identifier)('rec')
-            PsiElement(:)(':')
-            PsiWhiteSpace(' ')
+          Parameter: <anonymous>
             ParameterType
               ParametrizedType: Show[String]
                 SimpleType: Show
@@ -102,8 +92,8 @@ ScalaFile
                     CodeReferenceElement: String
                       PsiElement(identifier)('String')
                   PsiElement(])(']')
-          PsiElement())(')')
-      PsiElement(:)(':')
+        PsiWhiteSpace(' ')
+        PsiElement(=>)('=>')
       PsiWhiteSpace(' ')
       ParametrizedType: Show[String]
         SimpleType: Show
@@ -133,8 +123,6 @@ ScalaFile
       Parameters
         ParametersClause
           PsiElement(()('(')
-          PsiElement(using)('using')
-          PsiWhiteSpace(' ')
           Parameter: rec
             AnnotationsList
               <empty list>
@@ -157,7 +145,8 @@ ScalaFile
                       PsiElement(identifier)('String')
                   PsiElement(])(']')
           PsiElement())(')')
-      PsiElement(:)(':')
+        PsiWhiteSpace(' ')
+        PsiElement(=>)('=>')
       PsiWhiteSpace(' ')
       ParametrizedType: Show[Option[String]]
         SimpleType: Show

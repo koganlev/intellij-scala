@@ -1,6 +1,8 @@
 //> using options -Werror -deprecation
 @deprecated("no CaseClass")
 case class CaseClass(rgb: Int)
+
+case class K(@deprecated("don't use k, ok?","0.1") k: Int)
 -----
 ScalaFile
   PsiElement(SCALA_DIRECTIVE)
@@ -49,6 +51,54 @@ ScalaFile
             Modifiers
               <empty list>
             PsiElement(identifier)('rgb')
+            PsiElement(:)(':')
+            PsiWhiteSpace(' ')
+            ParameterType
+              SimpleType: Int
+                CodeReferenceElement: Int
+                  PsiElement(identifier)('Int')
+          PsiElement())(')')
+    ExtendsBlock
+      <empty list>
+  PsiWhiteSpace('\n\n')
+  ScClass: K
+    AnnotationsList
+      <empty list>
+    Modifiers
+      PsiElement(case)('case')
+    PsiWhiteSpace(' ')
+    PsiElement(class)('class')
+    PsiWhiteSpace(' ')
+    PsiElement(identifier)('K')
+    PrimaryConstructor
+      AnnotationsList
+        <empty list>
+      Modifiers
+        <empty list>
+      Parameters
+        ParametersClause
+          PsiElement(()('(')
+          ClassParameter: k
+            AnnotationsList
+              Annotation
+                PsiElement(@)('@')
+                AnnotationExpression
+                  ConstructorInvocation
+                    SimpleType: deprecated
+                      CodeReferenceElement: deprecated
+                        PsiElement(identifier)('deprecated')
+                    ArgumentList
+                      PsiElement(()('(')
+                      StringLiteral
+                        PsiElement(string content)('"don't use k, ok?"')
+                      PsiElement(,)(',')
+                      StringLiteral
+                        PsiElement(string content)('"0.1"')
+                      PsiElement())(')')
+            Modifiers
+              <empty list>
+            PsiWhiteSpace(' ')
+            PsiElement(identifier)('k')
             PsiElement(:)(':')
             PsiWhiteSpace(' ')
             ParameterType
