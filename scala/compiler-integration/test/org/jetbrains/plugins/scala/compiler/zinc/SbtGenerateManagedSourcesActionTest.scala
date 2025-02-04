@@ -6,12 +6,15 @@ import com.intellij.openapi.compiler.CompilerMessageCategory
 import com.intellij.openapi.module.{Module, ModuleManager}
 import com.intellij.testFramework.CompilerTester
 import junit.framework.TestCase.{assertEquals, assertFalse, assertNotNull}
+import org.jetbrains.plugins.scala.SlowTests
 import org.jetbrains.plugins.scala.compiler.CompilerMessagesUtil.assertNoErrorsOrWarnings
+import org.junit.experimental.categories.Category
 
 import java.nio.file.{Files, Path}
 import scala.concurrent.TimeoutException
 import scala.jdk.CollectionConverters._
 
+@Category(Array(classOf[SlowTests]))
 class SbtGenerateManagedSourcesActionTest extends ZincTestBase {
 
   private var module1: Module = _
