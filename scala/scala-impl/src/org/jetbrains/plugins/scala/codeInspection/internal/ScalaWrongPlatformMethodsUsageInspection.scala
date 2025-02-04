@@ -2,7 +2,7 @@ package org.jetbrains.plugins.scala.codeInspection.internal
 
 import com.intellij.codeInspection.{LocalInspectionTool, ProblemsHolder}
 import com.intellij.psi.{PsiElementVisitor, PsiMethod}
-import org.jetbrains.plugins.scala.incremental.EditorArea.isVisible
+import org.jetbrains.plugins.scala.incremental.Highlighting._
 import org.jetbrains.plugins.scala.extensions._
 import org.jetbrains.plugins.scala.lang.psi.api.expr.ScReferenceExpression
 import org.jetbrains.plugins.scala.lang.psi.api.toplevel.typedef.ScDocCommentOwner
@@ -22,7 +22,7 @@ class ScalaWrongPlatformMethodsUsageInspection extends LocalInspectionTool {
 
     new ScalaElementVisitor {
       override def visitReferenceExpression(ref: ScReferenceExpression): Unit = {
-        if (!isVisible(ref)) return
+        if (!ref.isVisible) return
 
         val resolve = ref.resolve()
 

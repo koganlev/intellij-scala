@@ -14,7 +14,6 @@ import org.jetbrains.plugins.scala.annotator.usageTracker.ScalaRefCountHolder
 import org.jetbrains.plugins.scala.annotator.usageTracker.UsageTracker._
 import org.jetbrains.plugins.scala.caches.CachesUtil.fileModCount
 import org.jetbrains.plugins.scala.extensions.{ObjectExt, PsiElementExt, PsiFileExt, PsiNamedElementExt}
-import org.jetbrains.plugins.scala.incremental.EditorArea
 import org.jetbrains.plugins.scala.lang.psi.ScalaPsiUtil
 import org.jetbrains.plugins.scala.lang.psi.api.ImplicitArgumentsOwner
 import org.jetbrains.plugins.scala.lang.psi.api.base.ScReference
@@ -26,14 +25,14 @@ final class ScalaRefCountVisitor(project: Project) extends HighlightVisitor {
   private val LOG = Logger.getInstance(classOf[ScalaRefCountVisitor])
   private var analyzedWholeFile = false
 
-  override def suitableForFile(file: PsiFile): Boolean = {
-    if (EditorArea.isIncrementalHighlightingEnabledIn(project)) return false
-
+  override def suitableForFile(file: PsiFile): Boolean =
     HighlightingAdvisor.shouldInspect(file)
-  }
 
-  override def visit(element: PsiElement): Unit =
+  override def visit(element: PsiElement): Unit = {
+    if (incremental.Highlighting.enabledIn(project)) return
+
     registerElementsAndImportsUsed(element)
+  }
 
   override def analyze(file: PsiFile,
                        updateWholeFile: Boolean,
@@ -48,6 +47,9 @@ final class ScalaRefCountVisitor(project: Project) extends HighlightVisitor {
       return true
 
     clearDirtyAnnotatorHintsIn(scalaFile)
+
+    if (incremental.Highlighting.enabledIn(project)) return true
+
     val success = if (updateWholeFile) {
       analyzedWholeFile = false
 

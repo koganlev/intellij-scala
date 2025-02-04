@@ -3,7 +3,7 @@ package org.jetbrains.plugins.scala.codeInspection.scaladoc
 import com.intellij.codeInspection._
 import com.intellij.openapi.project.DumbAware
 import com.intellij.psi.{PsiElement, PsiElementVisitor, PsiErrorElement}
-import org.jetbrains.plugins.scala.incremental.EditorArea.isVisible
+import org.jetbrains.plugins.scala.incremental.Highlighting._
 import org.jetbrains.plugins.scala.lang.psi.api.{ScalaElementVisitor, ScalaPsiElement}
 import org.jetbrains.plugins.scala.lang.scaladoc.psi.api.ScDocComment
 
@@ -16,7 +16,7 @@ final class ScalaDocParserErrorInspection extends LocalInspectionTool with DumbA
         visitScaladocElement(s)
 
       override def visitScaladocElement(element: ScalaPsiElement): Unit = {
-        if (!isVisible(element)) return
+        if (!element.isVisible) return
 
         element.getChildren.foreach {
           case a: PsiErrorElement =>

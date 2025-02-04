@@ -1,9 +1,11 @@
-package org.jetbrains.plugins.scala
+package org.jetbrains.plugins
+package scala
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer
 import com.intellij.codeInsight.daemon.impl.{DaemonCodeAnalyzerEx, DaemonCodeAnalyzerImpl, FileStatusMap}
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.util.TextRange
+import com.intellij.openapi.vfs.VirtualFile
 
 package object incremental {
   private final val REASON = "Incremental highlighting"
@@ -40,4 +42,7 @@ package object incremental {
       else new TextRange(a.getStartOffset, b.getStartOffset)
     }
   }
+
+  private[incremental] def isScalaIn(file: VirtualFile): Boolean =
+    file != null && (file.getExtension == "scala" || file.getExtension == "sc" || file.getExtension == "sbt")
 }

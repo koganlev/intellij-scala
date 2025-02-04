@@ -4,7 +4,7 @@ import com.intellij.codeInspection._
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiFile
-import org.jetbrains.plugins.scala.incremental.EditorArea.isVisible
+import org.jetbrains.plugins.scala.incremental.Highlighting._
 import org.jetbrains.plugins.scala.codeInspection.{AbstractFixOnPsiElement, ScalaInspectionBundle}
 import org.jetbrains.plugins.scala.lang.psi.api.ScalaFile
 import org.jetbrains.plugins.scala.settings.ScalaProjectSettings
@@ -22,7 +22,7 @@ class ChainedPackageInspection extends LocalInspectionTool {
       case file: ScalaFile =>
         val maybeProblemDescriptor = for {
           firstPackaging <- file.firstPackaging
-          if isVisible(firstPackaging)
+          if firstPackaging.isVisible
           module <- file.module
           basePackage = ScalaProjectSettings.getInstance(file.getProject).getBasePackageFor(module)
           if basePackage.nonEmpty && firstPackaging.packageName != basePackage && (firstPackaging.packageName + ".").startsWith(basePackage + ".")

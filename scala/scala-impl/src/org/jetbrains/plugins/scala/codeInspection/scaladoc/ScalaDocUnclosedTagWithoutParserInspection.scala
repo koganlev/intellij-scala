@@ -4,7 +4,7 @@ import com.intellij.codeInspection._
 import com.intellij.openapi.project.{DumbAware, Project}
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElementVisitor
-import org.jetbrains.plugins.scala.incremental.EditorArea.isVisible
+import org.jetbrains.plugins.scala.incremental.Highlighting._
 import org.jetbrains.plugins.scala.ScalaBundle
 import org.jetbrains.plugins.scala.codeInspection.{AbstractFixOnPsiElement, ScalaInspectionBundle}
 import org.jetbrains.plugins.scala.lang.psi.api.ScalaElementVisitor
@@ -21,7 +21,7 @@ final class ScalaDocUnclosedTagWithoutParserInspection extends LocalInspectionTo
   override def buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): PsiElementVisitor = {
     new ScalaElementVisitor {
       override def visitWikiSyntax(s: ScDocSyntaxElement): Unit = {
-        if (!isVisible(s)) return
+        if (!s.isVisible) return
 
         val firstElementType = s.getFirstChild.getNode.getElementType
         if (!ScalaDocSyntaxElementType.canClose(firstElementType,

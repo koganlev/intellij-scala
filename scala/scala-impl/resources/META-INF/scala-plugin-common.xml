@@ -160,9 +160,9 @@
         <fileType name="Scala" language="Scala" extensions="scala;mill"
                   implementationClass="org.jetbrains.plugins.scala.ScalaFileType" fieldName="INSTANCE" />
 
-        <editorFactoryListener implementation="org.jetbrains.plugins.scala.incremental.FactoryListener"/>
+        <editorFactoryListener implementation="org.jetbrains.plugins.scala.incremental.Listener"/>
         <postStartupActivity implementation="org.jetbrains.plugins.scala.incremental.Tracing$StartupActivity"/>
-        <highlightInfoPostFilter implementation="org.jetbrains.plugins.scala.incremental.PostFilter"/>
+        <highlightInfoPostFilter implementation="org.jetbrains.plugins.scala.incremental.Filter"/>
         <registryKey key="scala.highlighting.tracing" defaultValue="false" description="Trace resolve and type inference"/>
         <registryKey key="scala.incremental.highlighting.lookaround" defaultValue="0" description="Number of lines to highlight beyond the visible area"/>
 

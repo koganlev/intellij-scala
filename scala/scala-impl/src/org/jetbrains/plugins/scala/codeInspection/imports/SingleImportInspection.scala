@@ -3,7 +3,7 @@ package org.jetbrains.plugins.scala.codeInspection.imports
 import com.intellij.codeInspection.{LocalInspectionTool, ProblemHighlightType, ProblemsHolder}
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElementVisitor
-import org.jetbrains.plugins.scala.incremental.EditorArea.isVisible
+import org.jetbrains.plugins.scala.incremental.Highlighting._
 import org.jetbrains.plugins.scala.ScalaBundle
 import org.jetbrains.plugins.scala.codeInspection.{AbstractFixOnPsiElement, ScalaInspectionBundle}
 import org.jetbrains.plugins.scala.extensions.{PsiElementExt, inWriteAction}
@@ -17,7 +17,7 @@ class SingleImportInspection extends LocalInspectionTool {
   override def buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): PsiElementVisitor = {
     new ScalaElementVisitor {
       override def visitImportExpr(importExpr: ScImportExpr): Unit = {
-        if (!isVisible(importExpr)) return
+        if (!importExpr.isVisible) return
 
         importExpr.selectorSet.foreach {
           case selectorSet@ScImportSelectors(selector) if selectorSet.getFirstChild.elementType == ScalaTokenTypes.tLBRACE =>

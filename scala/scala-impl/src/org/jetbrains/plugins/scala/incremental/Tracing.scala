@@ -1,4 +1,8 @@
-package org.jetbrains.plugins.scala.incremental
+package org.jetbrains.plugins.scala
+package incremental
+
+import project.ProjectExt
+import startup.ProjectActivity
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer.DaemonListener
@@ -11,13 +15,16 @@ import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.wm.WindowManager
 import com.intellij.psi.PsiElement
 import com.intellij.ui.{Gray, JBColor}
-import org.jetbrains.plugins.scala.project.ProjectExt
-import org.jetbrains.plugins.scala.startup.ProjectActivity
 
 import java.util
 import scala.jdk.CollectionConverters.CollectionHasAsScala
+import scala.util.matching.Regex
 
 object Tracing {
+  private val MaxLength = 120
+
+  private val MultipleSpaces = new Regex(" {2,}")
+
   class StartupActivity extends ProjectActivity {
     override def execute(project: Project): Unit = {
       val connection = project.getMessageBus.connect(project.unloadAwareDisposable)
@@ -33,14 +40,20 @@ object Tracing {
     private var startInstants = Map.empty[FileEditor, Long]
     private var durations = Seq.empty[Long]
 
-    override def daemonStarting(fileEditors: util.Collection[_ <: FileEditor]): Unit = if (isHighlightingTracingEnabled) {
-      startInstants ++= fileEditors.asScala.map(editor => editor -> System.nanoTime())
+    override def daemonStarting(fileEditors: util.Collection[_ <: FileEditor]): Unit = {
+      if (!isHighlightingTracingEnabled) return
+      val editors = fileEditors.asScala.filter(e => isScalaIn(e.getFile))
+      if (editors.isEmpty) return
+      startInstants ++= editors.map(editor => editor -> System.nanoTime())
       durations = Seq.empty
       statusBar.setInfo("Highlighting...")
     }
 
-    override def daemonFinished(fileEditors: util.Collection[_ <: FileEditor]): Unit = if (isHighlightingTracingEnabled) {
-      val editors = fileEditors.asScala
+    override def daemonFinished(fileEditors: util.Collection[_ <: FileEditor]): Unit = {
+      Highlighting.suppress = false
+      if (!isHighlightingTracingEnabled) return
+      val editors = fileEditors.asScala.filter(e => isScalaIn(e.getFile))
+      if (editors.isEmpty) return
       val ds = editors.map(editor => (System.nanoTime() - startInstants(editor)) / 1000000)
       statusBar.setInfo("Highlighted: " + (durations ++ ds).map(x => s"$x ms").mkString(", "))
       startInstants --= editors.toSet
@@ -51,10 +64,12 @@ object Tracing {
   }
 
   def trace(e: PsiElement, reason: String): Unit = if (isHighlightingTracingEnabled) {
-    EditorArea.editorsFor(e).foreach { editor =>
+    VisibleRange.editorsFor(e).foreach { editor =>
       val text = reason + ": " + {
-        val s = e.getText.replace('\n', '↵').replaceAll(" {2,}", " ")
-        if (s.length > 120) s.substring(0, 120) + "…" else s
+        val range = e.getTextRange
+        val charSequence = editor.getDocument.getCharsSequence.subSequence(range.getStartOffset, range.getEndOffset.min(range.getStartOffset + MaxLength))
+        val s = MultipleSpaces.replaceAllIn(charSequence.toString.replace('\n', '↵'), " ")
+        if (range.getLength > MaxLength) s + "…" else s
       }
 
       val highlighter = editor.getMarkupModel.addRangeHighlighter(

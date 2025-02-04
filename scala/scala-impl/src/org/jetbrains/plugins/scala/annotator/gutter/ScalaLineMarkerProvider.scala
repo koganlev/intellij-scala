@@ -15,7 +15,7 @@ import com.intellij.psi._
 import com.intellij.psi.search.searches.ClassInheritorsSearch
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.util.{Function => IJFunction}
-import org.jetbrains.plugins.scala.incremental.EditorArea.isVisible
+import org.jetbrains.plugins.scala.incremental.Highlighting._
 import org.jetbrains.plugins.scala.ScalaBundle
 import org.jetbrains.plugins.scala.extensions._
 import org.jetbrains.plugins.scala.icons.Icons
@@ -44,7 +44,7 @@ final class ScalaLineMarkerProvider extends LineMarkerProviderDescriptor {
   import ScalaMarkerType._
 
   override def getLineMarkerInfo(element: PsiElement): LineMarkerInfo[_ <: PsiElement] = {
-    if (!isVisible(element)) return null
+    if (!element.isVisible) return null
 
     if (element.isValid) {
       val lineMarkerInfo =
@@ -192,7 +192,7 @@ final class ScalaLineMarkerProvider extends LineMarkerProviderDescriptor {
                                       result: ju.Collection[_ >: LineMarkerInfo[_]]): Unit = {
     import scala.jdk.CollectionConverters._
 
-    elements.asScala.filter(_.isValid).filter(isVisible).flatMap { element =>
+    elements.asScala.filter(_.isValid).filter(_.isVisible).flatMap { element =>
       getImplementsSAMTypeMarker(element).map(augmentSeparatorInfo(element, _))
     }.foreach(result.add)
 
@@ -201,7 +201,7 @@ final class ScalaLineMarkerProvider extends LineMarkerProviderDescriptor {
     }
 
     ApplicationManager.getApplication.assertReadAccessAllowed()
-    elements.asScala.filter(isVisible).collect {
+    elements.asScala.filter(_.isVisible).collect {
       case ident if ident.getNode.getElementType == ScalaTokenTypes.tIDENTIFIER => ident
     }.flatMap { identifier =>
       ProgressManager.checkCanceled()

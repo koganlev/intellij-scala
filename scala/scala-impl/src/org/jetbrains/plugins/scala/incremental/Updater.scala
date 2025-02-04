@@ -1,27 +1,28 @@
-package org.jetbrains.plugins.scala.incremental
+package org.jetbrains.plugins.scala
+package incremental
+
+import incremental.Updater._
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer
 import com.intellij.openapi.editor.Editor
-import com.intellij.openapi.editor.ex.EditorEx
+import com.intellij.openapi.editor.colors.EditorColorsScheme
+import com.intellij.openapi.editor.ex.{EditorEx, MarkupModelEx}
 import com.intellij.openapi.util.{Key, TextRange}
 import com.intellij.psi.PsiManager
-import org.jetbrains.plugins.scala.incremental.Updater._
 
 import java.awt.Color
 import javax.swing.Timer
 
 private class Updater(editor: Editor) {
   private val updateTimer = {
-    val timer = new Timer(200, _ => doUpdate())
+    val timer = new Timer(UPDATE_DELAY, _ => update())
     timer.setRepeats(false)
     timer
   }
 
   private var previousVisibleRange: TextRange = _
 
-  def update(visibleRange: TextRange, delta: Boolean): Unit = {
-    editor.putUserData(EditorArea.VISIBLE_RANGE_KEY, visibleRange)
-
+  def scheduleUpdate(delta: Boolean): Unit = {
     if (!delta) {
       previousVisibleRange = null
     }
@@ -29,11 +30,14 @@ private class Updater(editor: Editor) {
     updateTimer.restart()
   }
 
-  private def doUpdate(): Unit = {
-    val visibleRange = editor.getUserData(EditorArea.VISIBLE_RANGE_KEY)
+  private def update(): Unit = {
+    val visibleRange = VisibleRange.in(editor)
 
-    concealErrorStripeMarksOutside(visibleRange, editor)
-    revealErrorStripeMarksInside(visibleRange, editor)
+    val editorEx = editor.asInstanceOf[EditorEx]
+    Seq(editorEx.getMarkupModel, editorEx.getFilteredDocumentMarkupModel).foreach { model =>
+      concealErrorStripeMarksOutside(visibleRange, model, editor.getColorsScheme)
+      revealErrorStripeMarksInside(visibleRange, model)
+    }
 
     val newlyVisibleRange = if (previousVisibleRange == null) visibleRange else visibleRange.diff(previousVisibleRange)
 
@@ -47,13 +51,13 @@ private class Updater(editor: Editor) {
 }
 
 private object Updater {
+  private val UPDATE_DELAY = 200 // ms
+
   private val ERROR_STRIPE_MARK_COLOR_KEY = Key.create[Color]("error_stripe_mark_color")
 
-  private def concealErrorStripeMarksOutside(visibleRange: TextRange, editor: Editor) = {
-    val markupModel = editor.asInstanceOf[EditorEx].getFilteredDocumentMarkupModel
-
+  private def concealErrorStripeMarksOutside(visibleRange: TextRange, markupModel: MarkupModelEx, colorScheme: EditorColorsScheme): Unit = {
     markupModel.processRangeHighlightersOutside(visibleRange.getStartOffset, visibleRange.getEndOffset, highlighter => {
-      val actualColor = highlighter.getErrorStripeMarkColor(editor.getColorsScheme)
+      val actualColor = highlighter.getErrorStripeMarkColor(colorScheme)
       if (!highlighter.isThinErrorStripeMark && actualColor != null) {
         highlighter.putUserData(ERROR_STRIPE_MARK_COLOR_KEY, actualColor)
         highlighter.setErrorStripeMarkColor(null)
@@ -62,9 +66,7 @@ private object Updater {
     })
   }
 
-  private def revealErrorStripeMarksInside(visibleRange: TextRange, editor: Editor) = {
-    val markupModel = editor.asInstanceOf[EditorEx].getFilteredDocumentMarkupModel
-
+  private def revealErrorStripeMarksInside(visibleRange: TextRange, markupModel: MarkupModelEx): Unit = {
     markupModel.processRangeHighlightersOverlappingWith(visibleRange.getStartOffset, visibleRange.getEndOffset, highlighter => {
       val savedColor = highlighter.getUserData(ERROR_STRIPE_MARK_COLOR_KEY)
       if (savedColor != null) {

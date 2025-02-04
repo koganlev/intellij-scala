@@ -2,7 +2,6 @@ package org.jetbrains.plugins.scala.annotator.usageTracker
 
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.{PsiElement, PsiNamedElement}
-import org.jetbrains.plugins.scala.incremental.EditorArea.isVisible
 import org.jetbrains.plugins.scala.editor.importOptimizer.ImportInfoProvider
 import org.jetbrains.plugins.scala.extensions.{IteratorExt, PsiElementExt, PsiFileExt}
 import org.jetbrains.plugins.scala.lang.psi.api.ScalaFile
@@ -54,7 +53,7 @@ object UsageTracker {
       mutable.ArrayBuffer.empty
 
     val importHolders: Iterator[ScImportsHolder] =
-      file.elements.filterByType[ScImportsHolder]
+      file.depthFirst().filterByType[ScImportsHolder]
 
     val isSource3 = file.isSource3Enabled
 
@@ -63,7 +62,6 @@ object UsageTracker {
       importStmt   <- importHolder.getImportStatements
       importExprs  = importStmt.importExprs
       importExpr   <- importExprs
-      if isVisible(importExpr)
     } {
       val importsUsed = ImportUsed.buildAllFor(importExpr)
       importExprToUsedImports += ((importExpr, importsUsed))
