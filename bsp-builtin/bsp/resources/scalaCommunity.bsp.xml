@@ -23,6 +23,11 @@
         <sbt.sbtVersionProvider implementation="org.jetbrains.bsp.project.BspSbtVersionProvider"/>
         <bsp.bspProjectInstallProvider implementation="org.jetbrains.bsp.project.importing.MillProjectInstaller"/>
     </extensions>
+
+    <extensions defaultExtensionNs="org.jetbrains.sbt">
+        <!--suppress PluginXmlValidity -->
+        <bspProjectHandler implementation="org.jetbrains.bsp.project.BuiltinSbtBspProjectHandler"/>
+    </extensions>
     
     <extensions defaultExtensionNs="com.intellij">
         <externalSystemCrcCalculator implementation="org.jetbrains.bsp.project.BspScalaFilesCrcCalculator"/>

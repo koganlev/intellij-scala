@@ -8,7 +8,7 @@ import org.jetbrains.sbt.Sbt
 
 package object notification {
 
-  private[notification]
+  private[jetbrains]
   def isScalaSourceFile(file: VirtualFile, project: Project): Boolean =
     if (file.isWritable) {
       val psiFile = PsiManager.getInstance(project).findFile(file)

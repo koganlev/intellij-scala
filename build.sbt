@@ -758,7 +758,7 @@ lazy val gradleIntegration =
 
 lazy val intellijBspIntegration =
   newProject("intellij-bsp", file("scala/integration/intellij-bsp"))
-    .dependsOn(scalaImpl)
+    .dependsOn(scalaImpl, sbtImpl)
     .settings(
       intellijPlugins += "org.jetbrains.bsp::nightly".toPlugin,
       packageMethod := PackagingMethod.PluginModule("scalaCommunity.intellij-bsp")

@@ -1,4 +1,4 @@
-package org.jetbrains.plugins.scala.project.notification
+package org.jetbrains.sbt.project
 
 import com.intellij.framework.FrameworkTypeEx
 import com.intellij.framework.addSupport.impl.AddSupportForSingleFrameworkDialog
@@ -10,11 +10,13 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiFile
 import com.intellij.ui.{EditorNotificationPanel, EditorNotificationProvider}
 import com.intellij.util.concurrency.annotations.RequiresEdt
-import org.jetbrains.plugins.scala.ScalaBundle
+import org.jetbrains.annotations.Nullable
+import org.jetbrains.plugins.scala.project.notification.isScalaSourceFile
 import org.jetbrains.plugins.scala.project.template.ScalaFrameworkType
 import org.jetbrains.plugins.scala.project.{ModuleExt, ScalaProjectConfigurationService}
+import org.jetbrains.sbt.codeInsight.daemon.SbtProjectImportStateProblemHighlightFilter
+import org.jetbrains.sbt.{SbtBundle, SbtUtil}
 
-import java.util.function
 import javax.swing.JComponent
 import javax.swing.event.HyperlinkEvent
 
@@ -24,27 +26,39 @@ import javax.swing.event.HyperlinkEvent
  *  - [[com.intellij.codeInsight.daemon.ProjectSdkSetupValidator]]
  *  - [[com.intellij.codeInsight.daemon.impl.JavaProjectSdkSetupValidator]]
  */
-final class SetupScalaSdkNotificationProvider extends EditorNotificationProvider {
+private final class SetupScalaHighlightingNotificationProvider extends EditorNotificationProvider {
 
-  override def collectNotificationData(project: Project, file: VirtualFile): function.Function[_ >: FileEditor, _ <: JComponent] = {
-    val isScalaSource = isScalaSourceFile(file, project)
-    if (isScalaSource && !hasDeveloperKit(file, project)) {
-      // No notification while project sync is in progress
-      if (ScalaProjectConfigurationService.getInstance(project).isSyncInProgress) {
+  @Nullable
+  override def collectNotificationData(project: Project, file: VirtualFile): java.util.function.Function[_ >: FileEditor, _ <: JComponent] = {
+    if (SbtUtil.couldBeSbtProject(project)) {
+      // We do not track the file type of this source file, do not show any notifications.
+      if (!SbtProjectImportStateProblemHighlightFilter.isTrackedFileType(file.getFileType)) return null
+      // Project reload is already in progress, do not show any notifications.
+      if (ScalaProjectConfigurationService.getInstance(project).isSyncInProgress) return null
+      // The project is fully imported, do not show any notifications.
+      if (SbtProjectImportStateService.instance(project).isImported) return null
+
+      (fileEditor: FileEditor) => SbtProjectImportStateNotificationPanel.createNotificationPanel(project, fileEditor)
+    } else {
+      val isScalaSource = isScalaSourceFile(file, project)
+      if (isScalaSource && !hasDeveloperKit(file, project)) {
+        // No notification while project sync is in progress
+        if (ScalaProjectConfigurationService.getInstance(project).isSyncInProgress) {
+          null
+        } else {
+          (fileEditor: FileEditor) => createPanel(project, fileEditor)
+        }
+      } else
         null
-      } else {
-        (fileEditor: FileEditor) => createPanel(project, fileEditor)
-      }
-    } else
-      null
+    }
   }
 
   @RequiresEdt
   private def createPanel(project: Project, fileEditor: FileEditor): EditorNotificationPanel = {
     val panel = new EditorNotificationPanel(fileEditor, EditorNotificationPanel.Status.Warning)
-    panel.setText(ScalaBundle.message("sdk.notification.provider.no.scala.sdk.in.module"))
+    panel.setText(SbtBundle.message("sdk.notification.provider.no.scala.sdk.in.module"))
     val fixHandler = getFixHandler(project, fileEditor.getFile)
-    panel.createActionLabel(ScalaBundle.message("sdk.notification.provider.setup.scala.sdk"), fixHandler, true)
+    panel.createActionLabel(SbtBundle.message("sdk.notification.provider.setup.scala.sdk"), fixHandler, true)
     panel
   }
 
