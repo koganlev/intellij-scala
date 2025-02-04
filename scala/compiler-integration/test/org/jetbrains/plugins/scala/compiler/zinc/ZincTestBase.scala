@@ -17,8 +17,7 @@ import org.jetbrains.sbt.project.settings.SbtProjectSettings
 import org.jetbrains.sbt.project.{SbtCachesSetupUtil, SbtProjectSystem}
 import org.junit.Assert.assertNotNull
 
-import java.io.File
-import java.nio.file.Path
+import java.nio.file.{Files, Path}
 
 abstract class ZincTestBase(separateProdAndTestSources: Boolean = false) extends ExternalSystemImportingTestCase {
 
@@ -89,15 +88,14 @@ abstract class ZincTestBase(separateProdAndTestSources: Boolean = false) extends
    * then #getCompilerOutputPathForTests is used instead of #getCompilerOutputPath
    */
   @Nullable
-  protected def findClassFile(className: String, module:Module, isTest: Boolean): File = {
+  protected def findClassFile(className: String, module:Module, isTest: Boolean): Path = {
     val moduleExtension = ModuleRootManager.getInstance(module).getModuleExtension(classOf[CompilerModuleExtension])
     val out =
       if (isTest) moduleExtension.getCompilerOutputPathForTests
       else moduleExtension.getCompilerOutputPath
     assertNotNull(out)
-    val classFile = new File(out.getPath, className.replace('.', '/') + ".class")
-    if (classFile.exists()) classFile
+    val classFile = out.toNioPath.resolve(className.replace('.', '/') ++ ".class")
+    if (Files.exists(classFile)) classFile
     else null
   }
-
 }

@@ -16,9 +16,10 @@ import org.jetbrains.plugins.scala.util.CompilerTestUtil.runWithErrorsFromCompil
 import org.junit.Assert.{assertEquals, assertTrue}
 import org.junit.experimental.categories.Category
 
-import java.io.File
+import java.nio.file.{Files, Path}
 import scala.concurrent.duration.DurationInt
 import scala.concurrent.{Await, Promise}
+import scala.jdk.StreamConverters.StreamHasToScala
 
 /**
  * Checks if there are no conflicts between usual compilation and
@@ -70,14 +71,16 @@ abstract class HighlightingCompilerConflictsBase(
 
   private def getTargetFileTimestamp(className: String): Long = {
     val targetFileName = s"$className.class"
+
     val optionResult =
       Option(CompilerModuleExtension.getInstance(getModule).getCompilerOutputPath)
         .map(_.getCanonicalPath)
-        .map(new File(_))
+        .map(Path.of(_))
         .flatMap { targetDir =>
-          targetDir.listFiles((_, name) => name == targetFileName)
-            .find(_.getName == targetFileName)
-            .map(_.lastModified())
+          Files.list(targetDir)
+            .toScala(LazyList)
+            .find(_.getFileName.toString == targetFileName)
+            .map(Files.getLastModifiedTime(_).toInstant.toEpochMilli)
         }
 
     assertTrue(s"$targetFileName doesn't exist", optionResult.isDefined)

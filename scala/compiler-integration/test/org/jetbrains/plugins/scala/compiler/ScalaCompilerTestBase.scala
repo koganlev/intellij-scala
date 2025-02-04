@@ -14,7 +14,7 @@ import com.intellij.testFramework._
 import com.intellij.testFramework.common.ThreadLeakTracker
 import org.jetbrains.plugins.scala.base.SourceRootTestUtil
 
-import java.nio.file.Path
+import java.nio.file.{Files, Path}
 //noinspection ApiStatus
 import org.jetbrains.plugins.scala.base.ScalaSdkOwner
 import org.jetbrains.plugins.scala.base.libraryLoaders._
@@ -28,7 +28,6 @@ import org.jetbrains.plugins.scala.util.{CompilerTestUtil, RevertableChange}
 import org.junit.Assert
 import org.junit.Assert._
 
-import java.io.File
 import java.util.{List => JList}
 import scala.collection.mutable
 import scala.concurrent.duration.{Duration, FiniteDuration}
@@ -113,10 +112,10 @@ abstract class ScalaCompilerTestBase extends JavaModuleTestCase with ScalaSdkOwn
 
   protected val includeReflectLibrary: Boolean = true
   protected val includeCompilerAsLibrary: Boolean = false
-  protected def compilerBridgeBinaryJar: Option[File] = None
+  protected def compilerBridgeBinaryJar: Option[Path] = None
 
   override protected def librariesLoaders: Seq[LibraryLoader] = Seq(
-    ScalaSDKLoader(includeReflectLibrary, includeCompilerAsLibrary, compilerBridgeBinaryJar = compilerBridgeBinaryJar.map(_.toPath)),
+    ScalaSDKLoader(includeReflectLibrary, includeCompilerAsLibrary, compilerBridgeBinaryJar = compilerBridgeBinaryJar),
     HeavyJDKLoader(testProjectJdkVersion)
   ) ++ additionalLibraries
 
@@ -158,10 +157,10 @@ abstract class ScalaCompilerTestBase extends JavaModuleTestCase with ScalaSdkOwn
     file
   }
 
-  private def getOrCreateChildDir(name: String) = {
-    val file = new File(getBaseDir.getCanonicalPath, name)
-    if (!file.exists()) file.mkdir()
-    LocalFileSystem.getInstance.refreshAndFindFileByPath(file.getCanonicalPath)
+  private def getOrCreateChildDir(name: String): VirtualFile = {
+    val dir = getBaseDir.toNioPath.resolve(name)
+    if (!Files.exists(dir)) Files.createDirectory(dir)
+    LocalFileSystem.getInstance.refreshAndFindFileByNioFile(dir)
   }
 
   private def addSrcRoot(): Unit = inWriteAction {

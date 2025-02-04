@@ -4,11 +4,12 @@ import com.intellij.ide.util.projectWizard.ModuleBuilder
 import com.intellij.openapi.module.{JavaModuleType, Module, ModuleType}
 import com.intellij.openapi.roots.{DependencyScope, ModuleRootModificationUtil}
 import com.intellij.testFramework.PsiTestUtil
+import junit.framework.TestCase.assertTrue
 import org.jetbrains.plugins.scala.DependencyManagerBase.RichStr
 import org.jetbrains.plugins.scala.base.libraryLoaders.IvyManagedLoader
 import org.jetbrains.plugins.scala.compiler.references.ScalaCompilerReferenceServiceFixture
 
-import java.io.File
+import java.nio.file.Path
 
 class TransitiveDependencyClasspathTest extends ScalaCompilerReferenceServiceFixture {
   def testClasspathIncludesTransitiveModules(): Unit = {
@@ -22,15 +23,14 @@ class TransitiveDependencyClasspathTest extends ScalaCompilerReferenceServiceFix
     val libLoader = IvyManagedLoader("org.scalatest" %% "scalatest" % "3.2.0")
     libLoader.init(moduleB, version)
 
-    val remoteServerConnectorBase = new TestRemoteServerConnectorBase(moduleA, None, new java.io.File("/tmp"))
+    val remoteServerConnectorBase = new TestRemoteServerConnectorBase(moduleA, Path.of("/", "tmp"))
 
     val r = remoteServerConnectorBase.result()
-    assert(r.exists(_.toString.contains("scalatest")))
+    assertTrue(r.exists(_.toString.contains("scalatest")))
   }
 
-}
-
-class TestRemoteServerConnectorBase (module: Module, filesToCompile: Option[Seq[File]], outputDir: File)
-    extends RemoteServerConnectorBase(module, filesToCompile, outputDir) {
-  def result(): Seq[java.io.File] = assemblyRuntimeClasspath()
+  private final class TestRemoteServerConnectorBase (module: Module, outputDir: Path)
+    extends RemoteServerConnectorBase(module, None, outputDir.toFile) {
+    def result(): Seq[Path] = assemblyRuntimeClasspath().map(_.toPath)
+  }
 }

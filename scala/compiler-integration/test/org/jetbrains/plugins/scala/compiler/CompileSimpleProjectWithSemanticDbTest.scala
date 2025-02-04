@@ -12,7 +12,6 @@ import org.jetbrains.sbt.project.{SbtCachesSetupUtil, SbtExternalSystemImporting
 import org.junit.Assert.{assertTrue, fail}
 import org.junit.experimental.categories.Category
 
-import java.io.File
 import java.nio.file.{Files, Path}
 import scala.jdk.CollectionConverters.IteratorHasAsScala
 
@@ -37,9 +36,9 @@ class CompileSimpleProjectWithSemanticDbTest extends SbtExternalSystemImportingT
     //This is needed because `org.jetbrains.jps.incremental.scala.data.CompilerDataFactory.semanticDbOptionsFor`
     //needs the correct project path to be equal to the project actual root in order correct semanticDb target folder is calculated later
     //(it's done in dotty.tools.dotc.semanticdb.ExtractSemanticDB#write)
-    val testProjectDir = new File(getTestProjectPath)
-    val projectParentFolder = testProjectDir.getParentFile.toPath
-    val projectName = testProjectDir.getName
+    val testProjectDir = Path.of(getTestProjectPath)
+    val projectParentFolder = testProjectDir.getParent
+    val projectName = testProjectDir.getFileName.toString
     myTestFixture = IdeaTestFixtureFactory.getFixtureFactory.createFixtureBuilder(projectName, projectParentFolder, true).getFixture
     myTestFixture.setUp()
   }

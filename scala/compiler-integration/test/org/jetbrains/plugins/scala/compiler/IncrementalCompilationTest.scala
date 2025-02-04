@@ -11,7 +11,8 @@ import org.jetbrains.plugins.scala.util.matchers.HamcrestMatchers.everyValueGrea
 import org.jetbrains.plugins.scala.{CompilationTests, ScalaVersion}
 import org.junit.experimental.categories.Category
 
-import java.io.File
+import java.nio.file.{Files, Path}
+import scala.jdk.StreamConverters.StreamHasToScala
 
 @Category(Array(classOf[CompilationTests]))
 abstract class IncrementalCompilationTestBase(
@@ -157,11 +158,11 @@ abstract class IncrementalCompilationTestBase(
     sourceFiles
   }
 
-  private def targetDir: File =
-    new File(CompilerModuleExtension.getInstance(getModule).getCompilerOutputPath.getCanonicalPath)
+  private def targetDir: Path =
+    CompilerModuleExtension.getInstance(getModule).getCompilerOutputPath.toNioPath
 
   private def targetFileNames: Set[String] =
-    targetDir.listFiles().map(_.getName).toSet
+    Files.list(targetDir).map(_.getFileName.toString).toScala(Set)
 
   protected def classFileNames(className: String)
                               (implicit version: ScalaVersion): Set[String] = {
@@ -201,16 +202,14 @@ abstract class IncrementalCompilationTestBase(
     def expectedTargetFileNames: Set[String] =
       classes.flatMap(classFileNames)
 
-    private def targetFiles: Set[File] = {
+    private def targetFiles: Set[Path] = {
       val targetFileNames = expectedTargetFileNames
-      targetDir.listFiles { (_, fileName) =>
-        targetFileNames contains fileName
-      }.toSet
+      Files.list(targetDir).filter(p => targetFileNames.contains(p.getFileName.toString)).toScala(Set)
     }
 
     def targetTimestamps: Map[String, Long] =
       targetFiles.map { targetFile =>
-        targetFile.getName -> targetFile.lastModified()
+        targetFile.getFileName.toString -> Files.getLastModifiedTime(targetFile).toInstant.toEpochMilli
       }.toMap
   }
 }

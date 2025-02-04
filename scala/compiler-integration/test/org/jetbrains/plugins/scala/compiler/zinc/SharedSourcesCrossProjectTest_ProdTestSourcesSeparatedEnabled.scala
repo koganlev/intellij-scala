@@ -9,7 +9,7 @@ import org.jetbrains.plugins.scala.project.settings.ScalaCompilerConfiguration
 import org.junit.Assert.{assertNotNull, assertNull}
 import org.junit.experimental.categories.Category
 
-import java.io.File
+import java.nio.file.Path
 import scala.jdk.CollectionConverters._
 
 @Category(Array(classOf[CompilationTests]))
@@ -98,8 +98,8 @@ class SharedSourcesCrossProjectTest_ProdTestSourcesSeparatedEnabled extends Zinc
       assertNotNull(s"Shared class file not found in ${module.getName}", sharedClass)
     }
 
-    def fileIsNullAssertion(sharedClass: File, moduleName: String): Unit =
-      assertNull(s"Shared class file found in $moduleName, but it shouldn't", sharedClass)
+    def fileIsNullAssertion(sharedClass: Path, moduleName: String): Unit =
+      assertNull(s"Shared class file ${sharedClass.toString} found in $moduleName, but it shouldn't", sharedClass)
 
     Seq(baseJSMain,baseJVMMain).foreach { module =>
       val sharedClass = findClassFile("Shared", module, isTest = false)
