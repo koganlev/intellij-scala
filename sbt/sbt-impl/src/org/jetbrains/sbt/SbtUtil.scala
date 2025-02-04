@@ -8,6 +8,7 @@ import com.intellij.openapi.externalSystem.model.{DataNode, Key}
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil
 import com.intellij.openapi.module.{Module, ModuleManager}
 import com.intellij.openapi.project.{Project, ProjectUtil}
+import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.platform.workspace.storage.{EntityStorage, SymbolicEntityId, WorkspaceEntityWithSymbolicId}
 import com.intellij.util.net.{ProxyConfiguration, ProxyCredentialStore, ProxyCredentialStoreKt, ProxySettings, ProxyUtils}
 import com.intellij.util.{EnvironmentUtil, SystemProperties}
@@ -18,13 +19,14 @@ import org.jetbrains.plugins.scala.project.Version
 import org.jetbrains.plugins.scala.util.{ExternalSystemUtil, JarManifestUtils}
 import org.jetbrains.sbt.Sbt.SbtModuleChildKeyInstance
 import org.jetbrains.sbt.buildinfo.BuildInfo
-import org.jetbrains.sbt.project.SbtProjectSystem
 import org.jetbrains.sbt.project.data.{SbtBuildModuleData, SbtModuleData, SbtProjectData}
 import org.jetbrains.sbt.project.structure.{JvmOpts, SbtOption, SbtOpts}
+import org.jetbrains.sbt.project.{SbtBspProjectHandler, SbtProjectImportProvider, SbtProjectSystem}
 import org.jetbrains.sbt.settings.SbtSettings
 
 import java.io.{BufferedInputStream, File, FileInputStream}
 import java.net.URI
+import java.nio.file.Path
 import java.util.Properties
 import java.util.jar.JarFile
 import scala.collection.mutable
@@ -49,7 +51,7 @@ object SbtUtil {
   }
 
   def sbtSettings(project: Project): SbtSettings =
-      ExternalSystemApiUtil.getSettings(project, SbtProjectSystem.Id).asInstanceOf[SbtSettings]
+    ExternalSystemApiUtil.getSettings(project, SbtProjectSystem.Id).asInstanceOf[SbtSettings]
 
   /** Directory for global sbt plugins given sbt version */
   @VisibleForTesting
@@ -60,8 +62,8 @@ object SbtUtil {
     }
 
   /** Directory for global sbt plugins from parameters if it is explicitly set,
-    * otherwise calculate from sbt version.
-    */
+   * otherwise calculate from sbt version.
+   */
   def globalPluginsDirectory(sbtVersion: Version, parameters: ParametersList): File = {
     val maybeCustomDir = customGlobalPluginsDirectory(parameters)
     maybeCustomDir.getOrElse {
@@ -83,7 +85,9 @@ object SbtUtil {
   private def getFileProperty(name: String): Option[File] = Option(System.getProperty(name)) flatMap { path =>
     if (path.isEmpty) None else Some(new File(path))
   }
+
   private[sbt] def defaultGlobalBase: File = new File(SystemProperties.getUserHome) / Sbt.Extension
+
   private def defaultVersionedGlobalBase(sbtVersion: Version): File = {
     defaultGlobalBase / binaryVersion(sbtVersion).presentation
   }
@@ -359,6 +363,7 @@ object SbtUtil {
       .getOrElse(Seq.empty)
     java_opts_env ++ JvmOpts.loadFrom(workingDir) ++ vmOptionsFromSettings
   }
+
   def collectAllOptionsFromSbt(sbtOptions: Seq[String], directory: File, passParentEnvironment: Boolean, userSetEnv: Map[String, String])
                               (implicit reporter: BuildReporter = null): Seq[SbtOption] = {
     val sbt_opts_env = environmentsToUse(passParentEnvironment, userSetEnv).get("SBT_OPTS")
@@ -410,15 +415,36 @@ object SbtUtil {
     }
     externalRootProjectPath
       .orElse {
-        //Not sure when externalRootProjectPath can be empty in SBT projects
-        //But just in case fallback to ProjectUtil.guessProjectDir, but notice that it's not reliable in some cases (see SCL-21143)
+        // externalRootProjectPath can be empty when an IDEA project has not yet been "linked" to an external project.
+        // In other words, the project has not yet been imported as a project from some build tool. For example, an
+        // sbt project on disk can be opened in IDEA before the Scala plugin is even installed and enabled.
+        // After the Scala plugin is installed, the project will initially have an empty `externalRootProjectPath` until
+        // it is imported as an sbt project using the external system machinery.
         val message = s"Can't calculate external root project path for project `${project.getName}`, fallback to `ProjectUtil.guessProjectDir`"
-        if (ApplicationManager.getApplication.isInternal)
-          log.error(message)
-        else
-          log.warn(message)
+        log.warn(message)
         Option(ProjectUtil.guessProjectDir(project)).map(_.getCanonicalPath)
       }
       .getOrElse(throw new IllegalStateException(s"no project directory found for project ${project.getName}"))
+  }
+
+  /**
+   * Determines if the project should be treated as an sbt project (has been imported using our built-in sbt support)
+   * or it could be imported as such if it hasn't been imported by a BSP handler already.
+   *
+   * We use the result of this function to determine if we should highlight certain sbt project files and source files
+   * and show notification banners depending on the import state of the project.
+   */
+  private[sbt] def couldBeSbtProject(project: Project): Boolean =
+    isSbtProject(project) || couldBeImportedAsSbtProject(project) && !SbtBspProjectHandler.isImportedAsBspProject(project)
+
+  private def couldBeImportedAsSbtProject(project: Project): Boolean = {
+    val workingDir =
+      try getWorkingDirPath(project)
+      catch {
+        case _: IllegalStateException => return false
+      }
+    val projectDir = Path.of(workingDir)
+    val projectDirVirtualFile = VirtualFileManager.getInstance().findFileByNioPath(projectDir)
+    SbtProjectImportProvider.canImport(projectDirVirtualFile)
   }
 }

@@ -20,6 +20,13 @@ private[sbt] final class SbtProjectImportStateService(project: Project) {
    */
   private var state: State = State.NotInitialized
 
+  /**
+   * Checks if the project has been fully imported as an sbt project using the built-in sbt support. In any other case,
+   * it returns `false`.
+   *
+   * @note This method also returns `false` for sbt projects imported via BSP.
+   * @see [[org.jetbrains.sbt.SbtUtil.couldBeSbtProject]] which should most likely be called before this method
+   */
   def isImported: Boolean = synchronized {
     state match {
       case State.NotInitialized =>
