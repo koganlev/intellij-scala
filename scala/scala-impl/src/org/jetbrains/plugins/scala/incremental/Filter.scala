@@ -6,7 +6,7 @@ import com.intellij.openapi.util.TextRange
 
 class Filter extends HighlightInfoPostFilter {
   override def accept(highlightInfo: HighlightInfo): Boolean = {
-    val editor = Listener.currentEditor
+    val editor = Highlighting.editor
 
     if (editor == null) return true
 

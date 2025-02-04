@@ -1,7 +1,6 @@
 package org.jetbrains.plugins.scala
 package incremental
 
-import incremental.Listener._
 import project.ProjectExt
 
 import com.intellij.openapi.editor.event.{EditorFactoryEvent, EditorFactoryListener, VisibleAreaEvent, VisibleAreaListener}
@@ -24,7 +23,7 @@ class Listener extends EditorFactoryListener {
   }
 
   private def handleEvent(editor: Editor, delta: Boolean): Unit = {
-    currentEditor = editor
+    Highlighting.editor = editor
     VisibleRange.saveIn(editor)
     updaters(editor).scheduleUpdate(delta)
   }
@@ -47,8 +46,4 @@ class Listener extends EditorFactoryListener {
     editor.getScrollingModel.removeVisibleAreaListener(visibleAreaListener)
     updaters -= editor
   }
-}
-
-private object Listener {
-  var currentEditor: Editor = _
 }
