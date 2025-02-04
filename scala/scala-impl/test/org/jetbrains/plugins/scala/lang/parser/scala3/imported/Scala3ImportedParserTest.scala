@@ -9,7 +9,6 @@ import junit.framework.{Test, TestCase}
 import org.jetbrains.plugins.scala.base.ScalaFileSetTestCase
 import org.jetbrains.plugins.scala.extensions._
 import org.jetbrains.plugins.scala.lang.lexer.ScalaTokenTypes
-import org.jetbrains.plugins.scala.lang.parser.scala3.imported.Scala3ImportedParserTest.rangesDirectory
 import org.jetbrains.plugins.scala.lang.psi.impl.ScalaPsiElementFactory
 import org.jetbrains.plugins.scala.project.ScalaFeatures
 import org.jetbrains.plugins.scala.{LatestScalaVersions, Scala3Language}
@@ -17,13 +16,14 @@ import org.junit.Assert._
 
 import java.nio.file.Paths
 
-private[imported] abstract class Scala3ImportedParserTestBase(dir: String) extends ScalaFileSetTestCase(dir) {
+private[imported] class Scala3ImportedParserTestBase(config: Scala3ImportedParserTestConfig, runOnSucceedDirectory: Boolean)
+  extends ScalaFileSetTestCase(if (runOnSucceedDirectory) config.successDataDirectory else config.failDataDirectory) {
   override protected def getLanguage: Language = Scala3Language.INSTANCE
 
   protected def findErrorElements(fileText: String, project: Project): (Seq[PsiErrorElement], PsiFile) = {
     val lightFile = ScalaPsiElementFactory.createScalaFileFromText(
       fileText,
-      ScalaFeatures.forParserTests(LatestScalaVersions.Scala_3)
+      ScalaFeatures.forParserTests(LatestScalaVersions.allScalaNext.last)
     )(project)
 
     val errors = lightFile
@@ -51,7 +51,7 @@ private[imported] abstract class Scala3ImportedParserTestBase(dir: String) exten
     // check ranges
     lazy val interlaced = findInterlacedRanges(lightFile, testName)
 
-    if (shouldHaveErrors) {
+    if (!runOnSucceedDirectory) {
       println(fileText)
       println("-------")
       println(actualPsiTreeText)
@@ -79,7 +79,7 @@ private[imported] abstract class Scala3ImportedParserTestBase(dir: String) exten
   }
 
   protected override def transformExpectedResult(text: String): String = {
-    if (!shouldHaveErrors) {
+    if (runOnSucceedDirectory) {
       assertFalse(text.contains("PsiErrorElement"))
     }
     super.transformExpectedResult(text)
@@ -89,7 +89,7 @@ private[imported] abstract class Scala3ImportedParserTestBase(dir: String) exten
     ScalaTokenTypes.STRING_LITERAL_TOKEN_SET.contains(e.elementType)
 
   def findInterlacedRanges(root: PsiElement, testName: String): Seq[(PsiElement, (TextRange, String))] = {
-    val ranges = RangeMap.fromFileOrEmpty(Paths.get(getTestDataPath, rangesDirectory, testName + ".ranges"))
+    val ranges = RangeMap.fromFileOrEmpty(Paths.get(getTestDataPath, config.rangesDirectory, testName + ".ranges"))
     //val ignoredNames = Set("Import", "Export")
     for {
       e <- root.depthFirst()
@@ -128,30 +128,29 @@ private[imported] abstract class Scala3ImportedParserTestBase(dir: String) exten
     !newScala3Range.isEmpty && (scala3Range interlaces intellijRange)
   }
 
-  protected def shouldHaveErrors: Boolean
-
   override protected def shouldPass = true
 }
 
-class Scala3ImportedParserTest extends TestCase
-
-object Scala3ImportedParserTest {
-  val directory = "/parser/scala3Import/success"
-  val rangesDirectory = "/parser/scala3Import/ranges"
-  def suite(): Test = new Scala3ImportedParserTestBase(directory) {
-    override protected def shouldHaveErrors: Boolean = false
-  }
-}
-
 /**
- * If this tests fails because you fixed parser stuff,
+ * If these tests fails because you fixed parser stuff,
  * run [[Scala3ImportedParserTest_Move_Fixed_Tests]].
  */
-class Scala3ImportedParserTest_Fail extends TestCase
+class Scala3ImportedParserTest_LTS extends TestCase
+object Scala3ImportedParserTest_LTS {
+  def suite(): Test = new Scala3ImportedParserTestBase(Scala3ImportedParserTestConfig.LTS, runOnSucceedDirectory = true)
+}
 
-object Scala3ImportedParserTest_Fail {
-  val directory = "/parser/scala3Import/fail"
-  def suite(): Test = new Scala3ImportedParserTestBase(directory) {
-    override protected def shouldHaveErrors: Boolean = true
-  }
+class Scala3ImportedParserTest_LTS_Fail extends TestCase
+object Scala3ImportedParserTest_LTS_Fail {
+  def suite(): Test = new Scala3ImportedParserTestBase(Scala3ImportedParserTestConfig.LTS, runOnSucceedDirectory = true)
+}
+
+class Scala3ImportedParserTest_Newest extends TestCase
+object Scala3ImportedParserTest_Newest {
+  def suite(): Test = new Scala3ImportedParserTestBase(Scala3ImportedParserTestConfig.Newest, runOnSucceedDirectory = false)
+}
+
+class Scala3ImportedParserTest_Newest_Fail extends TestCase
+object Scala3ImportedParserTest_Newest_Fail {
+  def suite(): Test = new Scala3ImportedParserTestBase(Scala3ImportedParserTestConfig.Newest, runOnSucceedDirectory = false)
 }
