@@ -44,6 +44,7 @@ object Scala3ImportedParserTest_Move_Fixed_Tests {
 
         println("Move " + from)
         println("  to " + to)
+        Files.createDirectories(rootTestDataPath / config.successDataDirectory)
         Files.move(
           from,
           to,

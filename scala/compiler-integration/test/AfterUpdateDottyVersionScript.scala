@@ -254,29 +254,33 @@ object AfterUpdateDottyVersionScript {
   /**
    * Imports Tests from the dotty repositiory
    */
-  class Scala3ImportedParserTest_Import_FromDottyDirectory_LTS extends Scala3ImportedParserTest_Import_FromDottyDirectory(Scala3ImportedParserTestConfig.LTS)
-  class Scala3ImportedParserTest_Import_FromDottyDirectory_Newest extends Scala3ImportedParserTest_Import_FromDottyDirectory(Scala3ImportedParserTestConfig.Newest)
+  class Scala3ImportedParserTest_Import_FromDottyDirectory_LTS
+    extends Scala3ImportedParserTest_Import_FromDottyDirectory(Scala3ImportedParserTestConfig.LTS, scala3_repo_lts_branch)
+  class Scala3ImportedParserTest_Import_FromDottyDirectory_Newest
+    extends Scala3ImportedParserTest_Import_FromDottyDirectory(Scala3ImportedParserTestConfig.Newest, scala3_repo_newest_branch)
 
-  abstract class Scala3ImportedParserTest_Import_FromDottyDirectory(config: Scala3ImportedParserTestConfig)
+  abstract class Scala3ImportedParserTest_Import_FromDottyDirectory(config: Scala3ImportedParserTestConfig, branch: String)
     extends TestCase {
 
-    val successDataPath = testDataPath / config.failDataDirectory
+    val successDataPath = testDataPath / config.successDataDirectory
     val failDataPath = testDataPath / config.failDataDirectory
     val rangesPath = testDataPath / config.rangesDirectory
 
     def test(): Unit = {
-      val repo = ScalaRepository.prepareBranch(scala3_repo_newest_branch)
+      val repo = ScalaRepository.prepareBranch(branch)
 
       val srcDir = repo.path.resolve(Paths.get("tests", "pos")).toAbsolutePath
 
       clearDirectory(successDataPath)
       clearDirectory(failDataPath)
+      clearDirectory(rangesPath)
 
       println("srcdir =  " + srcDir)
       println("faildir = " + failDataPath)
 
       Files.createDirectories(successDataPath)
       Files.createDirectories(failDataPath)
+      Files.createDirectories(rangesPath)
 
       //val tempRangeSourceDir = Path.of("/home/tobi/desktop/testing/pos")
       val tempRangeSourceDir = newTempDir().toPath.resolve("pos")
