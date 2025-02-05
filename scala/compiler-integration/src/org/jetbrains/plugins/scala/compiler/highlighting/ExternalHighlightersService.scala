@@ -210,18 +210,13 @@ private final class ExternalHighlightersService(project: Project) { self =>
     highlightType: HighlightInfoType,
     highlightRange: TextRange,
     @Nls description: String,
-    diagnostics: List[Action],
-    fileLevel: Boolean
+    diagnostics: List[Action]
   ): HighlightInfo.Builder = {
     val builder = HighlightInfo.newHighlightInfo(highlightType)
       .range(highlightRange)
       .description(description)
       .escapedToolTip(escapeHtmlWithNewLines(description))
       .group(ScalaCompilerPassId)
-
-    if (fileLevel) {
-      builder.fileLevelAnnotation()
-    }
 
     diagnostics
       .map(CompilerDiagnosticIntentionAction.create(document, _))
@@ -243,9 +238,8 @@ private final class ExternalHighlightersService(project: Project) { self =>
 
   @RequiresReadLock
   private def toHighlightInfo(highlighting: ExternalHighlighting, document: Document, psiFile: PsiFile): Option[HighlightInfo] = {
-    // NOTE: in case there is no location in the file, do not ignore/lose messages
-    // instead report them as file level errors/warnings
-    val fileLevel = highlighting.rangeInfo.isEmpty
+    //NOTE: in case there is no location in the file, do not ignore/lose messages
+    //instead report them in the beginning of the file
     val range = highlighting.rangeInfo.getOrElse {
       // Our PosInfo data structure expects 1-based line and column information.
       val start = PosInfo(1, 1)
@@ -258,7 +252,7 @@ private final class ExternalHighlightersService(project: Project) { self =>
       val description = CompilerMessages.description(highlighting.message)
 
       def standardBuilder =
-        highlightInfoBuilder(document, highlighting.highlightType, highlightRange, description, highlighting.diagnostics, fileLevel)
+        highlightInfoBuilder(document, highlighting.highlightType, highlightRange, description, highlighting.diagnostics)
 
       val highlightInfo =
         if (CompilerMessages.isUnusedImport(description)) {
@@ -266,7 +260,7 @@ private final class ExternalHighlightersService(project: Project) { self =>
           val unusedImportRange = unusedImportElementRange(leaf)
           if (unusedImportRange != null) {
             // modify highlighting info to mimic Scala 2 unused import highlighting in Scala 3
-            highlightInfoBuilder(document, HighlightInfoType.UNUSED_SYMBOL, unusedImportRange, ScalaInspectionBundle.message("unused.import.statement"), Nil, fileLevel = false)
+            highlightInfoBuilder(document, HighlightInfoType.UNUSED_SYMBOL, unusedImportRange, ScalaInspectionBundle.message("unused.import.statement"), Nil)
               .registerFix(new ScalaOptimizeImportsFix, null, null, unusedImportRange, null)
           } else standardBuilder
         } else if (highlighting.diagnostics.isEmpty && CompilerMessages.isNeedsToBeAbstract(description)) {
