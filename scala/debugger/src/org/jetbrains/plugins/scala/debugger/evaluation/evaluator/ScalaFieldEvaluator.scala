@@ -12,6 +12,10 @@ import org.jetbrains.plugins.scala.debugger.evaluation.EvaluationException
 import org.jetbrains.plugins.scala.debugger.evaluation.evaluator.ScalaFieldEvaluator.MyModifier
 import org.jetbrains.plugins.scala.debugger.evaluation.util.DebuggerUtil
 
+/**
+ * Follows the implementation details of `com.intellij.debugger.engine.evaluation.expression.FieldEvaluator` but is
+ * adapted for Scala.
+ */
 case class ScalaFieldEvaluator(objectEvaluator: Evaluator, _fieldName: String,
                           classPrivateThisField: Boolean = false) extends ModifiableEvaluator {
   // Planned to be removed in the future, see IDEA-366793
@@ -136,7 +140,7 @@ case class ScalaFieldEvaluator(objectEvaluator: Evaluator, _fieldName: String,
   }
 }
 
-private object ScalaFieldEvaluator {
+object ScalaFieldEvaluator {
   //noinspection InstanceOf
   private final class MyModifier(evaluatedQualifier: AnyRef, evaluatedField: Field) extends Modifier {
     override def canInspect: Boolean = evaluatedQualifier.isInstanceOf[ObjectReference]

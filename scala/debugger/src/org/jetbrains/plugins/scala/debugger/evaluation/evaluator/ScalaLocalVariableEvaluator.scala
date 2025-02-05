@@ -1,18 +1,23 @@
 package org.jetbrains.plugins.scala.debugger.evaluation.evaluator
 
 import com.intellij.debugger.JavaDebuggerBundle
-import com.intellij.debugger.engine.evaluation.expression.{Evaluator, Modifier}
+import com.intellij.debugger.engine.evaluation.expression.{ModifiableEvaluator, ModifiableValue, Modifier}
 import com.intellij.debugger.engine.evaluation.{EvaluateException, EvaluationContextImpl}
 import com.intellij.debugger.jdi.{LocalVariableProxyImpl, StackFrameProxyImpl}
-import com.intellij.debugger.ui.impl.watch.{LocalVariableDescriptorImpl, NodeDescriptorImpl}
+import com.intellij.debugger.ui.impl.watch.LocalVariableDescriptorImpl
+import com.intellij.debugger.ui.tree.NodeDescriptor
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.Project
 import com.sun.jdi._
 import org.jetbrains.plugins.scala.debugger.evaluation.EvaluationException
+import org.jetbrains.plugins.scala.debugger.evaluation.evaluator.ScalaLocalVariableEvaluator.MyModifier
 import org.jetbrains.plugins.scala.debugger.evaluation.util.DebuggerUtil
 
-class ScalaLocalVariableEvaluator(name: String, sourceName: String) extends Evaluator {
-  import org.jetbrains.plugins.scala.debugger.evaluation.evaluator.ScalaLocalVariableEvaluator.LOG
+/**
+ * Follows the implementation details of `com.intellij.debugger.engine.evaluation.expression.LocalVariableEvaluator`
+ * but is adapted for Scala.
+ */
+class ScalaLocalVariableEvaluator(name: String, sourceName: String) extends ModifiableEvaluator {
   private val depthOfSearch = 20
 
   private val myName: String = DebuggerUtil.withoutBackticks(name)
@@ -36,7 +41,7 @@ class ScalaLocalVariableEvaluator(name: String, sourceName: String) extends Eval
       case _: AbsentInformationException => ""
     }
 
-  override def evaluate(context: EvaluationContextImpl): AnyRef = {
+  override def evaluateModifiable(context: EvaluationContextImpl): ModifiableValue = {
 
     def saveContextAndGetValue(framePr: StackFrameProxyImpl, local: LocalVariableProxyImpl) = {
       myEvaluatedVariable = local
@@ -117,7 +122,11 @@ class ScalaLocalVariableEvaluator(name: String, sourceName: String) extends Eval
       .orElse(evaluateWithFrames(withDollar))
 
     result match {
-      case Some(x) => x
+      case Some(x) =>
+        val modifier =
+          if ((myEvaluatedVariable ne null) && (myContext ne null)) new MyModifier(myContext, myEvaluatedVariable)
+          else null
+        new ModifiableValue(x, modifier)
       case None =>
         myEvaluatedVariable = null
         myContext = null
@@ -126,50 +135,49 @@ class ScalaLocalVariableEvaluator(name: String, sourceName: String) extends Eval
   }
 
   override def getModifier: Modifier = {
-    var modifier: Modifier = null
-    if (myEvaluatedVariable != null && myContext != null) {
-      modifier = new Modifier {
-        override def canInspect: Boolean = true
-        override def canSetValue: Boolean = true
-        override def setValue(value: Value): Unit = {
-          val frameProxy: StackFrameProxyImpl = myContext.getFrameProxy
-          try {
-            if (DebuggerUtil.isScalaRuntimeRef(myEvaluatedVariable.getType.name())) {
-              frameProxy.getValue(myEvaluatedVariable) match {
-                case objRef: ObjectReference =>
-                  val field = DebuggerUtil.runtimeRefField(objRef.referenceType())
-                  field.foreach(objRef.setValue(_, value))
-                case _ =>
-                  frameProxy.setValue(myEvaluatedVariable, value)
-              }
-            } else {
-              frameProxy.setValue(myEvaluatedVariable, value)
-            }
-          }
-          catch {
-            case e: EvaluateException =>
-              LOG.error(e)
-          }
-        }
-        override def getExpectedType: Type = {
-          try {
-            myEvaluatedVariable.getType
-          }
-          catch {
-            case e: EvaluateException =>
-              LOG.error(e)
-              null
-          }
-        }
-        override def getInspectItem(project: Project): NodeDescriptorImpl = {
-          new LocalVariableDescriptorImpl(project, myEvaluatedVariable)
-        }
-      }
+    if ((myEvaluatedVariable ne null) && (myContext ne null)) {
+      return new MyModifier(myContext, myEvaluatedVariable)
     }
-    modifier
+    null
   }
 }
 
-object ScalaLocalVariableEvaluator {
-  private val LOG: Logger = Logger.getInstance("#org.jetbrains.plugins.scala.debugger.evaluation.evaluator.ScalaLocalVariableEvaluator")
+private object ScalaLocalVariableEvaluator {
+  private val LOG: Logger = Logger.getInstance(classOf[ScalaLocalVariableEvaluator])
+
+  private final class MyModifier(context: EvaluationContextImpl, evaluatedVariable: LocalVariableProxyImpl) extends Modifier {
+    override def canInspect: Boolean = true
+    override def canSetValue: Boolean = true
+    override def setValue(value: Value): Unit = {
+      val frameProxy = context.getFrameProxy
+      try {
+        if (DebuggerUtil.isScalaRuntimeRef(evaluatedVariable.getType.name())) {
+          frameProxy.getValue(evaluatedVariable) match {
+            case objRef: ObjectReference =>
+              val field = DebuggerUtil.runtimeRefField(objRef.referenceType())
+              field.foreach(objRef.setValue(_, value))
+            case _ =>
+              frameProxy.setValue(evaluatedVariable, value)
+          }
+        } else {
+          frameProxy.setValue(evaluatedVariable, value)
+        }
+      }
+      catch {
+        case e: EvaluateException =>
+          LOG.error(e)
+      }
+    }
+
+    override def getExpectedType: Type =
+      try evaluatedVariable.getType
+      catch {
+        case e: EvaluateException =>
+          LOG.error(e)
+          null
+      }
+
+    override def getInspectItem(project: Project): NodeDescriptor =
+      new LocalVariableDescriptorImpl(project, evaluatedVariable)
+  }
 }
