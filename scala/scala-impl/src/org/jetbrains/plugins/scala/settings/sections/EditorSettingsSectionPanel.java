@@ -11,6 +11,7 @@ import com.intellij.uiDesigner.core.GridLayoutManager;
 import com.intellij.uiDesigner.core.Spacer;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.scala.ScalaBundle;
+import org.jetbrains.plugins.scala.incremental.Highlighting;
 import org.jetbrains.plugins.scala.project.ScalaLanguageLevel;
 import org.jetbrains.plugins.scala.settings.ScalaProjectSettings;
 import org.jetbrains.plugins.scala.settings.SimpleMappingListCellRenderer;
@@ -195,7 +196,12 @@ public class EditorSettingsSectionPanel extends SettingsSectionPanel {
 
         scalaProjectSettings.setCompilerHighlightingScala2(typeCheckerScala2.getSelectedItem() == ScalaProjectSettings.TypeChecker.Compiler);
         scalaProjectSettings.setCompilerHighlightingScala3(typeCheckerScala3.getSelectedItem() == ScalaProjectSettings.TypeChecker.Compiler);
-        scalaProjectSettings.setIncrementalHighlighting(incrementalHighlighting.isSelected());
+        boolean wasEnabled = scalaProjectSettings.isIncrementalHighlighting();
+        boolean enabled = incrementalHighlighting.isSelected();
+        scalaProjectSettings.setIncrementalHighlighting(enabled);
+        if (enabled != wasEnabled) {
+            Highlighting.update(enabled, myProject);
+        }
         scalaProjectSettings.setUseCompilerRanges(useCompilerRanges.isSelected());
         scalaProjectSettings.setUseCompilerTypes(useCompilerTypes.isSelected());
     }

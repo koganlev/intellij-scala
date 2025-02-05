@@ -14,8 +14,6 @@ private object VisibleRange {
   private def lookaround: Int = Registry.intValue("scala.incremental.highlighting.lookaround")
 
   def isVisible(e: PsiElement): Boolean = {
-    if (!incremental.Highlighting.enabledIn(e.getProject)) return true
-
     val elementRange = e.getTextRange
 
     editorsFor(e).exists { editor =>

@@ -6,7 +6,6 @@ import com.intellij.codeInsight.daemon.impl.{FileStatusMap, HighlightInfoProcess
 import com.intellij.openapi.editor.{Document, Editor}
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiFile
-import org.jetbrains.plugins.scala.incremental
 
 final class ScalaUnusedImportsPassFactory
   extends TextEditorHighlightingPassFactory
@@ -24,8 +23,6 @@ final class ScalaUnusedImportsPassFactory
   }
 
   override def createHighlightingPass(file: PsiFile, editor: Editor): ScalaUnusedImportPass = {
-    if (incremental.Highlighting.enabledIn(file.getProject)) return null
-
     val dirtyRange = FileStatusMap.getDirtyTextRange(editor.getDocument, file, Pass.UPDATE_ALL)
     val nothingChangedInFile = dirtyRange == null && (ScalaUnusedImportPass.isUpToDate(file) || !ProblemHighlightFilter.shouldHighlightFile(file))
     if (nothingChangedInFile)
