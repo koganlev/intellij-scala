@@ -24,6 +24,24 @@ object CompilationCache {
       val combined = id ++ hashString
       val hash = HashUtil.farmHash(combined.getBytes(StandardCharsets.UTF_8))
       java.lang.Long.toHexString(hash)
+    },
+    pushRemoteCache := {
+      val s = streams.value
+      pushRemoteCache.result.value match {
+        case Value(_) => ()
+        case Inc(cause) =>
+          s.log.warn(s"Failed to push the compilation cache to the remote repository, continuing: $cause")
+          ()
+      }
+    },
+    pullRemoteCache := {
+      val s = streams.value
+      pullRemoteCache.result.value match {
+        case Value(_) => ()
+        case Inc(cause) =>
+          s.log.warn(s"Failed to pull the compilation cache from the remote repository, continuing without it: $cause")
+          ()
+      }
     }
   )
 
