@@ -69,7 +69,6 @@ import java.util.regex.Pattern
 import java.util.stream.{Stream => JStream}
 import java.util.{Arrays, Set => JSet}
 import scala.annotation.{nowarn, tailrec}
-import scala.collection.convert.StreamExtensions.AccumulatorFactoryInfo
 import scala.collection.immutable.ArraySeq
 import scala.collection.mutable
 import scala.collection.mutable.ArrayBuffer
@@ -1841,10 +1840,6 @@ package object extensions {
 
     def isDirectory: Boolean = Files.isDirectory(path)
     def isRegularFile: Boolean = Files.isRegularFile(path)
-
-    def lines[C1](factory: collection.Factory[String, C1], charset: Charset = Charset.defaultCharset)
-                 (implicit info: AccumulatorFactoryInfo[String, C1]): C1 =
-      Files.lines(path, charset).toScala(factory)
 
     def nameContains(str: String): Boolean = path.getFileName.toString.contains(str)
     def nameMatches(regex: String): Boolean = path.getFileName.toString.matches(regex)

@@ -11,7 +11,8 @@ import org.jetbrains.plugins.scala.project.sdkdetect.repository.CompilerClasspat
 import org.jetbrains.plugins.scala.project.template.{ScalaSdkComponent, ScalaSdkDescriptor, SdkChoice, SystemSdkChoice}
 import org.jetbrains.plugins.scala.util.JarManifestUtils
 
-import java.nio.file.{Path, Paths}
+import java.nio.charset.Charset
+import java.nio.file.{Files, Path, Paths}
 import java.util.stream.{Stream => JStream}
 import scala.jdk.CollectionConverters.IteratorHasAsScala
 import scala.util.Using
@@ -88,7 +89,7 @@ private[project] object SystemDetector extends ScalaSdkDetectorBase {
     if (!versionFile.exists)
       None
     else {
-      val line = versionFile.lines(Iterator).find(_.startsWith(VersionPropertyPrefix))
+      val line = Using.resource(Files.lines(versionFile, Charset.defaultCharset()))(_.iterator().asScala.find(_.startsWith(VersionPropertyPrefix)))
       line.map(_.stripPrefix(VersionPropertyPrefix).trim)
     }
   }

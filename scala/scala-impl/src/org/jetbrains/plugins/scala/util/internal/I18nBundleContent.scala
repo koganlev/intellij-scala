@@ -66,7 +66,7 @@ object I18nBundleContent {
     read(Path.of(bundlePath))
 
   def read(bundleFile: Path): I18nBundleContent = {
-    val lines = bundleFile.lines(Array, StandardCharsets.UTF_8)
+    val lines = Files.readAllLines(bundleFile, StandardCharsets.UTF_8).toArray(new Array[String](_))
 
     var comments = ""
     var path = noPath
