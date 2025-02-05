@@ -3,11 +3,9 @@ package org.jetbrains.plugins.scala.findUsages.factory
 import com.intellij.find.findUsages.{AbstractFindUsagesDialog, FindUsagesHandler, FindUsagesOptions}
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.psi.{PsiElement, PsiMethod}
-import org.jetbrains.plugins.scala.extensions.Parent
-import org.jetbrains.plugins.scala.findUsages.factory.dialog.{ScalaOverridableMemberFindUsagesDialog, ScalaTypeDefinitionUsagesDialog}
 import org.jetbrains.plugins.scala.lang.psi.ScalaPsiUtil
-import org.jetbrains.plugins.scala.lang.psi.api.statements.{ScFunction, ScFunctionDefinition, ScTypeAlias, ScValueOrVariable}
-import org.jetbrains.plugins.scala.lang.psi.api.toplevel.typedef.{ScClass, ScMember, ScTypeDefinition}
+import org.jetbrains.plugins.scala.lang.psi.api.statements.ScFunctionDefinition
+import org.jetbrains.plugins.scala.lang.psi.api.toplevel.typedef.ScClass
 import org.jetbrains.plugins.scala.lang.psi.types.api.designator.ScDesignatorType
 
 class ScalaFindUsagesHandlerBase(
@@ -36,7 +34,7 @@ class ScalaFindUsagesHandlerBase(
     }
 
   override def getFindUsagesOptions(dataContext: DataContext): FindUsagesOptions = {
-    val options = config.getFindUsagesOptions(element)
+    val options = config.getFindUsagesOptionsResolver(element).getOptions
     options.getOrElse(super.getFindUsagesOptions(dataContext))
   }
 
@@ -45,35 +43,9 @@ class ScalaFindUsagesHandlerBase(
     toShowInNewTab:   Boolean,
     mustOpenInNewTab: Boolean
   ): AbstractFindUsagesDialog = {
-    def overridableDialog(member: ScMember) = new ScalaOverridableMemberFindUsagesDialog(
-      member,
-      getProject,
-      config.getMemberOptions,
-      toShowInNewTab,
-      mustOpenInNewTab,
-      isSingleFile,
-      this
-    )
-
-    element match {
-      case t: ScTypeDefinition =>
-        new ScalaTypeDefinitionUsagesDialog(
-          t,
-          getProject,
-          getFindUsagesOptions,
-          toShowInNewTab,
-          mustOpenInNewTab,
-          isSingleFile,
-          this
-        )
-      case function: ScFunction =>
-        overridableDialog(function)
-      case typeAlias: ScTypeAlias =>
-        overridableDialog(typeAlias)
-      case Parent(Parent(value: ScValueOrVariable)) =>
-        overridableDialog(value)
-      case _ =>
-        super.getFindUsagesDialog(isSingleFile, toShowInNewTab, mustOpenInNewTab)
-    }
+    config
+      .getFindUsagesOptionsResolver(element)
+      .getDialog(this, getProject, toShowInNewTab, mustOpenInNewTab, isSingleFile)
+      .getOrElse(super.getFindUsagesDialog(isSingleFile, toShowInNewTab, mustOpenInNewTab))
   }
 }
