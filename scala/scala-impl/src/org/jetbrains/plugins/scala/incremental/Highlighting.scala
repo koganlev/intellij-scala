@@ -17,6 +17,7 @@ object Highlighting {
     !suppress && project != null && ScalaProjectSettings.in(project).isIncrementalHighlighting
 
   implicit class ElementHighlightingExt(private val e: PsiElement) extends AnyVal {
-    def isVisible: Boolean = VisibleRange.isVisible(e)
+    def isVisible: Boolean =
+      !enabledIn(e.getProject) || VisibleRange.isVisible(e)
   }
 }
