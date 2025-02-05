@@ -99,7 +99,7 @@ class SharedSourcesCrossProjectTest_ProdTestSourcesSeparatedEnabled extends Zinc
     }
 
     def fileIsNullAssertion(sharedClass: Path, moduleName: String): Unit =
-      assertNull(s"Shared class file ${sharedClass.toString} found in $moduleName, but it shouldn't", sharedClass)
+      assertNull(s"Shared class file found in $moduleName, but it shouldn't", sharedClass)
 
     Seq(baseJSMain,baseJVMMain).foreach { module =>
       val sharedClass = findClassFile("Shared", module, isTest = false)
