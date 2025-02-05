@@ -4,6 +4,7 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.progress.{EmptyProgressIndicator, ProcessCanceledException, ProgressIndicator, ProgressManager, Task}
 import com.intellij.openapi.util.Disposer
+import com.intellij.ui.scale.JBUIScale
 import org.jetbrains.annotations.Nls
 import org.jetbrains.plugins.scala.ScalaBundle
 import org.jetbrains.plugins.scala.extensions.ObjectExt
@@ -51,7 +52,7 @@ trait AsynchronousVersionsDownloading {
 
   protected def createSComboBoxWithSearchingListRenderer[T <: Object : ClassTag](elements: ListSet[T], textCustomizer: Option[T => String], isLoading: AtomicBoolean): SComboBox[T] = {
     val searchingListCellRenderer = new SearchingListCellRenderer[T](isLoading, textCustomizer)
-    new SComboBox(elements.toArray, 150, searchingListCellRenderer, true)
+    new SComboBox(elements.toArray, JBUIScale.scale(140), searchingListCellRenderer, true)
   }
 
   private def createBackgroundableTask[T](@Nls title: String, onComplete: Try[T] => Unit)(operationToExecute: => T): Task.Backgroundable = {
