@@ -6,7 +6,9 @@ import project.ProjectExt
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer
 import com.intellij.openapi.editor.event.{EditorFactoryEvent, EditorFactoryListener, VisibleAreaEvent, VisibleAreaListener}
 import com.intellij.openapi.editor.ex.{FoldingListener, FoldingModelEx}
-import com.intellij.openapi.editor.{Editor, FoldRegion}
+import com.intellij.openapi.editor.{Editor, EditorFactory, FoldRegion}
+import com.intellij.openapi.extensions.ExtensionPointName
+import com.intellij.openapi.project.Project
 
 import java.awt.event.{KeyAdapter, KeyEvent}
 
@@ -52,6 +54,10 @@ class Listener extends EditorFactoryListener {
 
     if (!incremental.Highlighting.enabledIn(editor.getProject) || !isScalaIn(editor.getVirtualFile)) return
 
+    connectTo(editor)
+  }
+
+  private def connectTo(editor: Editor): Unit = {
     updaters += editor -> new Updater(editor)
     editor.getScrollingModel.addVisibleAreaListener(visibleAreaListener)
     editor.getFoldingModel.asInstanceOf[FoldingModelEx].addListener(foldingListener, editor.getProject.unloadAwareDisposable)
@@ -63,8 +69,26 @@ class Listener extends EditorFactoryListener {
 
     if (!incremental.Highlighting.enabledIn(editor.getProject) || !isScalaIn(editor.getVirtualFile)) return
 
+    disconnectFrom(editor)
+  }
+
+  private def disconnectFrom(editor: Editor): Unit = {
     updaters -= editor
     editor.getScrollingModel.removeVisibleAreaListener(visibleAreaListener)
     editor.getContentComponent.removeKeyListener(keyListener)
+  }
+}
+
+private object Listener {
+  private def instance = new ExtensionPointName("com.intellij.editorFactoryListener").findExtensionOrFail(classOf[Listener])
+
+  private def editors = EditorFactory.getInstance.getAllEditors.filter(editor => isScalaIn(editor.getVirtualFile))
+
+  def connectTo(project: Project): Unit = {
+    editors.foreach(instance.connectTo)
+  }
+
+  def disconnectFrom(project: Project): Unit = {
+    editors.foreach(instance.disconnectFrom)
   }
 }

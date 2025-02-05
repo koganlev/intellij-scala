@@ -3,6 +3,7 @@ package incremental
 
 import settings.ScalaProjectSettings
 
+import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
@@ -15,6 +16,15 @@ object Highlighting {
 
   def enabledIn(project: Project): Boolean =
     !suppress && project != null && ScalaProjectSettings.in(project).isIncrementalHighlighting
+
+  def update(enabled: Boolean, project: Project): Unit = {
+    if (enabled) {
+      Listener.connectTo(project)
+    } else {
+      Listener.disconnectFrom(project)
+    }
+    DaemonCodeAnalyzer.getInstance(project).restart()
+  }
 
   implicit class ElementHighlightingExt(private val e: PsiElement) extends AnyVal {
     def isVisible: Boolean =
