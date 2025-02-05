@@ -53,7 +53,7 @@ class ScalaArrayAccessEvaluator(arrayReferenceEvaluator: Evaluator, indexEvaluat
 }
 
 private object ScalaArrayAccessEvaluator {
-  private class MyModifier(evaluatedArrayReference: ArrayReference, evaluatedIndex: Int) extends Modifier {
+  private final class MyModifier(evaluatedArrayReference: ArrayReference, evaluatedIndex: Int) extends Modifier {
     override def canInspect: Boolean = true
     override def canSetValue: Boolean = true
     override def setValue(value: Value): Unit = {

@@ -2,16 +2,19 @@ package org.jetbrains.plugins.scala.debugger.evaluation.evaluator
 
 import com.intellij.debugger.JavaDebuggerBundle
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl
-import com.intellij.debugger.engine.evaluation.expression.{Evaluator, Modifier}
-import com.intellij.debugger.impl.DebuggerUtilsEx
-import com.intellij.debugger.ui.impl.watch.{FieldDescriptorImpl, NodeDescriptorImpl}
+import com.intellij.debugger.engine.evaluation.expression.{Evaluator, ModifiableEvaluator, ModifiableValue, Modifier}
+import com.intellij.debugger.ui.impl.watch.FieldDescriptorImpl
+import com.intellij.debugger.ui.tree.NodeDescriptor
 import com.intellij.openapi.project.Project
 import com.sun.jdi._
+import org.jetbrains.annotations.NotNull
 import org.jetbrains.plugins.scala.debugger.evaluation.EvaluationException
+import org.jetbrains.plugins.scala.debugger.evaluation.evaluator.ScalaFieldEvaluator.MyModifier
 import org.jetbrains.plugins.scala.debugger.evaluation.util.DebuggerUtil
 
 case class ScalaFieldEvaluator(objectEvaluator: Evaluator, _fieldName: String,
-                          classPrivateThisField: Boolean = false) extends Evaluator {
+                          classPrivateThisField: Boolean = false) extends ModifiableEvaluator {
+  // Planned to be removed in the future, see IDEA-366793
   private var myEvaluatedQualifier: AnyRef = _
   private var myEvaluatedField: Field = _
 
@@ -67,7 +70,8 @@ case class ScalaFieldEvaluator(objectEvaluator: Evaluator, _fieldName: String,
     null
   }
 
-  override def evaluate(context: EvaluationContextImpl): AnyRef = {
+  @NotNull
+  override def evaluateModifiable(context: EvaluationContextImpl): ModifiableValue = {
     myEvaluatedField = null
     myEvaluatedQualifier = null
     val obj: AnyRef = DebuggerUtil.unwrapScalaRuntimeRef {
@@ -76,7 +80,8 @@ case class ScalaFieldEvaluator(objectEvaluator: Evaluator, _fieldName: String,
     evaluateField(obj, context)
   }
 
-  private def evaluateField(obj: AnyRef, context: EvaluationContextImpl): AnyRef = {
+  @NotNull
+  private def evaluateField(obj: AnyRef, context: EvaluationContextImpl): ModifiableValue = {
     obj match {
       case refType: ReferenceType =>
         var field: Field = findField(refType, context)
@@ -86,9 +91,10 @@ case class ScalaFieldEvaluator(objectEvaluator: Evaluator, _fieldName: String,
         if (field == null || !field.isStatic) {
           throw EvaluationException(JavaDebuggerBundle.message("evaluation.error.no.static.field", fieldName))
         }
+        val modifier = new MyModifier(refType, field)
         myEvaluatedField = field
         myEvaluatedQualifier = refType
-        refType.getValue(field)
+        new ModifiableValue(refType.getValue(field), modifier)
       case objRef: ObjectReference =>
         val refType: ReferenceType = objRef.referenceType
         if (!(refType.isInstanceOf[ClassType] || refType.isInstanceOf[ArrayType])) {
@@ -96,7 +102,8 @@ case class ScalaFieldEvaluator(objectEvaluator: Evaluator, _fieldName: String,
         }
         objRef match {
           case arrayRef: ArrayReference if "length" == fieldName =>
-            return DebuggerUtilsEx.createValue(context.getDebugProcess.getVirtualMachineProxy, "int", arrayRef.length)
+            val value = context.getVirtualMachineProxy.mirrorOf(arrayRef.length())
+            return new ModifiableValue(value, null)
           case _ =>
         }
         var field: Field = findField(refType, context)
@@ -106,9 +113,12 @@ case class ScalaFieldEvaluator(objectEvaluator: Evaluator, _fieldName: String,
         if (field == null) {
           throw EvaluationException(JavaDebuggerBundle.message("evaluation.error.no.instance.field", fieldName))
         }
-        myEvaluatedQualifier = if (field.isStatic) refType else objRef
+        val qualifier = if (field.isStatic) refType else objRef
+        val modifier = new MyModifier(qualifier, field)
+        myEvaluatedQualifier = qualifier
         myEvaluatedField = field
-        if (field.isStatic) refType.getValue(field) else objRef.getValue(field)
+        val value = if (field.isStatic) refType.getValue(field) else objRef.getValue(field)
+        new ModifiableValue(value, modifier)
       case null => throw EvaluationException(new NullPointerException)
       case _ =>
         throw EvaluationException(JavaDebuggerBundle.message("evaluation.error.evaluating.field", fieldName))
@@ -116,43 +126,37 @@ case class ScalaFieldEvaluator(objectEvaluator: Evaluator, _fieldName: String,
   }
 
   override def getModifier: Modifier = {
-    var modifier: Modifier = null
-    if (myEvaluatedField != null &&
-      (myEvaluatedQualifier.isInstanceOf[ClassType] ||
-        myEvaluatedQualifier.isInstanceOf[ObjectReference])) {
-      modifier = new Modifier {
-        override def canInspect: Boolean = {
-          myEvaluatedQualifier.isInstanceOf[ObjectReference]
-        }
-
-        override def canSetValue: Boolean = {
-          true
-        }
-
-        override def setValue(value: Value): Unit = {
-          if (myEvaluatedQualifier.isInstanceOf[ReferenceType]) {
-            val classType: ClassType = myEvaluatedQualifier.asInstanceOf[ClassType]
-            classType.setValue(myEvaluatedField, value)
-          }
-          else {
-            val objRef: ObjectReference = myEvaluatedQualifier.asInstanceOf[ObjectReference]
-            objRef.setValue(myEvaluatedField, value)
-          }
-        }
-
-        override def getExpectedType: Type = {
-          myEvaluatedField.`type`
-        }
-
-        override def getInspectItem(project: Project): NodeDescriptorImpl = {
-          myEvaluatedQualifier match {
-            case reference: ObjectReference =>
-              new FieldDescriptorImpl(project, reference, myEvaluatedField)
-            case _ => null
-          }
-        }
+    if (myEvaluatedField ne null) {
+      myEvaluatedQualifier match {
+        case _: ClassType | _: ObjectReference => return new MyModifier(myEvaluatedQualifier, myEvaluatedField)
+        case _ =>
       }
     }
-    modifier
+    null
+  }
+}
+
+private object ScalaFieldEvaluator {
+  //noinspection InstanceOf
+  private final class MyModifier(evaluatedQualifier: AnyRef, evaluatedField: Field) extends Modifier {
+    override def canInspect: Boolean = evaluatedQualifier.isInstanceOf[ObjectReference]
+    override def canSetValue: Boolean = true
+    override def setValue(value: Value): Unit = {
+      if (evaluatedQualifier.isInstanceOf[ReferenceType]) {
+        val classType = evaluatedQualifier.asInstanceOf[ClassType]
+        classType.setValue(evaluatedField, value)
+      } else {
+        val objRef = evaluatedQualifier.asInstanceOf[ObjectReference]
+        objRef.setValue(evaluatedField, value)
+      }
+    }
+    override def getExpectedType: Type = evaluatedField.`type`()
+    override def getInspectItem(project: Project): NodeDescriptor = {
+      evaluatedQualifier match {
+        case objRef: ObjectReference =>
+          new FieldDescriptorImpl(project, objRef, evaluatedField)
+        case _ => null
+      }
+    }
   }
 }
