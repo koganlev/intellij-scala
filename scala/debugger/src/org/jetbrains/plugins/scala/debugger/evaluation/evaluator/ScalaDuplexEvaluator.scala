@@ -1,40 +1,25 @@
 package org.jetbrains.plugins.scala
 package debugger.evaluation.evaluator
 
-import com.intellij.debugger.engine.evaluation.EvaluationContextImpl
-import com.intellij.debugger.engine.evaluation.expression.{Evaluator, Modifier}
-import org.jetbrains.plugins.scala.debugger.evaluation.EvaluationException
-
-import scala.annotation.nowarn
+import com.intellij.debugger.engine.evaluation.expression.{Evaluator, ModifiableEvaluator, ModifiableValue}
+import com.intellij.debugger.engine.evaluation.{EvaluateExceptionUtil, EvaluationContextImpl}
 
 /**
  * Tries to use first evaluator first. If gets exception or null, uses second one.
  */
-case class ScalaDuplexEvaluator(first: Evaluator, second: Evaluator) extends Evaluator {
+case class ScalaDuplexEvaluator(first: Evaluator, second: Evaluator) extends ModifiableEvaluator {
 
-  private var myModifier: Modifier = _
-
-  override def evaluate(context: EvaluationContextImpl): AnyRef = {
-    var result: AnyRef = null
-    try {
-      result = first.evaluate(context)
-      myModifier = first.getModifier: @nowarn("cat=deprecation") // IDEA-366620
-    }
+  override def evaluateModifiable(context: EvaluationContextImpl): ModifiableValue = {
+    try first.evaluateModifiable(context)
     catch {
       case e1: Exception if first != second =>
-        try {
-          result = second.evaluate(context)
-          myModifier = second.getModifier: @nowarn("cat=deprecation") // IDEA-366620
-        }
+        try second.evaluateModifiable(context)
         catch {
           case e2: Exception =>
             val message = s"${e1.getMessage};${System.lineSeparator()} ${e2.getMessage}"
-            throw EvaluationException(message)
+            throw EvaluateExceptionUtil.createEvaluateException(message)
         }
-      case e: Exception => throw EvaluationException(e)
+      case e: Exception => throw EvaluateExceptionUtil.createEvaluateException(e)
     }
-    result
   }
-
-  override def getModifier: Modifier = myModifier
 }
