@@ -12,6 +12,7 @@ Document tests/pos/i6847.scala
 (12:22..12:23) _empty_/Instance.defer().[A] -> 12:13
 (12:26..12:34) _empty_/Instance# -> 5:7
 (12:35..12:36) _empty_/Instance.defer().[A] -> 12:13
+(13:8..13:11) _empty_/Syntax#ret(). -> 2:27
 (14:9..14:17) _empty_/Instance# -> 5:7
 (14:18..14:19) _empty_/Instance.defer().[A] -> 12:13
 

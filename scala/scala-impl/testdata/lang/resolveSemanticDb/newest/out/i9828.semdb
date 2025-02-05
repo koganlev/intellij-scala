@@ -9,6 +9,6 @@ Document tests/pos/i9828.scala
 (5:23..5:26) scala/Int#
 (5:44..5:50) scala/Predef.String#
 (6:11..6:12) _empty_/i9828$package.g(). -> 4:31
-(7:18..7:19) _empty_/i9828$package.f(). -> 5:39
 (7:23..7:29) scala/Predef.String#
+(7:38..7:39) _empty_/i9828$package.f(). -> 5:39
 

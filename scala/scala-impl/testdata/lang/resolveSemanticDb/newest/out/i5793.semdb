@@ -2,6 +2,7 @@ Document tests/pos/i5793/A.scala
 (3:16..3:17) _empty_/exec.Runner#[T] -> 2:16
 (3:20..3:24) scala/Unit#
 (6:16..6:22) _empty_/exec.Runner# -> 2:9
+(6:16..6:22) _empty_/exec.Runner.run().[T] -> 6:13
 (6:27..6:28) _empty_/exec.Runner.run().[T] -> 6:13
 (6:31..6:35) scala/Unit#
 (6:38..6:48) scala/Predef.implicitly().

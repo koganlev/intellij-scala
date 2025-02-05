@@ -12,8 +12,8 @@ Document tests/pos/i7413.scala
 (6:74..6:77) scala/Predef.`???`().
 (9:19..9:25) scala/Predef.String#
 (9:28..9:34) scala/Predef.String#
+(9:37..9:38) scala/StringContext#s().
 (9:46..9:50) _empty_/Greeter#greet().(name) -> 9:13
-(9:50..9:51) scala/StringContext#s().
 (11:28..11:34) scala/Predef.String#
 (11:45..11:52) _empty_/Greeter# -> 8:7
 (14:15..14:25) scala/Conversion#
@@ -29,6 +29,6 @@ Document tests/pos/i7413.scala
 (20:22..20:27) _empty_/Greeter#greet(). -> 9:7
 (20:30..20:34) _empty_/MyFixture#name. -> 11:22
 (20:36..20:38) scala/Any#`==`().
+(20:39..20:40) scala/StringContext#s().
 (20:51..20:55) _empty_/MyFixture#name. -> 11:22
-(20:56..20:57) scala/StringContext#s().
 

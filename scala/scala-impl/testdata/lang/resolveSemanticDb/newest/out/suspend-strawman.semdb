@@ -199,6 +199,7 @@ Document tests/pos/suspend-strawman/monadic-reflect.scala
 (19:24..19:25) _empty_/CanReflect#reflect().[R] -> 19:15
 (19:29..19:30) _empty_/CanReflect#reflect().[R] -> 19:15
 (21:21..21:26) _empty_/Monad# -> 4:7
+(21:21..21:26) _empty_/Monadic#[M] -> 21:15
 (26:18..26:19) _empty_/Monadic#pure().[A] -> 26:12
 (26:22..26:23) _empty_/Monadic#[M] -> 21:15
 (26:24..26:25) _empty_/Monadic#pure().[A] -> 26:12
@@ -238,6 +239,7 @@ Document tests/pos/suspend-strawman/monadic-reflect.scala
 (53:24..53:25) _empty_/Monadic#[M] -> 21:15
 (53:26..53:27) _empty_/Monadic#reify().[R] -> 49:13
 (53:36..53:38) local3 -> 24:11
+(53:39..53:46) _empty_/Monad#flatMap(). -> 11:9
 (53:47..53:48) local4 -> 53:31
 (53:49..53:55) runtime/Suspension#resume(). -> 9:7
 (54:7..54:11) _empty_/Monadic#pure(). -> 26:7

@@ -53,15 +53,15 @@ Document tests/pos/i4564.scala
 (34:38..34:41) scala/Int#
 (37:24..37:31) scala/Boolean#
 (37:34..37:44) _empty_/NoClashSig# -> 39:12
-(37:51..37:52) _empty_/NoClashSig.apply(+1).(x) -> 37:21
+(37:51..37:52) _empty_/NoClashSig.apply().(x) -> 37:21
 (37:54..37:64) _empty_/NoClashSig. -> 36:8
 (37:73..37:76) scala/Predef.`???`().
 (39:35..39:38) scala/Int#
 (43:24..43:31) scala/Boolean#
 (43:34..43:49) _empty_/NoClashOverload# -> 46:12
-(43:56..43:57) _empty_/NoClashOverload.apply(+1).(x) -> 43:21
+(43:56..43:57) _empty_/NoClashOverload.apply().(x) -> 43:21
 (43:59..43:74) _empty_/NoClashOverload. -> 41:8
-(43:83..43:88) _empty_/NoClashOverload.apply(+2). -> 44:7
+(43:83..43:88) _empty_/NoClashOverload.apply(+1). -> 44:7
 (44:16..44:22) scala/Predef.String#
 (44:25..44:40) _empty_/NoClashOverload# -> 46:12
 (44:43..44:46) scala/Predef.`???`().

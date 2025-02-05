@@ -1,0 +1,25 @@
+Document tests/pos/named-tuple-unstable.scala
+(1:8..1:13) scala/
+(1:14..1:22) scala/language.
+(1:23..1:35) scala/language.experimental.
+(1:36..1:47) scala/language.experimental.namedTuples.
+(2:8..2:18) scala/NamedTuple.
+(4:19..4:29) scala/Selectable#
+(5:10..5:13) scala/Any#
+(6:27..6:28) _empty_/Foo#f. -> 5:7
+(7:27..7:33) scala/Predef.String#
+(7:36..7:39) scala/Any#
+(10:14..10:17) _empty_/Foo# -> 4:7
+(10:27..10:30) scala/Int#
+(10:35..10:38) scala/Predef.`???`().
+(11:14..11:17) _empty_/Foo# -> 4:7
+(11:27..11:30) scala/Int#
+(11:35..11:38) scala/Predef.`???`().
+(13:13..13:17) scala/Unit#
+(14:12..14:15) scala/Int#
+(14:18..14:23) _empty_/Test.elem1. -> 10:7
+(14:24..14:31) _empty_/Foo#selectDynamic(). -> 7:7
+(15:12..15:15) scala/Int#
+(15:18..15:23) _empty_/Test.elem2(). -> 11:7
+(15:24..15:31) _empty_/Foo#selectDynamic(). -> 7:7
+

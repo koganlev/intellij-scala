@@ -15,4 +15,5 @@ Document tests/pos/i10311.scala
 (14:11..14:12) _empty_/test.a. -> 13:7
 (14:13..14:14) _empty_/Module.MyInt.Ops#x(). -> 5:11
 (15:11..15:12) _empty_/test.a. -> 13:7
+(15:13..15:14) _empty_/Module.MyInt.y(). -> 7:33
 

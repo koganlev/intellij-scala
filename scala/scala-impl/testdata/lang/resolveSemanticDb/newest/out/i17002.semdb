@@ -7,5 +7,5 @@ Document tests/pos/i17002.scala
 (4:24..4:34) scala/annotation/
 (4:35..4:45) scala/annotation/Annotation#
 (9:4..9:12) _empty_/methOnly# -> 4:7
-(10:19..10:23) _empty_/Test# -> 6:7
+(10:23..10:27) _empty_/Test# -> 6:7
 

@@ -1,0 +1,72 @@
+Document tests/pos/typeclass-aggregates.scala
+(4:17..4:21) _empty_/Ord#Self# -> 3:8
+(5:22..5:26) _empty_/Ord#Self# -> 3:8
+(5:29..5:32) scala/Int#
+(6:15..6:19) _empty_/Ord#Self# -> 3:8
+(6:22..6:29) scala/Boolean#
+(6:32..6:41) _empty_/Ord#compareTo(). -> 5:9
+(6:42..6:43) _empty_/Ord#`<`().(y) -> 6:12
+(6:45..6:46) scala/Int#`<`(+3).
+(7:15..7:19) _empty_/Ord#Self# -> 3:8
+(7:22..7:29) scala/Boolean#
+(7:32..7:41) _empty_/Ord#compareTo(). -> 5:9
+(7:42..7:43) _empty_/Ord#`>`().(y) -> 7:12
+(7:45..7:46) scala/Int#`>`(+3).
+(9:26..9:29) _empty_/Ord# -> 2:7
+(14:17..14:21) _empty_/SemiGroup#Self# -> 13:8
+(14:38..14:42) _empty_/SemiGroup#Self# -> 13:8
+(14:45..14:49) _empty_/SemiGroup#Self# -> 13:8
+(16:32..16:41) _empty_/SemiGroup# -> 12:7
+(19:22..19:31) _empty_/SemiGroup# -> 12:7
+(20:13..20:17) _empty_/SemiGroup#Self# -> 13:8
+(22:29..22:35) _empty_/Monoid# -> 19:7
+(25:24..25:27) _empty_/Ord# -> 2:7
+(25:37..25:43) _empty_/Monoid# -> 19:7
+(25:57..25:60) _empty_/`typeclass-aggregates$package`.ordWithMonoid().(ord) -> 25:19
+(25:61..25:65) _empty_/Ord#Self# -> 3:8
+(25:70..25:73) _empty_/Ord# -> 2:7
+(25:74..25:75) scala/`&`#
+(25:76..25:82) _empty_/Monoid# -> 19:7
+(26:7..26:10) _empty_/`typeclass-aggregates$package`.ordWithMonoid().(ord) -> 25:19
+(26:11..26:19) _empty_/Ord#OrdProxy# -> 9:9
+(26:25..26:31) _empty_/`typeclass-aggregates$package`.ordWithMonoid().(monoid) -> 25:29
+(26:32..26:43) _empty_/Monoid#MonoidProxy# -> 22:9
+(28:29..28:32) _empty_/Ord# -> 2:7
+(28:34..28:40) _empty_/Monoid# -> 19:7
+(30:25..30:28) _empty_/Ord# -> 2:7
+(30:38..30:44) _empty_/Monoid# -> 19:7
+(30:58..30:61) _empty_/`typeclass-aggregates$package`.ordWithMonoid2().(ord) -> 30:20
+(30:62..30:66) _empty_/Ord#Self# -> 3:8
+(31:7..31:20) _empty_/OrdWithMonoid# -> 28:7
+(31:26..31:29) _empty_/`typeclass-aggregates$package`.ordWithMonoid2().(ord) -> 30:20
+(31:30..31:38) _empty_/Ord#OrdProxy# -> 9:9
+(31:44..31:50) _empty_/`typeclass-aggregates$package`.ordWithMonoid2().(monoid) -> 30:30
+(31:51..31:62) _empty_/Monoid#MonoidProxy# -> 22:9
+(33:16..33:19) _empty_/Ord# -> 2:7
+(33:34..33:37) scala/Int#
+(33:43..33:46) scala/Predef.`???`().
+(34:19..34:25) _empty_/Monoid# -> 19:7
+(34:40..34:43) scala/Int#
+(34:49..34:52) scala/Predef.`???`().
+(39:9..39:15) scala/Predef.summon().
+(39:16..39:19) _empty_/Ord# -> 2:7
+(39:20..39:21) scala/`&`#
+(39:22..39:28) _empty_/Monoid# -> 19:7
+(39:43..39:46) scala/Int#
+(40:8..40:11) scala/Int#
+(40:14..40:17) scala/Predef.`???`().
+(40:20..40:21) _empty_/`typeclass-aggregates$package`.x. -> 39:5
+(40:22..40:26) _empty_/SemiGroup#Self# -> 13:8
+(45:20..45:23) _empty_/Ord# -> 2:7
+(45:38..45:39) _empty_/`typeclass-aggregates$package`.`given_&_Ord_Monoid`().[A] -> 45:8
+(45:51..45:57) _empty_/Monoid# -> 19:7
+(45:72..45:73) _empty_/`typeclass-aggregates$package`.`given_&_Ord_Monoid`().[A] -> 45:8
+(45:81..45:84) _empty_/Ord# -> 2:7
+(45:85..45:86) scala/`&`#
+(45:87..45:93) _empty_/Monoid# -> 19:7
+(45:109..45:110) _empty_/`typeclass-aggregates$package`.`given_&_Ord_Monoid`().[A] -> 45:8
+(46:7..46:10) _empty_/`typeclass-aggregates$package`.`given_&_Ord_Monoid`().(ord) -> 45:15
+(46:11..46:19) _empty_/Ord#OrdProxy# -> 9:9
+(46:25..46:31) _empty_/`typeclass-aggregates$package`.`given_&_Ord_Monoid`().(monoid) -> 45:43
+(46:32..46:43) _empty_/Monoid#MonoidProxy# -> 22:9
+

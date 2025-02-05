@@ -14,7 +14,7 @@ Document tests/pos/t573.scala
 (26:30..26:33) lampion/collections/Linked#Node0#get().(dir) -> 26:13
 (26:34..26:36) scala/Any#`==`().
 (26:37..26:43) lampion/collections/DirX.BEFORE. -> 7:10
-(26:46..26:50) lampion/collections/Linked#Node0#prev(). -> 24:9
+(26:45..26:50) lampion/collections/Linked#Node0#prev(). -> 24:9
 (26:56..26:60) lampion/collections/Linked#Node0#next(). -> 23:9
 (27:27..27:30) lampion/collections/DirX.Dir# -> 4:18
 (27:39..27:43) lampion/collections/Linked#Node# -> 18:8

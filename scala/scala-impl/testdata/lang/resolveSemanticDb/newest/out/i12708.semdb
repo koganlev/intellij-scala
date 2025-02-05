@@ -11,6 +11,7 @@ Document tests/pos/i12708.scala
 (7:18..7:19) _empty_/AdditiveSemigroupOps#[A] -> 5:34
 (7:22..7:25) scala/Predef.`???`().
 (11:40..11:57) _empty_/AdditiveSemigroup# -> 3:7
+(11:40..11:57) _empty_/AdditiveSemigroupSyntax#additiveSemigroupOps().[A] -> 11:37
 (11:62..11:63) _empty_/AdditiveSemigroupSyntax#additiveSemigroupOps().[A] -> 11:37
 (11:66..11:86) _empty_/AdditiveSemigroupOps# -> 5:13
 (11:87..11:88) _empty_/AdditiveSemigroupSyntax#additiveSemigroupOps().[A] -> 11:37

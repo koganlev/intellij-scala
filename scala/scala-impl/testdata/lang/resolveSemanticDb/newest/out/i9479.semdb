@@ -1,5 +1,6 @@
 Document tests/pos/i9479.scala
 (3:20..3:31) _empty_/Applicative# -> 1:7
+(3:20..3:31) _empty_/i9479$package.traverse().[F] -> 3:14
 (3:43..3:47) scala/package.List#
 (3:48..3:49) _empty_/i9479$package.traverse().[A] -> 3:33
 (3:55..3:56) _empty_/i9479$package.traverse().[A] -> 3:33

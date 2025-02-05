@@ -1,0 +1,28 @@
+Document tests/pos/i20377.scala
+(1:8..1:16) scala/language.
+(1:17..1:29) scala/language.experimental.
+(1:30..1:41) scala/language.experimental.namedTuples.
+(2:8..2:18) scala/NamedTuple.
+(6:36..6:49) scala/NamedTuple.AnyNamedTuple#
+(7:15..7:25) scala/NamedTuple.
+(7:26..7:29) scala/NamedTuple.Map#
+(7:30..7:34) _empty_/ClassToFind#[Rows] -> 6:28
+(9:12..9:23) _empty_/ClassToFind# -> 6:16
+(9:29..9:32) scala/Int#
+(9:38..9:44) scala/Predef.String#
+(11:21..11:24) scala/Int#
+(12:21..12:27) scala/Predef.String#
+(15:23..15:26) scala/Int#
+(15:32..15:38) scala/Predef.String#
+(16:37..16:48) _empty_/ClassToFind# -> 6:16
+(16:49..16:58) _empty_/i20377$package.TypeAlias# -> 15:6
+(18:5..18:11) _empty_/Repro1_Pass#testDB. -> 16:29
+(18:5..18:18) scala/NamedTuple.apply(+1).
+(18:12..18:18) _empty_/ClassToFind#mapped(). -> 7:7
+(20:37..20:48) _empty_/ClassToFind# -> 6:16
+(20:54..20:57) scala/Int#
+(20:63..20:69) scala/Predef.String#
+(22:5..22:11) _empty_/Repro1_Fail#testDB. -> 20:29
+(22:5..22:18) scala/NamedTuple.apply(+1).
+(22:12..22:18) _empty_/ClassToFind#mapped(). -> 7:7
+

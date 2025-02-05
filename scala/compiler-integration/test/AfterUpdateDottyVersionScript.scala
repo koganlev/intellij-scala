@@ -79,6 +79,8 @@ class AfterUpdateDottyVersionScript {
   @Test def test_8_ReferenceComparisonTestsGenerator_Newest(): Unit =
     runScript(Script.FromTestCase(classOf[ReferenceComparisonTestsGenerator_Scala3.TestCase_Scala3_Newest]))
 
+
+
   @Test def test_9_UpdateScalacOptionsInfo(): Unit =
     runScript(Script.FromTestCase(classOf[UpdateScalacOptionsInfo.ScriptTestCase]))
 }
@@ -733,6 +735,11 @@ object AfterUpdateDottyVersionScript {
         |#class i15029.orig$package cannot be unpickled because no class file was found for denot: val <none>
         |i15029.orig.scala
         |
+        |# also very long
+        |jzon
+        |i19907_slow_1000_3.scala
+        |i19907_slow_1000_4.scala
+        |
         |#Fatal compiler crash when compiling: tests\pos\i15827.scala:
         |i15827.scala
         |
@@ -838,6 +845,30 @@ object AfterUpdateDottyVersionScript {
         |i19001.case3.scala
         |given-syntax.scala
         |alphanumeric-infix-operator-compat
+        |
+        |i7851.scala
+        |FromString-cb-companion.scala
+        |hylolib-deferred-given-extract.scala
+        |i18097.1.scala
+        |typeclass-aggregates.scala
+        |erased-soft-keyword.scala
+        |parsercombinators-givens-2.scala
+        |i18097.orig.scala
+        |i21558.orig.scala
+        |FromString-named.scala
+        |experimental-flag.scala
+        |erased-class-as-args.scala
+        |TupleReverse.scala
+        |cbproxy-expansion.scala
+        |parent-refinement.scala
+        |depclass-1.scala
+        |precise-indexof.scala
+        |i18097.2.scala
+        |tailrec.scala
+        |TupleReverseOnto.scala
+        |FromString.scala
+        |typeclasses.scala
+        |i10848a.scala
         |""".stripMargin.trim
     )
   }

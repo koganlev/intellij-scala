@@ -13,6 +13,6 @@ Document tests/pos/i9967.scala
 (4:58..4:63) scala/collection/mutable/TreeMap.empty().
 (4:64..4:65) _empty_/MaxSizeMap#[K] -> 3:18
 (4:67..4:68) _empty_/MaxSizeMap#[V] -> 3:21
-(4:70..4:71) _empty_/MaxSizeMap#o. -> 3:44
+(4:76..4:77) _empty_/MaxSizeMap#o. -> 3:44
 (6:10..6:19) _empty_/MaxSizeMap#sortedMap. -> 4:7
 

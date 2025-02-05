@@ -3,6 +3,7 @@ Document tests/pos/implicit-infix-ops.scala
 (2:19..2:28) scala/math/Ordering.Implicits.
 (3:10..3:17) scala/package.Numeric.
 (3:18..3:27) scala/math/Numeric.Implicits.
+(5:13..5:20) _empty_/Test.f1().[T] -> 5:10
 (5:13..5:20) scala/package.Numeric#
 (5:25..5:26) _empty_/Test.f1().[T] -> 5:10
 (5:31..5:32) _empty_/Test.f1().[T] -> 5:10
@@ -12,6 +13,7 @@ Document tests/pos/implicit-infix-ops.scala
 (5:47..5:48) _empty_/Test.f1().(y) -> 5:28
 (5:49..5:50) scala/math/Numeric#NumericOps#`+`().
 (5:51..5:52) _empty_/Test.f1().(z) -> 5:34
+(6:13..6:21) _empty_/Test.f2().[T] -> 6:10
 (6:13..6:21) scala/package.Ordering#
 (6:26..6:27) _empty_/Test.f2().[T] -> 6:10
 (6:32..6:33) _empty_/Test.f2().[T] -> 6:10
@@ -30,6 +32,7 @@ Document tests/pos/implicit-infix-ops.scala
 (11:10..11:14) scala/math/
 (11:15..11:23) scala/math/Integral.
 (11:24..11:33) scala/math/Integral.Implicits.
+(13:13..13:21) _empty_/Int.f1().[T] -> 13:10
 (13:13..13:21) scala/package.Integral#
 (13:26..13:27) _empty_/Int.f1().[T] -> 13:10
 (13:32..13:33) _empty_/Int.f1().[T] -> 13:10
@@ -41,6 +44,7 @@ Document tests/pos/implicit-infix-ops.scala
 (13:53..13:54) _empty_/Int.f1().(z) -> 13:35
 (13:56..13:57) scala/math/Integral#IntegralOps#`/`().
 (13:58..13:59) _empty_/Int.f1().(z) -> 13:35
+(14:13..14:21) _empty_/Int.f2().[T] -> 14:10
 (14:13..14:21) scala/package.Ordering#
 (14:26..14:27) _empty_/Int.f2().[T] -> 14:10
 (14:32..14:33) _empty_/Int.f2().[T] -> 14:10
@@ -59,6 +63,7 @@ Document tests/pos/implicit-infix-ops.scala
 (19:10..19:14) scala/math/
 (19:15..19:25) scala/math/Fractional.
 (19:26..19:35) scala/math/Fractional.Implicits.
+(21:13..21:23) _empty_/Frac.f1().[T] -> 21:10
 (21:13..21:23) scala/package.Fractional#
 (21:28..21:29) _empty_/Frac.f1().[T] -> 21:10
 (21:34..21:35) _empty_/Frac.f1().[T] -> 21:10
@@ -70,6 +75,7 @@ Document tests/pos/implicit-infix-ops.scala
 (21:55..21:56) _empty_/Frac.f1().(z) -> 21:37
 (21:58..21:59) scala/math/Fractional#FractionalOps#`/`().
 (21:60..21:61) _empty_/Frac.f1().(z) -> 21:37
+(22:13..22:21) _empty_/Frac.f2().[T] -> 22:10
 (22:13..22:21) scala/package.Ordering#
 (22:26..22:27) _empty_/Frac.f2().[T] -> 22:10
 (22:32..22:33) _empty_/Frac.f2().[T] -> 22:10

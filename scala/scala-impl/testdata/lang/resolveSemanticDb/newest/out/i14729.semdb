@@ -14,10 +14,10 @@ Document tests/pos/i14729.scala
 (12:7..12:14) _empty_/Bar.makeFoo(). -> 8:7
 (12:15..12:18) scala/Int#
 (12:20..12:23) _empty_/i14729$package.ext(). -> 5:7
-(14:3..14:6) _empty_/i14729$package.ext(). -> 5:7
 (14:4..14:7) _empty_/Bar. -> 7:8
 (14:8..14:15) _empty_/Bar.makeFoo(). -> 8:7
 (14:16..14:19) scala/Int#
+(14:22..14:25) _empty_/i14729$package.ext(). -> 5:7
 (16:13..16:16) _empty_/Bar. -> 7:8
 (16:17..16:24) _empty_/Bar.makeFoo(). -> 8:7
 (16:25..16:28) scala/Int#

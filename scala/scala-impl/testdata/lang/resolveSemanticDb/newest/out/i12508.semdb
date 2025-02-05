@@ -13,4 +13,5 @@ Document tests/pos/i12508.scala
 (10:39..10:42) _empty_/Test2#test().(fun) -> 10:19
 (11:3..11:7) _empty_/Test2#test(). -> 10:14
 (13:10..13:11) local5 -> 12:21
+(14:10..14:11) local6 -> 12:24
 

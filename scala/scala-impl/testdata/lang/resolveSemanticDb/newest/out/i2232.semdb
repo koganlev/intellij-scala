@@ -20,6 +20,7 @@ Document tests/pos/i2232.scala
 (12:28..12:29) _empty_/Cats.Category#[C] -> 10:18
 (12:31..12:32) _empty_/Cats.Category#Obj#[X] -> 12:14
 (14:15..14:18) _empty_/Cats.Category#Obj# -> 12:10
+(14:15..14:18) _empty_/Cats.Category#id().[A] -> 14:12
 (14:21..14:22) _empty_/Cats.Category#id().[A] -> 14:12
 (14:23..14:25) _empty_/Cats.Category#`->`# -> 11:10
 (14:26..14:27) _empty_/Cats.Category#id().[A] -> 14:12
@@ -41,6 +42,7 @@ Document tests/pos/i2232.scala
 (24:31..24:35) _empty_/Cats.Scal# -> 22:8
 (24:43..24:51) _empty_/Cats.Category# -> 10:9
 (24:52..24:56) _empty_/Cats.Scal# -> 22:8
+(25:15..25:23) local11 -> 25:12
 (25:20..25:23) _empty_/Cats.Category#Obj# -> 12:10
 (25:26..25:27) local11 -> 25:12
 (25:28..25:30) _empty_/Cats.Category#`->`# -> 11:10
