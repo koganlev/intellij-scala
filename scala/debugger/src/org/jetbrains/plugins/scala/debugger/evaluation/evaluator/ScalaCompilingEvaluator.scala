@@ -5,7 +5,7 @@ package evaluation.evaluator
 import com.intellij.debugger.SourcePosition
 import com.intellij.debugger.engine._
 import com.intellij.debugger.engine.evaluation._
-import com.intellij.debugger.engine.evaluation.expression.{Evaluator, ExpressionEvaluator, Modifier}
+import com.intellij.debugger.engine.evaluation.expression.{Evaluator, ExpressionEvaluator}
 import com.intellij.debugger.jdi.VirtualMachineProxyImpl
 import com.intellij.openapi.util.Key
 import com.intellij.psi.PsiElement
@@ -26,8 +26,6 @@ class ScalaCompilingEvaluator(psiContext: PsiElement, fragment: ScalaCodeFragmen
   private val project = inReadAction(fragment.getProject)
   private val generatedClass = GeneratedClass(fragment, psiContext)
   private var classLoader: ClassLoaderReference = null
-
-  override def getModifier: Modifier = null
 
   override def evaluate(context: EvaluationContextImpl): Value = {
     val process: DebugProcess = context.getDebugProcess
