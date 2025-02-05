@@ -1,15 +1,31 @@
 package org.jetbrains.plugins.scala.findUsages.factory
 
+import com.intellij.ide.util.PropertiesComponent
 import com.intellij.openapi.project.Project
+import org.jetbrains.plugins.scala.findUsages.factory.ScalaTypeDefinitionFindUsagesOptions._
 
-final class ScalaTypeDefinitionFindUsagesOptions(project: Project) extends ScalaFindUsagesOptionsBase(project) {
-  isSearchForTextOccurrences = false
+final class ScalaTypeDefinitionFindUsagesOptions(project: Project) extends ScalaFindUsagesOptionsBase(project, isSearchForTextOccurrencesDefault = false) {
+  var isImplementingTypeDefinitions: Boolean = isImplementingTypeDefinitionsDefault
+  var isMembersUsages: Boolean = isMembersUsagesDefault
+  var isSearchCompanionModule: Boolean = isSearchCompanionModuleDefault
+  var isOnlyNewInstances: Boolean = isOnlyNewInstancesDefault
 
-  var isImplementingTypeDefinitions = false
-  var isMembersUsages = false
-  var isSearchCompanionModule = false
 
-  var isOnlyNewInstances: Boolean = false
+  override def setDefaults(properties: PropertiesComponent, prefix: String): Unit = {
+    super.setDefaults(properties, prefix)
+    isImplementingTypeDefinitions = properties.getBoolean(prefix + "isImplementingTypeDefinitions", isImplementingTypeDefinitionsDefault)
+    isMembersUsages = properties.getBoolean(prefix + "isMembersUsages", isMembersUsagesDefault)
+    isSearchCompanionModule = properties.getBoolean(prefix + "isSearchCompanionModule", isSearchCompanionModuleDefault)
+    isOnlyNewInstances = properties.getBoolean(prefix + "isOnlyNewInstances", isOnlyNewInstancesDefault)
+  }
+
+  override def storeDefaults(properties: PropertiesComponent, prefix: String): Unit = {
+    super.storeDefaults(properties, prefix)
+    properties.setValue(prefix + "isImplementingTypeDefinitions", isImplementingTypeDefinitions, isImplementingTypeDefinitionsDefault)
+    properties.setValue(prefix + "isMembersUsages", isMembersUsages, isMembersUsagesDefault)
+    properties.setValue(prefix + "isSearchCompanionModule", isSearchCompanionModule, isSearchCompanionModuleDefault)
+    properties.setValue(prefix + "isOnlyNewInstances", isOnlyNewInstances, isOnlyNewInstancesDefault)
+  }
 
   override def equals(o: Any): Boolean = {
     o match {
@@ -31,4 +47,11 @@ final class ScalaTypeDefinitionFindUsagesOptions(project: Project) extends Scala
     res = 31 * res + (if (isOnlyNewInstances) 1 else 0)
     res
   }
+}
+
+object ScalaTypeDefinitionFindUsagesOptions {
+  val isImplementingTypeDefinitionsDefault: Boolean = false
+  val isMembersUsagesDefault: Boolean = false
+  val isSearchCompanionModuleDefault: Boolean = false
+  val isOnlyNewInstancesDefault: Boolean = false
 }
