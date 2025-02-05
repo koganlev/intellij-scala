@@ -134,6 +134,8 @@ class ScalaLocalVariableEvaluator(name: String, sourceName: String) extends Modi
     }
   }
 
+  // This method is still overridden in `com.intellij.debugger.engine.evaluation.expression.LocalVariableEvaluator`, so
+  // we still do too.
   override def getModifier: Modifier = {
     if ((myEvaluatedVariable ne null) && (myContext ne null)) {
       return new MyModifier(myContext, myEvaluatedVariable)

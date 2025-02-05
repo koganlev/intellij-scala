@@ -44,6 +44,8 @@ class ScalaArrayAccessEvaluator(arrayReferenceEvaluator: Evaluator, indexEvaluat
     }
   }
 
+  // This method is still overridden in `com.intellij.debugger.engine.evaluation.expression.ArrayAccessEvaluator`, so
+  // we still do too.
   override def getModifier: Modifier = {
     if (myEvaluatedArrayReference ne null) {
       return new MyModifier(myEvaluatedArrayReference, myEvaluatedIndex)

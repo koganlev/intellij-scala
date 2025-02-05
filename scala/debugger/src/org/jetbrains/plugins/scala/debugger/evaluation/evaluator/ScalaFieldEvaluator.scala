@@ -129,6 +129,8 @@ case class ScalaFieldEvaluator(objectEvaluator: Evaluator, _fieldName: String,
     }
   }
 
+  // This method is still overridden in `com.intellij.debugger.engine.evaluation.expression.FieldEvaluator`, so
+  // we still do too.
   override def getModifier: Modifier = {
     if (myEvaluatedField ne null) {
       myEvaluatedQualifier match {
