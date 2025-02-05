@@ -3,13 +3,13 @@ package org.jetbrains.plugins.scala.lang.resolveSemanticDb
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.psi.PsiFile
 import org.jetbrains.plugins.scala.base.ScalaLightCodeInsightFixtureTestCase
+import org.jetbrains.plugins.scala.extensions.PathExt
 import org.jetbrains.plugins.scala.lang.resolveSemanticDb.ComparisonTestBase.sourcePath
 import org.jetbrains.plugins.scala.util.TestUtils
 import org.junit.Assert.assertTrue
 
 import java.nio.charset.StandardCharsets
-import java.nio.file.{Files, Path, Paths}
-import scala.jdk.StreamConverters._
+import java.nio.file.{Path, Paths}
 
 abstract class ComparisonTestBase extends ScalaLightCodeInsightFixtureTestCase {
 
@@ -19,11 +19,11 @@ abstract class ComparisonTestBase extends ScalaLightCodeInsightFixtureTestCase {
     val testDirPath = sourcePath.resolve(testName)
     val testFilePath = sourcePath.resolve(testName + ".scala")
     val (source, sourceBasePath) =
-      if (Files.isDirectory(testDirPath)) {
+      if (testDirPath.isDirectory) {
         (testDirPath, testDirPath)
       } else {
-        assertTrue(s"Test file does not exist: $testFilePath", Files.exists(testFilePath))
-        assertTrue(s"Test file is not a regular file: $testFilePath", Files.isRegularFile(testFilePath))
+        assertTrue(s"Test file does not exist: $testFilePath", testFilePath.exists)
+        assertTrue(s"Test file is not a regular file: $testFilePath", testFilePath.isRegularFile)
         (testFilePath, sourcePath)
       }
 
@@ -35,11 +35,10 @@ abstract class ComparisonTestBase extends ScalaLightCodeInsightFixtureTestCase {
     }
   }
 
-  private def allPathsIn(path: Path): Iterator[Path] = {
-    if (Files.isRegularFile(path)) Iterator(path)
-    else if (Files.isDirectory(path))
-      Files.list(path).toScala(Seq).sorted.iterator
-    else Iterator.empty
+  private def allPathsIn(path: Path): Seq[Path] = {
+    if (path.isRegularFile) Seq(path)
+    else if (path.isDirectory) path.children().sorted
+    else Seq.empty
   }
 }
 

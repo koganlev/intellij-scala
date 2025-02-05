@@ -21,12 +21,11 @@ import org.jetbrains.plugins.scala.util.ScalaUtil
 import org.jetbrains.plugins.scala.worksheet.{WorksheetFileType, WorksheetUtils}
 import org.jetbrains.sbt.project.SbtProjectSystem
 
-import java.nio.file.{Files, Path}
+import java.nio.file.Path
 import java.util.regex.Pattern
 import scala.annotation.tailrec
 import scala.collection.mutable
 import scala.collection.mutable.ArrayBuffer
-import scala.jdk.StreamConverters._
 import scala.util.matching.Regex
 
 object AmmoniteUtil {
@@ -124,7 +123,7 @@ object AmmoniteUtil {
   def findJarRoot(refElement: ScReference): Option[VirtualFile] = {
     AmmoniteUtil.extractLibInfo(refElement).flatMap {
       case LibInfo(group, name, version, scalaVersion) =>
-        val existsPredicate = (p: Path) => Files.exists(p)
+        val existsPredicate = (p: Path) => p.exists
 
         val n = name
         val nv = s"${name}_$scalaVersion"
@@ -149,7 +148,7 @@ object AmmoniteUtil {
         val fileOpt = tryIvy().orElse(tryCoursier())
         for {
           parent <- fileOpt
-          files = Files.list(parent).toScala(List)
+          files = parent.children()
           jarModuleRoot <- files.find { cf =>
             val name = cf.getFileName.toString
             prefixPatterns.exists(name.startsWith) &&
@@ -213,11 +212,11 @@ object AmmoniteUtil {
   private def treeToPaths(tree: FileTree, acc: List[Path]): List[Path] = tree match {
     case Empty => acc
     case OneSegment(segment, next) =>
-      treeToPaths(next, acc.filter(Files.isDirectory(_)).flatMap(Files.list(_).filter(_.getFileName.toString == segment).toScala(List)))
+      treeToPaths(next, acc.filter(_.isDirectory).flatMap(_.children().filter(_.getFileName.toString == segment)))
     case AlternativeSegments(segments, next) =>
-      treeToPaths(next, acc.filter(Files.isDirectory(_)).flatMap(Files.list(_).filter(f => segments.contains(f.getFileName.toString)).toScala(List)))
+      treeToPaths(next, acc.filter(_.isDirectory).flatMap(_.children().filter(f => segments.contains(f.getFileName.toString))))
     case AnySegment(next) =>
-      treeToPaths(next, acc.filter(Files.isDirectory(_)).flatMap(Files.list(_).toScala(List)))
+      treeToPaths(next, acc.filter(_.isDirectory).flatMap(_.children()))
   }
 
   private def firstFileMatchingPattern(pattern: String, rootFile: Path): List[Path] =

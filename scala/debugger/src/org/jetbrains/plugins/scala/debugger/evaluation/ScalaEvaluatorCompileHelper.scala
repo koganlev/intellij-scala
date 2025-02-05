@@ -9,6 +9,7 @@ import com.intellij.openapi.util.io.FileUtil
 import org.jetbrains.jps.incremental.scala.remote.CommandIds
 import org.jetbrains.jps.incremental.scala.{Client, DummyClient, MessageKind}
 import org.jetbrains.plugins.scala.compiler.{CompileServerLauncher, RemoteServerConnectorBase, RemoteServerRunner}
+import org.jetbrains.plugins.scala.extensions.PathExt
 import org.jetbrains.plugins.scala.settings.ScalaCompileServerSettings
 
 import java.nio.file.{Files, Path}
@@ -97,8 +98,8 @@ private class ServerConnector(module: Module, filesToCompile: Seq[Path], outputD
   }
 
   @tailrec
-  private def classfiles(dir: Path, namePrefix: String = ""): Array[(Path, String)] = Files.list(dir).toArray(new Array[Path](_)) match {
-    case Array(d) if Files.isDirectory(d) => classfiles(d, s"$namePrefix${d.getFileName}.")
+  private def classfiles(dir: Path, namePrefix: String = ""): Array[(Path, String)] = dir.children().toArray match {
+    case Array(d) if d.isDirectory => classfiles(d, s"$namePrefix${d.getFileName}.")
     case files => files.map(f => (f, s"$namePrefix${f.getFileName}".stripSuffix(".class")))
   }
 

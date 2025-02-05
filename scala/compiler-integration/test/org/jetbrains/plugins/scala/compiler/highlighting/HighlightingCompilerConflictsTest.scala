@@ -11,7 +11,7 @@ import com.intellij.pom.java.LanguageLevel
 import com.intellij.testFramework.EdtTestUtil
 import org.jetbrains.plugins.scala.base.libraryLoaders.SmartJDKLoader
 import org.jetbrains.plugins.scala.compiler.{CompilerEvent, CompilerEventListener, ScalaCompilerTestBase}
-import org.jetbrains.plugins.scala.extensions.{inWriteAction, invokeAndWait}
+import org.jetbrains.plugins.scala.extensions.{PathExt, inWriteAction, invokeAndWait}
 import org.jetbrains.plugins.scala.util.CompilerTestUtil.runWithErrorsFromCompiler
 import org.junit.Assert.{assertEquals, assertTrue}
 import org.junit.experimental.categories.Category
@@ -19,7 +19,6 @@ import org.junit.experimental.categories.Category
 import java.nio.file.{Files, Path}
 import scala.concurrent.duration.DurationInt
 import scala.concurrent.{Await, Promise}
-import scala.jdk.StreamConverters.StreamHasToScala
 
 /**
  * Checks if there are no conflicts between usual compilation and
@@ -77,8 +76,7 @@ abstract class HighlightingCompilerConflictsBase(
         .map(_.getCanonicalPath)
         .map(Path.of(_))
         .flatMap { targetDir =>
-          Files.list(targetDir)
-            .toScala(LazyList)
+          targetDir.children()
             .find(_.getFileName.toString == targetFileName)
             .map(Files.getLastModifiedTime(_).toInstant.toEpochMilli)
         }

@@ -7,12 +7,12 @@ import com.intellij.testFramework.VfsTestUtil
 import org.hamcrest.CoreMatchers.equalTo
 import org.hamcrest.MatcherAssert.assertThat
 import org.jetbrains.plugins.scala.compiler.data.IncrementalityType
+import org.jetbrains.plugins.scala.extensions.PathExt
 import org.jetbrains.plugins.scala.util.matchers.HamcrestMatchers.everyValueGreaterThanIn
 import org.jetbrains.plugins.scala.{CompilationTests, ScalaVersion}
 import org.junit.experimental.categories.Category
 
 import java.nio.file.{Files, Path}
-import scala.jdk.StreamConverters.StreamHasToScala
 
 @Category(Array(classOf[CompilationTests]))
 abstract class IncrementalCompilationTestBase(
@@ -162,7 +162,7 @@ abstract class IncrementalCompilationTestBase(
     CompilerModuleExtension.getInstance(getModule).getCompilerOutputPath.toNioPath
 
   private def targetFileNames: Set[String] =
-    Files.list(targetDir).map(_.getFileName.toString).toScala(Set)
+    targetDir.children().map(_.getFileName.toString).toSet
 
   protected def classFileNames(className: String)
                               (implicit version: ScalaVersion): Set[String] = {
@@ -204,7 +204,7 @@ abstract class IncrementalCompilationTestBase(
 
     private def targetFiles: Set[Path] = {
       val targetFileNames = expectedTargetFileNames
-      Files.list(targetDir).filter(p => targetFileNames.contains(p.getFileName.toString)).toScala(Set)
+      targetDir.children().filter(p => targetFileNames.contains(p.getFileName.toString)).toSet
     }
 
     def targetTimestamps: Map[String, Long] =

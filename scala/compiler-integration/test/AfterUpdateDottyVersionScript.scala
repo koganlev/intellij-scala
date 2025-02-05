@@ -7,7 +7,7 @@ import junit.framework.{TestCase, TestFailure, TestResult, TestSuite}
 import org.jetbrains.plugins.scala.compiler.ScalaCompilerTestBase
 import org.jetbrains.plugins.scala.extensions.PathExt
 import org.jetbrains.plugins.scala.lang.parser.scala3.imported.{Scala3ImportedParserTest, Scala3ImportedParserTest_Move_Fixed_Tests}
-import org.jetbrains.plugins.scala.lang.resolveSemanticDb.{ComparisonTestBase, ReferenceComparisonTestsGenerator_Scala3, SemanticDbFromScalaMeta, SemanticDbStore}
+import org.jetbrains.plugins.scala.lang.resolveSemanticDb.{ComparisonTestBase, ReferenceComparisonTestsGenerator_Scala3, SemanticDbFromScalaMeta}
 import org.jetbrains.plugins.scala.project.VirtualFileExt
 import org.jetbrains.plugins.scala.util.TestUtils
 import org.jetbrains.plugins.scala.{LatestScalaVersions, ScalaVersion}
@@ -21,7 +21,7 @@ import java.io.{File, PrintWriter}
 import java.nio.charset.StandardCharsets
 import java.nio.file.{Files, Path, Paths, StandardCopyOption}
 import scala.io.Source
-import scala.jdk.CollectionConverters.{EnumerationHasAsScala, IteratorHasAsScala, ListHasAsScala}
+import scala.jdk.CollectionConverters.{EnumerationHasAsScala, ListHasAsScala}
 import scala.sys.process.Process
 import scala.util.Using
 
@@ -424,7 +424,7 @@ object AfterUpdateDottyVersionScript {
       val posOutDir = repoPath.resolve("out/posTestFromTasty/pos")
       assert(Files.isDirectory(posOutDir))
 
-      for (testOutPath <- Files.list(posOutDir).iterator().asScala) {
+      for (testOutPath <- posOutDir.children()) {
         val dirName = testOutPath.getFileName.toString
         val storePath = ComparisonTestBase.outPath.resolve(dirName + ".semdb")
 
@@ -477,7 +477,7 @@ object AfterUpdateDottyVersionScript {
 
   private def deleteRecursively(path: Path): Unit = {
     if (Files.isDirectory(path))
-      Files.list(path).forEach(deleteRecursively)
+      path.children().foreach(deleteRecursively)
     Files.delete(path)
   }
 

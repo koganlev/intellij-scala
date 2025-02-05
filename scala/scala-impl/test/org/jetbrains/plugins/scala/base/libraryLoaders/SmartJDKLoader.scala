@@ -166,10 +166,10 @@ object SmartJDKLoader {
       .filter(_.isDirectory)
       .find {
         _
-          .children(LazyList)
+          .children()
           .exists { b =>
             b.getFileName.toString == "bin" &&
-              b.children(LazyList).exists(x => x.getFileName.toString == "javac.exe" || x.getFileName.toString == "javac")
+              b.children().exists(x => x.getFileName.toString == "javac.exe" || x.getFileName.toString == "javac")
           }
       }.orElse(Some(dir))
   }
@@ -179,7 +179,7 @@ object SmartJDKLoader {
       .filter(_.exists)
       .flatMap { dir =>
         dir
-          .children(List)
+          .children()
           .sortBy(_.getFileName.toString) // TODO somehow sort by release number to get the newest actually
           .reverse
           .filter(_.nameContains(versionString))

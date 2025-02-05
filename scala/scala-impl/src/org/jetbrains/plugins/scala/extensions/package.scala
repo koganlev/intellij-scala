@@ -79,7 +79,7 @@ import scala.jdk.StreamConverters.StreamHasToScala
 import scala.reflect.ClassTag
 import scala.runtime.NonLocalReturnControl
 import scala.util.control.Exception.catching
-import scala.util.{Failure, Success, Try}
+import scala.util.{Failure, Success, Try, Using}
 
 package object extensions {
 
@@ -1814,15 +1814,27 @@ package object extensions {
     def /(subPath: Path): Path = path.resolve(subPath)
     def /(@NonNls subPath: String): Path = path.resolve(subPath)
 
-    def allFiles(): LazyList[Path] = {
-      val (files, directories) = children(LazyList).span(_.isRegularFile)
-      files #::: directories.flatMap(_.allFiles())
+    /**
+     * Returns a strict collection containing all files within a directory, by recursively listing all files within
+     * nested directories.
+     *
+     * If you need a lazily populated collection, consider implementing it manually using [[java.nio.file.Files.list]].
+     * Note that in that case, the returned stream needs to be manually closed, otherwise it could lead to leaked
+     * OS resources.
+     */
+    def allFiles(): Seq[Path] = {
+      val (files, directories) = children().span(_.isRegularFile)
+      files ++ directories.flatMap(_.allFiles())
     }
 
+    /**
+     * A convenience method around [[java.nio.file.Files.list]].
+     *
+     * @note Important! The returned stream needs to be closed, otherwise it leaks OS resources. Consider wrapping in
+     *       [[scala.util.Using]].
+     */
     def childrenStream(): JStream[Path] = Files.list(path)
-    def children(): Seq[Path] = children(Seq)
-    def children[C1](factory: collection.Factory[Path, C1]): C1 =
-      childrenStream().toScala(factory)
+    def children(): Seq[Path] = Using.resource(childrenStream())(_.toScala(Seq))
 
     def childExists(child: String): Boolean = (path / child).exists
     def exists: Boolean = Files.exists(path)

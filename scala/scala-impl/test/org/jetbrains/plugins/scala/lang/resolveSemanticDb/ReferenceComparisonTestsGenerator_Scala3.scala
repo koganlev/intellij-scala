@@ -3,15 +3,13 @@ package org.jetbrains.plugins.scala.lang.resolveSemanticDb
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.util.ThrowableRunnable
 import junit.framework.TestCase
-import org.jetbrains.plugins.scala.extensions.StringExt
+import org.jetbrains.plugins.scala.extensions.{PathExt, StringExt}
 import org.jetbrains.plugins.scala.lang.resolveSemanticDb.ReferenceComparisonTestBase.Result
 import org.jetbrains.plugins.scala.util.TestUtils
-import org.junit.Ignore
 
 import java.nio.charset.StandardCharsets
-import java.nio.file.{Files, Path, Paths, StandardOpenOption}
+import java.nio.file.{Files, Path, Paths}
 import scala.collection.mutable
-import scala.jdk.CollectionConverters.IteratorHasAsScala
 
 object ReferenceComparisonTestsGenerator_Scala3  {
 
@@ -57,7 +55,7 @@ object ReferenceComparisonTestsGenerator_Scala3  {
       def testNameFromFilePath(path: Path): String =
         path.getFileName.toString.stripSuffix(".semdb")
 
-      val testOutPaths = Files.list(ComparisonTestBase.outPath).iterator().asScala.toSeq
+      val testOutPaths = ComparisonTestBase.outPath.children()
         .sortBy(testNameFromFilePath)((x, y) => StringUtil.naturalCompare(x, y))
 
       val originalTestNames = testOutPaths.map(testNameFromFilePath).toSet
