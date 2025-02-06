@@ -19,7 +19,7 @@
   "choices": {
     "3.0": ["12", "8", "13", "16", "10", "15", "11", "9", "17", "14"],
     "3.5": ["12", "8", "22", "13", "16", "10", "21", "20", "18", "19", "23", "15", "11", "9", "17", "14"],
-    "3.3": ["12", "8", "19", "22", "13", "16", "10", "21", "20", "18", "15", "11", "9", "17", "14"],
+    "3.3": ["12", "8", "22", "13", "16", "10", "21", "20", "18", "19", "23", "15", "11", "9", "17", "14"],
     "3.2": ["12", "8", "19", "13", "16", "10", "18", "15", "11", "9", "17", "14"],
     "3.6": ["12", "8", "22", "13", "16", "10", "21", "20", "18", "19", "23", "15", "11", "9", "17", "14"],
     "3.1": ["12", "8", "13", "16", "10", "18", "15", "11", "9", "17", "14"],
@@ -275,7 +275,7 @@
 
   },
   "descriptions": {
-    "2.13": "A footer on every Scaladoc page, by default the EPFL/Lightbend copyright notice. Can be overridden with a custom footer."
+    "2.13": "A footer on every Scaladoc page, by default the EPFL/Akka copyright notice. Can be overridden with a custom footer."
   },
   "flag": "--doc-footer",
   "scalaVersions": ["2.13"]
@@ -592,7 +592,7 @@
   "choices": {
     "2.13": ["experimental.macros", "higherKinds", "existentials", "dynamics", "reflectiveCalls", "implicitConversions", "postfixOps"],
     "3.5": ["experimental.genericNumberLiterals", "experimental.saferExceptions", "dynamics", "experimental.erasedDefinitions", "experimental.pureFunctions", "unsafeNulls", "experimental.captureChecking", "experimental.modularity", "deprecated.symbolLiterals", "adhocExtensions", "noAutoTupling", "experimental.macros", "experimental.clauseInterleaving", "experimental.namedTypeArguments", "help", "experimental.dependent", "experimental.fewerBraces", "experimental.betterMatchTypeExtractors", "strictEquality", "experimental.namedTuples", "experimental.into", "implicitConversions", "postfixOps"],
-    "3.6": ["experimental.genericNumberLiterals", "dynamics", "experimental.erasedDefinitions", "experimental.pureFunctions", "unsafeNulls", "experimental.captureChecking", "experimental.modularity", "experimental.into", "deprecated.symbolLiterals", "adhocExtensions", "noAutoTupling", "experimental.saferExceptions", "experimental.betterFors", "experimental.macros", "experimental.clauseInterleaving", "experimental.namedTypeArguments", "help", "experimental.dependent", "experimental.fewerBraces", "experimental.betterMatchTypeExtractors", "strictEquality", "implicitConversions", "postfixOps"]
+    "3.6": ["experimental.genericNumberLiterals", "dynamics", "experimental.erasedDefinitions", "experimental.pureFunctions", "unsafeNulls", "experimental.captureChecking", "experimental.modularity", "deprecated.symbolLiterals", "adhocExtensions", "noAutoTupling", "experimental.saferExceptions", "experimental.betterFors", "experimental.macros", "experimental.clauseInterleaving", "experimental.namedTypeArguments", "help", "experimental.dependent", "experimental.fewerBraces", "experimental.betterMatchTypeExtractors", "strictEquality", "experimental.namedTuples", "experimental.into", "implicitConversions", "postfixOps"]
   },
   "descriptions": {
     "3.0": "Enable one or more language features.",
@@ -1676,11 +1676,12 @@
 
   },
   "descriptions": {
+    "3.3": "Enable all warning settings.",
     "3.5": "Enable all warning settings.",
     "3.6": "Enable all warning settings."
   },
   "flag": "-Wall",
-  "scalaVersions": ["3.5", "3.6"]
+  "scalaVersions": ["3.3", "3.5", "3.6"]
 }, {
   "argType": "Multiple",
   "choices": {
@@ -1689,7 +1690,7 @@
   "descriptions": {
     "2.13": "Configure reporting of compiler warnings; use `help` for details.",
     "3.5": "Configure compiler warnings.\nSyntax: -Wconf:<filters>:<action>,<filters>:<action>,...\nmultiple <filters> are combined with &, i.e., <filter>&...&<filter>\n\n<filter>\n  - Any message: any\n\n  - Message categories: cat=deprecation, cat=feature, cat=unchecked\n\n  - Message content: msg=regex\n    The regex need only match some part of the message, not all of it.\n\n  - Message id: id=E129\n    The message id is printed with the warning.\n\n  - Message name: name=PureExpressionInStatementPosition\n    The message name is printed with the warning in verbose warning mode.\n\n  - Source location: src=regex\n    The regex is evaluated against the full source path.\n\n  - Origin of warning: origin=regex\n    The regex must match the full name (`package.Class.method`) of the deprecated entity.\n\nIn verbose warning mode the compiler prints matching filters for warnings.\nVerbose mode can be enabled globally using `-Wconf:any:verbose`, or locally\nusing the @nowarn annotation (example: `@nowarn(\"v\") def test = try 1`).\n\n<action>\n  - error / e\n  - warning / w\n  - verbose / v (emit warning, show additional help for writing `-Wconf` filters)\n  - info / i    (infos are not counted as warnings and not affected by `-Werror`)\n  - silent / s\n\nThe default configuration is empty.\n\nUser-defined configurations are added to the left. The leftmost rule matching\na warning message defines the action.\n\nExamples:\n  - change every warning into an error: -Wconf:any:error\n  - silence deprecations: -Wconf:cat=deprecation:s\n  - silence a deprecation: -Wconf:origin=java\\.lang\\.Thread\\.getId:s\n  - silence warnings in src_managed directory: -Wconf:src=src_managed/.*:s\n\nNote: on the command-line you might need to quote configurations containing `*` or `&`\nto prevent the shell from expanding patterns.",
-    "3.3": "Configure compiler warnings.\nSyntax: -Wconf:<filters>:<action>,<filters>:<action>,...\nmultiple <filters> are combined with &, i.e., <filter>&...&<filter>\n\n<filter>\n  - Any message: any\n\n  - Message categories: cat=deprecation, cat=feature, cat=unchecked\n\n  - Message content: msg=regex\n    The regex need only match some part of the message, not all of it.\n\n  - Message id: id=E129\n    The message id is printed with the warning.\n\n  - Message name: name=PureExpressionInStatementPosition\n    The message name is printed with the warning in verbose warning mode.\n\n  - Source location: src=regex\n    The regex is evaluated against the full source path.\n\nIn verbose warning mode the compiler prints matching filters for warnings.\nVerbose mode can be enabled globally using `-Wconf:any:verbose`, or locally\nusing the @nowarn annotation (example: `@nowarn(\"v\") def test = try 1`).\n\n<action>\n  - error / e\n  - warning / w\n  - verbose / v (emit warning, show additional help for writing `-Wconf` filters)\n  - info / i    (infos are not counted as warnings and not affected by `-Werror`)\n  - silent / s\n\nThe default configuration is empty.\n\nUser-defined configurations are added to the left. The leftmost rule matching\na warning message defines the action.\n\nExamples:\n  - change every warning into an error: -Wconf:any:error\n  - silence deprecations: -Wconf:cat=deprecation:s\n  - silence warnings in src_managed directory: -Wconf:src=src_managed/.*:s\n\nNote: on the command-line you might need to quote configurations containing `*` or `&`\nto prevent the shell from expanding patterns.",
+    "3.3": "Configure compiler warnings.\nSyntax: -Wconf:<filters>:<action>,<filters>:<action>,...\nmultiple <filters> are combined with &, i.e., <filter>&...&<filter>\n\n<filter>\n  - Any message: any\n\n  - Message categories: cat=deprecation, cat=feature, cat=unchecked\n\n  - Message content: msg=regex\n    The regex need only match some part of the message, not all of it.\n\n  - Message id: id=E129\n    The message id is printed with the warning.\n\n  - Message name: name=PureExpressionInStatementPosition\n    The message name is printed with the warning in verbose warning mode.\n\n  - Source location: src=regex\n    The regex is evaluated against the full source path.\n\n  - Origin of warning: origin=regex\n    The regex must match the full name (`package.Class.method`) of the deprecated entity.\n\nIn verbose warning mode the compiler prints matching filters for warnings.\nVerbose mode can be enabled globally using `-Wconf:any:verbose`, or locally\nusing the @nowarn annotation (example: `@nowarn(\"v\") def test = try 1`).\n\n<action>\n  - error / e\n  - warning / w\n  - verbose / v (emit warning, show additional help for writing `-Wconf` filters)\n  - info / i    (infos are not counted as warnings and not affected by `-Werror`)\n  - silent / s\n\nThe default configuration is empty.\n\nUser-defined configurations are added to the left. The leftmost rule matching\na warning message defines the action.\n\nExamples:\n  - change every warning into an error: -Wconf:any:error\n  - silence deprecations: -Wconf:cat=deprecation:s\n  - silence a deprecation: -Wconf:origin=java\\.lang\\.Thread\\.getId:s\n  - silence warnings in src_managed directory: -Wconf:src=src_managed/.*:s\n\nNote: on the command-line you might need to quote configurations containing `*` or `&`\nto prevent the shell from expanding patterns.",
     "2.12": "Configure reporting of compiler warnings; use `help` for details.",
     "3.2": "Configure compiler warnings.\nSyntax: -Wconf:<filters>:<action>,<filters>:<action>,...\nmultiple <filters> are combined with &, i.e., <filter>&...&<filter>\n\n<filter>\n  - Any message: any\n\n  - Message categories: cat=deprecation, cat=feature, cat=unchecked\n\n  - Message content: msg=regex\n    The regex need only match some part of the message, not all of it.\n\n  - Message id: id=E129\n    The message id is printed with the warning.\n\n  - Message name: name=PureExpressionInStatementPosition\n    The message name is printed with the warning in verbose warning mode.\n\nIn verbose warning mode the compiler prints matching filters for warnings.\nVerbose mode can be enabled globally using `-Wconf:any:verbose`, or locally\nusing the @nowarn annotation (example: `@nowarn(\"v\") def test = try 1`).\n\n<action>\n  - error / e\n  - warning / w\n  - verbose / v (emit warning, show additional help for writing `-Wconf` filters)\n  - info / i    (infos are not counted as warnings and not affected by `-Werror`)\n  - silent / s\n\nThe default configuration is empty.\n\nUser-defined configurations are added to the left. The leftmost rule matching\na warning message defines the action.\n\nExamples:\n  - change every warning into an error: -Wconf:any:error\n  - silence deprecations: -Wconf:cat=deprecation:s\n\nNote: on the command-line you might need to quote configurations containing `*` or `&`\nto prevent the shell from expanding patterns.",
     "3.6": "Configure compiler warnings.\nSyntax: -Wconf:<filters>:<action>,<filters>:<action>,...\nmultiple <filters> are combined with &, i.e., <filter>&...&<filter>\n\n<filter>\n  - Any message: any\n\n  - Message categories: cat=deprecation, cat=feature, cat=unchecked\n\n  - Message content: msg=regex\n    The regex need only match some part of the message, not all of it.\n\n  - Message id: id=E129\n    The message id is printed with the warning.\n\n  - Message name: name=PureExpressionInStatementPosition\n    The message name is printed with the warning in verbose warning mode.\n\n  - Source location: src=regex\n    The regex is evaluated against the full source path.\n\n  - Origin of warning: origin=regex\n    The regex must match the full name (`package.Class.method`) of the deprecated entity.\n\nIn verbose warning mode the compiler prints matching filters for warnings.\nVerbose mode can be enabled globally using `-Wconf:any:verbose`, or locally\nusing the @nowarn annotation (example: `@nowarn(\"v\") def test = try 1`).\n\n<action>\n  - error / e\n  - warning / w\n  - verbose / v (emit warning, show additional help for writing `-Wconf` filters)\n  - info / i    (infos are not counted as warnings and not affected by `-Werror`)\n  - silent / s\n\nThe default configuration is empty.\n\nUser-defined configurations are added to the left. The leftmost rule matching\na warning message defines the action.\n\nExamples:\n  - change every warning into an error: -Wconf:any:error\n  - silence deprecations: -Wconf:cat=deprecation:s\n  - silence a deprecation: -Wconf:origin=java\\.lang\\.Thread\\.getId:s\n  - silence warnings in src_managed directory: -Wconf:src=src_managed/.*:s\n\nNote: on the command-line you might need to quote configurations containing `*` or `&`\nto prevent the shell from expanding patterns.",
@@ -1771,6 +1772,16 @@
     "2.13": "Enable lint warnings on macro expansions. Default: `default`, `help` to list choices."
   },
   "flag": "-Wmacros",
+  "scalaVersions": ["2.13"]
+}, {
+  "argType": "No",
+  "choices": {
+
+  },
+  "descriptions": {
+    "2.13": "Infix operator was defined or used with multiarg operand. [false]"
+  },
+  "flag": "-Wmultiarg-infix",
   "scalaVersions": ["2.13"]
 }, {
   "argType": "No",
@@ -2313,7 +2324,7 @@
   "choices": {
     "2.11": ["infer-any", "private-shadow", "poly-implicit-overload", "type-parameter-shadow", "nullary-unit", "inaccessible", "option-implicit", "by-name-right-associative", "stars-align", "unsound-match", "missing-interpolator", "doc-detached", "package-object-classes", "delayedinit-select", "nullary-override", "adapted-args"],
     "2.12": ["constant", "infer-any", "private-shadow", "poly-implicit-overload", "type-parameter-shadow", "inaccessible", "option-implicit", "by-name-right-associative", "stars-align", "unsound-match", "int-div-to-float", "missing-interpolator", "doc-detached", "unused", "package-object-classes", "delayedinit-select", "deprecation", "nullary-unit", "nullary-override", "adapted-args"],
-    "2.13": ["implicit-not-found", "recurse-with-default", "poly-implicit-overload", "type-parameter-shadow", "implicit-recursion", "nonlocal-return", "option-implicit", "stars-align", "numeric-methods", "serial", "constant", "universal-methods", "missing-interpolator", "doc-detached", "strict-unsealed-patmat", "infer-any", "pattern-shadow", "private-shadow", "unused", "package-object-classes", "delayedinit-select", "eta-sam", "deprecation", "nullary-unit", "adapted-args", "byname-implicit", "eta-zero", "inaccessible", "unit-special", "arg-discard", "multiarg-infix", "valpattern", "int-div-to-float", "cloneable"],
+    "2.13": ["implicit-not-found", "recurse-with-default", "poly-implicit-overload", "type-parameter-shadow", "implicit-recursion", "nonlocal-return", "option-implicit", "stars-align", "numeric-methods", "valpattern", "serial", "constant", "universal-methods", "missing-interpolator", "doc-detached", "strict-unsealed-patmat", "infer-any", "pattern-shadow", "private-shadow", "unused", "package-object-classes", "delayedinit-select", "eta-sam", "deprecation", "nullary-unit", "adapted-args", "byname-implicit", "eta-zero", "inaccessible", "unit-special", "arg-discard", "int-div-to-float", "cloneable"],
     "3.3": ["all", "private-shadow", "type-parameter-shadow"]
   },
   "descriptions": {
@@ -3124,7 +3135,7 @@
   "choices": {
     "3.0": ["12", "8", "13", "16", "10", "15", "11", "9", "17", "14"],
     "3.5": ["12", "8", "22", "13", "16", "10", "21", "20", "18", "19", "23", "15", "11", "9", "17", "14"],
-    "3.3": ["12", "8", "19", "22", "13", "16", "10", "21", "20", "18", "15", "11", "9", "17", "14"],
+    "3.3": ["12", "8", "22", "13", "16", "10", "21", "20", "18", "19", "23", "15", "11", "9", "17", "14"],
     "3.2": ["12", "8", "19", "13", "16", "10", "18", "15", "11", "9", "17", "14"],
     "3.6": ["12", "8", "22", "13", "16", "10", "21", "20", "18", "19", "23", "15", "11", "9", "17", "14"],
     "3.1": ["12", "8", "13", "16", "10", "18", "15", "11", "9", "17", "14"],
@@ -3156,7 +3167,7 @@
   "argType": "OneAfterColon",
   "choices": {
     "3.5": ["12", "8", "22", "13", "16", "10", "21", "20", "18", "19", "23", "15", "11", "9", "17", "14"],
-    "3.3": ["12", "8", "19", "22", "13", "16", "10", "21", "20", "18", "15", "11", "9", "17", "14"],
+    "3.3": ["12", "8", "22", "13", "16", "10", "21", "20", "18", "19", "23", "15", "11", "9", "17", "14"],
     "3.2": ["12", "8", "19", "13", "16", "10", "18", "15", "11", "9", "17", "14"],
     "3.6": ["12", "8", "22", "13", "16", "10", "21", "20", "18", "19", "23", "15", "11", "9", "17", "14"],
     "3.1": ["12", "8", "13", "16", "10", "18", "15", "11", "9", "17", "14"],
@@ -5238,6 +5249,16 @@
   "flag": "-Yprofile-trace",
   "scalaVersions": ["2.12", "2.13"]
 }, {
+  "argType": "OneSeparate",
+  "choices": {
+
+  },
+  "descriptions": {
+    "3.6": "Capture trace of compilation in JSON Chrome Trace format to the specified file. This option requires -Yprofile-enabled. The output file can be visualized using https://ui.perfetto.dev/."
+  },
+  "flag": "-Yprofile-trace",
+  "scalaVersions": ["3.6"]
+}, {
   "argType": "No",
   "choices": {
 
@@ -6362,7 +6383,7 @@
   "descriptions": {
     "2.11": "A footer on every Scaladoc page, by default the EPFL/Lightbend copyright notice. Can be overridden with a custom footer.",
     "2.12": "A footer on every Scaladoc page, by default the EPFL/Lightbend copyright notice. Can be overridden with a custom footer.",
-    "2.13": "A footer on every Scaladoc page, by default the EPFL/Lightbend copyright notice. Can be overridden with a custom footer."
+    "2.13": "A footer on every Scaladoc page, by default the EPFL/Akka copyright notice. Can be overridden with a custom footer."
   },
   "flag": "-doc-footer",
   "scalaVersions": ["2.11", "2.12", "2.13"]
@@ -6840,7 +6861,7 @@
     "2.13": ["experimental.macros", "higherKinds", "existentials", "dynamics", "reflectiveCalls", "implicitConversions", "postfixOps"],
     "3.5": ["experimental.genericNumberLiterals", "experimental.saferExceptions", "dynamics", "experimental.erasedDefinitions", "experimental.pureFunctions", "unsafeNulls", "experimental.captureChecking", "experimental.modularity", "deprecated.symbolLiterals", "adhocExtensions", "noAutoTupling", "experimental.macros", "experimental.clauseInterleaving", "experimental.namedTypeArguments", "help", "experimental.dependent", "experimental.fewerBraces", "experimental.betterMatchTypeExtractors", "strictEquality", "experimental.namedTuples", "experimental.into", "implicitConversions", "postfixOps"],
     "2.12": ["experimental.macros", "higherKinds", "existentials", "dynamics", "reflectiveCalls", "implicitConversions", "postfixOps"],
-    "3.6": ["experimental.genericNumberLiterals", "dynamics", "experimental.erasedDefinitions", "experimental.pureFunctions", "unsafeNulls", "experimental.captureChecking", "experimental.modularity", "experimental.into", "deprecated.symbolLiterals", "adhocExtensions", "noAutoTupling", "experimental.saferExceptions", "experimental.betterFors", "experimental.macros", "experimental.clauseInterleaving", "experimental.namedTypeArguments", "help", "experimental.dependent", "experimental.fewerBraces", "experimental.betterMatchTypeExtractors", "strictEquality", "implicitConversions", "postfixOps"],
+    "3.6": ["experimental.genericNumberLiterals", "dynamics", "experimental.erasedDefinitions", "experimental.pureFunctions", "unsafeNulls", "experimental.captureChecking", "experimental.modularity", "deprecated.symbolLiterals", "adhocExtensions", "noAutoTupling", "experimental.saferExceptions", "experimental.betterFors", "experimental.macros", "experimental.clauseInterleaving", "experimental.namedTypeArguments", "help", "experimental.dependent", "experimental.fewerBraces", "experimental.betterMatchTypeExtractors", "strictEquality", "experimental.namedTuples", "experimental.into", "implicitConversions", "postfixOps"],
     "2.11": ["experimental.macros", "higherKinds", "existentials", "dynamics", "reflectiveCalls", "implicitConversions", "postfixOps"]
   },
   "descriptions": {
