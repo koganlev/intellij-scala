@@ -4,10 +4,11 @@ import com.intellij.ide.projectWizard.NewProjectWizardTestCase
 import com.intellij.ide.wizard.NewProjectWizardBaseData.getBaseData
 import com.intellij.ide.wizard.NewProjectWizardStep
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.projectRoots.JavaSdk
+import com.intellij.openapi.projectRoots.{JavaSdk, ProjectJdkTable}
 import com.intellij.openapi.roots.{LanguageLevelProjectExtension, ProjectRootManager}
 import com.intellij.testFramework.IndexingTestUtil
 import org.jetbrains.plugins.scala.SlowTests
+import org.jetbrains.plugins.scala.extensions.inWriteAction
 import org.jetbrains.sbt.project.ProjectStructureMatcher.ProjectComparisonOptions
 import org.junit.Assert
 import org.junit.Assert.assertNotNull
@@ -23,6 +24,14 @@ abstract class NewScalaProjectWizardTestBase extends NewProjectWizardTestCase
   override protected def setUp(): Unit = {
     super.setUp()
     configureJdk()
+  }
+
+  override def tearDown(): Unit = {
+    inWriteAction {
+      val projectJdkTable = ProjectJdkTable.getInstance()
+      projectJdkTable.getAllJdks.foreach(projectJdkTable.removeJdk)
+    }
+    super.tearDown()
   }
 
   protected def createScalaProject(
