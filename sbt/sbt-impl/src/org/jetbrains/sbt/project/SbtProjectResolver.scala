@@ -777,12 +777,12 @@ class SbtProjectResolver extends ExternalSystemProjectResolver[SbtExecutionSetti
   }
 
   private def generateUniqueModuleInternalNameForRootProject(moduleName: String, moduleInternalNameRegistry: ModuleUniqueInternalNameGenerator): String = {
-    //NOTE: the idea of replacing all "/" with "_" was taken from com.intellij.openapi.externalSystem.model.project.ModuleData public constructor.
+    //NOTE: the idea of replacing all "/" and "\" with "_" was taken from com.intellij.openapi.externalSystem.model.project.ModuleData public constructor.
     //It is also done here because that way we are sure the generated internal module name is unique and will not be changed in ModuleData constructor.
     //Replacing all "." with "_" is done to prevent grouping projects from different builds into the same node e.g.
     //let's assume that in build.sbt there are references to two others ProjectRef and in one of these projects the root name is "proj.dummy" and the other
     //is "proj". Such a situation would cause "proj.dummy" to be displayed under "proj" in Project Structure | Modules.
-    val moduleInternalName = moduleName.replaceAll("[/\\.]", "_")
+    val moduleInternalName = moduleName.replaceAll("""([/\\\.])""", "_")
     moduleInternalNameRegistry.getUniqueInternalNameAndUpdateRegistry(moduleInternalName)
   }
 
