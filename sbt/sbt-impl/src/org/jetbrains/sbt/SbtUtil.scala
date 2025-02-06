@@ -9,6 +9,7 @@ import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil
 import com.intellij.openapi.module.{Module, ModuleManager}
 import com.intellij.openapi.project.{Project, ProjectUtil}
 import com.intellij.platform.workspace.storage.{EntityStorage, SymbolicEntityId, WorkspaceEntityWithSymbolicId}
+import com.intellij.psi.PsiFile
 import com.intellij.util.net.{ProxyConfiguration, ProxyCredentialStore, ProxyCredentialStoreKt, ProxySettings, ProxyUtils}
 import com.intellij.util.{EnvironmentUtil, SystemProperties}
 import org.jetbrains.annotations.VisibleForTesting
@@ -34,7 +35,7 @@ import scala.util.Using
 object SbtUtil {
   private lazy val log: Logger = Logger.getInstance(getClass)
 
-  object CommandLineOptions {
+  private object CommandLineOptions {
     val globalPlugins = "sbt.global.plugins"
     val globalBase = "sbt.global.base"
   }
@@ -121,7 +122,7 @@ object SbtUtil {
     sbtVersionIn(directory)
       .orElse(sbtVersionInBootPropertiesOf(sbtLauncher))
       .orElse(JarManifestUtils.readManifestAttributeFrom(sbtLauncher, "Implementation-Version"))
-      .getOrElse(BuildInfo.sbtLatestVersion)
+      .getOrElse(SbtVersion.Latest.Sbt_1.minor)
 
   private def sbtVersionInBootPropertiesOf(jar: File): Option[String] = {
     val appProperties = readSectionFromBootPropertiesOf(jar, sectionName = "app")
@@ -133,6 +134,7 @@ object SbtUtil {
     } yield version
   }
 
+  //noinspection SameParameterValue
   private def readSectionFromBootPropertiesOf(launcherFile: File, sectionName: String): Map[String, String] = {
     val Property = "^\\s*(\\w+)\\s*:(.+)".r.unanchored
 
@@ -157,7 +159,7 @@ object SbtUtil {
     }
   }
 
-  def sbtBuildPropertiesFile(base: File): File =
+  private def sbtBuildPropertiesFile(base: File): File =
     base / Sbt.ProjectDirectory / Sbt.PropertiesFile
 
   private def sbtVersionIn(directory: File): Option[String] =
@@ -166,6 +168,7 @@ object SbtUtil {
       case _ => None
     }
 
+  //noinspection SameParameterValue
   private def readPropertyFrom(file: File, name: String): Option[String] =
     Using.resource(new BufferedInputStream(new FileInputStream(file))) { input =>
       val properties = new Properties()
@@ -226,9 +229,7 @@ object SbtUtil {
     s"{$uri}$id"
   }
 
-  def getLauncherDir: File = getDirInPlugin("launcher")
-
-  def getLibDir: File = getDirInPlugin("lib")
+  private def getLauncherDir: File = getDirInPlugin("launcher")
 
   def getRepoDir: File = getDirInPlugin("repo")
 
@@ -259,10 +260,10 @@ object SbtUtil {
   def latestCompatibleVersion(version: SbtVersion): SbtVersion = {
     val major = version.value.major(2)
 
-    val latestInSeries =
-      if (major.inRange(Version("0.13"), Version("1.0"))) Sbt.Latest_0_13
-      else if (major.inRange(Version("1.0"), Version("2.0"))) Sbt.Latest_1_0
-      else Sbt.LatestVersion // needs to be updated for sbt versions >= 2.0
+    val latestInSeries: SbtVersion =
+      if (major.inRange(Version("0.13"), Version("1.0"))) SbtVersion.Latest.Sbt_0_13
+      else if (major.inRange(Version("1.0"), Version("2.0"))) SbtVersion.Latest.Sbt_1
+      else SbtVersion.Latest.Sbt_1 // TODO: needs to be updated for sbt versions >= 2.0
 
     if (version < latestInSeries)
       latestInSeries
@@ -410,4 +411,11 @@ object SbtUtil {
 
   def getDefaultModuleFilesDirectory(projectRoot: File): String =
     (projectRoot / Sbt.ModulesDirectory).path
+
+  // NOTE: "*/*" syntax is deprecated since sbt 1.1 and doesn't work in sbt 2
+  def sbtStructureGlobalCommand(command: String, sbtVersion: SbtVersion): String =
+    if (SbtVersionCapabilities.isSlashSyntaxSupported(sbtVersion))
+      s"Global / $command"
+    else
+      s"*/*:$command"
 }

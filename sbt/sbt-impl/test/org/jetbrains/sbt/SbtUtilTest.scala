@@ -2,8 +2,6 @@ package org.jetbrains.sbt
 
 import com.intellij.execution.configurations.ParametersList
 import org.jetbrains.plugins.scala.extensions.RichFile
-import org.jetbrains.plugins.scala.project.Version
-import org.jetbrains.sbt.SbtUtil._
 import org.junit.Assert._
 import org.junit.Test
 
@@ -27,6 +25,7 @@ class SbtUtilTest {
 
   @Test
   def testDefaultGlobalBase(): Unit = {
+    import SbtUtil.globalBase
     assertEquals(globalBase012, globalBase(v0120))
     assertEquals(globalBase013, globalBase(v0130))
     assertEquals(globalBase013, globalBase(v01317))
@@ -38,6 +37,7 @@ class SbtUtilTest {
 
   @Test
   def testDefaultGlobalPluginsDirectory(): Unit = {
+    import SbtUtil.globalPluginsDirectory
     assertEquals(globalBase012 / "plugins", globalPluginsDirectory(v0120))
     assertEquals(globalBase013 / "plugins", globalPluginsDirectory(v0130))
     assertEquals(globalBase013 / "plugins", globalPluginsDirectory(v01317))
@@ -52,6 +52,7 @@ class SbtUtilTest {
     val params = new ParametersList()
     params.addProperty("sbt.global.base", "hockensnock")
 
+    import SbtUtil.globalPluginsDirectory
     val dir = globalPluginsDirectory(v0120, params)
     assertEquals(new File("hockensnock/plugins"), dir)
   }
@@ -60,6 +61,7 @@ class SbtUtilTest {
   def testCustomGlobalPluginsWithEmptyPluginsParam(): Unit = {
     val params = new ParametersList()
 
+    import SbtUtil.globalPluginsDirectory
     val expected1 = globalPluginsDirectory(v0120)
     val actual1 = globalPluginsDirectory(v0120, params)
     assertEquals(expected1, actual1)
@@ -74,7 +76,7 @@ class SbtUtilTest {
     val params = new ParametersList()
     params.addProperty("sbt.global.plugins", "snickenfland")
 
-    val dir = globalPluginsDirectory(v0120, params)
+    val dir = SbtUtil.globalPluginsDirectory(v0120, params)
     assertEquals(new File("snickenfland"), dir)
   }
 
@@ -83,21 +85,23 @@ class SbtUtilTest {
     val params = new ParametersList()
     params.addProperty("sbt.global.base", "hockensnock")
     params.add("-Dsbt.global.plugins=tocklewick")
-    val dir = globalPluginsDirectory(v0120, params)
+
+    val dir = SbtUtil.globalPluginsDirectory(v0120, params)
     assertEquals(new File("tocklewick"), dir)
   }
 
   @Test
   def testLatestCompatibleVersion(): Unit = {
-    assertEquals(Sbt.Latest_0_13, latestCompatibleVersion(v0130))
-    assertEquals(Sbt.Latest_0_13, latestCompatibleVersion(v01317))
-    assertEquals(Sbt.Latest_1_0, latestCompatibleVersion(v100))
-    assertEquals(Sbt.Latest_1_0, latestCompatibleVersion(v112))
-    assertEquals(Sbt.Latest_1_0, latestCompatibleVersion(Sbt.Latest_1_0))
+    import SbtUtil.latestCompatibleVersion
+    assertEquals(SbtVersion.Latest.Sbt_0_13, latestCompatibleVersion(v0130))
+    assertEquals(SbtVersion.Latest.Sbt_0_13, latestCompatibleVersion(v01317))
+    assertEquals(SbtVersion.Latest.Sbt_1, latestCompatibleVersion(v100))
+    assertEquals(SbtVersion.Latest.Sbt_1, latestCompatibleVersion(v112))
+    assertEquals(SbtVersion.Latest.Sbt_1, latestCompatibleVersion(SbtVersion.Latest.Sbt_1))
     assertEquals(SbtVersion("1.9001.1"), latestCompatibleVersion(SbtVersion("1.9001.1")))
 
-    // when this breaks, update latestCompatibleVersion method and this test
-    assertEquals(Sbt.Latest_1_0, latestCompatibleVersion(Sbt.LatestVersion))
+    // when this breaks, update the `latestCompatibleVersion` method and this test
+    assertEquals(SbtVersion.Latest.Sbt_1, latestCompatibleVersion(SbtVersion.Latest.Sbt_LatestIncludingUnreleased))
   }
 
   @Test

@@ -5,8 +5,8 @@ import com.intellij.testFramework.UsefulTestCase
 import org.jetbrains.plugins.scala.DependencyManagerBase._
 import org.jetbrains.plugins.scala.util.dependencymanager.TestDependencyManagerForSbt
 import org.jetbrains.sbt.SbtUtil._
+import org.jetbrains.sbt.SbtVersion
 import org.jetbrains.sbt.buildinfo.BuildInfo
-import org.jetbrains.sbt.{Sbt, SbtVersion}
 import org.junit.Assert._
 
 import java.io.{BufferedOutputStream, File, FileOutputStream}
@@ -18,10 +18,10 @@ import scala.util.Using
 class SbtRunnerTest extends UsefulTestCase {
 
   def testSbtLaunch_latest_0_13(): Unit =
-    doTestSbtLauncherVersionDetection(Sbt.Latest_0_13)
+    doTestSbtLauncherVersionDetection(SbtVersion.Latest.Sbt_0_13)
 
   def testSbtLaunch_latest(): Unit =
-    doTestSbtLauncherVersionDetection(Sbt.LatestVersion)
+    doTestSbtLauncherVersionDetection(SbtVersion.Latest.Sbt_1)
 
 
   def testMockLauncherWithoutSbtBootProperties(): Unit = {
@@ -36,7 +36,7 @@ class SbtRunnerTest extends UsefulTestCase {
     val launcherFile = generateJarFileWithEntries()
     assertTrue(launcherFile.exists())
     val actualVersion = detectSbtVersion(tmpDirFile, launcherFile)
-    assertEquals(BuildInfo.sbtLatestVersion, actualVersion)
+    assertEquals(BuildInfo.sbtLatest_1, actualVersion)
   }
 
   private val tmpDirFile: File = new File(FileUtil.getTempDirectory)

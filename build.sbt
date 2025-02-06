@@ -135,11 +135,11 @@ lazy val sbtApi =
         "sbtIdeaShellVersion" -> Versions.sbtIdeaShellVersion,
         "sbtIdeaCompilerIndicesVersion" -> Versions.compilerIndicesVersion,
         "sbtLatest_0_13" -> Versions.Sbt.latest_0_13,
-        "sbtLatest_1_0" -> Versions.Sbt.latest_1_0,
-        "sbtLatestVersion" -> Versions.sbtVersion,
-        "sbtStructurePath_0_13" -> relativeJarPath(sbtDep("org.jetbrains.scala", "sbt-structure-extractor", Versions.sbtStructureVersion, "0.13")),
-        "sbtStructurePath_1_2" -> relativeJarPath(sbtDep("org.jetbrains.scala", "sbt-structure-extractor", Versions.sbtStructureVersion, "1.2")),
-        "sbtStructurePath_1_3" -> relativeJarPath(sbtDep("org.jetbrains.scala", "sbt-structure-extractor", Versions.sbtStructureVersion, "1.3"))
+        "sbtLatest_1" -> Versions.Sbt.latest_1,
+        "sbtStructurePath_0_13" -> relativeJarPath(Dependencies.structureExtractor_0_13),
+        "sbtStructurePath_1_0" -> relativeJarPath(Dependencies.structureExtractor_1_0),
+        "sbtStructurePath_1_3" -> relativeJarPath(Dependencies.structureExtractor_1_3),
+        "sbtStructurePath_2_0" -> relativeJarPath(Dependencies.structureExtractor_2_0),
       ),
       buildInfoOptions += BuildInfoOption.ConstantValue
     )
@@ -908,12 +908,14 @@ lazy val runtimeDependencies = project.in(file("target/tools/runtime-dependencie
       binaryDep("org.scala-sbt.rt", "java9-rt-export", Versions.java9rtExportVersion) -> "java9-rt-export/java9-rt-export.jar",
     ),
     localRepoDependencies := List(
-      sbtDep("org.jetbrains.scala", "sbt-structure-extractor", Versions.sbtStructureVersion, Versions.Sbt.binary_0_13),
-      sbtDep("org.jetbrains.scala", "sbt-structure-extractor", Versions.sbtStructureVersion, Versions.Sbt.structure_extractor_binary_1_2),
-      sbtDep("org.jetbrains.scala", "sbt-structure-extractor", Versions.sbtStructureVersion, Versions.Sbt.structure_extractor_binary_1_3),
+      Dependencies.structureExtractor_0_13,
+      Dependencies.structureExtractor_1_0,
+      Dependencies.structureExtractor_1_3,
+      Dependencies.structureExtractor_2_0,
 
       sbtDep("org.jetbrains.scala", "sbt-idea-shell", Versions.sbtIdeaShellVersion, Versions.Sbt.binary_0_13),
-      sbtDep("org.jetbrains.scala", "sbt-idea-shell", Versions.sbtIdeaShellVersion, Versions.Sbt.binary_1_0)
+      sbtDep("org.jetbrains.scala", "sbt-idea-shell", Versions.sbtIdeaShellVersion, Versions.Sbt.binary_1_0),
+      sbtDep("org.jetbrains.scala", "sbt-idea-shell", Versions.sbtIdeaShellVersion, Versions.Sbt.binary_2_0),
 
       // SCL-22858 compiler bytecode indices are disabled in sbt shell
       // sbtDep("org.jetbrains.scala", "sbt-idea-compiler-indices", Versions.compilerIndicesVersion, Versions.Sbt.binary_0_13),

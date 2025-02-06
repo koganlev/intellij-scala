@@ -85,19 +85,26 @@ final class SbtProcessManager(project: Project) extends Disposable {
   // TODO add configurable plugins somewhere for users and via API; factor this stuff out
   // this *might* get messy if multiple IDEA projects start messing with the global settings.
   // but we should be fine since it is written before every sbt boot
-  private def getInjectedPluginsCommands(
-    sbtBinVersion: Version,
-    sbtStructurePluginBinVersion: Version
-  ): Seq[String] = {
+  private def getInjectedPluginsCommands(sbtVersion: SbtVersion): Seq[String] = {
+    val sbtBinaryVersion = sbtVersion.binaryVersion
     val sbtStructureVersion = BuildInfo.sbtStructureVersion
     val sbtIdeaShellVersion = BuildInfo.sbtIdeaShellVersion
 
-    sbtBinVersion.presentation match {
-      case "0.12" => Seq.empty // 0.12 doesn't support AutoPlugins
+    val sbtStructurePluginBinVersion = structurePluginBinaryVersion(sbtVersion)
+    // NOTE: sbt-idea-shell plugin is published with `_2.0` suffix instead of the full suffix
+    // even for the unreleased sbt version like 2.0.0-M3
+    val sbtIdeaShellBinVersion =
+      if (sbtBinaryVersion.toString.startsWith("2")) "2.0"
+      else sbtBinaryVersion
+    log.debug(s"sbtBinVersion = $sbtBinaryVersion")
+    log.debug(s"sbtStructurePluginBinVersion = $sbtStructurePluginBinVersion")
+    log.debug(s"sbtIdeaShellBinVersion = $sbtIdeaShellBinVersion")
+
+    sbtBinaryVersion.presentation match {
       case _ =>
         Seq(
           s"""addSbtPlugin("org.jetbrains.scala" % "sbt-structure-extractor" % "$sbtStructureVersion", "$sbtStructurePluginBinVersion")""",
-          s"""addSbtPlugin("org.jetbrains.scala" % "sbt-idea-shell" % "$sbtIdeaShellVersion")""",
+          s"""addSbtPlugin("org.jetbrains.scala" % "sbt-idea-shell" % "$sbtIdeaShellVersion", "$sbtIdeaShellBinVersion")""",
         )
         // SCL-22858 compiler bytecode indices are disabled in sbt shell
         // ++ compilerIndicesPlugin // works for 0.13.5+, for older versions it will be ignored
@@ -117,7 +124,7 @@ final class SbtProcessManager(project: Project) extends Disposable {
     // an id to identify this boot of sbt as being launched from idea, so that any plugins it injects are never ever loaded otherwise
     // use sbtStructureVersion as approximation of compatible versions of IDEA this is allowed to launch with.
     // this avoids failing reloads when multiple sbt instances are booted from IDEA (SCL-12009)
-    val runid = BuildInfo.sbtStructureVersion
+    val runId = BuildInfo.sbtStructureVersion
 
     val sdk = selectSdkOrWarn(sbtSettings)
     val javaParameters: JavaParameters = new JavaParameters
@@ -154,9 +161,9 @@ final class SbtProcessManager(project: Project) extends Disposable {
     val allOpts = buildVMParameters(sbtSettings, workingDir, sbtOptsValues)
     vmParams.addAll(allOpts.asJava)
 
-    // don't add runid when using addPluginSbtFile command
+    // don't add runId when using addPluginSbtFile command
     if (!addPluginCommandSupported)
-      vmParams.add(s"-D$IdeaRunIdVmOption=$runid")
+      vmParams.add(s"-D$IdeaRunIdVmOption=$runId")
 
     // For details see: https://youtrack.jetbrains.com/issue/SCL-13293#focus=streamItem-27-3323121.0-0
     if(SystemInfo.isWindows)
@@ -166,19 +173,15 @@ final class SbtProcessManager(project: Project) extends Disposable {
     sbtSettings.getCustomVMExecutableOrWarn(project).foreach(exe => commandLine.setExePath(exe.getAbsolutePath))
 
     if (autoPluginsSupported) {
-      val sbtBinVersion = projectSbtVersion.binaryVersion
-      val sbtStructurePluginBinVersion = structurePluginBinaryVersion(projectSbtVersion)
-      log.debug(s"sbtBinVersion = $sbtBinVersion")
-      log.debug(s"sbtBinVersion = $sbtStructurePluginBinVersion")
-
       val settingsFile: File =
-        getOrCreateExtraSbtSettingsFile(addPluginCommandSupported, commandLine, sbtBinVersion)
+        getOrCreateExtraSbtSettingsFile(addPluginCommandSupported, commandLine, projectSbtVersion.binaryVersion)
 
-      // caution! writes injected plugin settings to user's global sbt config if addPlugin command is not supported
-      val injectPluginsSettings = getInjectedPluginsCommands(sbtBinVersion, sbtStructurePluginBinVersion)
+      val injectPluginsSettings = getInjectedPluginsCommands(projectSbtVersion)
       val settingsAll = pluginResolverSetting +: injectPluginsSettings
+      // caution! writes injected plugin settings to user's global sbt config if addPlugin command is not supported
       injectSettings(
-        runid,
+        projectSbtVersion,
+        runId,
         !addPluginCommandSupported,
         settingsFile,
         settingsAll
@@ -186,7 +189,7 @@ final class SbtProcessManager(project: Project) extends Disposable {
 
       if (addPluginCommandSupported) {
         val settingsPath = settingsFile.getAbsolutePath
-        commandLine.addParameter("early(addPluginSbtFile=\"\"\"" + settingsPath + "\"\"\")")
+        commandLine.addParameter(s"early(addPluginSbtFile=\"\"\"$settingsPath\"\"\")")
       }
 
       // SCL-22858 compiler bytecode indices are disabled in sbt shell
@@ -305,19 +308,26 @@ final class SbtProcessManager(project: Project) extends Disposable {
    * Inject custom settings or plugins into an sbt directory.
    * This seems to be the most straightforward way to add our own sbt settings
    */
-  private def injectSettings(runid: String, guardSettings: Boolean, settingsFile: File, settings: Seq[String]): Unit = {
+  private def injectSettings(
+    sbtVersion: SbtVersion,
+    runId: String,
+    guardSettings: Boolean,
+    settingsFile: File,
+    settings: Seq[String]
+  ): Unit = {
     @NonNls
     val header =
       """// Generated by IntelliJ-IDEA Scala plugin.
         |// Adds settings when starting sbt from IDEA.
         |// Manual changes to this file will be lost.
         |""".stripMargin
-    val settingsString = settings.mkString("scala.collection.Seq(\n",",\n","\n)")
+    val SeqFqn = SbtVersionCapabilities.collectionsSeqClassFqn(sbtVersion)
+    val settingsString = settings.mkString(s"$SeqFqn(\n",",\n","\n)")
 
     // any idea-specific settings should be added conditional on sbt being started from idea
     val guardedSettings =
       if (guardSettings)
-        s"""if (java.lang.System.getProperty("$IdeaRunIdVmOption", "false") == "$runid") $settingsString else scala.collection.Seq.empty"""
+        s"""if (java.lang.System.getProperty("$IdeaRunIdVmOption", "false") == "$runId") $settingsString else $SeqFqn.empty"""
       else settingsString
 
     val content = header + "\n" + guardedSettings

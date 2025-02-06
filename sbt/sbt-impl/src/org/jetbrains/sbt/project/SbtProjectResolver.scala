@@ -160,7 +160,14 @@ class SbtProjectResolver extends ExternalSystemProjectResolver[SbtExecutionSetti
 
       val messageResult: Try[BuildMessages] = {
         if (useShellImport) {
-          val messagesF = dumper.dumpFromShell(project, structureFilePath, options, reporter, settings.preferScala2)
+          val messagesF = dumper.dumpFromShell(
+            project,
+            sbtVersion,
+            structureFilePath,
+            options,
+            reporter,
+            settings.preferScala2
+          )
           Try(Await.result(messagesF, Duration.Inf)) // TODO some kind of timeout / cancel mechanism
         }
         else {
@@ -172,9 +179,18 @@ class SbtProjectResolver extends ExternalSystemProjectResolver[SbtExecutionSetti
           log.debug(s"sbtStructureJar: $sbtStructureJar")
           // TODO add error/warning messages during dump, report directly
           dumper.dumpFromProcess(
-            projectRoot, structureFilePath, options,
-            settings.vmExecutable, settings.vmOptions, settings.sbtOptions, settings.userSetEnvironment,
-            sbtLauncher, sbtStructureJar, settings.preferScala2, settings.passParentEnvironment)
+            projectRoot,
+            structureFilePath,
+            options,
+            settings.vmExecutable,
+            settings.vmOptions,
+            settings.sbtOptions,
+            settings.userSetEnvironment,
+            sbtLauncher,
+            sbtStructureJar,
+            settings.preferScala2,
+            settings.passParentEnvironment
+          )
         }
       }
       activeProcessDumper = None

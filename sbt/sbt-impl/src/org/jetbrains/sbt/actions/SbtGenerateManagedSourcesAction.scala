@@ -12,7 +12,7 @@ import org.jetbrains.sbt.buildinfo.BuildInfo
 import org.jetbrains.sbt.icons.Icons
 import org.jetbrains.sbt.project.structure.SbtStructureDump
 import org.jetbrains.sbt.project.{SbtExternalSystemManager, SbtProjectSystem}
-import org.jetbrains.sbt.{SbtBundle, SbtUtil, SbtVersion, SbtVersionCapabilities}
+import org.jetbrains.sbt.{SbtBundle, SbtUtil, SbtVersion}
 
 import java.nio.file.{Files, Path}
 import scala.util.control.NonFatal
@@ -84,10 +84,7 @@ private final class SbtGenerateManagedSourcesAction extends AnAction(
           val setupOptions = Seq(s"-addPluginSbtFile=${tmpPluginsSbtFile.toRealPath()}")
           tmpPluginsSbtFile.toFile.deleteOnExit()
 
-          val generateCommand =
-            if (SbtVersionCapabilities.isSlashSyntaxSupported(sbtVersion)) "show Global / ideaGenerateAllManagedSources"
-            else "show */*:ideaGenerateAllManagedSources"
-
+          val generateCommand = "show " + SbtUtil.sbtStructureGlobalCommand("ideaGenerateAllManagedSources", sbtVersion)
           val sbtResult = new SbtStructureDump().runSbt(
             projectBasePath.toFile,
             settings.vmExecutable,

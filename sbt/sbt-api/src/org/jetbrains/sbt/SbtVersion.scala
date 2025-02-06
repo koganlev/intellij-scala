@@ -25,23 +25,33 @@ object SbtVersion {
 
   implicit val sbtVersionOrdering: Ordering[SbtVersion] = Ordering.by(_.value)
 
-  val allSbt1: Seq[SbtVersion] = Seq(
-    SbtVersion("1.0.4"),
-    SbtVersion("1.1.6"),
-    SbtVersion("1.2.8"),
-    SbtVersion("1.3.13"),
-    SbtVersion("1.4.9"),
-    SbtVersion("1.5.8"),
-    SbtVersion("1.6.2"),
-    SbtVersion("1.7.3"),
-    SbtVersion("1.8.3"),
-    SbtVersion("1.9.9"),
-    SbtVersion("1.10.7")
-  )
+  object Latest {
+    import org.jetbrains.sbt.buildinfo.BuildInfo
+
+    val Sbt_0_13: SbtVersion = SbtVersion(BuildInfo.sbtLatest_0_13)
+    val Sbt_1: SbtVersion = SbtVersion(BuildInfo.sbtLatest_1)
+
+    val Sbt_LatestIncludingUnreleased: SbtVersion = SbtVersion("2.0.0-M3")
+
+    val AllSbt1: Seq[SbtVersion] = Seq(
+      SbtVersion("1.0.4"),
+      SbtVersion("1.1.6"),
+      SbtVersion("1.2.8"),
+      SbtVersion("1.3.13"),
+      SbtVersion("1.4.9"),
+      SbtVersion("1.5.8"),
+      SbtVersion("1.6.2"),
+      SbtVersion("1.7.3"),
+      SbtVersion("1.8.3"),
+      SbtVersion("1.9.9"),
+      SbtVersion("1.10.7")
+    )
+  }
 
   /**
-   * @return - 0.13 for all 0.13.x versions<br>
-   *         - 1.0 for all 1.x.y versions<br>
+   * @return Binary sbt version according to the default sbt behavior:
+   *         - 0.13 for all 0.13.x versions
+   *         - 1.0 for all 1.x.y versions
    *         - 2.0 for all 2.x.y versions
    */
   private def standardBinaryVersion(sbtVersion: Version): Version = {

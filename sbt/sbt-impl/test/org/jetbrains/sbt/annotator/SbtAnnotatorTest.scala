@@ -13,7 +13,7 @@ import org.jetbrains.plugins.scala.util.TestUtils.getTestDataPath
 import org.jetbrains.sbt.language.SbtFileImpl
 import org.jetbrains.sbt.project.settings.SbtProjectSettings
 import org.jetbrains.sbt.settings.SbtSettings
-import org.jetbrains.sbt.{MockSbtBase, MockSbtBuildModule, MockSbt_0_13, MockSbt_1_0, Sbt, SbtBundle, SbtVersion}
+import org.jetbrains.sbt.{MockSbtBase, MockSbtBuildModule, MockSbt_0_13, MockSbt_1_0, SbtBundle, SbtVersion}
 import org.junit.Assert.assertNotNull
 import org.junit.Ignore
 import org.junit.experimental.categories.Category
@@ -104,9 +104,7 @@ class SbtAnnotatorTest_0_13_7 extends SbtAnnotatorTestBase with MockSbt_0_13 {
 }
 
 @Category(Array(classOf[SlowTests]))
-class SbtAnnotatorTest_latest extends SbtAnnotatorTestBase with MockSbt_1_0 {
-  override implicit val sbtVersion: SbtVersion = Sbt.LatestVersion
-
+class SbtAnnotatorTest_1 extends SbtAnnotatorTestBase with MockSbt_1_0 {
   def test(): Unit = runTest(sbtVersion, Expectations.sbt_1_0)
 }
 

@@ -28,11 +28,11 @@ trait MockSbtBase extends ScalaSdkOwner { this: Test =>
 }
 
 trait MockSbt_0_13 extends MockSbtBase { this: Test =>
-  override val sbtVersion: SbtVersion = Sbt.Latest_0_13
+  override val sbtVersion: SbtVersion = SbtVersion.Latest.Sbt_0_13
   override protected def supportedIn(version: ScalaVersion): Boolean = version <= LatestScalaVersions.Scala_2_10
 }
 
 trait MockSbt_1_0 extends MockSbtBase { this: Test =>
-  override val sbtVersion: SbtVersion = Sbt.LatestVersion
+  override val sbtVersion: SbtVersion = SbtVersion.Latest.Sbt_1
   override protected def supportedIn(version: ScalaVersion): Boolean = version >= LatestScalaVersions.Scala_2_12
 }

@@ -6,8 +6,7 @@ import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import org.jetbrains.plugins.scala.LatestScalaVersions._
 import org.jetbrains.plugins.scala.extensions.withProgressSynchronously
 import org.jetbrains.plugins.scala.{ScalaBundle, ScalaVersion, isInternalMode}
-import org.jetbrains.sbt.buildinfo.BuildInfo
-import org.jetbrains.sbt.{MinorVersionGenerator, SbtVersion}
+import org.jetbrains.sbt.{MinorVersionGenerator, SbtVersion, SbtVersionCapabilities}
 
 import java.net.URI
 import java.net.http.{HttpClient, HttpRequest, HttpResponse}
@@ -66,7 +65,6 @@ object Versions {
       Scala3Entity :: ScalaEntity :: Nil
   ) {
 
-    // While Scala 3 support is WIP we do not want preselect Scala 3 version
     override protected def defaultVersion: String =
       ScalaVersion.Latest.Scala_3_LTS.minor
 
@@ -75,21 +73,16 @@ object Versions {
       val ltsVersions = versions.flatMap(ScalaVersion.fromString).filter(_.languageLevel == ScalaVersion.Latest.Scala_3_LTS.languageLevel)
       ltsVersions.maxOption.map(_.minor).getOrElse(defaultVersion)
     }
-
-    private def isScala2Version(v: String) = v.startsWith("2")
   }
 
   case object SBT extends Kind(
     Sbt1Entity :: Sbt013Entity :: Nil
   ) {
-    val LatestSbtVersion: String = BuildInfo.sbtLatestVersion
+    val LatestSbtVersion: String = SbtVersion.Latest.Sbt_1.minor
 
-    /** Scala3 is only supported since sbt 1.5.0 */
-    val MinSbtVersionForScala3 = "1.5.0"
-
-    def sbtVersionsForScala3(sbtVersions: Seq[Version]): Seq[Version] = {
-      val minVersion = Version(MinSbtVersionForScala3)
-      sbtVersions.collect { case v if v >= minVersion => v }
+    def sbtVersionsForScala3(sbtVersions: Versions): Versions = {
+      val minVersion = SbtVersionCapabilities.MinSbtVersionForScala3.value
+      Versions(LatestSbtVersion, sbtVersions.versions.collect { case v if Version(v) >= minVersion => v })
     }
   }
 
@@ -205,17 +198,18 @@ object Versions {
     val ScalaCandidatesEntity: Entity = ScalaEntity.copy(versionPattern = CandidateVersionPattern)
     val Scala3CandidatesEntity: Entity = Scala3Entity.copy(versionPattern = CandidateVersionPattern)
 
-    //Do not download SBT 0.13.x versions from internet, support only latest 0.13 version
-    //It also helps performance: downloading of 0.13 version from internet takes quite long due to some JFrog server issues
+    // Do not download SBT 0.13.x versions from the internet, support only the latest 0.13 version
+    // It also helps performance:
+    // downloading of 0.13 version from the internet takes quite long due to some JFrog server issues
     val Sbt013Entity: StaticEntity = StaticEntity(
-      BuildInfo.sbtLatest_0_13,
-      BuildInfo.sbtLatest_0_13 :: Nil
+      SbtVersion.Latest.Sbt_0_13.minor,
+      SbtVersion.Latest.Sbt_0_13.minor :: Nil
     )
 
     val Sbt1Entity: DownloadableEntity = DownloadableEntity(
       url = "https://repo1.maven.org/maven2/org/scala-sbt/sbt-launch/maven-metadata.xml",
       minVersion = "1.0.0",
-      hardcodedVersions = MinorVersionGenerator.generateAllMinorVersions(SbtVersion.allSbt1, (v: Version) => v.presentation),
+      hardcodedVersions = MinorVersionGenerator.generateAllMinorVersions(SbtVersion.Latest.AllSbt1, (v: Version) => v.presentation),
       versionPattern = """^\s+<version>(\d+\.\d+\.\d+)</version>$""".r
     )
   }

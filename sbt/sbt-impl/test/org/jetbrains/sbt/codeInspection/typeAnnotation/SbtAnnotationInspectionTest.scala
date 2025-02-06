@@ -12,8 +12,6 @@ class SbtAnnotationInspectionTest extends TypeAnnotationInspectionTest with Mock
 
   override protected val fileType = SbtFileType
 
-  override implicit val sbtVersion: SbtVersion = Sbt.LatestVersion
-
   private var excludeWhenTypeIsStable: Boolean = _
   private var excludeInDialectSources: Boolean = _
   private var excludeWhenTypeMatches: ju.Set[String] = _

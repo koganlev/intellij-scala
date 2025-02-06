@@ -14,7 +14,12 @@ object SbtVersionCapabilities {
 
   val SinceSbtVersionShell: SbtVersion = SbtVersion("0.13.5")
 
-  val SinceSlashSyntax: SbtVersion = SbtVersion("1.1.0")
+  /**
+   * Scala3 is only supported since sbt 1.5.0
+   */
+  val MinSbtVersionForScala3: SbtVersion = SbtVersion("1.5.0")
+
+  private val SinceSlashSyntax: SbtVersion = SbtVersion("1.1.0")
 
   /**
    * Minimum project sbt version that is allowed version override
@@ -29,4 +34,10 @@ object SbtVersionCapabilities {
 
   def importSupported(sbtVersion: SbtVersion): Boolean =
     sbtVersion >= SbtVersionCapabilities.SinceSbtVersion
+
+  def collectionsSeqClassFqn(sbtVersion: SbtVersion): String =
+    if (sbtVersion.isSbt2)
+      "scala.collection.immutable.Seq"
+    else
+      "scala.collection.Seq"
 }

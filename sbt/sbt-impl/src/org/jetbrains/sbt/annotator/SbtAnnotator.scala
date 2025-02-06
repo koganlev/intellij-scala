@@ -10,7 +10,7 @@ import org.jetbrains.plugins.scala.lang.psi.api.statements.{ScFunctionDefinition
 import org.jetbrains.plugins.scala.lang.psi.api.toplevel.imports.ScImportStmt
 import org.jetbrains.plugins.scala.lang.psi.impl.ScalaPsiElementFactory
 import org.jetbrains.plugins.scala.lang.psi.types._
-import org.jetbrains.plugins.scala.project.{ModuleExt, Version}
+import org.jetbrains.plugins.scala.project.ModuleExt
 import org.jetbrains.sbt.language.SbtFileImpl
 
 final class SbtAnnotator extends Annotator {
@@ -24,7 +24,7 @@ final class SbtAnnotator extends Annotator {
     case file: SbtFileImpl =>
       val sbtVersion = file.module
         .flatMap(_.sbtVersion).map(SbtVersion(_))
-        .getOrElse(Sbt.LatestVersion)
+        .getOrElse(SbtVersion.Latest.Sbt_1)
 
       val less_13_6 = sbtVersion < SbtVersion("0.13.6")
       val allowedTypes =

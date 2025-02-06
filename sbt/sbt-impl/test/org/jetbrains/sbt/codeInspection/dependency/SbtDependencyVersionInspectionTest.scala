@@ -14,9 +14,7 @@ class SbtDependencyVersionInspectionTest
     with MockSbt_1_0
     with MockSbtBuildModule
     with PackageSearchClientTesting {
-
-  override val sbtVersion: SbtVersion = Sbt.LatestVersion
-
+  
   override protected val classOfInspection = classOf[SbtDependencyVersionInspection]
   override protected val description: String = ""
   override protected val fileType: LanguageFileType = SbtFileType
