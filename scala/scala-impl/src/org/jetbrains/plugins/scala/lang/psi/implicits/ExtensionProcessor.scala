@@ -30,7 +30,7 @@ final class ExtensionProcessor(
           implicitScopeObject      = state.implicitScopeObject,
           unresolvedTypeParameters = state.unresolvedTypeParams,
           isExtensionCall          = true,
-          exportedIn               = state.exportedIn,
+          exportedInfo             = state.exportedInfo,
           isExtensionFromGiven     = true
         )
       )
