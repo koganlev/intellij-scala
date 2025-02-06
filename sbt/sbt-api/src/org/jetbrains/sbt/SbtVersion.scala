@@ -2,6 +2,8 @@ package org.jetbrains.sbt
 
 import org.jetbrains.plugins.scala.project.Version
 
+import scala.math.Ordering.Implicits.infixOrderingOps
+
 final case class SbtVersion(value: Version) extends MinorVersionGenerator[Version] {
   override def minor: String = value.presentation
 
@@ -35,10 +37,13 @@ object SbtVersion {
   val MinSupportedVersion: SbtVersion = SbtVersion.Latest.Sbt_0_13
 
   object Latest {
-    import org.jetbrains.sbt.buildinfo.BuildInfo
+    val Sbt_0_13: SbtVersion = SbtVersion("0.13.18")
+    val Sbt_2: SbtVersion = SbtVersion("2.0.0-M3")
 
-    val Sbt_0_13: SbtVersion = SbtVersion(BuildInfo.sbtLatest_0_13)
-    val Sbt_1: SbtVersion = SbtVersion(BuildInfo.sbtLatest_1)
+    // NOTE: when updating the latest sbt version,
+    // also update `Versions.sbtVersion` in `project/Versions.scala` in project definition
+    private val Sbt_1_10 = SbtVersion("1.10.7")
+    val Sbt_1: SbtVersion = Sbt_1_10
 
     val Sbt_LatestIncludingUnreleased: SbtVersion = SbtVersion("2.0.0-M3")
 
@@ -53,7 +58,7 @@ object SbtVersion {
       SbtVersion("1.7.3"),
       SbtVersion("1.8.3"),
       SbtVersion("1.9.9"),
-      SbtVersion("1.10.7")
+      Sbt_1_10
     )
   }
 
@@ -74,5 +79,14 @@ object SbtVersion {
     }
     else
       sbtVersion.major(2)
+  }
+
+  /** @note tested in org.jetbrains.sbt.SbtUtilTest */
+  def upgradeSbtVersionToTheLatestCompatible(sbtVersion: SbtVersion): SbtVersion = {
+    val latestCompat =
+      if (sbtVersion.isSbt0) Latest.Sbt_0_13
+      else if (sbtVersion.isSbt2) Latest.Sbt_2
+      else Latest.Sbt_1
+    sbtVersion.max(latestCompat)
   }
 }

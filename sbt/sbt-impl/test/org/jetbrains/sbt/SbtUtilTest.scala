@@ -91,17 +91,19 @@ class SbtUtilTest {
   }
 
   @Test
-  def testLatestCompatibleVersion(): Unit = {
-    import SbtUtil.latestCompatibleVersion
-    assertEquals(SbtVersion.Latest.Sbt_0_13, latestCompatibleVersion(v0130))
-    assertEquals(SbtVersion.Latest.Sbt_0_13, latestCompatibleVersion(v01317))
-    assertEquals(SbtVersion.Latest.Sbt_1, latestCompatibleVersion(v100))
-    assertEquals(SbtVersion.Latest.Sbt_1, latestCompatibleVersion(v112))
-    assertEquals(SbtVersion.Latest.Sbt_1, latestCompatibleVersion(SbtVersion.Latest.Sbt_1))
-    assertEquals(SbtVersion("1.9001.1"), latestCompatibleVersion(SbtVersion("1.9001.1")))
+  def testUpgradeSbtVersionToTheLatestCompatible(): Unit = {
+    import org.jetbrains.sbt.SbtVersion.upgradeSbtVersionToTheLatestCompatible
 
-    // when this breaks, update the `latestCompatibleVersion` method and this test
-    assertEquals(SbtVersion.Latest.Sbt_1, latestCompatibleVersion(SbtVersion.Latest.Sbt_LatestIncludingUnreleased))
+    assertEquals(SbtVersion.Latest.Sbt_0_13, upgradeSbtVersionToTheLatestCompatible(v0130))
+    assertEquals(SbtVersion.Latest.Sbt_0_13, upgradeSbtVersionToTheLatestCompatible(v01317))
+    assertEquals(SbtVersion.Latest.Sbt_1, upgradeSbtVersionToTheLatestCompatible(v100))
+    assertEquals(SbtVersion.Latest.Sbt_1, upgradeSbtVersionToTheLatestCompatible(v112))
+    assertEquals(SbtVersion.Latest.Sbt_1, upgradeSbtVersionToTheLatestCompatible(SbtVersion.Latest.Sbt_1))
+    assertEquals(SbtVersion.Latest.Sbt_LatestIncludingUnreleased, upgradeSbtVersionToTheLatestCompatible(SbtVersion.Latest.Sbt_LatestIncludingUnreleased))
+
+    assertEquals(SbtVersion("1.9001.1"), upgradeSbtVersionToTheLatestCompatible(SbtVersion("1.9001.1")))
+    assertEquals(SbtVersion("2.0.0-M3"), upgradeSbtVersionToTheLatestCompatible(SbtVersion("2.0.0-M3")))
+    assertEquals(SbtVersion("2.0.0"), upgradeSbtVersionToTheLatestCompatible(SbtVersion("2.0.0")))
   }
 
   @Test

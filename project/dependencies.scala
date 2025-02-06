@@ -9,10 +9,10 @@ object Versions {
   val scalaVersion: String = "2.13.16"
   val scala3Version: String = "3.3.5"
 
-  // ATTENTION: when updating sbtVersion also update versions in MockSbt_1_0
+  // ATTENTION: when updating `sbtVersion` also update it in `org.jetbrains.sbt.SbtVersion.Latest`
   // NOTE: sbt-launch / bloop-launcher won't be fetched on refresh.
   // run runtimeDependencies/update manually
-  val sbtVersion: String = Sbt.latest_1
+  val sbtVersion: String = "1.10.7"
   val bloopVersion = "1.5.6"
   val zincVersion = "1.10.7"
 
@@ -73,11 +73,6 @@ object Versions {
     val structure_extractor_binary_1_0 = "1.0"
     val structure_extractor_binary_1_3 = "1.3"
     val structure_extractor_binary_2_0 = "2.0"
-
-    // ATTENTION: after adding sbt major version, also update:
-    // buildInfoKeys, Sbt.scala and SbtUtil.latestCompatibleVersion
-    val latest_0_13 = "0.13.18"
-    val latest_1 = "1.10.7"
   }
 }
 

@@ -134,8 +134,6 @@ lazy val sbtApi =
         "sbtStructureVersion" -> Versions.sbtStructureVersion,
         "sbtIdeaShellVersion" -> Versions.sbtIdeaShellVersion,
         "sbtIdeaCompilerIndicesVersion" -> Versions.compilerIndicesVersion,
-        "sbtLatest_0_13" -> Versions.Sbt.latest_0_13,
-        "sbtLatest_1" -> Versions.Sbt.latest_1,
         "sbtStructurePath_0_13" -> relativeJarPath(Dependencies.structureExtractor_0_13),
         "sbtStructurePath_1_0" -> relativeJarPath(Dependencies.structureExtractor_1_0),
         "sbtStructurePath_1_3" -> relativeJarPath(Dependencies.structureExtractor_1_3),

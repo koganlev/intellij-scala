@@ -30,6 +30,7 @@ import java.util.Properties
 import java.util.jar.JarFile
 import scala.collection.mutable
 import scala.jdk.CollectionConverters.MapHasAsScala
+import scala.math.Ordering.Implicits.infixOrderingOps
 import scala.util.Using
 
 object SbtUtil {
@@ -257,20 +258,6 @@ object SbtUtil {
   /** Normalizes pathname so that backslashes don't get interpreted as escape characters in interpolated strings. */
   def normalizePath(file: File): String = file.getAbsolutePath.replace('\\', '/')
 
-  def latestCompatibleVersion(version: SbtVersion): SbtVersion = {
-    val major = version.value.major(2)
-
-    val latestInSeries: SbtVersion =
-      if (major.inRange(Version("0.13"), Version("1.0"))) SbtVersion.Latest.Sbt_0_13
-      else if (major.inRange(Version("1.0"), Version("2.0"))) SbtVersion.Latest.Sbt_1
-      else SbtVersion.Latest.Sbt_1 // TODO: needs to be updated for sbt versions >= 2.0
-
-    if (version < latestInSeries)
-      latestInSeries
-    else
-      version
-  }
-
   private def pluginBase: File = {
     val file: File = jarWith[this.type]
     val deep = if (file.getName == "classes") 1 else 2
@@ -299,15 +286,6 @@ object SbtUtil {
   }
 
   private def isInTest: Boolean = ApplicationManager.getApplication.isUnitTestMode
-
-  private def canUpgradeSbtVersion(sbtVersion: SbtVersion): Boolean =
-    sbtVersion < SbtUtil.latestCompatibleVersion(sbtVersion)
-
-  def upgradedSbtVersion(sbtVersion: SbtVersion): SbtVersion =
-    if (canUpgradeSbtVersion(sbtVersion))
-      SbtUtil.latestCompatibleVersion(sbtVersion)
-    else
-      sbtVersion
 
   def sbtVersionParam(sbtVersion: SbtVersion): String =
     s"-Dsbt.version=$sbtVersion"
