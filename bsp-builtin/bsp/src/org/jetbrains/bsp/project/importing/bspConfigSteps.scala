@@ -24,6 +24,7 @@ import org.jetbrains.plugins.scala.build.IndicatorReporter
 import org.jetbrains.plugins.scala.project.Version
 import org.jetbrains.plugins.scala.project.external.SdkUtils
 import org.jetbrains.sbt.SbtUtil._
+import org.jetbrains.sbt.SbtVersion
 import org.jetbrains.sbt.project.SbtProjectImportProvider
 
 import java.awt.{GridBagConstraints, GridBagLayout}
@@ -153,8 +154,8 @@ object bspConfigSteps {
     val vfile = LocalFileSystem.getInstance().findFileByIoFile(workspace.toFile)
 
     val sbtChoice = if (SbtProjectImportProvider.canImport(vfile)) {
-      val sbtVersion = Version(detectSbtVersion(workspace.toFile, getDefaultLauncher))
-      if (sbtVersion.major(2) >= Version("1.4")) {
+      val sbtVersion = detectSbtVersion(workspace.toFile, getDefaultLauncher)
+      if (sbtVersion >= SbtVersion("1.4")) {
         // sbt >= 1.4 : user choose: bloop or sbt
         List(SbtSetup, BloopSbtSetup)
       } else {

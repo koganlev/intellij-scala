@@ -54,7 +54,7 @@ private final class SbtGenerateManagedSourcesAction extends AnAction(
         try {
           val launcher = settings.customLauncher.getOrElse(SbtUtil.getDefaultLauncher)
 
-          val sbtVersion = SbtVersion(SbtUtil.detectSbtVersion(projectBasePath.toFile, launcher))
+          val sbtVersion = SbtUtil.detectSbtVersion(projectBasePath.toFile, launcher)
           val sbtStructurePluginBinVersion = SbtUtil.structurePluginBinaryVersion(sbtVersion)
           val addPluginCommandSupported = SbtVersionCapabilities.isAddPluginCommandSupported(sbtVersion)
 

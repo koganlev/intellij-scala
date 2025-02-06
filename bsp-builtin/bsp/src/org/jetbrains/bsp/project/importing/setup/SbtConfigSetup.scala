@@ -35,7 +35,7 @@ object SbtConfigSetup {
     val sbtLauncherArgs = List("early(startServer)")
     val sbtCommands = ""
 
-    val projectSbtVersion = SbtVersion(detectSbtVersion(baseDir.toFile, getDefaultLauncher))
+    val projectSbtVersion = detectSbtVersion(baseDir.toFile, getDefaultLauncher)
     val sbtVersion = SbtVersion.upgradeSbtVersionToTheLatestCompatible(projectSbtVersion)
     val upgradeParam =
       if (sbtVersion > projectSbtVersion)

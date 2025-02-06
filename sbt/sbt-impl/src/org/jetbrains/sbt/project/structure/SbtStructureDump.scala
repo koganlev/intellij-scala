@@ -94,7 +94,7 @@ class SbtStructureDump {
   )(implicit reporter: BuildReporter): Try[BuildMessages] = {
     val optString = makeOptionsStringLiteral(options)
 
-    val sbtVersion = SbtVersion(SbtUtil.detectSbtVersion(directory, SbtUtil.getDefaultLauncher))
+    val sbtVersion = SbtUtil.detectSbtVersion(directory, SbtUtil.getDefaultLauncher)
 
     val SeqFqn = SbtVersionCapabilities.collectionsSeqClassFqn(sbtVersion)
     val setCommands = Seq(

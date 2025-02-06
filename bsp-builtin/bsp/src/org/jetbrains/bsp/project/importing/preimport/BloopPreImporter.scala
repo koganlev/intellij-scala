@@ -42,7 +42,7 @@ object BloopPreImporter {
     )
     val sbtCommands = "bloopInstall"
 
-    val projectSbtVersion = SbtVersion(detectSbtVersion(baseDir, getDefaultLauncher))
+    val projectSbtVersion = detectSbtVersion(baseDir.toFile, getDefaultLauncher)
     val sbtVersion = SbtVersion.upgradeSbtVersionToTheLatestCompatible(projectSbtVersion)
     val upgradeParam =
       if (sbtVersion > projectSbtVersion)

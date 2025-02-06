@@ -145,8 +145,7 @@ final class SbtProcessManager(project: Project) extends Disposable {
       }
     }
 
-    val projectSbtVersion = SbtVersion(detectSbtVersion(workingDir, launcher))
-
+    val projectSbtVersion = detectSbtVersion(workingDir, launcher)
     val addPluginCommandSupported = SbtVersionCapabilities.isAddPluginCommandSupported(projectSbtVersion)
     log.debug(s"projectSbtVersion = $projectSbtVersion")
     log.debug(s"addPluginCommandSupported = $addPluginCommandSupported")

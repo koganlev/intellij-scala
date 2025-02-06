@@ -77,6 +77,7 @@ class SbtProjectResolver extends ExternalSystemProjectResolver[SbtExecutionSetti
     settings: SbtExecutionSettings,
     projectRoot: File,
     sbtLauncher: File,
+    sbtVersion: SbtVersion,
     notifications: ExternalSystemTaskNotificationListener
   ): DataNode[ESProjectData] = {
 
@@ -91,7 +92,7 @@ class SbtProjectResolver extends ExternalSystemProjectResolver[SbtExecutionSetti
     } else esReporter
 
     val startTime = System.currentTimeMillis()
-    val structureDump = dumpStructure(projectRoot, sbtLauncher, SbtVersion(sbtVersion), settings, taskId.findProject())
+    val structureDump = dumpStructure(projectRoot, sbtLauncher, sbtVersion, settings, taskId.findProject())
 
     // side-effecty status reporting
     structureDump.foreach { _ =>
@@ -304,7 +305,10 @@ class SbtProjectResolver extends ExternalSystemProjectResolver[SbtExecutionSetti
    * Create project preview without using sbt, since sbt import can fail and users would have to do a manual edit of the project.
    * Also sbt boot makes the whole process way too slow.
    */
-  private def dummyProject(projectRoot: File, settings: SbtExecutionSettings): Node[ESProjectData] = {
+  private def dummyProject(
+    projectRoot: File,
+    settings: SbtExecutionSettings,
+  ): Node[ESProjectData] = {
 
     // TODO add default scala sdk and sbt libs (newest versions or so)
 
@@ -349,7 +353,15 @@ class SbtProjectResolver extends ExternalSystemProjectResolver[SbtExecutionSetti
 
     val dummyBuildData = BuildData(projectUri, Seq.empty, Seq.empty, Seq.empty, Seq.empty)
     val projectToParentModule = projectToModule.view.mapValues(_.parent).toMap
-    createBuildModule(dummyBuildData, projects, getDefaultModuleFilesDirectory(projectRoot), None, settings.sbtVersion, projectToParentModule, buildProjectsGroup)
+    createBuildModule(
+      dummyBuildData,
+      projects,
+      getDefaultModuleFilesDirectory(projectRoot),
+      None,
+      settings.sbtVersion,
+      projectToParentModule,
+      buildProjectsGroup
+    )
 
     projectNode
   }
@@ -367,7 +379,7 @@ class SbtProjectResolver extends ExternalSystemProjectResolver[SbtExecutionSetti
     root: String,
     data: sbtStructure.StructureData,
     settingsJdk: Option[String],
-    sbtVersion: String,
+    sbtVersion: SbtVersion,
     settings: SbtExecutionSettings,
   ): Node[ESProjectData] = {
     val projects: Seq[sbtStructure.ProjectData] = data.projects
@@ -423,7 +435,15 @@ class SbtProjectResolver extends ExternalSystemProjectResolver[SbtExecutionSetti
     )
 
     val buildModuleForProject: BuildData => BuildModuleNodeWithBuildBaseDir =
-      createBuildModule(_, projects, defaultModuleFilesDirectory, data.localCachePath.map(_.getCanonicalPath), sbtVersion, projectToParentModule, buildProjectsGroups)
+      build => createBuildModule(
+        build,
+        projects,
+        defaultModuleFilesDirectory,
+        data.localCachePath.map(_.getCanonicalPath),
+        sbtVersion,
+        projectToParentModule,
+        buildProjectsGroups
+      )
     val buildModules = data.builds.map(buildModuleForProject)
 
     configureBuildModuleDependencies(buildModules)
@@ -1107,10 +1127,6 @@ class SbtProjectResolver extends ExternalSystemProjectResolver[SbtExecutionSetti
     createContentRootNodes(allRoots, rootPathsString)
   }
 
-
-  private def allDirectories(dirs: Seq[sbtStructure.DirectoryData]) =
-    dirs.map(_.file.canonicalPath)
-
   private def managedDirectories(dirs: Seq[sbtStructure.DirectoryData]) =
     dirs.filter(_.managed).map(_.file.canonicalPath)
 
@@ -1135,7 +1151,7 @@ class SbtProjectResolver extends ExternalSystemProjectResolver[SbtExecutionSetti
     projects: Seq[ProjectData],
     defaultModuleFilesDirectory: String,
     localCachePath: Option[String],
-    sbtVersion: String,
+    sbtVersion: SbtVersion,
     projectToParentModule: Map[ProjectData, ModuleDataNodeType],
     buildProjectsGroups: Seq[BuildProjectsGroup]
   ): BuildModuleNodeWithBuildBaseDir = {

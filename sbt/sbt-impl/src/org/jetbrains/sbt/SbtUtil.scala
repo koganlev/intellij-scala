@@ -119,11 +119,12 @@ object SbtUtil {
       sbtVersion.value.major(2) //effectively ~ 0.13
   }
 
-  def detectSbtVersion(directory: File, sbtLauncher: => File): String =
+  def detectSbtVersion(directory: File, sbtLauncher: => File): SbtVersion =
     sbtVersionIn(directory)
       .orElse(sbtVersionInBootPropertiesOf(sbtLauncher))
       .orElse(JarManifestUtils.readManifestAttributeFrom(sbtLauncher, "Implementation-Version"))
-      .getOrElse(SbtVersion.Latest.Sbt_1.minor)
+      .map(SbtVersion(_))
+      .getOrElse(SbtVersion.Latest.Sbt_1)
 
   private def sbtVersionInBootPropertiesOf(jar: File): Option[String] = {
     val appProperties = readSectionFromBootPropertiesOf(jar, sectionName = "app")
