@@ -147,10 +147,8 @@ final class SbtProcessManager(project: Project) extends Disposable {
 
     val projectSbtVersion = SbtVersion(detectSbtVersion(workingDir, launcher))
 
-    val autoPluginsSupported = projectSbtVersion >= SbtVersionCapabilities.SinceSbtVersionShell
-    val addPluginCommandSupported = isAddPluginCommandSupported(projectSbtVersion)
+    val addPluginCommandSupported = SbtVersionCapabilities.isAddPluginCommandSupported(projectSbtVersion)
     log.debug(s"projectSbtVersion = $projectSbtVersion")
-    log.debug(s"autoPluginsSupported = $autoPluginsSupported")
     log.debug(s"addPluginCommandSupported = $addPluginCommandSupported")
 
     val vmParams = javaParameters.getVMParametersList
@@ -172,33 +170,31 @@ final class SbtProcessManager(project: Project) extends Disposable {
     val commandLine: GeneralCommandLine = javaParameters.toCommandLine
     sbtSettings.getCustomVMExecutableOrWarn(project).foreach(exe => commandLine.setExePath(exe.getAbsolutePath))
 
-    if (autoPluginsSupported) {
-      val settingsFile: File =
-        getOrCreateExtraSbtSettingsFile(addPluginCommandSupported, commandLine, projectSbtVersion.binaryVersion)
+    val settingsFile: File =
+      getOrCreateExtraSbtSettingsFile(addPluginCommandSupported, commandLine, projectSbtVersion.binaryVersion)
 
-      val injectPluginsSettings = getInjectedPluginsCommands(projectSbtVersion)
-      val settingsAll = pluginResolverSetting +: injectPluginsSettings
-      // caution! writes injected plugin settings to user's global sbt config if addPlugin command is not supported
-      injectSettings(
-        projectSbtVersion,
-        runId,
-        !addPluginCommandSupported,
-        settingsFile,
-        settingsAll
-      )
+    val injectPluginsSettings = getInjectedPluginsCommands(projectSbtVersion)
+    val settingsAll = pluginResolverSetting +: injectPluginsSettings
+    // caution! writes injected plugin settings to user's global sbt config if addPlugin command is not supported
+    injectSettings(
+      projectSbtVersion,
+      runId,
+      !addPluginCommandSupported,
+      settingsFile,
+      settingsAll
+    )
 
-      if (addPluginCommandSupported) {
-        val settingsPath = settingsFile.getAbsolutePath
-        commandLine.addParameter(s"early(addPluginSbtFile=\"\"\"$settingsPath\"\"\")")
-      }
-
-      // SCL-22858 compiler bytecode indices are disabled in sbt shell
-      val commands = "idea-shell"
-
-      commandLine.addParameter(commands)
-      val sbtLauncherArgs = sbtOpts.collect { case a: SbtLauncherOption => a.value }
-      commandLine.addParameters(sbtLauncherArgs.asJava)
+    if (addPluginCommandSupported) {
+      val settingsPath = settingsFile.getAbsolutePath
+      commandLine.addParameter(s"early(addPluginSbtFile=\"\"\"$settingsPath\"\"\")")
     }
+
+    // SCL-22858 compiler bytecode indices are disabled in sbt shell
+    val commands = "idea-shell"
+
+    commandLine.addParameter(commands)
+    val sbtLauncherArgs = sbtOpts.collect { case a: SbtLauncherOption => a.value }
+    commandLine.addParameters(sbtLauncherArgs.asJava)
 
     val pty = createPtyCommandLine(commandLine, sbtSettings.passParentEnvironment, sbtSettings.userSetEnvironment)
     val cpty = new ColoredProcessHandler(pty)
@@ -422,7 +418,7 @@ final class SbtProcessManager(project: Project) extends Disposable {
     var timeout = 3L
     val backoff = 3L // Back off for additional 3 seconds before each retry.
 
-    while (!success && tries > 0) {
+    while (!success &&  tries > 0) {
       attemptTermination()
       try {
         process.onExit().get(timeout, TimeUnit.SECONDS)

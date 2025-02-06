@@ -301,8 +301,7 @@ object SbtUtil {
   private def isInTest: Boolean = ApplicationManager.getApplication.isUnitTestMode
 
   private def canUpgradeSbtVersion(sbtVersion: SbtVersion): Boolean =
-    sbtVersion >= SbtVersionCapabilities.MayUpgradeSbtVersion &&
-      sbtVersion < SbtUtil.latestCompatibleVersion(sbtVersion)
+    sbtVersion < SbtUtil.latestCompatibleVersion(sbtVersion)
 
   def upgradedSbtVersion(sbtVersion: SbtVersion): SbtVersion =
     if (canUpgradeSbtVersion(sbtVersion))
@@ -312,11 +311,6 @@ object SbtUtil {
 
   def sbtVersionParam(sbtVersion: SbtVersion): String =
     s"-Dsbt.version=$sbtVersion"
-
-  def isAddPluginCommandSupported(sbtVersion: SbtVersion): Boolean =
-    sbtVersion >= SbtVersionCapabilities.AddPluginCommandVersion_1 ||
-      sbtVersion.inRange(SbtVersionCapabilities.AddPluginCommandVersion_013, SbtVersion("1.0.0"))
-
 
   /** It is needed as we want to behave exactly like sbt. Sbt does not take into account options with unbalanced quoted derived from a single line from
    * .jvmopts/.sbtopts file. When options entered in the terminal contains unbalanced quotes it still waits until the user aligns the quotes. Additional we don't take into account

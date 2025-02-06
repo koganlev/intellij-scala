@@ -11,6 +11,7 @@ final case class SbtVersion(value: Version) extends MinorVersionGenerator[Versio
 
   lazy val binaryVersion: Version = SbtVersion.standardBinaryVersion(value)
 
+  def isSbt0: Boolean = minor.startsWith("0")
   def isSbt2: Boolean = minor.startsWith("2")
 
   def inRange(atLeast: SbtVersion, lessThan: SbtVersion): Boolean =
@@ -24,6 +25,14 @@ object SbtVersion {
   def apply(value: String): SbtVersion = new SbtVersion(Version(value))
 
   implicit val sbtVersionOrdering: Ordering[SbtVersion] = Ordering.by(_.value)
+
+  /**
+   * Minimum sbt version for which IntelliJ IDEA has official support.
+   * For any version below this there might be undefined behavior, and there is no guarantee to how IntelliJ will behave
+   *
+   * @note sbt 0.13 have been deprecated since 2017 already!
+   */
+  val MinSupportedVersion: SbtVersion = SbtVersion.Latest.Sbt_0_13
 
   object Latest {
     import org.jetbrains.sbt.buildinfo.BuildInfo

@@ -12,7 +12,7 @@ import org.jetbrains.sbt.buildinfo.BuildInfo
 import org.jetbrains.sbt.icons.Icons
 import org.jetbrains.sbt.project.structure.SbtStructureDump
 import org.jetbrains.sbt.project.{SbtExternalSystemManager, SbtProjectSystem}
-import org.jetbrains.sbt.{SbtBundle, SbtUtil, SbtVersion}
+import org.jetbrains.sbt.{SbtBundle, SbtUtil, SbtVersion, SbtVersionCapabilities}
 
 import java.nio.file.{Files, Path}
 import scala.util.control.NonFatal
@@ -56,7 +56,7 @@ private final class SbtGenerateManagedSourcesAction extends AnAction(
 
           val sbtVersion = SbtVersion(SbtUtil.detectSbtVersion(projectBasePath.toFile, launcher))
           val sbtStructurePluginBinVersion = SbtUtil.structurePluginBinaryVersion(sbtVersion)
-          val addPluginCommandSupported = SbtUtil.isAddPluginCommandSupported(sbtVersion)
+          val addPluginCommandSupported = SbtVersionCapabilities.isAddPluginCommandSupported(sbtVersion)
 
           if (!addPluginCommandSupported) {
             val notSupportedWord = SbtBundle.message("sbt.generate.managed.sources.action.not.supported")

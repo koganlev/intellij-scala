@@ -26,13 +26,8 @@ final class SbtAnnotator extends Annotator {
         .flatMap(_.sbtVersion).map(SbtVersion(_))
         .getOrElse(SbtVersion.Latest.Sbt_1)
 
-      val less_13_6 = sbtVersion < SbtVersion("0.13.6")
       val allowedTypes =
-        if (sbtVersion < SbtVersion("0.13.0"))
-          "Seq[Project.Setting[_]]" :: "Project.Setting[_]" :: Nil
-        else if (less_13_6)
-          "Seq[Def.SettingsDefinition]" :: "Def.SettingsDefinition" :: Nil
-        else if (sbtVersion < SbtVersion("1.0.0"))
+        if (sbtVersion.isSbt0)
           "sbt.internals.DslEntry" :: Nil
         else
           "sbt.internal.DslEntry" :: Nil
@@ -48,13 +43,11 @@ final class SbtAnnotator extends Annotator {
 
               message =
               if (expressionType.isNothing || expressionType.isNull) {
-                if (less_13_6) SbtBundle.message("sbt.annotation.expectedExpressionType")
-                else SbtBundle.message("sbt.annotation.expectedExpressionTypeSbt0136")
+                SbtBundle.message("sbt.annotation.expectedExpressionTypeSbt0136")
               } else if (isTypeAllowed(expression, expressionType, allowedTypes: _*)) {
                 null
               } else {
-                if (less_13_6) SbtBundle.message("sbt.annotation.expressionMustConform", expressionType)
-                else SbtBundle.message("sbt.annotation.expressionMustConformSbt0136", expressionType)
+                SbtBundle.message("sbt.annotation.expressionMustConformSbt0136", expressionType)
               }
               if message != null
             } yield message
@@ -63,26 +56,21 @@ final class SbtAnnotator extends Annotator {
                _: PsiComment |
                _: PsiWhiteSpace => None
           case _: ScFunctionDefinition |
-               _: ScPatternDefinition if sbtVersion > SbtVersion("0.13.0") => None
+               _: ScPatternDefinition => None
           case _ => Some(SbtBundle.message("sbt.annotation.sbtFileMustContainOnlyExpressions"))
         }
       } holder.createErrorAnnotation(child, message)
-
-      if (sbtVersion < SbtVersion("0.13.7")) {
-        for {
-          expression <- missingBlankLines(children.toSeq)
-          message = SbtBundle.message("sbt.annotation.blankLineRequired", sbtVersion)
-        } holder.createErrorAnnotation(expression, message)
-      }
     case _ =>
   }
 }
 
 object SbtAnnotator {
 
-  def isTypeAllowed(expression: ScExpression,
-                    expressionType: ScType,
-                    allowedTypes: String*): Boolean = {
+  def isTypeAllowed(
+    expression: ScExpression,
+    expressionType: ScType,
+    allowedTypes: String*
+  ): Boolean = {
     val maybeExpectedType = for {
       typeName <- allowedTypes
       typeElement = ScalaPsiElementFactory.createTypeElementFromText(typeName, expression.getContext, expression)
@@ -94,10 +82,4 @@ object SbtAnnotator {
         expression.getTypeAfterImplicitConversion(expectedOption = Option(expectedType)).tr.getOrNothing.conforms(expectedType)
     }
   }
-
-  private def missingBlankLines(elements: Seq[PsiElement]) =
-    elements.sliding(3).flatMap {
-      case Seq(_: ScExpression, space: PsiWhiteSpace, expression: ScExpression) if space.getText.count(_ == '\n') == 1 => Some(expression)
-      case _ => None
-    }
 }

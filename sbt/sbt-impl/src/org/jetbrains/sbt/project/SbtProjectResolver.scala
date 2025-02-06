@@ -149,7 +149,7 @@ class SbtProjectResolver extends ExternalSystemProjectResolver[SbtExecutionSetti
   )(implicit reporter: BuildReporter): Try[(Elem, BuildMessages)] = {
     SbtProjectResolver.processOutputOfLatestStructureDump = ""
 
-    val useShellImport = settings.useShellForImport && SbtVersionCapabilities.shellImportSupported(sbtVersion) && project != null
+    val useShellImport = settings.useShellForImport && project != null
     val options = getSbtStructureDumpOptions(settings)
 
     def doDumpStructure(structureFile: File): Try[(Elem, BuildMessages)] = {
@@ -241,8 +241,8 @@ class SbtProjectResolver extends ExternalSystemProjectResolver[SbtExecutionSetti
     if (!sbtLauncher.isFile) {
       val error = SbtBundle.message("sbt.launcher.not.found", sbtLauncher.getCanonicalPath)
       Failure(new FileNotFoundException(error))
-    } else if (!SbtVersionCapabilities.importSupported(sbtVersion)) {
-      val message = SbtBundle.message("sbt.sincesbtversion.required", SbtVersionCapabilities.SinceSbtVersion)
+    } else if (sbtVersion < SbtVersion.MinSupportedVersion) {
+      val message = SbtBundle.message("sbt.version.required", SbtVersion.MinSupportedVersion)
       Failure(new UnsupportedOperationException(message))
     }
     else {
@@ -1431,5 +1431,4 @@ object SbtProjectResolver {
   private final case object LegacyModuleType extends ModuleType
   private final case object ProductionModuleType extends NewModuleType
   private final case object TestModuleType extends NewModuleType
-
 }
