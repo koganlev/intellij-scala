@@ -13,7 +13,7 @@ import org.jetbrains.plugins.scala.compiler.references.ModuleScope
 import org.jetbrains.plugins.scala.indices.protocol.CompiledClass
 import org.jetbrains.plugins.scala.indices.protocol.jps.JpsCompilationInfo
 
-import java.io.File
+import java.nio.file.Paths
 import java.{util => jutil}
 import scala.jdk.CollectionConverters._
 
@@ -89,7 +89,11 @@ class ScalaCompilerReferenceIndexBuilder extends ModuleLevelBuilder(BuilderCateg
           .values()
           .iterator()
           .asScala
-          .map(cc => CompiledClass(ContainerUtil.getFirstItem(cc.getSourceFiles), cc.getOutputFile))
+          .map { cc =>
+            val sourcePath = Option(ContainerUtil.getFirstItem(cc.getSourceFiles)).map(_.toPath).orNull
+            val outputPath = cc.getOutputFile.toPath
+            CompiledClass(sourcePath, outputPath)
+          }
           .toSet
 
       val timestamp = getTargetTimestamps(chunk.getTargets.asScala, context)
@@ -97,7 +101,7 @@ class ScalaCompilerReferenceIndexBuilder extends ModuleLevelBuilder(BuilderCateg
       val removedSources = for {
         target      <- chunk.getTargets.asScala.toSet if target != null
         removedFile <- dirtyFilesHolder.getRemoved(target).asScala
-      } yield removedFile.toFile // TODO: SCL-23310
+      } yield removedFile
 
       val data = JpsCompilationInfo(
         affectedModules,
@@ -127,8 +131,8 @@ class ScalaCompilerReferenceIndexBuilder extends ModuleLevelBuilder(BuilderCateg
 
       sources.foreach { source =>
         val outputs    = Option(mapping.getOutputs(source)).fold(Iterable.empty[String])(_.asScala)
-        val sourceFile = new File(source)
-        outputs.foreach(cls => classes += CompiledClass(sourceFile, new File(cls)))
+        val sourcePath = Paths.get(source)
+        outputs.foreach(cls => classes += CompiledClass(sourcePath, Paths.get(cls)))
       }
     }
 

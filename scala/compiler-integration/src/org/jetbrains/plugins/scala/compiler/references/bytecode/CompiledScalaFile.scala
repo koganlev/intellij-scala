@@ -3,18 +3,18 @@ package org.jetbrains.plugins.scala.compiler.references.bytecode
 import org.jetbrains.jps.backwardRefs.CompilerRef
 import org.jetbrains.plugins.scala.compiler.references.indices.{ScFunExprCompilerRef, ScalaCompilerReferenceWriter}
 
-import java.io.File
+import java.nio.file.Path
 import java.{util => ju}
 
 private[references] final case class CompiledScalaFile private (
-  file:              File,
+  file:              Path,
   backwardHierarchy: ju.Map[CompilerRef, collection.Seq[CompilerRef]],
   refs:              ju.Map[CompilerRef, collection.Seq[Int]]
 )
 
 private[references] object CompiledScalaFile {
   def apply(
-    source:  File,
+    source:  Path,
     classes: Set[ParsedClass],
     writer:  ScalaCompilerReferenceWriter
   ): CompiledScalaFile = {

@@ -30,7 +30,7 @@ import org.jetbrains.plugins.scala.settings.CompilerIndicesSettings
 import org.jetbrains.plugins.scala.startup.ProjectActivity
 import org.jetbrains.sbt.project.settings.{CompilerMode, SbtProjectSettingsControl}
 
-import java.io.File
+import java.nio.file.Path
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.{AtomicInteger, LongAdder}
 import java.util.concurrent.locks.ReentrantReadWriteLock
@@ -66,7 +66,7 @@ final private[references] class ScalaCompilerReferenceService(project: Project) 
   private[this] val indexerScheduler =
     new CompilerReferenceIndexerScheduler(project, ScalaCompilerReferenceReaderFactory.expectedIndexVersion)
 
-  private[this] val failedToParse                       = ContainerUtil.newConcurrentSet[File]()
+  private[this] val failedToParse                       = ContainerUtil.newConcurrentSet[Path]()
   private[this] val compilationTimestamps               = new ConcurrentHashMap[String, Long]()
   private[this] val messageBus                          = project.getMessageBus
   private[this] var currentCompilerMode: CompilerMode   = CompilerMode.JPS

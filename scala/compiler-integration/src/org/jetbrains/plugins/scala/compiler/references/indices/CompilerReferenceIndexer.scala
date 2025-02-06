@@ -5,15 +5,15 @@ import com.intellij.openapi.progress.{ProgressIndicator, Task}
 import com.intellij.openapi.project.Project
 import com.intellij.util.containers.ContainerUtil
 import org.jetbrains.plugins.scala.compiler.CompilerIntegrationBundle
-import org.jetbrains.plugins.scala.extensions._
 import org.jetbrains.plugins.scala.compiler.references.bytecode.{ClassfileParser, CompiledScalaFile}
 import org.jetbrains.plugins.scala.compiler.references.indices.IndexerFailure._
 import org.jetbrains.plugins.scala.compiler.references.indices.IndexingStage._
 import org.jetbrains.plugins.scala.compiler.references.{indexDir, removeIndexFiles, task}
+import org.jetbrains.plugins.scala.extensions._
 import org.jetbrains.plugins.scala.indices.protocol.{CompilationInfo, CompiledClass}
 import org.jetbrains.plugins.scala.project.ProjectExt
 
-import java.io.File
+import java.nio.file.Path
 import java.util.concurrent._
 import java.util.concurrent.atomic.AtomicReference
 import scala.jdk.CollectionConverters._
@@ -57,7 +57,7 @@ private class CompilerReferenceIndexer(project: Project, expectedIndexVersion: I
         val job = indexerJobQueue.poll()
 
         try job match {
-          case ProcessRemovedSource(file) => writer.processDeletedFile(file.getPath)
+          case ProcessRemovedSource(file) => writer.processDeletedFile(file.toCanonicalPath.toString)
           case ProcessGeneratedClasses(classes) =>
             val sourceFile = classes.head.source // guaranteed to be non-empty
             val classfiles = classes.map(_.output)
@@ -153,13 +153,13 @@ private[references] object CompilerReferenceIndexer {
   private[references] final case class IndexerJobFailure(job: IndexerJob, cause: Throwable) {
     def errorMessage: String = s"Indexer job $job failed."
 
-    def classfiles: Set[File] = job match {
+    def classfiles: Set[Path] = job match {
       case ProcessRemovedSource(_)       => Set.empty
       case ProcessGeneratedClasses(data) => data.map(_.output)
     }
   }
 
   private[references] sealed trait IndexerJob
-  private final case class ProcessRemovedSource(file:    File)               extends IndexerJob
+  private final case class ProcessRemovedSource(file:    Path)               extends IndexerJob
   private final case class ProcessGeneratedClasses(data: Set[CompiledClass]) extends IndexerJob
 }

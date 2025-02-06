@@ -5,9 +5,11 @@ import org.jetbrains.org.objectweb.asm.Opcodes._
 import org.jetbrains.org.objectweb.asm._
 import org.jetbrains.plugins.scala.decompiler.Decompiler.{BYTES_VALUE, SCALA_LONG_SIG_ANNOTATION, SCALA_SIG_ANNOTATION}
 import org.jetbrains.plugins.scala.decompiler.scalasig._
+import org.jetbrains.plugins.scala.extensions.PathExt
 
 import java.io._
 import java.nio.charset.StandardCharsets
+import java.nio.file.{Files, Path}
 import java.util.regex.Pattern
 import java.{util => ju}
 import scala.annotation.tailrec
@@ -55,12 +57,12 @@ private[references] object ClassfileParser {
     }
   }
 
-  def parse(classFiles: Set[File]): Set[ParsedClass] = {
-    val outer = classFiles.minBy(_.getPath.length)
+  def parse(classFiles: Set[Path]): Set[ParsedClass] = {
+    val outer = classFiles.minBy(_.toCanonicalPath.toString.length)
 
-    val scalaSig = Using.resource(new FileInputStream(outer)) { in =>
+    val scalaSig = Using.resource(new BufferedInputStream(Files.newInputStream(outer))) { in =>
       val reader  = new ClassReader(in)
-      val visitor = new ScalaSigVisitor(outer.getPath)
+      val visitor = new ScalaSigVisitor(outer.toCanonicalPath.toString)
       reader.accept(visitor, ClassReader.SKIP_CODE | ClassReader.SKIP_DEBUG | ClassReader.SKIP_FRAMES)
       visitor.scalaSig
     }
@@ -96,8 +98,8 @@ private[references] object ClassfileParser {
     visitor.result
   }
 
-  def parse(file: File, synthetics: Set[String]): ParsedClass =
-    parse(new BufferedInputStream(new FileInputStream(file)), synthetics)
+  def parse(file: Path, synthetics: Set[String]): ParsedClass =
+    parse(new BufferedInputStream(Files.newInputStream(file)), synthetics)
 
   private[this] val pattern = Pattern.compile("/")
   private[this] def fqnFromInternalName(internal: String): String  = pattern.matcher(internal).replaceAll(".")

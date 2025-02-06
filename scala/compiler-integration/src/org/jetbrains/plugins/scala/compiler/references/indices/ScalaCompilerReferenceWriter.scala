@@ -4,6 +4,7 @@ import com.intellij.openapi.util.io.FileUtil
 import org.jetbrains.jps.backwardRefs.CompilerReferenceWriter
 import org.jetbrains.jps.backwardRefs.index.CompilerReferenceIndex
 import org.jetbrains.plugins.scala.compiler.references.bytecode.CompiledScalaFile
+import org.jetbrains.plugins.scala.extensions.PathExt
 
 import java.nio.file.Path
 
@@ -17,7 +18,7 @@ private[references] class ScalaCompilerReferenceWriter protected (
   }
 
   def registerClassfileData(data: CompiledScalaFile): Unit = {
-    val fileId = enumeratePath(data.file.getPath)
+    val fileId = enumeratePath(data.file.toCanonicalPath.toString)
     writeData(fileId, data)
   }
 
