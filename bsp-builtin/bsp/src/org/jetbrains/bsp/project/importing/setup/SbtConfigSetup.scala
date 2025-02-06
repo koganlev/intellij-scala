@@ -4,11 +4,10 @@ import com.intellij.openapi.projectRoots.{JavaSdk, ProjectJdkTable, Sdk}
 import org.jetbrains.bsp.BspBundle
 import org.jetbrains.plugins.scala.build.{BuildMessages, BuildReporter}
 import org.jetbrains.plugins.scala.extensions.invokeAndWait
-import org.jetbrains.plugins.scala.project.Version
-import org.jetbrains.sbt.SbtUtil
 import org.jetbrains.sbt.SbtUtil.{detectSbtVersion, getDefaultLauncher, sbtVersionParam, upgradedSbtVersion}
 import org.jetbrains.sbt.project.SbtExternalSystemManager
 import org.jetbrains.sbt.project.structure.SbtStructureDump
+import org.jetbrains.sbt.{SbtUtil, SbtVersion}
 
 import java.nio.file.Path
 import scala.util.Try
@@ -36,7 +35,7 @@ object SbtConfigSetup {
     val sbtLauncherArgs = List("early(startServer)")
     val sbtCommands = ""
 
-    val projectSbtVersion = Version(detectSbtVersion(baseDir.toFile, getDefaultLauncher))
+    val projectSbtVersion = SbtVersion(detectSbtVersion(baseDir.toFile, getDefaultLauncher))
     val sbtVersion = upgradedSbtVersion(projectSbtVersion)
     val upgradeParam =
       if (sbtVersion > projectSbtVersion)

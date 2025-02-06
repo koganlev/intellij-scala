@@ -22,7 +22,7 @@ import org.jetbrains.plugins.scala.project.Version
 import org.jetbrains.plugins.scala.project.external.{JdkByHome, JdkByName, SdkReference}
 import org.jetbrains.plugins.scala.util.ScalaNotificationGroups
 import org.jetbrains.sbt.SbtUtil._
-import org.jetbrains.sbt.project.SbtProjectResolver.{ModuleType, _}
+import org.jetbrains.sbt.project.SbtProjectResolver._
 import org.jetbrains.sbt.project.SourceSetType.SourceSetType
 import org.jetbrains.sbt.project.data._
 import org.jetbrains.sbt.project.module.SbtModuleType
@@ -32,7 +32,7 @@ import org.jetbrains.sbt.project.structure._
 import org.jetbrains.sbt.resolvers.{SbtIvyResolver, SbtMavenResolver, SbtResolver}
 import org.jetbrains.sbt.structure.XmlSerializer._
 import org.jetbrains.sbt.structure.{BuildData, CompilerOptions, Configuration, ConfigurationData, Dependencies, DependencyData, DirectoryData, JarDependencyData, JavaData, ModuleDependencyData, ModuleIdentifier, ProjectData, ProjectDependencyData, ScalaData}
-import org.jetbrains.sbt.{RichBoolean, Sbt, SbtBundle, SbtUtil, usingTempFile, structure => sbtStructure}
+import org.jetbrains.sbt.{RichBoolean, Sbt, SbtBundle, SbtUtil, SbtVersion, SbtVersionCapabilities, usingTempFile, structure => sbtStructure}
 
 import java.io.{File, FileNotFoundException}
 import java.net.URI
@@ -91,7 +91,7 @@ class SbtProjectResolver extends ExternalSystemProjectResolver[SbtExecutionSetti
     } else esReporter
 
     val startTime = System.currentTimeMillis()
-    val structureDump = dumpStructure(projectRoot, sbtLauncher, Version(settings.sbtVersion), settings, taskId.findProject())
+    val structureDump = dumpStructure(projectRoot, sbtLauncher, SbtVersion(sbtVersion), settings, taskId.findProject())
 
     // side-effecty status reporting
     structureDump.foreach { _ =>
@@ -140,15 +140,16 @@ class SbtProjectResolver extends ExternalSystemProjectResolver[SbtExecutionSetti
     conversionResult.get // ok to throw here, that's the way ExternalSystem likes it
   }
 
-  private def dumpStructure(projectRoot: File,
-                            sbtLauncher: File,
-                            sbtVersion: Version,
-                            settings:SbtExecutionSettings,
-                            @Nullable project: Project
-                           )(implicit reporter: BuildReporter): Try[(Elem, BuildMessages)] = {
+  private def dumpStructure(
+    projectRoot: File,
+    sbtLauncher: File,
+    sbtVersion: SbtVersion,
+    settings:SbtExecutionSettings,
+    @Nullable project: Project
+  )(implicit reporter: BuildReporter): Try[(Elem, BuildMessages)] = {
     SbtProjectResolver.processOutputOfLatestStructureDump = ""
 
-    val useShellImport = settings.useShellForImport && shellImportSupported(sbtVersion) && project != null
+    val useShellImport = settings.useShellForImport && SbtVersionCapabilities.shellImportSupported(sbtVersion) && project != null
     val options = getSbtStructureDumpOptions(settings)
 
     def doDumpStructure(structureFile: File): Try[(Elem, BuildMessages)] = {
@@ -224,8 +225,8 @@ class SbtProjectResolver extends ExternalSystemProjectResolver[SbtExecutionSetti
     if (!sbtLauncher.isFile) {
       val error = SbtBundle.message("sbt.launcher.not.found", sbtLauncher.getCanonicalPath)
       Failure(new FileNotFoundException(error))
-    } else if (!importSupported(sbtVersion)) {
-      val message = SbtBundle.message("sbt.sincesbtversion.required", sinceSbtVersion)
+    } else if (!SbtVersionCapabilities.importSupported(sbtVersion)) {
+      val message = SbtBundle.message("sbt.sincesbtversion.required", SbtVersionCapabilities.SinceSbtVersion)
       Failure(new UnsupportedOperationException(message))
     }
     else {
@@ -1324,18 +1325,6 @@ object SbtProjectResolver {
   @TestOnly
   @ApiStatus.Internal
   var processOutputOfLatestStructureDump: String = ""
-
-  def shellImportSupported(sbtVersion: Version): Boolean =
-    sbtVersion >= sinceSbtVersionShell
-
-  def importSupported(sbtVersion: Version): Boolean =
-    sbtVersion >= sinceSbtVersion
-
-  // TODO shared code, move to a more suitable object
-  val sinceSbtVersion: Version = Version("0.13.0")
-
-  // TODO shared code, move to a more suitable object
-  val sinceSbtVersionShell: Version = Version("0.13.5")
 
   private case class LibraryIdentifierWithoutRevision(
     organization: String,

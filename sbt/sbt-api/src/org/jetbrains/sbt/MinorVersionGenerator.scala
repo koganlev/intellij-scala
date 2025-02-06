@@ -8,7 +8,7 @@ trait MinorVersionGenerator[T <: Ordered[T]] {
   def minor: String
   def generateNewVersion(version: String): Option[T]
 
-  def generateAllMinorVersions(): Seq[T] = {
+  final def generateAllMinorVersions: Seq[T] = {
     val versions = Version.findAllNumbersInVersion(minor)
     versions.lift(2).map { minorSuffix =>
       val major = versions.take(2).mkString(".")
@@ -21,7 +21,7 @@ trait MinorVersionGenerator[T <: Ordered[T]] {
 object MinorVersionGenerator {
 
   def generateAllMinorVersions[V <: Ordered[V], T <: MinorVersionGenerator[V]](versions: Seq[T], mapToString: V => String): List[String] =
-    SortedSet.from(versions.flatMap(_.generateAllMinorVersions()))
+    SortedSet.from(versions.flatMap(_.generateAllMinorVersions))
       .map(mapToString)
       .toList
 

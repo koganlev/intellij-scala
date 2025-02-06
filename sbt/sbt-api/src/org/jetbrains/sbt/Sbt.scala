@@ -39,9 +39,10 @@ object Sbt {
   // this should be in sync with sbt.BuildUtil.baseImports
   @NonNls val DefaultImplicitImports: Seq[String] = Seq("sbt._", "Process._", "Keys._", "dsl._")
 
-  val LatestVersion: Version = Version(BuildInfo.sbtLatestVersion)
-  val Latest_1_0: Version = Version(BuildInfo.sbtLatest_1_0)
-  val Latest_0_13: Version = Version(BuildInfo.sbtLatest_0_13)
+
+  val LatestVersion: SbtVersion = SbtVersion(BuildInfo.sbtLatestVersion)
+  val Latest_1_0: SbtVersion = SbtVersion(BuildInfo.sbtLatest_1_0)
+  val Latest_0_13: SbtVersion = SbtVersion(BuildInfo.sbtLatest_0_13)
 
   val SbtModuleChildKeyInstance: SbtModuleChildKey = SbtModuleChildKey(SbtNestedModuleData.Key, SbtSourceSetData.Key)
 

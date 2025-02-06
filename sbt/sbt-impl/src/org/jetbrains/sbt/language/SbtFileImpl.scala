@@ -53,7 +53,7 @@ final class SbtFileImpl private[language](provider: FileViewProvider)
     }
 
     if (imports.isEmpty) None
-    else Some(ScalaPsiElementFactory.createScalaFileFromText(imports.mkString("import ", ", ", ";"), ScalaFeatures.default))
+    else Some(ScalaPsiElementFactory.createScalaFileFromText(imports.mkString("import ", ", ", ";"), this.features))
   })
 
   /**

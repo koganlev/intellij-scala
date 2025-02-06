@@ -31,6 +31,9 @@ final class SbtShellConsoleView private(project: Project, debugConnection: Optio
     val defaultActions = super.createConsoleActions()
     val toggleSoftWrapsAction = defaultActions.find(_.isInstanceOf[ToggleUseSoftWrapsToolbarAction])
       .getOrElse(throw new RuntimeException("action of type `ToggleUseSoftWrapsToolbarAction` couldn't be found"))
+
+    //TODO: make it use the same shortcut as in Terminal (Cmd + K)
+    // TODO: same for Scala REPL
     val clearAllAction = defaultActions.find(_.isInstanceOf[ClearConsoleAction])
       .getOrElse(throw new RuntimeException("action of type `ClearConsoleAction` couldn't be found"))
 

@@ -7,14 +7,16 @@ import org.jetbrains.plugins.scala.packagesearch.util.DependencyUtil
 import org.jetbrains.plugins.scala.project.Version
 import org.jetbrains.sbt.codeInspection.SbtDependencyVersionInspection
 import org.jetbrains.sbt.language.SbtFileType
-import org.jetbrains.sbt.{MockSbtBuildModule, MockSbt_1_0, Sbt, SbtBundle, SbtHighlightingUtil}
+import org.jetbrains.sbt.{MockSbtBuildModule, MockSbt_1_0, Sbt, SbtBundle, SbtHighlightingUtil, SbtVersion}
 
 class SbtDependencyVersionInspectionTest
   extends ScalaInspectionTestBase
     with MockSbt_1_0
     with MockSbtBuildModule
     with PackageSearchClientTesting {
-  override val sbtVersion: Version = Sbt.LatestVersion
+
+  override val sbtVersion: SbtVersion = Sbt.LatestVersion
+
   override protected val classOfInspection = classOf[SbtDependencyVersionInspection]
   override protected val description: String = ""
   override protected val fileType: LanguageFileType = SbtFileType

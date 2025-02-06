@@ -8,12 +8,11 @@ import com.intellij.openapi.progress.{ProgressIndicator, Task}
 import com.intellij.openapi.vfs.VirtualFileManager
 import org.jetbrains.annotations.Nullable
 import org.jetbrains.plugins.scala.build.BuildMessages
-import org.jetbrains.plugins.scala.project.Version
 import org.jetbrains.sbt.buildinfo.BuildInfo
 import org.jetbrains.sbt.icons.Icons
 import org.jetbrains.sbt.project.structure.SbtStructureDump
 import org.jetbrains.sbt.project.{SbtExternalSystemManager, SbtProjectSystem}
-import org.jetbrains.sbt.{SbtBundle, SbtUtil}
+import org.jetbrains.sbt.{SbtBundle, SbtUtil, SbtVersion, SbtVersionCapabilities}
 
 import java.nio.file.{Files, Path}
 import scala.util.control.NonFatal
@@ -55,14 +54,13 @@ private final class SbtGenerateManagedSourcesAction extends AnAction(
         try {
           val launcher = settings.customLauncher.getOrElse(SbtUtil.getDefaultLauncher)
 
-          val sbtVersion = Version(SbtUtil.detectSbtVersion(projectBasePath.toFile, launcher))
+          val sbtVersion = SbtVersion(SbtUtil.detectSbtVersion(projectBasePath.toFile, launcher))
           val sbtStructurePluginBinVersion = SbtUtil.structurePluginBinaryVersion(sbtVersion)
           val addPluginCommandSupported = SbtUtil.isAddPluginCommandSupported(sbtVersion)
-          val slashSyntaxSupported = sbtVersion >= Version("1.0.0")
 
           if (!addPluginCommandSupported) {
             val notSupportedWord = SbtBundle.message("sbt.generate.managed.sources.action.not.supported")
-            val notSupportedMessage = SbtBundle.message("sbt.generate.managed.sources.action.not.supported.message", sbtVersion.presentation)
+            val notSupportedMessage = SbtBundle.message("sbt.generate.managed.sources.action.not.supported.message", sbtVersion.minor)
             val failureResult = new FailureResultImpl(notSupportedMessage)
             val finishEvent = new FinishBuildEventImpl(taskId, null, System.currentTimeMillis(), notSupportedWord, failureResult)
             viewManager.onEvent(taskId, finishEvent)
@@ -87,7 +85,7 @@ private final class SbtGenerateManagedSourcesAction extends AnAction(
           tmpPluginsSbtFile.toFile.deleteOnExit()
 
           val generateCommand =
-            if (slashSyntaxSupported) "show Global / ideaGenerateAllManagedSources"
+            if (SbtVersionCapabilities.isSlashSyntaxSupported(sbtVersion)) "show Global / ideaGenerateAllManagedSources"
             else "show */*:ideaGenerateAllManagedSources"
 
           val sbtResult = new SbtStructureDump().runSbt(

@@ -9,12 +9,11 @@ import com.intellij.testFramework.{HeavyPlatformTestCase, UsefulTestCase}
 import org.jetbrains.plugins.scala.SlowTests
 import org.jetbrains.plugins.scala.annotator._
 import org.jetbrains.plugins.scala.base.libraryLoaders.{HeavyJDKLoader, LibraryLoader, SmartJDKLoader}
-import org.jetbrains.plugins.scala.project.Version
 import org.jetbrains.plugins.scala.util.TestUtils.getTestDataPath
 import org.jetbrains.sbt.language.SbtFileImpl
 import org.jetbrains.sbt.project.settings.SbtProjectSettings
 import org.jetbrains.sbt.settings.SbtSettings
-import org.jetbrains.sbt.{MockSbtBase, MockSbtBuildModule, MockSbt_0_13, MockSbt_1_0, Sbt, SbtBundle}
+import org.jetbrains.sbt.{MockSbtBase, MockSbtBuildModule, MockSbt_0_13, MockSbt_1_0, Sbt, SbtBundle, SbtVersion}
 import org.junit.Assert.assertNotNull
 import org.junit.Ignore
 import org.junit.experimental.categories.Category
@@ -52,16 +51,16 @@ abstract class SbtAnnotatorTestBase extends HeavyPlatformTestCase
 
   override protected def getTestProjectJdk: Sdk = SmartJDKLoader.getOrCreateJDK()
 
-  protected def runTest(sbtVersion: Version, expectedMessages: Seq[Message]): Unit = {
+  protected def runTest(sbtVersion: SbtVersion, expectedMessages: Seq[Message]): Unit = {
     setSbtVersion(sbtVersion)
     val actualMessages = annotate().asJava
     UsefulTestCase.assertSameElements(actualMessages, expectedMessages: _*)
   }
 
-  protected def setSbtVersion(sbtVersion: Version): Unit = {
+  protected def setSbtVersion(sbtVersion: SbtVersion): Unit = {
     val projectSettings = SbtSettings.getInstance(getProject).getLinkedProjectSettings(getProject.getBasePath)
     assert(projectSettings != null)
-    projectSettings.setSbtVersion(sbtVersion.presentation)
+    projectSettings.setSbtVersion(sbtVersion.minor)
   }
 
   private def annotate(): Seq[Message] = {
@@ -91,7 +90,7 @@ abstract class SbtAnnotatorTestBase extends HeavyPlatformTestCase
 @Category(Array(classOf[SlowTests]))
 @Ignore
 class SbtAnnotatorTest_0_13_1 extends SbtAnnotatorTestBase with MockSbt_0_13 {
-  override implicit val sbtVersion: Version = Version("0.13.1")
+  override implicit val sbtVersion: SbtVersion = SbtVersion("0.13.1")
 
   def test(): Unit = runTest(sbtVersion, Expectations.sbt_0_13(sbtVersion))
 }
@@ -99,14 +98,14 @@ class SbtAnnotatorTest_0_13_1 extends SbtAnnotatorTestBase with MockSbt_0_13 {
 @Category(Array(classOf[SlowTests]))
 @Ignore
 class SbtAnnotatorTest_0_13_7 extends SbtAnnotatorTestBase with MockSbt_0_13 {
-  override implicit val sbtVersion: Version = Version("0.13.7")
+  override implicit val sbtVersion: SbtVersion = SbtVersion("0.13.7")
 
   def test(): Unit = runTest(sbtVersion, Expectations.sbt_0_13_7)
 }
 
 @Category(Array(classOf[SlowTests]))
 class SbtAnnotatorTest_latest extends SbtAnnotatorTestBase with MockSbt_1_0 {
-  override implicit val sbtVersion: Version = Sbt.LatestVersion
+  override implicit val sbtVersion: SbtVersion = Sbt.LatestVersion
 
   def test(): Unit = runTest(sbtVersion, Expectations.sbt_1_0)
 }
@@ -122,20 +121,20 @@ object Expectations {
   )
 
 
-  def sbt012_013(sbtVersion: Version): Seq[Error] = sbtAll ++ Seq(
+  def sbt012_013(sbtVersion: SbtVersion): Seq[Error] = sbtAll ++ Seq(
     Error("organization", SbtBundle.message("sbt.annotation.expressionMustConform", "SettingKey[String]")),
     Error(""""some string"""", SbtBundle.message("sbt.annotation.expressionMustConform", "String")),
     Error("null", SbtBundle.message("sbt.annotation.expectedExpressionType")),
-    Error("""version := "SNAPSHOT"""", SbtBundle.message("sbt.annotation.blankLineRequired", sbtVersion.presentation))
+    Error("""version := "SNAPSHOT"""", SbtBundle.message("sbt.annotation.blankLineRequired", sbtVersion.minor))
   )
 
-  def sbt_0_12: Seq[Error] = sbt012_013(Version("0.12.4")) ++ Seq(
+  def sbt_0_12: Seq[Error] = sbt012_013(SbtVersion("0.12.4")) ++ Seq(
     Error(
       """lazy val foo = project.in(file("foo")).enablePlugins(sbt.plugins.JvmPlugin)""",
       SbtBundle.message("sbt.annotation.sbtFileMustContainOnlyExpressions"))
   )
 
-  def sbt_0_13(sbtVersion: Version): Seq[Error] = sbt012_013(sbtVersion) ++ Seq(
+  def sbt_0_13(sbtVersion: SbtVersion): Seq[Error] = sbt012_013(sbtVersion) ++ Seq(
     Error("???", SbtBundle.message("sbt.annotation.expectedExpressionType"))
   )
 

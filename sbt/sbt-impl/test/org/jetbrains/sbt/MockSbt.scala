@@ -4,13 +4,12 @@ import junit.framework.Test
 import org.jetbrains.plugins.scala.DependencyManagerBase._
 import org.jetbrains.plugins.scala.base.ScalaSdkOwner
 import org.jetbrains.plugins.scala.base.libraryLoaders.{IvyManagedLoader, LibraryLoader, ScalaSDKLoader}
-import org.jetbrains.plugins.scala.project.Version
 import org.jetbrains.plugins.scala.util.dependencymanager.TestDependencyManagerForSbt
 import org.jetbrains.plugins.scala.{LatestScalaVersions, ScalaVersion}
 
 trait MockSbtBase extends ScalaSdkOwner { this: Test =>
 
-  implicit def sbtVersion: Version
+  implicit def sbtVersion: SbtVersion
 
   override protected def buildVersionsDetailsMessage: String = {
     super.buildVersionsDetailsMessage + s", sbt: $sbtVersion"
@@ -25,15 +24,15 @@ trait MockSbtBase extends ScalaSdkOwner { this: Test =>
     )
 
   private def sbtLoader: IvyManagedLoader =
-    IvyManagedLoader(new TestDependencyManagerForSbt(sbtVersion), ("org.scala-sbt" % "sbt" % sbtVersion.presentation).transitive())
+    IvyManagedLoader(new TestDependencyManagerForSbt(sbtVersion), ("org.scala-sbt" % "sbt" % sbtVersion.minor).transitive())
 }
 
 trait MockSbt_0_13 extends MockSbtBase { this: Test =>
-  override val sbtVersion: Version = Sbt.Latest_0_13
+  override val sbtVersion: SbtVersion = Sbt.Latest_0_13
   override protected def supportedIn(version: ScalaVersion): Boolean = version <= LatestScalaVersions.Scala_2_10
 }
 
 trait MockSbt_1_0 extends MockSbtBase { this: Test =>
-  override val sbtVersion: Version = Sbt.LatestVersion
+  override val sbtVersion: SbtVersion = Sbt.LatestVersion
   override protected def supportedIn(version: ScalaVersion): Boolean = version >= LatestScalaVersions.Scala_2_12
 }

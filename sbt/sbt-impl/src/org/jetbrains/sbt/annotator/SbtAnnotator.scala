@@ -23,16 +23,16 @@ final class SbtAnnotator extends Annotator {
   def annotate(element: PsiElement)(holder: ScalaAnnotationHolder): Unit = element match {
     case file: SbtFileImpl =>
       val sbtVersion = file.module
-        .flatMap(_.sbtVersion)
+        .flatMap(_.sbtVersion).map(SbtVersion(_))
         .getOrElse(Sbt.LatestVersion)
 
-      val less_13_6 = sbtVersion < Version("0.13.6")
+      val less_13_6 = sbtVersion < SbtVersion("0.13.6")
       val allowedTypes =
-        if (sbtVersion < Version("0.13.0"))
+        if (sbtVersion < SbtVersion("0.13.0"))
           "Seq[Project.Setting[_]]" :: "Project.Setting[_]" :: Nil
         else if (less_13_6)
           "Seq[Def.SettingsDefinition]" :: "Def.SettingsDefinition" :: Nil
-        else if (sbtVersion < Version("1.0.0"))
+        else if (sbtVersion < SbtVersion("1.0.0"))
           "sbt.internals.DslEntry" :: Nil
         else
           "sbt.internal.DslEntry" :: Nil
@@ -63,12 +63,12 @@ final class SbtAnnotator extends Annotator {
                _: PsiComment |
                _: PsiWhiteSpace => None
           case _: ScFunctionDefinition |
-               _: ScPatternDefinition if sbtVersion > Version("0.13.0") => None
+               _: ScPatternDefinition if sbtVersion > SbtVersion("0.13.0") => None
           case _ => Some(SbtBundle.message("sbt.annotation.sbtFileMustContainOnlyExpressions"))
         }
       } holder.createErrorAnnotation(child, message)
 
-      if (sbtVersion < Version("0.13.7")) {
+      if (sbtVersion < SbtVersion("0.13.7")) {
         for {
           expression <- missingBlankLines(children.toSeq)
           message = SbtBundle.message("sbt.annotation.blankLineRequired", sbtVersion)

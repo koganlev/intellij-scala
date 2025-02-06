@@ -2,9 +2,22 @@ package org.jetbrains.sbt
 
 import org.jetbrains.plugins.scala.project.Version
 
-final class SbtVersion(val value: Version) extends MinorVersionGenerator[Version] {
+final case class SbtVersion(value: Version) extends MinorVersionGenerator[Version] {
   override def minor: String = value.presentation
+
   override def generateNewVersion(version: String): Option[Version] = Some(Version(version))
+
+  override def toString: String = minor
+
+  lazy val binaryVersion: Version = SbtVersion.standardBinaryVersion(value)
+
+  def isSbt2: Boolean = minor.startsWith("2")
+
+  def inRange(atLeast: SbtVersion, lessThan: SbtVersion): Boolean =
+    value.inRange(atLeast.value, lessThan.value)
+
+  def inRange(atLeast: Version, lessThan: Version): Boolean =
+    value.inRange(atLeast, lessThan)
 }
 
 object SbtVersion {
@@ -25,4 +38,22 @@ object SbtVersion {
     SbtVersion("1.9.9"),
     SbtVersion("1.10.7")
   )
+
+  /**
+   * @return - 0.13 for all 0.13.x versions<br>
+   *         - 1.0 for all 1.x.y versions<br>
+   *         - 2.0 for all 2.x.y versions
+   */
+  private def standardBinaryVersion(sbtVersion: Version): Version = {
+    // 1.0.0 milestones are regarded as not binary compatible by sbt
+    if ((sbtVersion ~= Version("1.0.0")) && sbtVersion.presentation.contains("-M"))
+      sbtVersion
+    // sbt uses binary version x.0 for [x.0,x+1.0]
+    else if (sbtVersion.major(1) >= Version("1")) {
+      val major = sbtVersion.major(1).presentation
+      Version(s"$major.0")
+    }
+    else
+      sbtVersion.major(2)
+  }
 }

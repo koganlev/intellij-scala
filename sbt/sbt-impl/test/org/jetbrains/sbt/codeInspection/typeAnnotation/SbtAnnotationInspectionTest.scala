@@ -4,7 +4,6 @@ package typeAnnotation
 
 import com.intellij.testFramework.EditorTestUtil.{SELECTION_END_TAG, SELECTION_START_TAG}
 import org.jetbrains.plugins.scala.codeInspection.typeAnnotation.TypeAnnotationInspectionTest
-import org.jetbrains.plugins.scala.project.Version
 import org.jetbrains.sbt.language.SbtFileType
 
 import java.{util => ju}
@@ -13,7 +12,7 @@ class SbtAnnotationInspectionTest extends TypeAnnotationInspectionTest with Mock
 
   override protected val fileType = SbtFileType
 
-  override implicit val sbtVersion: Version = Sbt.LatestVersion
+  override implicit val sbtVersion: SbtVersion = Sbt.LatestVersion
 
   private var excludeWhenTypeIsStable: Boolean = _
   private var excludeInDialectSources: Boolean = _

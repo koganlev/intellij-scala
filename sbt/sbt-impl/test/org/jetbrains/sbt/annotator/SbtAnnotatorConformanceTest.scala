@@ -38,7 +38,7 @@ abstract class SbtAnnotatorConformanceTestBase extends SbtAnnotatorTestBase {
 }
 
 class SbtAnnotatorConformanceTest_latest_0_13 extends SbtAnnotatorConformanceTestBase with MockSbt_0_13 {
-  override implicit val sbtVersion: Version = Sbt.Latest_0_13
+  override implicit val sbtVersion: SbtVersion = Sbt.Latest_0_13
 
   def testSingleSetting(): Unit = testSingleSetting("sbt.internals.DslEntry")
 
@@ -46,7 +46,7 @@ class SbtAnnotatorConformanceTest_latest_0_13 extends SbtAnnotatorConformanceTes
 }
 
 class SbtAnnotatorConformanceTest_latest extends SbtAnnotatorConformanceTestBase with MockSbt_1_0 {
-  override implicit val sbtVersion: Version = Sbt.LatestVersion
+  override implicit val sbtVersion: SbtVersion = Sbt.LatestVersion
 
   def testSingleSetting(): Unit = testSingleSetting("sbt.internal.DslEntry")
 

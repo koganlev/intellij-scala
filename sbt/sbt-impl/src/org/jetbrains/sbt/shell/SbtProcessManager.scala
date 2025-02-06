@@ -31,11 +31,11 @@ import org.jetbrains.plugins.scala.project.external.{JdkByName, SdkUtils}
 import org.jetbrains.plugins.scala.util.ScalaNotificationGroups
 import org.jetbrains.sbt.SbtUtil._
 import org.jetbrains.sbt.buildinfo.BuildInfo
+import org.jetbrains.sbt.project.SbtExternalSystemManager
 import org.jetbrains.sbt.project.settings.SbtExecutionSettings
 import org.jetbrains.sbt.project.structure.SbtOption._
-import org.jetbrains.sbt.project.{SbtExternalSystemManager, SbtProjectResolver, SbtProjectSystem}
 import org.jetbrains.sbt.shell.SbtProcessManager._
-import org.jetbrains.sbt.{JvmMemorySize, Sbt, SbtBundle, SbtUtil}
+import org.jetbrains.sbt.{JvmMemorySize, Sbt, SbtBundle, SbtUtil, SbtVersion, SbtVersionCapabilities}
 
 import java.io.{File, IOException, OutputStreamWriter, PrintWriter}
 import java.util.concurrent.TimeUnit
@@ -138,9 +138,9 @@ final class SbtProcessManager(project: Project) extends Disposable {
       }
     }
 
-    val projectSbtVersion = Version(detectSbtVersion(workingDir, launcher))
+    val projectSbtVersion = SbtVersion(detectSbtVersion(workingDir, launcher))
 
-    val autoPluginsSupported = projectSbtVersion >= SbtProjectResolver.sinceSbtVersionShell
+    val autoPluginsSupported = projectSbtVersion >= SbtVersionCapabilities.SinceSbtVersionShell
     val addPluginCommandSupported = isAddPluginCommandSupported(projectSbtVersion)
     log.debug(s"projectSbtVersion = $projectSbtVersion")
     log.debug(s"autoPluginsSupported = $autoPluginsSupported")
@@ -166,7 +166,7 @@ final class SbtProcessManager(project: Project) extends Disposable {
     sbtSettings.getCustomVMExecutableOrWarn(project).foreach(exe => commandLine.setExePath(exe.getAbsolutePath))
 
     if (autoPluginsSupported) {
-      val sbtBinVersion = binaryVersion(projectSbtVersion)
+      val sbtBinVersion = projectSbtVersion.binaryVersion
       val sbtStructurePluginBinVersion = structurePluginBinaryVersion(projectSbtVersion)
       log.debug(s"sbtBinVersion = $sbtBinVersion")
       log.debug(s"sbtBinVersion = $sbtStructurePluginBinVersion")
@@ -213,7 +213,7 @@ final class SbtProcessManager(project: Project) extends Disposable {
     if (addPluginCommandSupported)
       FileUtil.createTempFile("idea", Sbt.Extension, true)
     else {
-      val globalPluginsDir = globalPluginsDirectory(sbtBinVersion, commandLine.getParametersList)
+      val globalPluginsDir = globalPluginsDirectory(SbtVersion(sbtBinVersion), commandLine.getParametersList)
       // workaround: --addPluginSbtFile fails if global plugins dir does not exist. https://youtrack.jetbrains.com/issue/SCL-14415
       globalPluginsDir.mkdirs()
       new File(globalPluginsDir, "idea.sbt")
