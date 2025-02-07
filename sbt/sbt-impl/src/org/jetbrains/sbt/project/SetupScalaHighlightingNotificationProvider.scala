@@ -7,9 +7,9 @@ import com.intellij.openapi.fileEditor.FileEditor
 import com.intellij.openapi.module.{JavaModuleType, Module, ModuleType, ModuleUtilCore}
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.psi.PsiFile
+import com.intellij.psi.{PsiFile, PsiManager}
 import com.intellij.ui.{EditorNotificationPanel, EditorNotificationProvider}
-import com.intellij.util.concurrency.annotations.RequiresEdt
+import com.intellij.util.concurrency.annotations.{RequiresEdt, RequiresReadLock}
 import org.jetbrains.annotations.Nullable
 import org.jetbrains.plugins.scala.project.notification.isScalaSourceFile
 import org.jetbrains.plugins.scala.project.template.ScalaFrameworkType
@@ -28,15 +28,23 @@ import javax.swing.event.HyperlinkEvent
  */
 private final class SetupScalaHighlightingNotificationProvider extends EditorNotificationProvider {
 
+  @RequiresReadLock
   @Nullable
   override def collectNotificationData(project: Project, file: VirtualFile): java.util.function.Function[_ >: FileEditor, _ <: JComponent] = {
-    if (SbtUtil.couldBeSbtProject(project)) {
+    val psiFile = PsiManager.getInstance(project).findFile(file)
+    if (psiFile eq null) return null
+
+    if (SbtUtil.couldFileBeInSbtProject(psiFile)) {
       // We do not track the file type of this source file, do not show any notifications.
       if (!SbtProjectImportStateProblemHighlightFilter.isTrackedFileType(file.getFileType)) return null
       // Project reload is already in progress, do not show any notifications.
       if (ScalaProjectConfigurationService.getInstance(project).isSyncInProgress) return null
+
+      val psiFile = PsiManager.getInstance(project).findFile(file)
+      if (psiFile eq null) return null
+
       // The project is fully imported, do not show any notifications.
-      if (SbtProjectImportStateService.instance(project).isImported) return null
+      if (SbtProjectImportStateService.instance(project).isImported(psiFile)) return null
 
       (fileEditor: FileEditor) => SbtProjectImportStateNotificationPanel.createNotificationPanel(project, fileEditor)
     } else {

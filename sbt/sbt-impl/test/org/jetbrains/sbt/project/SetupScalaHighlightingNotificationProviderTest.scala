@@ -39,7 +39,7 @@ class SetupScalaHighlightingNotificationProviderTest extends SbtExternalSystemIm
     assertFalse("Greeter.java should not be highlighted before the project has been imported", shouldHighlightGreeterBefore)
     assertFalse("AbstractGreeter.kt should not be highlighted before the project has been imported", shouldHighlightAbstractGreeterBefore)
     assertFalse("HelloWorldGreeter.scala should not be highlighted before the project has been imported", shouldHighlightHelloWorldGreeterBefore)
-    assertFalse("The sbt project should not have been imported yet", SbtProjectImportStateService.instance(getProject).isImported)
+    assertFalse("The sbt project should not have been imported yet", SbtProjectImportStateService.instance(getProject).isImported(findPsiFile(greeterPath)))
 
     importProject(false)
 
@@ -54,7 +54,7 @@ class SetupScalaHighlightingNotificationProviderTest extends SbtExternalSystemIm
     assertTrue("Greeter.java should be highlighted after the project has been imported", shouldHighlightGreeterAfter)
     assertTrue("AbstractGreeter.kt should be highlighted after the project has been imported", shouldHighlightAbstractGreeterAfter)
     assertTrue("HelloWorldGreeter.scala should be highlighted after the project has been imported", shouldHighlightHelloWorldGreeterAfter)
-    assertTrue("The sbt project should have been imported", SbtProjectImportStateService.instance(getProject).isImported)
+    assertTrue("The sbt project should have been imported", SbtProjectImportStateService.instance(getProject).isImported(findPsiFile(greeterPath)))
     assertNull("A notification banner should not be shown in Greeter.java after the project has been imported", notificationBannerGreeterAfter)
     assertNull("A notification banner should not be shown in AbstractGreeter.kt after the project has been imported", notificationBannerAbstractGreeterAfter)
     assertNull("A notification banner should not be shown in HelloWorldGreeter.scala after the project has been imported", notificationBannerHelloWorldGreeterAfter)

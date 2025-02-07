@@ -10,12 +10,13 @@ import com.intellij.openapi.module.{Module, ModuleManager}
 import com.intellij.openapi.project.{Project, ProjectUtil}
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.platform.workspace.storage.{EntityStorage, SymbolicEntityId, WorkspaceEntityWithSymbolicId}
+import com.intellij.psi.PsiFile
 import com.intellij.util.net.{ProxyConfiguration, ProxyCredentialStore, ProxyCredentialStoreKt, ProxySettings, ProxyUtils}
 import com.intellij.util.{EnvironmentUtil, SystemProperties}
 import org.jetbrains.annotations.VisibleForTesting
 import org.jetbrains.plugins.scala.build.BuildReporter
 import org.jetbrains.plugins.scala.extensions.RichFile
-import org.jetbrains.plugins.scala.project.Version
+import org.jetbrains.plugins.scala.project.{ProjectPsiFileExt, Version}
 import org.jetbrains.plugins.scala.util.{ExternalSystemUtil, JarManifestUtils}
 import org.jetbrains.sbt.Sbt.SbtModuleChildKeyInstance
 import org.jetbrains.sbt.buildinfo.BuildInfo
@@ -428,14 +429,18 @@ object SbtUtil {
   }
 
   /**
-   * Determines if the project should be treated as an sbt project (has been imported using our built-in sbt support)
-   * or it could be imported as such if it hasn't been imported by a BSP handler already.
+   * Determines if the project the provided file is in should be treated as an sbt project (has been imported using our
+   * built-in sbt support). Alternatively, the project could be imported as such, but only if it hasn't been imported
+   * by a BSP handler already.
    *
    * We use the result of this function to determine if we should highlight certain sbt project files and source files
    * and show notification banners depending on the import state of the project.
    */
-  private[sbt] def couldBeSbtProject(project: Project): Boolean =
-    isSbtProject(project) || couldBeImportedAsSbtProject(project) && !SbtBspProjectHandler.isImportedAsBspProject(project)
+  private[sbt] def couldFileBeInSbtProject(file: PsiFile): Boolean =
+    isFileInSbtModule(file) || couldBeImportedAsSbtProject(file.getProject) && !SbtBspProjectHandler.isImportedAsBspProject(file.getProject)
+
+  private def isFileInSbtModule(file: PsiFile): Boolean =
+    file.module.exists(isSbtModule)
 
   private def couldBeImportedAsSbtProject(project: Project): Boolean = {
     val workingDir =

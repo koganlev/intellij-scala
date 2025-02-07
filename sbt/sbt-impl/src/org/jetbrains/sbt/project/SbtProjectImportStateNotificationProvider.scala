@@ -30,13 +30,13 @@ private final class SbtProjectImportStateNotificationProvider extends EditorNoti
         return null
     }
     // The project is not an sbt project, or it could not be imported as an sbt project, do not show any notifications.
-    if (!SbtUtil.couldBeSbtProject(project)) return null
+    if (!SbtUtil.couldFileBeInSbtProject(sbtFile)) return null
     // The sbt file is not a part of the current project, do not show any notifications.
     if (!SbtProblemHighlightFilter.shouldHighlightSbtFile(sbtFile)) return null
     // Project reload is already in progress, do not show any notifications.
     if (ScalaProjectConfigurationService.getInstance(project).isSyncInProgress) return null
     // The project is fully imported, do not show any notifications.
-    if (SbtProjectImportStateService.instance(project).isImported) return null
+    if (SbtProjectImportStateService.instance(project).isImported(sbtFile)) return null
 
     (fileEditor: FileEditor) => SbtProjectImportStateNotificationPanel.createNotificationPanel(project, fileEditor)
   }
