@@ -7,6 +7,7 @@ import junit.framework.{TestCase, TestFailure, TestResult, TestSuite}
 import org.jetbrains.plugins.scala.compiler.ScalaCompilerTestBase
 import org.jetbrains.plugins.scala.extensions.PathExt
 import org.jetbrains.plugins.scala.lang.parser.scala3.imported.{Scala3ImportedParserTestConfig, Scala3ImportedParserTest_Move_Fixed_Tests}
+import org.jetbrains.plugins.scala.lang.resolveSemanticDb.ReferenceComparisonTestBase.disambiguatedStoreFileNameForUppercaseNames
 import org.jetbrains.plugins.scala.lang.resolveSemanticDb._
 import org.jetbrains.plugins.scala.lang.resolveSemanticDb.configurations._
 import org.jetbrains.plugins.scala.project.VirtualFileExt
@@ -581,10 +582,24 @@ object AfterUpdateDottyVersionScript {
       val posOutDir = repo.path.resolve("out/posTestFromTasty/pos")
       assert(Files.isDirectory(posOutDir))
 
-      for (testOutPath <- posOutDir.children()) {
-        val dirName = testOutPath.getFileName.toString
-        val storePath = config.outPath.resolve(dirName + ".semdb")
+      val allOutputDirs = posOutDir.children()
+      val duplicatedLowercaseNames = allOutputDirs
+        .map(_.getFileName.toString.toLowerCase)
+        .groupBy(identity)
+        .flatMap {
+          case (_, Seq(_)) => None
+          case (name, _) => Some(name)
+        }
+        .toSet
 
+      for (testOutPath <- allOutputDirs) {
+        val dirName = testOutPath.getFileName.toString
+        val disambiguatedName =
+          if (duplicatedLowercaseNames.contains(dirName.toLowerCase)) {
+            disambiguatedStoreFileNameForUppercaseNames(dirName)
+          } else None
+        val storeName = disambiguatedName.getOrElse(dirName + ".semdb")
+        val storePath = config.outPath.resolve(storeName)
         val store = SemanticDbFromScalaMeta.fromSemanticDbPath(testOutPath)
 
         if (store.files.nonEmpty)

@@ -47,7 +47,11 @@ abstract class ReferenceComparisonTestBase(config: ReferenceComparisonTestConfig
 
   protected def runTestToResult(testName: String): Result = {
     val files = setupFiles(testName)
-    val store = SemanticDbStore.fromTextFile(config.outPath.resolve(testName + ".semdb"))
+    val semDbFilePath = possibleStoreNames(testName)
+      .map(config.outPath.resolve)
+      .find(_.exists)
+      .getOrElse(throw new IllegalStateException(s"No semdb file found for: $testName. Possible filenames: ${possibleStoreNames(testName).mkString(", ")}"))
+    val store = SemanticDbStore.fromTextFile(semDbFilePath)
 
     var problems = Seq.empty[String]
     var refCount = 0
@@ -373,5 +377,18 @@ object ReferenceComparisonTestBase {
         aliased.map(PhysicalRefTarget)
       case _ => None
     }
+  }
+
+  def disambiguatedStoreFileNameForUppercaseNames(testName: String): Option[String] = {
+    if (testName.exists(_.isUpper)) {
+      val hash = testName.hashCode.toHexString.take(6)
+      Some(s"$testName.$hash.semdb")
+    } else {
+      None
+    }
+  }
+
+  def possibleStoreNames(testName: String): Seq[String] = {
+    disambiguatedStoreFileNameForUppercaseNames(testName).iterator.toSeq :+ s"$testName.semdb"
   }
 }

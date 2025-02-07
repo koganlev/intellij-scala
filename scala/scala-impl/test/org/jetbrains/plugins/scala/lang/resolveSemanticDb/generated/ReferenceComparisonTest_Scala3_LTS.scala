@@ -224,14 +224,12 @@ class ReferenceComparisonTest_Scala3_LTS extends ReferenceComparisonTestBase(org
   def test_enums_capture(): Unit = doTest("enums-capture", false) // #enum
   def test_erased_args_lifted(): Unit = doTest("erased-args-lifted", false)
   def test_erased_asInstanceOf(): Unit = doTest("erased-asInstanceOf", false)
-  def test_erased_class_as_args(): Unit = doTest("erased-class-as-args", false)
   def test_erased_class_separate(): Unit = doTest("erased-class-separate", false)
   def test_erased_conforms(): Unit = doTest("erased-conforms", false) // #extension
   def test_erased_deep_context(): Unit = doTest("erased-deep-context", false)
   def test_erased_extension_method(): Unit = doTest("erased-extension-method", false)
   def test_erased_lub(): Unit = doTest("erased-lub", true)
   def test_erased_lub_2(): Unit = doTest("erased-lub-2", true)
-  def test_erased_soft_keyword(): Unit = doTest("erased-soft-keyword", false)
   def test_erased_typedef(): Unit = doTest("erased-typedef", true)
   def test_erasure_array(): Unit = doTest("erasure-array", true)
   def test_erasure_nsquared(): Unit = doTest("erasure-nsquared", true)
@@ -896,7 +894,6 @@ class ReferenceComparisonTest_Scala3_LTS extends ReferenceComparisonTestBase(org
   def test_i7822(): Unit = doTest("i7822", true) // #unionType
   def test_i7829(): Unit = doTest("i7829", true) // #intersectionType
   def test_i7840(): Unit = doTest("i7840", true)
-  def test_i7851(): Unit = doTest("i7851", false)
   def test_i7863(): Unit = doTest("i7863", true) // #typeLambda
   def test_i7868(): Unit = doTest("i7868", false) // #unionType, #opaque, #intersectionType, #typeLambda
   def test_i7872(): Unit = doTest("i7872", false) // #intersectionType, #matchType
@@ -1113,7 +1110,6 @@ class ReferenceComparisonTest_Scala3_LTS extends ReferenceComparisonTestBase(org
   def test_i10715_scala(): Unit = doTest("i10715-scala", true)
   def test_i10769(): Unit = doTest("i10769", true)
   def test_i10769b(): Unit = doTest("i10769b", true)
-  def test_i10848a(): Unit = doTest("i10848a", false)
   def test_i10848b(): Unit = doTest("i10848b", false)
   def test_i10871(): Unit = doTest("i10871", true)
   def test_i10897(): Unit = doTest("i10897", false) // #intersectionType
@@ -2841,7 +2837,6 @@ class ReferenceComparisonTest_Scala3_LTS extends ReferenceComparisonTestBase(org
   def test_t112606A(): Unit = doTest("t112606A", true)
   def test_tagging(): Unit = doTest("tagging", false) // #opaque
   def test_tailcall(): Unit = doTest("tailcall", true)
-  def test_tailrec(): Unit = doTest("tailrec", false)
   def test_tailrec_super(): Unit = doTest("tailrec-super", false)
   def test_tangledCompanion(): Unit = doTest("tangledCompanion", true)
   def test_targetName(): Unit = doTest("targetName", true)

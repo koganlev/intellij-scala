@@ -6,11 +6,9 @@ import junit.framework.TestCase
 import org.jetbrains.plugins.scala.extensions.{PathExt, StringExt}
 import org.jetbrains.plugins.scala.lang.resolveSemanticDb.ReferenceComparisonTestBase.Result
 import org.jetbrains.plugins.scala.lang.resolveSemanticDb.configurations._
-import org.jetbrains.plugins.scala.util.TestUtils
 
 import java.nio.charset.StandardCharsets
 import java.nio.file.{Files, Path}
-import java.nio.file.{Files, Path, Paths}
 import scala.collection.mutable
 
 object ReferenceComparisonTestsGenerator_Scala3  {
@@ -61,7 +59,7 @@ object ReferenceComparisonTestsGenerator_Scala3  {
       var result = Result.empty
 
       def testNameFromFilePath(path: Path): String =
-        path.getFileName.toString.stripSuffix(".semdb")
+        path.getFileName.toString.replaceAll("(\\.[0-9a-f]{6})?\\.semdb$", "")
 
       val testOutPaths = config.outPath.children()
         .sortBy(testNameFromFilePath)((x, y) => StringUtil.naturalCompare(x, y))
