@@ -671,8 +671,10 @@ final class SbtProjectStructureImportingTest_ProdTestSourcesSeparatedEnabled ext
       private val buildURI: URI = getTestProjectDir.getCanonicalFile.toURI
 
       private val sbtIdeaPluginGroup = Array("sbtIdeaPlugin")
-      private val sbtIdeaShellGroup = Array("sbt-idea-shell")
       private val sbtIdeSettingsGroup = Array("sbt-ide-settings")
+
+      val url1 = "https://github.com/JetBrains/sbt-ide-settings.git"
+      val url2 = "https://github.com/JetBrains/sbt-idea-plugin.git#v4.0.3"
 
       modules := Seq(
         new module("SCL-14635") {
@@ -691,44 +693,30 @@ final class SbtProjectStructureImportingTest_ProdTestSourcesSeparatedEnabled ext
 
         // NOTE: sbtIdeaPlugin also has inner module named `sbt-idea-plugin` (with dashes), but it's separate, non-root module
         new module("sbtIdeaPlugin") {
-          sbtBuildURI := new URI("https://github.com/JetBrains/sbt-idea-plugin.git#v4.0.3")
+          sbtBuildURI := new URI(url2)
           sbtProjectId := "sbtIdeaPlugin"
         },
         new module("sbtIdeaPlugin.main") {
-          sbtBuildURI := new URI("https://github.com/JetBrains/sbt-idea-plugin.git#v4.0.3")
+          sbtBuildURI := new URI(url2)
           sbtProjectId := "sbtIdeaPlugin"
         },
         new module("sbtIdeaPlugin.test") {
-          sbtBuildURI := new URI("https://github.com/JetBrains/sbt-idea-plugin.git#v4.0.3")
+          sbtBuildURI := new URI(url2)
           sbtProjectId := "sbtIdeaPlugin"
         },
         new module("sbtIdeaPlugin-build", sbtIdeaPluginGroup),
 
-        new module("sbt-idea-shell") {
-          sbtBuildURI := new URI("https://github.com/JetBrains/sbt-idea-shell.git#master")
-          sbtProjectId := "root"
-        },
-        new module("sbt-idea-shell.main") {
-          sbtBuildURI := new URI("https://github.com/JetBrains/sbt-idea-shell.git#master")
-          sbtProjectId := "root"
-        },
-        new module("sbt-idea-shell.test") {
-          sbtBuildURI := new URI("https://github.com/JetBrains/sbt-idea-shell.git#master")
-          sbtProjectId := "root"
-        },
-        new module("sbt-idea-shell-build", sbtIdeaShellGroup),
-
         new module("sbt-ide-settings") {
-          sbtBuildURI := new URI("https://github.com/JetBrains/sbt-ide-settings.git")
-          sbtProjectId := "sbt-ide-settings"
+          sbtBuildURI := new URI(url1)
+          sbtProjectId := "root"
         },
         new module("sbt-ide-settings.main") {
-          sbtBuildURI := new URI("https://github.com/JetBrains/sbt-ide-settings.git")
-          sbtProjectId := "sbt-ide-settings"
+          sbtBuildURI := new URI(url1)
+          sbtProjectId := "root"
         },
         new module("sbt-ide-settings.test") {
-          sbtBuildURI := new URI("https://github.com/JetBrains/sbt-ide-settings.git")
-          sbtProjectId := "sbt-ide-settings"
+          sbtBuildURI := new URI(url1)
+          sbtProjectId := "root"
         },
         new module("sbt-ide-settings-build", sbtIdeSettingsGroup)
       ) ++
