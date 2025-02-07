@@ -7,9 +7,10 @@ import com.intellij.openapi.externalSystem.model.project._
 import com.intellij.openapi.externalSystem.model.task.{ExternalSystemTaskId, ExternalSystemTaskNotificationListener}
 import com.intellij.openapi.externalSystem.model.{DataNode, ExternalSystemException}
 import com.intellij.openapi.externalSystem.service.project.ExternalSystemProjectResolver
+import com.intellij.openapi.project.{Project, ProjectManager}
 import org.jetbrains.bsp.BspUtil._
 import org.jetbrains.bsp.project.BspExternalSystemManager.ScalaCliAffectedProjectFiles
-import org.jetbrains.bsp.project.BspProjectInstallProvider
+import org.jetbrains.bsp.project.{BspProjectInstallProvider, BspTargetCapabilities, PersistentBspTargetCapabilitiesHolder}
 import org.jetbrains.bsp.project.importing.BspProjectResolver._
 import org.jetbrains.bsp.project.importing.BspResolverDescriptors._
 import org.jetbrains.bsp.project.importing.BspResolverLogic._
@@ -98,6 +99,19 @@ class BspProjectResolver extends ExternalSystemProjectResolver[BspExecutionSetti
 
           val targets = targetsResponse.getTargets.asScala.toList
 
+          val serverTargetsToCapabilities: Map[BuildTargetIdentifier, BspTargetCapabilities] = targets.map { target =>
+            target.getId -> BspTargetCapabilities(
+              target.getCapabilities.getCanCompile,
+              target.getCapabilities.getCanTest,
+              target.getCapabilities.getCanRun,
+              target.getCapabilities.getCanDebug
+            )
+          }.toMap
+
+          val project: Project = ProjectManager.getInstance().getOpenProjects.find(_.getBasePath == workspace.getAbsolutePath).getOrElse {
+            throw new IllegalStateException(s"Could not find project for workspace $workspace")
+          }
+          PersistentBspTargetCapabilitiesHolder.getInstance(project).btIdToCapabilities = serverTargetsToCapabilities
           val td = targetData(targets, structureEventId)
 
           td.thenApply[DataNode[ProjectData]] { data =>

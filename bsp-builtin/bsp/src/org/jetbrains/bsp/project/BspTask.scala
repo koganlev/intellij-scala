@@ -184,14 +184,18 @@ class BspTask[T](project: Project,
 
   private def buildRequests(targets: Iterable[BspTarget], targetsToClean: Iterable[BspTarget])
                            (implicit server: BspServer, capabilities: BuildServerCapabilities, reporter: BuildReporter) = {
-    if (targetsToClean.isEmpty) compileRequest(targets)
+    val targetsWithCompileCap: Iterable[BspTarget] = PersistentBspTargetCapabilitiesHolder.getInstance(project).btIdToCapabilities
+      .filter { case (id, cap) => targets.exists(_.target.toString == id.getUri) && cap.canCompile }
+      .keys
+      .map(id => BspTarget(targets.find(_.target.toString == id.getUri).get.workspace, new URI(id.getUri)))
+    if (targetsToClean.isEmpty) compileRequest(targetsWithCompileCap)
     else {
       cleanRequest(targetsToClean)
       .exceptionally { err =>
         new CleanCacheResult(BspBundle.message("bsp.task.server.does.not.support.cleaning.build.cache", err.getMessage), false)
       }
       .thenCompose { cleaned =>
-        if (cleaned.getCleaned) compileRequest(targets)
+        if (cleaned.getCleaned) compileRequest(targetsWithCompileCap)
         else {
           reporter.error(BspBundle.message("bsp.task.targets.not.cleaned", cleaned.getMessage), None)
           val res = new CompileResult(StatusCode.CANCELLED)
