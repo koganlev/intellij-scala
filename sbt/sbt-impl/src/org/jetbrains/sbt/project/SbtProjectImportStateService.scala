@@ -1,24 +1,21 @@
 package org.jetbrains.sbt.project
 
 import com.intellij.openapi.components.Service
+import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil
 import com.intellij.openapi.module.{Module, ModuleManager}
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.{DependencyScope, LibraryOrderEntry, ModuleRootManager, OrderRootType}
-import org.jetbrains.plugins.scala.project.ModuleExt
+import com.intellij.psi.PsiFile
+import org.jetbrains.plugins.scala.project.{ModuleExt, ProjectPsiFileExt}
 import org.jetbrains.sbt.settings.SbtSettings
+
+import java.util.concurrent.ConcurrentHashMap
 
 @Service(Array(Service.Level.PROJECT))
 private[sbt] final class SbtProjectImportStateService(project: Project) {
   import SbtProjectImportStateService.State
 
-  /**
-   * Shared mutable state. Needs to be queried and updated in a `synchronized` block.
-   *
-   * Essentially, this is a way to avoid querying the project modules and libraries on every sbt project file open. The
-   * project is queried once and the result is cached. Project reimports and library changes reset this state.
-   * It will be recomputed again the next time.
-   */
-  private var state: State = State.NotInitialized
+  private val state: ConcurrentHashMap[String, State] = new ConcurrentHashMap()
 
   /**
    * Checks if the project has been fully imported as an sbt project using the built-in sbt support. In any other case,
@@ -27,24 +24,31 @@ private[sbt] final class SbtProjectImportStateService(project: Project) {
    * @note This method also returns `false` for sbt projects imported via BSP.
    * @see [[org.jetbrains.sbt.SbtUtil.couldBeSbtProject]] which should most likely be called before this method
    */
-  def isImported: Boolean = synchronized {
-    state match {
-      case State.NotInitialized =>
-        updateProjectState()
-        state == State.Imported
-      case State.Imported => true
-      case State.NotImported => false
+  def isImported(file: PsiFile): Boolean = {
+    val relevantPath = file.module.flatMap(m => Option(ExternalSystemApiUtil.getExternalRootProjectPath(m)))
+    relevantPath match {
+      case Some(path) =>
+        val s = state.computeIfAbsent(path, computeImportState)
+        s == State.Imported
+      case None =>
+        // The project has not even been linked to the external system machinery. It is therefore not imported.
+        false
     }
   }
 
-  def reset(): Unit = synchronized {
-    state = State.NotInitialized
+  def reset(): Unit = {
+    state.clear()
   }
 
-  private def updateProjectState(): Unit = {
-    val buildModules = ModuleManager.getInstance(project).getModules.filter(_.hasBuildModuleType)
-    val imported = buildModules.nonEmpty && buildModules.forall(hasSbtLibrary)
-    state = if (imported) State.Imported else State.NotImported
+  private def computeImportState(relevantProjectPath: String): State = {
+    val allBuildModules = ModuleManager.getInstance(project).getModules.filter(_.hasBuildModuleType)
+    val relevantBuildModules = allBuildModules.filter { module =>
+      val projectRootPath = Option(ExternalSystemApiUtil.getExternalRootProjectPath(module))
+      projectRootPath.contains(relevantProjectPath)
+    }
+    val imported = relevantBuildModules.nonEmpty && relevantBuildModules.forall(hasSbtLibrary)
+    val newState = if (imported) State.Imported else State.NotImported
+    newState
   }
 
   private def hasSbtLibrary(buildModule: Module): Boolean =
@@ -76,7 +80,6 @@ private[sbt] object SbtProjectImportStateService {
 
   private sealed trait State extends Product with Serializable
   private object State {
-    case object NotInitialized extends State
     case object Imported extends State
     case object NotImported extends State
   }

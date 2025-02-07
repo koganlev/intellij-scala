@@ -21,10 +21,10 @@ private final class SbtProjectImportStateProblemHighlightFilter extends ProblemH
     val project = psiFile.getProject
     // If this is not an sbt project, or it could not be imported as an sbt project,
     // this filter does not decide whether the file should be highlighted.
-    if (!SbtUtil.couldBeSbtProject(project)) return true
+    if (!SbtUtil.couldFileBeInSbtProject(psiFile)) return true
 
     // If the sbt project is fully imported, the files should be highlighted.
-    if (SbtProjectImportStateService.instance(project).isImported) return true
+    if (SbtProjectImportStateService.instance(project).isImported(psiFile)) return true
 
     // If the sbt project is not imported, disable highlighting for source files.
     val isSource = psiFile.getVirtualFile.isWritable && !JavaProjectRootsUtil.isOutsideJavaSourceRoot(psiFile)
@@ -37,19 +37,13 @@ private[jetbrains] object SbtProjectImportStateProblemHighlightFilter {
   private[sbt] def isTrackedFileType(fileType: FileType): Boolean = fileType match {
     case _: ScalaFileType => true
     case _: JavaFileType => true
-    case ft => dynamicFileTypes.exists(_.isInstance(ft))
+    case ft => trackedFileExtensions.contains(ft.getDefaultExtension)
   }
 
-  private val dynamicFileTypes: Set[Class[_]] = Set(
-    tryLoadingClass("org.jetbrains.kotlin.idea.KotlinFileType"),
-    tryLoadingClass("org.jetbrains.plugins.groovy.GroovyFileType")
-  ).flatten
-
-  private def tryLoadingClass(name: String): Option[Class[_]] =
-    try Some(Class.forName(name))
-    catch {
-      case _: ClassNotFoundException => None
-    }
+  // Ideally, this would hold references to each of the file types, but we're trying to avoid dependencies on
+  // other plugins.
+  private def trackedFileExtensions: Array[String] =
+    Array("sc", "kt", "kts", "groovy")
 
   /**
    * Provided specifically to make the Qodana coverage tests pass.

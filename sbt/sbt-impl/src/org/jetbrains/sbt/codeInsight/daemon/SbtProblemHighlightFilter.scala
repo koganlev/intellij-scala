@@ -3,7 +3,7 @@ package org.jetbrains.sbt.codeInsight.daemon
 import com.intellij.codeInsight.daemon.ProblemHighlightFilter
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.roots.ProjectRootManager
+import com.intellij.openapi.roots.{ModuleRootManager, ProjectRootManager}
 import com.intellij.openapi.vfs.NonPhysicalFileSystem
 import com.intellij.psi.{PsiCodeFragment, PsiFile}
 import org.jetbrains.plugins.scala.project.{ModuleExt, ProjectPsiFileExt}
@@ -43,7 +43,7 @@ final class SbtProblemHighlightFilter extends ProblemHighlightFilter {
       //     |-- build.sbt //should NOT be highlighted
       //
       //But `file.module` will anyway resolve to a correct `build` module
-      SbtProblemHighlightFilter.shouldHighlightSbtFile(file) && isInBuildModule(file) && isImported(file.getProject) ||
+      SbtProblemHighlightFilter.shouldHighlightSbtFile(file) && isInBuildModule(file) && isImported(file) ||
         ApplicationManager.getApplication.isUnitTestMode && SbtHighlightingUtil.isHighlightingOutsideBuildModuleEnabled(file.getProject)
     case _ =>
       true
@@ -55,8 +55,10 @@ final class SbtProblemHighlightFilter extends ProblemHighlightFilter {
   /**
    * We only track the import state of sbt projects. All other project types are considered imported.
    */
-  private def isImported(project: Project): Boolean =
-    !SbtUtil.isSbtProject(project) || SbtProjectImportStateService.instance(project).isImported
+  private def isImported(file: SbtFile): Boolean = {
+    val project = file.getProject
+    !SbtUtil.isSbtProject(project) || SbtProjectImportStateService.instance(project).isImported(file)
+  }
 }
 
 private[sbt] object SbtProblemHighlightFilter {

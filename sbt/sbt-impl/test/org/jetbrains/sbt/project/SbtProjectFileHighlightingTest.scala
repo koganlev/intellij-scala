@@ -38,7 +38,7 @@ abstract class SbtProjectFileHighlightingTestBase(sbtVersion: String) extends Sb
 
     assertFalse("plugins.sbt should not be highlighted before the project has been imported", shouldHighlightPluginsSbtBefore)
     assertFalse("build.sbt should not be highlighted before the project has been imported", shouldHighlightBuildSbtBefore)
-    assertFalse("The sbt project should not have been imported yet", SbtProjectImportStateService.instance(getProject).isImported)
+    assertFalse("The sbt project should not have been imported yet", SbtProjectImportStateService.instance(getProject).isImported(findPsiFile(buildSbtPath)))
 
     importProject(false)
 
@@ -47,7 +47,7 @@ abstract class SbtProjectFileHighlightingTestBase(sbtVersion: String) extends Sb
 
     assertTrue("plugins.sbt should be highlighted after the project has been imported", shouldHighlightPluginsSbtAfter)
     assertTrue("build.sbt should be highlighted after the project has been imported", shouldHighlightBuildSbtAfter)
-    assertTrue("The sbt project should have been imported", SbtProjectImportStateService.instance(getProject).isImported)
+    assertTrue("The sbt project should have been imported", SbtProjectImportStateService.instance(getProject).isImported(findPsiFile(buildSbtPath)))
   }
 
   private def findPsiFile(path: Path): PsiFile = {
