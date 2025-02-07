@@ -1,7 +1,5 @@
 package org.jetbrains.sbt.project
 
-import com.intellij.build.FilePosition
-import com.intellij.build.events.EventResult
 import com.intellij.notification.NotificationType
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.externalSystem.model.project.{ProjectData => ESProjectData, _}
@@ -315,12 +313,11 @@ class SbtProjectResolver extends ExternalSystemProjectResolver[SbtExecutionSetti
 
     val projectNode = new ProjectNode(projectName, projectPath, projectPath)
     val libraryNodes = Seq.empty[LibraryNode]
-    val moduleFilesDirectory = new File(projectPath, Sbt.ModulesDirectory)
     val buildProjectsGroup = Seq(BuildProjectsGroup(projectUri, dummyRootProject, Nil, projectTmpName))
     val projectToModule = createModules(
       buildProjectsGroup,
       libraryNodes,
-      moduleFilesDirectory,
+      projectRoot,
       useSeparateCompilerOutputPaths = false,
       separateProdTestSources = false
     )
@@ -337,10 +334,13 @@ class SbtProjectResolver extends ExternalSystemProjectResolver[SbtExecutionSetti
 
     val dummyBuildData = BuildData(projectUri, Seq.empty, Seq.empty, Seq.empty, Seq.empty)
     val projectToParentModule = projectToModule.view.mapValues(_.parent).toMap
-    createBuildModule(dummyBuildData, projects, moduleFilesDirectory, None, sbtVersion, projectToParentModule, buildProjectsGroup)
+    createBuildModule(dummyBuildData, projects, getDefaultModuleFilesDirectory(projectRoot), None, sbtVersion, projectToParentModule, buildProjectsGroup)
 
     projectNode
   }
+
+  private def getDefaultModuleFilesDirectory(projectRoot: File): String =
+    (projectRoot / Sbt.ModulesDirectory).path
 
   /**
    * This implementation is the same as in sbt.Project.normalizeModuleId to avoid inconsistencies in the import process.
@@ -385,13 +385,11 @@ class SbtProjectResolver extends ExternalSystemProjectResolver[SbtExecutionSetti
     val libraryNodes = createLibraries(data, projects)
     projectNode.addAll(libraryNodes)
 
-    val moduleFilesDirectory = new File(root, Sbt.ModulesDirectory)
-
     val buildProjectsGroups: Seq[BuildProjectsGroup] = createBuildProjectGroups(projects)
     val projectToModule = createModules(
       buildProjectsGroups,
       libraryNodes,
-      moduleFilesDirectory,
+      projectRootFile,
       settings.useSeparateCompilerOutputPaths,
       settings.separateProdTestSources
     )
@@ -403,16 +401,17 @@ class SbtProjectResolver extends ExternalSystemProjectResolver[SbtExecutionSetti
     val modulesSorted: Seq[ModuleDataNodeType] = projectToParentModule.values.toSeq.sortBy(_.getId)
     projectNode.addAll(removeNestedModuleNodes(modulesSorted))
 
+    val defaultModuleFilesDirectory = getDefaultModuleFilesDirectory(projectRootFile)
     addSharedSourceModules(
       projectToModule,
       libraryNodes,
-      moduleFilesDirectory,
+      defaultModuleFilesDirectory,
       settings.separateProdTestSources,
       buildProjectsGroups
     )
 
     val buildModuleForProject: BuildData => BuildModuleNodeWithBuildBaseDir =
-      createBuildModule(_, projects, moduleFilesDirectory, data.localCachePath.map(_.getCanonicalPath), sbtVersion, projectToParentModule, buildProjectsGroups)
+      createBuildModule(_, projects, defaultModuleFilesDirectory, data.localCachePath.map(_.getCanonicalPath), sbtVersion, projectToParentModule, buildProjectsGroups)
     val buildModules = data.builds.map(buildModuleForProject)
 
     configureBuildModuleDependencies(buildModules)
@@ -542,7 +541,7 @@ class SbtProjectResolver extends ExternalSystemProjectResolver[SbtExecutionSetti
   private def createModules(
     projectsGrouped: Seq[BuildProjectsGroup],
     libraryNodes: Seq[LibraryNode],
-    moduleFilesDirectory: File,
+    projectRoot: File,
     useSeparateCompilerOutputPaths: Boolean,
     separateProdTestSources: Boolean
   ): Map[ProjectData, ModuleSourceSet] = {
@@ -551,7 +550,7 @@ class SbtProjectResolver extends ExternalSystemProjectResolver[SbtExecutionSetti
     val projectToModule: Iterable[(ProjectData, ModuleSourceSet)] = projectsGrouped.flatMap { buildProjectsGroup =>
         createModulesInsideBuildProjectGroup(
           buildProjectsGroup,
-          moduleFilesDirectory,
+          projectRoot,
           librariesData,
           useSeparateCompilerOutputPaths,
           separateProdTestSources
@@ -571,7 +570,7 @@ class SbtProjectResolver extends ExternalSystemProjectResolver[SbtExecutionSetti
    */
   private def createModulesInsideBuildProjectGroup(
     buildProjectsGroup: BuildProjectsGroup,
-    moduleFilesDirectory: File,
+    projectRoot: File,
     librariesData: Seq[LibraryData],
     useSeparateCompilerOutputPaths: Boolean,
     separateProdTestSources: Boolean
@@ -586,7 +585,7 @@ class SbtProjectResolver extends ExternalSystemProjectResolver[SbtExecutionSetti
     //because "rootProjectModuleNameUnique" uniqueness has been ensured in #generateUniqueModuleInternalNameForRootProject
     val rootModuleSourceSet = createModule(
       rootProject,
-      moduleFilesDirectory,
+      projectRoot,
       rootProjectModuleNameUnique,
       None,
       None,
@@ -605,7 +604,7 @@ class SbtProjectResolver extends ExternalSystemProjectResolver[SbtExecutionSetti
       val (moduleName, moduleGroup) = generateModuleAndGroupName(project, parentModule.getInternalName, projectNameToProject)
       val moduleSourceSet = createModule(
         project,
-        moduleFilesDirectory,
+        projectRoot,
         moduleName,
         Some(moduleGroup),
         Some(moduleInternalNameRegistry),
@@ -788,7 +787,7 @@ class SbtProjectResolver extends ExternalSystemProjectResolver[SbtExecutionSetti
 
   private def createModuleWithAllRequiredDataLegacy(
     project: sbtStructure.ProjectData,
-    moduleFilesDirectory: File,
+    projectRoot: File,
     moduleName: String,
     moduleGroup: Option[String],
     moduleInternalNameRegistry: Option[ModuleUniqueInternalNameGenerator],
@@ -801,11 +800,13 @@ class SbtProjectResolver extends ExternalSystemProjectResolver[SbtExecutionSetti
     val projectId = ModuleNode.combinedId(project.id, Option(project.buildURI))
     //NOTE: module name which is passed in ModuleNode constructor will be saved as external module name, module name and
     //additionally as internal name but with all the "/" characters changed to "_"
+    val moduleFilesDirectory = createModuleFilesDirectory(projectRoot, project.base.getPath)
+
     val result = createModuleNode(
       StdModuleTypes.JAVA.getId,
       projectId,
       moduleName,
-      moduleFilesDirectory.path,
+      moduleFilesDirectory,
       project.base.canonicalPath,
       shouldCreateNestedModule
     )
@@ -865,9 +866,19 @@ class SbtProjectResolver extends ExternalSystemProjectResolver[SbtExecutionSetti
     module.setModuleName(moduleName)
   }
 
+  private def createModuleFilesDirectory(projectRoot: File, moduleBase: String): String = {
+    val relativeToRoot = FileUtil.getRelativePath(projectRoot.path, moduleBase, '/')
+    val relativePath =
+      if (relativeToRoot == null || relativeToRoot.equals(".")) ""
+      else relativeToRoot
+
+    val defaultModuleFilesDir = getDefaultModuleFilesDirectory(projectRoot)
+    (new File(defaultModuleFilesDir) / relativePath).path
+  }
+
   private def createModuleWithAllRequiredData(
     project: sbtStructure.ProjectData,
-    moduleFilesDirectory: File,
+    projectRoot: File,
     moduleName: String,
     moduleGroup: Option[String],
     moduleInternalNameRegistry: Option[ModuleUniqueInternalNameGenerator],
@@ -881,11 +892,13 @@ class SbtProjectResolver extends ExternalSystemProjectResolver[SbtExecutionSetti
     //NOTE: module name which is passed in ModuleNode constructor will be saved as external module name, module name and
     //additionally as internal name but with all the "/" characters changed to "_"
 
+    val moduleFilesDirectory = createModuleFilesDirectory(projectRoot, project.base.getPath)
+
     val parentModule = createModuleNode(
       StdModuleTypes.JAVA.getId,
       projectId,
       moduleName,
-      moduleFilesDirectory.path,
+      moduleFilesDirectory,
       project.base.canonicalPath,
       shouldCreateNestedModule
     )
@@ -894,7 +907,7 @@ class SbtProjectResolver extends ExternalSystemProjectResolver[SbtExecutionSetti
 
     val (prodModule, testModule) = createSbtSourceSetModules(
       project,
-      moduleFilesDirectory.path,
+      moduleFilesDirectory,
       parentModuleNameWithGroup,
     )
 
@@ -961,7 +974,7 @@ class SbtProjectResolver extends ExternalSystemProjectResolver[SbtExecutionSetti
         StdModuleTypes.JAVA.getId,
         moduleId,
         sourceSetName,
-        s"$moduleFilesDirectoryPath",
+        moduleFilesDirectoryPath,
         project.base.canonicalPath
       )
       moduleNode.setInternalName(s"$moduleNameWithGroup.$sourceSetName")
@@ -1195,7 +1208,7 @@ class SbtProjectResolver extends ExternalSystemProjectResolver[SbtExecutionSetti
   private def createBuildModule(
     build: sbtStructure.BuildData,
     projects: Seq[ProjectData],
-    moduleFilesDirectory: File,
+    defaultModuleFilesDirectory: String,
     localCachePath: Option[String],
     sbtVersion: String,
     projectToParentModule: Map[ProjectData, ModuleDataNodeType],
@@ -1224,9 +1237,11 @@ class SbtProjectResolver extends ExternalSystemProjectResolver[SbtExecutionSetti
 
     val buildRoot = buildBaseDir / Sbt.ProjectDirectory
 
+    val rootNode = findRootNodeForBuild(buildProjectsGroups, buildBaseDir, projectToParentModule)
+    val moduleFilesDirectory = rootNode.map(_.getModuleFileDirectoryPath).getOrElse(defaultModuleFilesDirectory)
     // TODO explicit canonical path is needed until IDEA-126011 is fixed
     val result = createModuleNode(
-      SbtModuleType.instance.getId, buildId, buildId, moduleFilesDirectory.path, buildRoot.canonicalPath, shouldCreateNestedModule = true
+      SbtModuleType.instance.getId, buildId, buildId, moduleFilesDirectory, buildRoot.canonicalPath, shouldCreateNestedModule = true
     )
 
     result.add(new SbtDisplayModuleNameNode(buildId))
@@ -1250,7 +1265,6 @@ class SbtProjectResolver extends ExternalSystemProjectResolver[SbtExecutionSetti
     result.add(createSbtBuildModuleData(build, projects, localCachePath))
 
     // note: put build module in a proper project group
-    val rootNode = findRootNodeForBuild(buildProjectsGroups, buildBaseDir, projectToParentModule)
     rootNode.foreach(_.add(result))
     val ideModuleGroupNameForBuild = rootNode.map(_.getInternalName)
     val buildModuleInternalName = result.getInternalName
