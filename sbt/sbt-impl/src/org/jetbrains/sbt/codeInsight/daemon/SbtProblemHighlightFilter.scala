@@ -38,6 +38,7 @@ final class SbtProblemHighlightFilter extends ProblemHighlightFilter {
       // root
       //   |-- project
       //     |-- build.sbt //should be highlighted
+      //     |-- Dependencies.scala // should be highlighted but is handled by (ScalaProblemHighlightFilter)
       //   |-- build.sbt //should be highlighted
       //   |-- testdata
       //     |-- build.sbt //should NOT be highlighted
