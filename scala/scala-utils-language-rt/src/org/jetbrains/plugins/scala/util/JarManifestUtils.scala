@@ -5,7 +5,7 @@ import java.util.jar.JarFile
 
 object JarManifestUtils {
 
-  def readManifestAttributeFrom(file: File, name: String): Option[String] = {
+  private def readManifestAttributeFrom(file: File, name: String): Option[String] = {
     val jar = new JarFile(file)
     try {
       Option(jar.getJarEntry("META-INF/MANIFEST.MF")).flatMap { entry =>

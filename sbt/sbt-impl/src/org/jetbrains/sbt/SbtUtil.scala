@@ -17,6 +17,8 @@ import org.jetbrains.plugins.scala.build.BuildReporter
 import org.jetbrains.plugins.scala.extensions.RichFile
 import org.jetbrains.plugins.scala.project.Version
 import org.jetbrains.plugins.scala.util.{ExternalSystemUtil, JarManifestUtils}
+import org.jetbrains.plugins.scala.project.{ProjectPsiFileExt, Version}
+import org.jetbrains.plugins.scala.util.ExternalSystemUtil
 import org.jetbrains.sbt.Sbt.SbtModuleChildKeyInstance
 import org.jetbrains.sbt.buildinfo.BuildInfo
 import org.jetbrains.sbt.project.SbtProjectSystem
@@ -24,14 +26,14 @@ import org.jetbrains.sbt.project.data.{SbtBuildModuleData, SbtModuleData, SbtPro
 import org.jetbrains.sbt.project.structure.{JvmOpts, SbtOption, SbtOpts}
 import org.jetbrains.sbt.settings.SbtSettings
 
-import java.io.{BufferedInputStream, File, FileInputStream}
+import java.io.File
 import java.net.URI
 import java.util.Properties
 import java.util.jar.JarFile
+import java.nio.file.Path
 import scala.collection.mutable
 import scala.jdk.CollectionConverters.MapHasAsScala
 import scala.math.Ordering.Implicits.infixOrderingOps
-import scala.util.Using
 
 object SbtUtil {
   private lazy val log: Logger = Logger.getInstance(getClass)
@@ -120,63 +122,7 @@ object SbtUtil {
   }
 
   def detectSbtVersion(directory: File, sbtLauncher: => File): SbtVersion =
-    sbtVersionIn(directory)
-      .orElse(sbtVersionInBootPropertiesOf(sbtLauncher))
-      .orElse(JarManifestUtils.readManifestAttributeFrom(sbtLauncher, "Implementation-Version"))
-      .map(SbtVersion(_))
-      .getOrElse(SbtVersion.Latest.Sbt_1)
-
-  private def sbtVersionInBootPropertiesOf(jar: File): Option[String] = {
-    val appProperties = readSectionFromBootPropertiesOf(jar, sectionName = "app")
-    for {
-      name <- appProperties.get("name")
-      if name == "sbt"
-      versionStr <- appProperties.get("version")
-      version <- "\\d+(\\.\\d+)+".r.findFirstIn(versionStr)
-    } yield version
-  }
-
-  //noinspection SameParameterValue
-  private def readSectionFromBootPropertiesOf(launcherFile: File, sectionName: String): Map[String, String] = {
-    val Property = "^\\s*(\\w+)\\s*:(.+)".r.unanchored
-
-    def findProperty(line: String): Option[(String, String)] = {
-      line match {
-        case Property(name, value) => Some((name, value.trim))
-        case _ => None
-      }
-    }
-
-    val jar = new JarFile(launcherFile)
-    try {
-      Option(jar.getEntry("sbt/sbt.boot.properties")).fold(Map.empty[String, String]) { entry =>
-        val lines = scala.io.Source.fromInputStream(jar.getInputStream(entry)).getLines()
-        val sectionLines = lines
-          .dropWhile(_.trim != s"[$sectionName]").drop(1)
-          .takeWhile(!_.trim.startsWith("["))
-        sectionLines.flatMap(findProperty).toMap
-      }
-    } finally {
-      jar.close()
-    }
-  }
-
-  private def sbtBuildPropertiesFile(base: File): File =
-    base / Sbt.ProjectDirectory / Sbt.PropertiesFile
-
-  private def sbtVersionIn(directory: File): Option[String] =
-    sbtBuildPropertiesFile(directory) match {
-      case propertiesFile if propertiesFile.exists => readPropertyFrom(propertiesFile, "sbt.version")
-      case _ => None
-    }
-
-  //noinspection SameParameterValue
-  private def readPropertyFrom(file: File, name: String): Option[String] =
-    Using.resource(new BufferedInputStream(new FileInputStream(file))) { input =>
-      val properties = new Properties()
-      properties.load(input)
-      Option(properties.getProperty(name))
-    }
+    SbtVersionDetector.detectSbtVersion(directory, sbtLauncher)
 
   def getSbtModuleData(module: Module): Option[SbtModuleData] = {
     val project = module.getProject
