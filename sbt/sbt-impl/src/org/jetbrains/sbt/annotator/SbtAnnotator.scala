@@ -13,6 +13,7 @@ import org.jetbrains.plugins.scala.lang.psi.types._
 import org.jetbrains.plugins.scala.project.ModuleExt
 import org.jetbrains.sbt.language.SbtFileImpl
 
+// TODO: we need to review SBT 2.0 new rules and adopt SbtAnnotator logic
 final class SbtAnnotator extends Annotator {
 
   import SbtAnnotator._

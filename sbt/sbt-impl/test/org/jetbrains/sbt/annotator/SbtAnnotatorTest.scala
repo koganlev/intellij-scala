@@ -13,7 +13,7 @@ import org.jetbrains.plugins.scala.util.TestUtils.getTestDataPath
 import org.jetbrains.sbt.language.SbtFileImpl
 import org.jetbrains.sbt.project.settings.SbtProjectSettings
 import org.jetbrains.sbt.settings.SbtSettings
-import org.jetbrains.sbt.{MockSbtBase, MockSbtBuildModule, MockSbt_0_13, MockSbt_1_0, SbtBundle, SbtVersion}
+import org.jetbrains.sbt.{MockSbtBase, MockSbtBuildModule, MockSbt_0_13, MockSbt_1_0, MockSbt_2, SbtBundle, SbtVersion}
 import org.junit.Assert.assertNotNull
 import org.junit.Ignore
 import org.junit.experimental.categories.Category
@@ -108,6 +108,11 @@ class SbtAnnotatorTest_1 extends SbtAnnotatorTestBase with MockSbt_1_0 {
   def test(): Unit = runTest(sbtVersion, Expectations.sbt_1_0)
 }
 
+@Category(Array(classOf[SlowTests]))
+class SbtAnnotatorTest_2 extends SbtAnnotatorTestBase with MockSbt_2 {
+  def test(): Unit = runTest(sbtVersion, Expectations.sbt_2)
+}
+
 /**
   * Expected error messages for specific sbt versions. Newer versions usually allow more syntactic constructs in the sbt files
   */
@@ -117,7 +122,6 @@ object Expectations {
   val sbtAll: Seq[Error] = Seq(
     Error("object Bar", SbtBundle.message("sbt.annotation.sbtFileMustContainOnlyExpressions"))
   )
-
 
   def sbt012_013(sbtVersion: SbtVersion): Seq[Error] = sbtAll ++ Seq(
     Error("organization", SbtBundle.message("sbt.annotation.expressionMustConform", "SettingKey[String]")),
@@ -144,4 +148,12 @@ object Expectations {
   )
 
   val sbt_1_0: Seq[Error] = sbt_0_13_7
+
+  // TODO: we need to review SBT 2.0 new rules and adopt SbtAnnotator.scala along with the expected data
+  val sbt_2: Seq[Error] = sbtAll ++ Seq(
+    Error("organization", SbtBundle.message("sbt.annotation.expressionMustConformSbt0136", "SettingKey[String]")),
+    Error(""""some string"""", SbtBundle.message("sbt.annotation.expressionMustConformSbt0136", "\"some string\"")),
+    Error("null", SbtBundle.message("sbt.annotation.expectedExpressionTypeSbt0136")),
+    Error("???", SbtBundle.message("sbt.annotation.expectedExpressionTypeSbt0136"))
+  )
 }

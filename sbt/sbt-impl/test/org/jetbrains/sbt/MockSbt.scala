@@ -36,3 +36,11 @@ trait MockSbt_1_0 extends MockSbtBase { this: Test =>
   override val sbtVersion: SbtVersion = SbtVersion.Latest.Sbt_1
   override protected def supportedIn(version: ScalaVersion): Boolean = version >= LatestScalaVersions.Scala_2_12
 }
+
+trait MockSbt_2 extends MockSbtBase { this: Test =>
+  override val sbtVersion: SbtVersion = SbtVersion.Latest.Sbt_2
+
+  // Q: hmm, why defining a scala version is even here?
+  // Sbt version should be independent of the scala version used in the project
+  override protected def supportedIn(version: ScalaVersion): Boolean = version.isScala3
+}

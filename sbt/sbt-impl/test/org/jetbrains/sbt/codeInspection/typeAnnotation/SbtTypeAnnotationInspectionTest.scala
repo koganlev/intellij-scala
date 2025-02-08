@@ -8,7 +8,7 @@ import org.jetbrains.sbt.language.SbtFileType
 
 import java.{util => ju}
 
-class SbtAnnotationInspectionTest extends TypeAnnotationInspectionTest with MockSbt_1_0 {
+class SbtTypeAnnotationInspectionTest extends TypeAnnotationInspectionTest with MockSbt_1_0 {
 
   override protected val fileType = SbtFileType
 

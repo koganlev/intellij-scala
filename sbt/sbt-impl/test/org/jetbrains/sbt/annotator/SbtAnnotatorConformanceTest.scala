@@ -47,3 +47,9 @@ class SbtAnnotatorConformanceTest_latest_1 extends SbtAnnotatorConformanceTestBa
 
   def testSeqSettings(): Unit = testSeqSettings("sbt.internal.DslEntry")
 }
+
+class SbtAnnotatorConformanceTest_latest_2 extends SbtAnnotatorConformanceTestBase with MockSbt_2 {
+  def testSingleSetting(): Unit = testSingleSetting("sbt.internal.DslEntry")
+
+  def testSeqSettings(): Unit = testSeqSettings("sbt.internal.DslEntry")
+}
