@@ -19,7 +19,7 @@ import org.junit.runner.JUnitCore
 import org.junit.runners.MethodSorters
 import org.junit.{FixMethodOrder, Ignore, Test}
 
-import java.io.{File, PrintWriter}
+import java.io.PrintWriter
 import java.nio.charset.StandardCharsets
 import java.nio.file.{Files, Path, Paths, StandardCopyOption}
 import scala.io.Source
@@ -175,12 +175,12 @@ object AfterUpdateDottyVersionScript {
 
   private val testDataPath: Path = Paths.get(TestUtils.getTestDataPath)
 
-  private def downloadRepository(url: String): File = {
+  private def downloadRepository(url: String): Path = {
     val repoFile = newTempFile()
-    DownloadUtil.downloadAtomically(new EmptyProgressIndicator, url, repoFile)
+    DownloadUtil.downloadAtomically(new EmptyProgressIndicator, url, repoFile.toFile)
 
     val repoDir = newTempDir()
-    GithubZipUtil.unzip(null, repoDir, repoFile, null, null, true)
+    GithubZipUtil.unzip(null, repoDir.toFile, repoFile.toFile, null, null, true)
     repoDir
   }
 
@@ -220,7 +220,7 @@ object AfterUpdateDottyVersionScript {
       val sourceFileName = "MacroPrinter3_sources.scala"
       val targetDir = resourcesPath.resolve(packagePath)
       val sourceFile = targetDir.resolve(Paths.get("src", sourceFileName))
-      assertTrue(new File(sourceFile.toUri).exists())
+      assertTrue(Path.of(sourceFile.toUri).exists)
 
       log("reading source file")
       val sourceContent = readFile(sourceFile)
@@ -286,7 +286,7 @@ object AfterUpdateDottyVersionScript {
       Files.createDirectories(rangesPath)
 
       //val tempRangeSourceDir = Path.of("/home/tobi/desktop/testing/pos")
-      val tempRangeSourceDir = newTempDir().toPath.resolve("pos")
+      val tempRangeSourceDir = newTempDir().resolve("pos")
       tempRangeSourceDir.toFile.mkdirs()
 
       patchTestBlacklist(repo)
@@ -300,8 +300,8 @@ object AfterUpdateDottyVersionScript {
       //       complains that it doesn't fail and needs to be moved to the successful category of tests. When it is
       //       finally moved using `Scala3ImportedParserTest_Move_Fixed_Tests`, at the end `Scala3ImportedParserTest`
       //       that the test fails and needs to be moved back.
-      def acceptFile(file: File): Boolean = {
-        val fileName = file.getName.toLowerCase
+      def acceptFile(file: Path): Boolean = {
+        val fileName = file.getFileName.toString.toLowerCase
         fileName.endsWith(".scala") && fileName != "help.scala" && fileName != "widen-union.scala"
       }
 
@@ -313,9 +313,9 @@ object AfterUpdateDottyVersionScript {
 
       val blacklist = loadBlacklist(repo)
       var atLeastOneFileProcessed = false
-      for (file <- allFilesIn(srcDir) if acceptFile(file) if !blacklist.contains(file.getName))  {
+      for (file <- allFilesIn(srcDir) if acceptFile(file) if !blacklist.contains(file.getFileName.toString))  {
         val target = failDataPath / file.toString.substring(srcDir.toString.length).replace(".scala", "++++test")
-        val content = readFile(file.toPath)
+        val content = readFile(file)
           .replaceAll("[-]{5,}", "+") // <- some test files have comment lines with dashes which confuse junit
 
         if (!ignoreFilesWithContent.exists(content.contains)) {
@@ -452,8 +452,8 @@ object AfterUpdateDottyVersionScript {
 
       val diff = allFilesInFailedSize - allFilesInRangesSize
       if (diff != 0) {
-        val namesInAllFilesInFailed = allFilesInFailed.map(_.getName.stripSuffix(".test"))
-        val namesInAllFilesInRanges = allFilesInRanges.map(_.getName.stripSuffix(".ranges"))
+        val namesInAllFilesInFailed = allFilesInFailed.map(_.getFileName.toString.stripSuffix(".test"))
+        val namesInAllFilesInRanges = allFilesInRanges.map(_.getFileName.toString.stripSuffix(".ranges"))
         fail(
           s"""Condition failed
              |allFilesInFailedSize : $allFilesInFailedSize
@@ -609,28 +609,25 @@ object AfterUpdateDottyVersionScript {
   }
 
   private def scalaUltimateProjectDir: Path = {
-    val file = new File(getClass.getProtectionDomain.getCodeSource.getLocation.getPath)
+    val file = Path.of(getClass.getProtectionDomain.getCodeSource.getLocation.getPath)
     file
-      .getParentFile.getParentFile.getParentFile
-      .getParentFile.getParentFile.getParentFile
-      .toPath
+      .getParent.getParent.getParent
+      .getParent.getParent.getParent
   }
 
   //noinspection MutatorLikeMethodIsParameterless
   private def needDeleteTempFileOnExit = true
 
-  private def newTempFile(): File =
-    FileUtilRt.createTempFile("imported-dotty-tests", "", needDeleteTempFileOnExit)
+  private def newTempFile(): Path =
+    FileUtilRt.createTempFile("imported-dotty-tests", "", needDeleteTempFileOnExit).toPath
 
-  private def newTempDir(): File =
-    FileUtilRt.createTempDirectory("imported-dotty-tests", "", needDeleteTempFileOnExit)
+  private def newTempDir(): Path =
+    FileUtilRt.createTempDirectory("imported-dotty-tests", "", needDeleteTempFileOnExit).toPath
 
-  private def allFilesIn(path: Path): Iterator[File] =
-    allFilesIn(path.toFile)
-  private def allFilesIn(path: File): Iterator[File] = {
+  private def allFilesIn(path: Path): Iterator[Path] = {
     if (!path.exists) Iterator.empty
     else if (!path.isDirectory) Iterator(path)
-    else path.listFiles.iterator.flatMap(allFilesIn)
+    else path.children().iterator.flatMap(allFilesIn)
   }
 
   private def clearDirectory(path: Path): Unit = {
