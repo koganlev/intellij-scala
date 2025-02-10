@@ -151,8 +151,8 @@ object CompileServerLauncher {
           pluginsClasspath ++ applicationClasspath
         }
         val classpath =
-          (jdk.tools ++ (classpathFiles ++ compilerServerAdditionalCP()).map(_.toFile))
-            .map(_.canonicalPath) ++ buildProcessClasspath
+          (jdk.tools ++ classpathFiles ++ compilerServerAdditionalCP())
+            .map(_.toCanonicalPath.toString) ++ buildProcessClasspath
 
         val freePort = CompileServerLauncher.findFreePort
         if (settings.COMPILE_SERVER_PORT != freePort) {
@@ -198,7 +198,7 @@ object CompileServerLauncher {
         val userJvmParameters = jvmParameters
         val java9rtJarParams = prepareJava9rtJar(jdk)
         val commands =
-          jdk.executable.canonicalPath +:
+          jdk.executable.toCanonicalPath.toString +:
             "-cp" +: nailgunClasspath +:
             userJvmParameters ++:
             jnaVMOptions ++:
@@ -250,7 +250,7 @@ object CompileServerLauncher {
               project = project,
               watcher = watcher,
               port = freePort,
-              workingDir = builder.directory(),
+              workingDir = Option(builder.directory()).map(_.toPath),
               jdk = jdk,
               jvmParameters = userJvmParameters.toSet,
               jpsUseUnifiedIC = jpsUseUnifiedIC,
@@ -489,7 +489,7 @@ object CompileServerLauncher {
      */
     Option(jdk).filter(_.version.exists(_.isAtLeast(JavaSdkVersion.JDK_1_9))).fold(Seq.empty[String]) { jdk =>
       // We are running JDK 9+ as the runtime JDK for the Scala compiler.
-      val executablePath = jdk.executable.canonicalPath
+      val executablePath = jdk.executable.toCanonicalPath.toString
 
       val resultPath =
         if (jdkRtJarCache.containsKey(executablePath)) Some(jdkRtJarCache.get(executablePath))
