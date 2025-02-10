@@ -2,10 +2,12 @@ package org.jetbrains.sbt.project
 
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil
-import com.intellij.openapi.module.{Module, ModuleManager}
+import com.intellij.openapi.module.{Module, ModuleManager, ModuleUtilCore}
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.roots.{DependencyScope, LibraryOrderEntry, ModuleRootManager, OrderRootType}
+import com.intellij.openapi.roots.{DependencyScope, LibraryOrderEntry, ModuleRootManager, OrderRootType, ProjectRootManager}
 import com.intellij.psi.PsiFile
+import org.jetbrains.plugins.scala.caches.cachedInUserData
+import org.jetbrains.plugins.scala.extensions.inReadAction
 import org.jetbrains.plugins.scala.project.{ModuleExt, ProjectPsiFileExt}
 import org.jetbrains.sbt.settings.SbtSettings
 
@@ -25,7 +27,8 @@ private[sbt] final class SbtProjectImportStateService(project: Project) {
    * @see [[org.jetbrains.sbt.SbtUtil.couldBeSbtProject]] which should most likely be called before this method
    */
   def isImported(file: PsiFile): Boolean = {
-    val relevantPath = file.module.flatMap(m => Option(ExternalSystemApiUtil.getExternalRootProjectPath(m)))
+    val relevantPath = cachedModuleForPsiFile(file)
+      .flatMap(m => Option(ExternalSystemApiUtil.getExternalRootProjectPath(m)))
     relevantPath match {
       case Some(path) =>
         val s = state.computeIfAbsent(path, computeImportState)
@@ -71,6 +74,14 @@ private[sbt] final class SbtProjectImportStateService(project: Project) {
     def expectedJars = library.getRootFiles(OrderRootType.CLASSES).nonEmpty
     expectedName && expectedDependencyScope && expectedJars
   }
+
+  private def cachedModuleForPsiFile(file: PsiFile): Option[Module] =
+    file.module.orElse {
+      cachedInUserData("moduleForAnyTypeOfFile", file, ProjectRootManager.getInstance(project)) {
+        // assuming that most of the time, the cached value will be read instead of recomputed
+        inReadAction(Option(ModuleUtilCore.findModuleForPsiElement(file)))
+      }
+    }
 }
 
 private[sbt] object SbtProjectImportStateService {
