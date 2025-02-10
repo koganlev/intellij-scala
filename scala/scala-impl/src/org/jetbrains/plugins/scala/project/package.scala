@@ -590,7 +590,7 @@ package object project {
             val virtualFile = if (file.getVirtualFile != null) file.getVirtualFile else file.getOriginalFile.getVirtualFile
             val isFileInLibrary = virtualFile != null && ProjectFileIndex.getInstance(file.getProject).isInLibrary(virtualFile)
             if (isFileInLibrary)
-              null
+              null // We do not search for the containing module of library sources in this method implementation.
             else
               ModuleUtilCore.findModuleForPsiElement(file)
           }
@@ -601,10 +601,9 @@ package object project {
               case sbtFile: SbtFile =>
                 sbtFile.findBuildModule(module)
               case _ =>
-                Option(module)
+                Some(module)
             }
-          } else
-            Option(module)
+          } else None
         }
       }
     }
