@@ -1,7 +1,8 @@
 package org.jetbrains.sbt.project
 
 import com.intellij.compiler.impl.javaCompiler.javac.JavacConfiguration
-import com.intellij.openapi.externalSystem.util.{DisposeAwareProjectChange, ExternalSystemApiUtil}
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil
 import com.intellij.openapi.projectRoots.ProjectJdkTable
 import com.intellij.openapi.roots.DependencyScope
 import com.intellij.pom.java.LanguageLevel
@@ -19,7 +20,6 @@ import org.junit.Assert.{assertEquals, assertTrue}
 import org.junit.experimental.categories.Category
 
 import java.net.URI
-import scala.annotation.nowarn
 
 @Category(Array(classOf[SlowTests]))
 final class SbtProjectStructureImportingTest_ProdTestSourcesSeparatedEnabled extends SbtProjectStructureImportingLike {
@@ -1389,16 +1389,14 @@ final class SbtProjectStructureImportingTest_ProdTestSourcesSeparatedEnabled ext
     doRunTest()
 
     // Emulate User changing the settings manually
-    ExternalSystemApiUtil.executeProjectChangeAction(new DisposeAwareProjectChange(myProject) {
-      override def execute(): Unit = {
-        val ManuallySetTarget = "9"
-        val ManuallySetSource = LanguageLevel.JDK_1_9
+    ExternalSystemApiUtil.executeProjectChangeAction(ApplicationManager.getApplication, () => {
+      val ManuallySetTarget = "9"
+      val ManuallySetSource = LanguageLevel.JDK_1_9
 
-        setOptions(myProject, ManuallySetSource, ManuallySetTarget, Seq("-some-root-option"))
+      setOptions(myProject, ManuallySetSource, ManuallySetTarget, Seq("-some-root-option"))
 
-        val projectModules = myProject.modules
-        projectModules.foreach(setOptions(_, ManuallySetSource, ManuallySetTarget, Seq("-some-module-option")))
-      }
+      val projectModules = myProject.modules
+      projectModules.foreach(setOptions(_, ManuallySetSource, ManuallySetTarget, Seq("-some-module-option")))
     })
 
     // Manually set settings should be rewritten if no explicit javac options provided

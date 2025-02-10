@@ -1,7 +1,8 @@
 package org.jetbrains.sbt.project
 
 import com.intellij.compiler.impl.javaCompiler.javac.JavacConfiguration
-import com.intellij.openapi.externalSystem.util.{DisposeAwareProjectChange, ExternalSystemApiUtil}
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil
 import com.intellij.openapi.projectRoots.ProjectJdkTable
 import com.intellij.openapi.roots.DependencyScope
 import com.intellij.pom.java.LanguageLevel
@@ -777,7 +778,6 @@ final class SbtProjectStructureImportingTest extends SbtProjectStructureImportin
 
   //noinspection TypeAnnotation
   // SCL-16204, SCL-17597
-  @nowarn("cat=deprecation")
   def testJavaLanguageLevelAndTargetByteCodeLevel_NoOptions(): Unit = {
     val projectLangaugeLevel = SbtProjectStructureImportingTest.this.projectJdkLanguageLevel
     val projectName = "java-language-level-and-target-byte-code-level-no-options"
@@ -805,16 +805,14 @@ final class SbtProjectStructureImportingTest extends SbtProjectStructureImportin
     doRunTest()
 
     // Emulate User changing the settings manually
-    ExternalSystemApiUtil.executeProjectChangeAction(new DisposeAwareProjectChange(myProject) {
-      override def execute(): Unit = {
-        val ManuallySetTarget = "9"
-        val ManuallySetSource = LanguageLevel.JDK_1_9
+    ExternalSystemApiUtil.executeProjectChangeAction(ApplicationManager.getApplication, () => {
+      val ManuallySetTarget = "9"
+      val ManuallySetSource = LanguageLevel.JDK_1_9
 
-        setOptions(myProject, ManuallySetSource, ManuallySetTarget, Seq("-some-root-option"))
+      setOptions(myProject, ManuallySetSource, ManuallySetTarget, Seq("-some-root-option"))
 
-        val projectModules = myProject.modules
-        projectModules.foreach(setOptions(_, ManuallySetSource, ManuallySetTarget, Seq("-some-module-option")))
-      }
+      val projectModules = myProject.modules
+      projectModules.foreach(setOptions(_, ManuallySetSource, ManuallySetTarget, Seq("-some-module-option")))
     })
 
     // Manually set settings should be rewritten if no explicit javac options provided
