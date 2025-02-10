@@ -382,7 +382,7 @@ object CompileServerLauncher {
 
   def compileServerJdk(project: Project): Either[CompileServerProblem, JDK] = {
     val sdk = compileServerSdk(project)
-    sdk.flatMap(toJdk)
+    sdk.flatMap(JDK.fromSdk)
   }
 
   /**
