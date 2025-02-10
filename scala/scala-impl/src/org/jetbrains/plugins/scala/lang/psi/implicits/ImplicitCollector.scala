@@ -850,7 +850,12 @@ class ImplicitCollector(
   }
 
   private def dominates(t: ScType, u: ScType): Boolean = {
-    complexity(t) > complexity(u) && topLevelTypeConstructors(t).intersect(topLevelTypeConstructors(u)).nonEmpty
+    val ct = complexity(t)
+    val ut = complexity(u)
+    lazy val tltcT = topLevelTypeConstructors(t)
+    lazy val tltcU = topLevelTypeConstructors(u)
+    //println(s"complexity($t) [$ct] > complexity($u) [$ut] && [$tltcT] intersects [$tltcU] = [${tltcT.exists(tltcU.contains)}]")
+    ct > ut && tltcT.exists(tltcU.contains)
   }
 
   private def topLevelTypeConstructors(tp: ScType): Set[ScType] = {
@@ -870,6 +875,7 @@ class ImplicitCollector(
     tp match {
       case ScProjectionType(proj, _)     => 1 + complexity(proj)
       case ParameterizedType(_, args)    => 1 + args.foldLeft(0)(_ + complexity(_))
+      case ScExistentialType(quant, _)   => 1 + complexity(quant)
       case ScDesignatorType(_: ScObject) => 1
       case ScDesignatorType(v: ScTypedDefinition) =>
         val valueType: ScType = v.`type`().getOrAny

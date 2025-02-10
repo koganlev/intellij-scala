@@ -288,6 +288,28 @@ class ImplicitParametersAnnotatorTest extends ImplicitParametersAnnotatorTestBas
       |f(new Bar)
       |""".stripMargin
   ))
+
+  // SCL-23591
+  def testDivergentType(): Unit = {
+    val actualMessages = messages(
+      """
+        |object Test {
+        |  trait B[T]
+        |  implicit def unbox[T](implicit b: B[T]): T /* = () */
+        |
+        |  // used to produce a stackoverflow because a search for B[T] could be satisfied by
+        |  //   unboxed[Int](unbox[B[Int]]                 )
+        |  //   unboxed[Int](unbox[B[Int]](unboxed[B[B[Int]]]))
+        |  // etc and our divergence algorithm was not working correctly
+        |  unbox[Int]
+        |}
+        |""".stripMargin
+    ).get
+
+    assertMessages(actualMessages)(
+      Error("unbox[Int]", notFound("B[Int]"))
+    )
+  }
 }
 
 class ImplicitParametersAnnotatorTest_Scala3 extends ImplicitParametersAnnotatorTestBase {
