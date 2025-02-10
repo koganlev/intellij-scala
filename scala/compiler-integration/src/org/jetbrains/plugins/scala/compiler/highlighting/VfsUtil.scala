@@ -9,13 +9,13 @@ import com.intellij.openapi.roots.ProjectFileIndex
 import com.intellij.util.concurrency.annotations.{RequiresBackgroundThread, RequiresReadLock}
 import org.jetbrains.plugins.scala.extensions.PathExt
 
-import java.io.File
+import java.nio.file.Path
 import scala.jdk.CollectionConverters._
 
 private object VfsUtil {
 
   @RequiresBackgroundThread
-  def refreshOutputPaths(project: Project, sources: Set[File]): Unit = {
+  def refreshOutputPaths(project: Project, sources: Set[Path]): Unit = {
     val modules = ReadAction.nonBlocking[Array[Module]](() => findModulesForSources(project, sources))
       .inSmartMode(project)
       .expireWhen(() => project.isDisposed)
@@ -25,10 +25,9 @@ private object VfsUtil {
   }
 
   @RequiresReadLock
-  private def findModulesForSources(project: Project, sources: Set[File]): Array[Module] = {
+  private def findModulesForSources(project: Project, sources: Set[Path]): Array[Module] = {
     val fileIndex = ProjectFileIndex.getInstance(project)
     sources.toArray
-      .map(_.toPath)
       .flatMap(_.toVirtualFile)
       .map(fileIndex.getModuleForFile)
       .filter(_ != null) // getModuleForFile is nullable and getOutputPaths doesn't accept nulls

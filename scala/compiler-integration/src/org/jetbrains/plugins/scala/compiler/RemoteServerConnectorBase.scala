@@ -5,18 +5,18 @@ import com.intellij.openapi.roots.OrderEnumerator
 import org.jetbrains.jps.incremental.Utils
 import org.jetbrains.plugins.scala.compiler.data._
 import org.jetbrains.plugins.scala.compiler.data.worksheet.WorksheetArgs
-import org.jetbrains.plugins.scala.extensions.ObjectExt
+import org.jetbrains.plugins.scala.extensions.{ObjectExt, PathExt}
 import org.jetbrains.plugins.scala.project.settings.ScalaCompilerSettings
 import org.jetbrains.plugins.scala.project.{ModuleExt, ProjectContext, VirtualFileExt}
 import org.jetbrains.plugins.scala.util.ScalaPluginJars
 
-import java.io.File
+import java.nio.file.Path
 
 //noinspection SameParameterValue
 abstract class RemoteServerConnectorBase(
   protected val module: Module,
-  filesToCompile: Option[Seq[File]],
-  protected val outputDir: File
+  filesToCompile: Option[Seq[Path]],
+  protected val outputDir: Path
 ) {
   filesToCompile.foreach(checkFilesToCompile)
 
@@ -30,9 +30,9 @@ abstract class RemoteServerConnectorBase(
     }
   }
 
-  private val sourceRoot: Option[File] = {
+  private val sourceRoot: Option[Path] = {
     val fileToCompile = filesToCompile.flatMap(_.headOption)
-    fileToCompile.flatMap(_.getAbsoluteFile.getParentFile.toOption)
+    fileToCompile.flatMap(_.toCanonicalPath.getParent.toOption)
   }
 
   protected def scalaParameters: Seq[String] =
@@ -40,49 +40,49 @@ abstract class RemoteServerConnectorBase(
 
   private val javaParameters = Seq.empty[String]
 
-  private val moduleCompilerClasspath: Seq[File] = module.scalaCompilerClasspath.map(_.toFile)
-  protected var additionalCompilerClasspath: Seq[File] = Nil
-  def compilerClasspath: Seq[File] = moduleCompilerClasspath ++ additionalCompilerClasspath
+  private val moduleCompilerClasspath: Seq[Path] = module.scalaCompilerClasspath
+  protected var additionalCompilerClasspath: Seq[Path] = Nil
+  def compilerClasspath: Seq[Path] = moduleCompilerClasspath ++ additionalCompilerClasspath
 
-  private val additionalRuntimeClasspath: Seq[File] =
+  private val additionalRuntimeClasspath: Seq[Path] =
     compilerClasspath :+
-      ScalaPluginJars.runnersJar.toFile :+
-      ScalaPluginJars.compilerSharedJar.toFile :+
-      ScalaPluginJars.scalaJpsJar.toFile :+
+      ScalaPluginJars.runnersJar :+
+      ScalaPluginJars.compilerSharedJar :+
+      ScalaPluginJars.scalaJpsJar :+
       outputDir
 
   protected def worksheetArgs: Option[WorksheetArgs] = None
 
-  protected def runtimeClasspath: Seq[File] = {
-    val classesRoots = assemblyRuntimeClasspath().map(stripJarPathSuffix).map(new File(_))
+  protected def runtimeClasspath: Seq[Path] = {
+    val classesRoots = assemblyRuntimeClasspath().map(stripJarPathSuffix).map(Path.of(_))
     classesRoots ++ additionalRuntimeClasspath
   }
 
-  private def stripJarPathSuffix(f: File): String =
-    f.getCanonicalPath.stripSuffix("!").stripSuffix("!/")
+  private def stripJarPathSuffix(p: Path): String =
+    p.toCanonicalPath.toString.stripSuffix("!").stripSuffix("!/")
 
-  protected def assemblyRuntimeClasspath(): Seq[File] = {
+  protected def assemblyRuntimeClasspath(): Seq[Path] = {
     val enumerator = OrderEnumerator.orderEntries(module).compileOnly().recursively()
-    enumerator.getClassesRoots.map(_.toPath.toFile).toSeq
+    enumerator.getClassesRoots.map(_.toPath).toSeq
   }
 
   protected final def arguments: Arguments = Arguments(
     sbtData = sbtData,
     compilerData = CompilerData(
-      compilerJars = CompilerJarsFactory.fromFiles(compilerClasspath, module.customScalaCompilerBridgeJar.map(_.toFile)).toOption,
-      javaHome = Some(findJdk),
+      compilerJars = CompilerJarsFactory.fromFiles(compilerClasspath.map(_.toFile), module.customScalaCompilerBridgeJar.map(_.toFile)).toOption,
+      javaHome = Some(findJdk.toFile),
       incrementalType = IncrementalityType.IDEA
     ),
     compilationData = CompilationData(
-      sources = filesToCompile.toSeq.flatten,
-      classpath = runtimeClasspath,
-      output = outputDir,
+      sources = filesToCompile.toSeq.flatten.map(_.toFile),
+      classpath = runtimeClasspath.map(_.toFile),
+      output = outputDir.toFile,
       scalaOptions = scalaParameters,
       javaOptions = javaParameters,
       order = CompileOrder.valueOf(compilerSettings.compileOrder.name),
-      cacheFile = new File(""),
+      cacheFile = Path.of("").toFile,
       outputToCacheMap = Map.empty,
-      outputGroups = sourceRoot.map(_ -> outputDir).toSeq,
+      outputGroups = sourceRoot.map(_ -> outputDir).map { case (p, q) => (p.toFile, q.toFile) }.toSeq,
       zincData = ZincData(
         allSources = Seq.empty,
         compilationStartDate = 0,
@@ -94,15 +94,15 @@ abstract class RemoteServerConnectorBase(
 
   protected def compilerSettings: ScalaCompilerSettings = module.scalaCompilerSettings
 
-  protected def findJdk: File = CompileServerLauncher.compileServerJdk(module.getProject)
-    .fold(m => throw new IllegalArgumentException(s"JDK for compiler process not found: $m"), _.executable)
+  protected def findJdk: Path = CompileServerLauncher.compileServerJdk(module.getProject)
+    .fold(m => throw new IllegalArgumentException(s"JDK for compiler process not found: $m"), _.executable.toPath)
 
-  private def checkFilesToCompile(files: Seq[File]): Unit = {
+  private def checkFilesToCompile(files: Seq[Path]): Unit = {
     if (files.isEmpty)
       throw new IllegalArgumentException("Non-empty list of files expected")
 
-    files.find(!_.exists()).foreach(f =>
-      throw new IllegalArgumentException(s"File ${f.getCanonicalPath} does not exists" )
+    files.find(!_.exists).foreach(f =>
+      throw new IllegalArgumentException(s"File ${f.toCanonicalPath} does not exists" )
     )
 
     if (files.map(_.getParent).distinct.size != 1)

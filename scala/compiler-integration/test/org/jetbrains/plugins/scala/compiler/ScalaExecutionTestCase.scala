@@ -10,10 +10,11 @@ import com.intellij.pom.java.LanguageLevel
 import com.intellij.testFramework.EdtTestUtil
 import org.jetbrains.plugins.scala.base.libraryLoaders.{HeavyJDKLoader, LibraryLoader, ScalaSDKLoader, SmartJDKLoader}
 import org.jetbrains.plugins.scala.base.{ScalaSdkOwner, SourceRootTestUtil}
+import org.jetbrains.plugins.scala.extensions.PathExt
 import org.jetbrains.plugins.scala.project.ModuleExt
 import org.jetbrains.plugins.scala.util.TestUtils
 
-import java.io.{File, FileInputStream, FileOutputStream, ObjectInputStream, ObjectOutputStream}
+import java.io.{FileInputStream, FileOutputStream, ObjectInputStream, ObjectOutputStream}
 import java.nio.charset.StandardCharsets
 import java.nio.file.{Files, Path}
 import java.security.MessageDigest
@@ -122,17 +123,17 @@ trait ScalaExecutionTestCase extends ExecutionTestCase with ScalaSdkOwner {
     val messageDigest = MessageDigest.getInstance("MD5")
 
     def calculateSrcCheksums(): Map[Path, Array[Byte]] = {
-      def checksum(file: File): Array[Byte] = {
-        val fileBytes = Files.readAllBytes(file.toPath)
+      def checksum(file: Path): Array[Byte] = {
+        val fileBytes = Files.readAllBytes(file)
         messageDigest.digest(fileBytes)
       }
 
-      def checksumsInDir(dir: File): List[(Path, Array[Byte])] =
-        dir.listFiles().toList.flatMap { f =>
-          if (f.isDirectory) checksumsInDir(f) else List((f.toPath, checksum(f)))
+      def checksumsInDir(dir: Path): Seq[(Path, Array[Byte])] =
+        dir.children().flatMap { f =>
+          if (f.isDirectory) checksumsInDir(f) else Seq((f, checksum(f)))
         }
 
-      checksumsInDir(srcPath.toFile).toMap
+      checksumsInDir(srcPath).toMap
     }
 
     def shouldCompile(srcChecksums: Map[Path, Array[Byte]], diskChecksums: Map[Path, Array[Byte]]): Boolean = {

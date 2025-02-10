@@ -18,7 +18,6 @@ import org.jetbrains.plugins.scala.project.{ModuleExt, ScalaLanguageLevel, Virtu
 import org.jetbrains.plugins.scala.settings.ScalaProjectSettings
 import org.jetbrains.plugins.scala.util.ScalaPluginJars
 
-import java.io.File
 import java.nio.file.{Files, Path}
 
 @Service(Array(Service.Level.PROJECT))
@@ -59,7 +58,7 @@ private final class DocumentCompiler(project: Project) {
       )
     } else {
       compilePhysicalFile(
-        originalSourceFile = originalSourceFile.toFile,
+        originalSourceFile = originalSourceFile,
         content = sourceContent,
         module = module,
         sourceScope = sourceScope,
@@ -68,13 +67,13 @@ private final class DocumentCompiler(project: Project) {
     }
   }
 
-  private def compilePhysicalFile(originalSourceFile: File,
+  private def compilePhysicalFile(originalSourceFile: Path,
                                   content: String,
                                   module: Module,
                                   sourceScope: SourceScope,
                                   client: Client): Unit = {
-    val tempSourceFile = workingDirectory.resolve("tempSourceFile").toFile
-    Files.writeString(tempSourceFile.toPath, content)
+    val tempSourceFile = workingDirectory.resolve("tempSourceFile")
+    Files.writeString(tempSourceFile, content)
     val connector =
       try new PhysicalFileConnector(tempSourceFile, module, sourceScope)
       catch {
@@ -114,10 +113,10 @@ private final class DocumentCompiler(project: Project) {
     }
   }
 
-  private final class PhysicalFileConnector(tempSourceFile: File, module: Module, sourceScope: SourceScope)
+  private final class PhysicalFileConnector(tempSourceFile: Path, module: Module, sourceScope: SourceScope)
     extends AbstractRemoteServerConnector(Some(Seq(tempSourceFile)), module, sourceScope) {
 
-    def compile(originalSourceFile: File, client: Client): Unit = {
+    def compile(originalSourceFile: Path, client: Client): Unit = {
       val fixedClient = new DelegateClient(client) {
         override def message(msg: Client.ClientMsg): Unit = {
           /**
@@ -128,13 +127,13 @@ private final class DocumentCompiler(project: Project) {
            * see [[org.jetbrains.plugins.scala.compiler.highlighting.ExternalHighlightersService.toHighlightInfo]]
            * (we assume that `from` and `to` are also empty for such files)
            */
-          val fixedSource = Some(originalSourceFile) //msg.source.map(_ => originalSourceFile)
+          val fixedSource = Some(originalSourceFile.toFile) //msg.source.map(_ => originalSourceFile)
           val fixedMsg = msg.copy(source = fixedSource)
           client.message(fixedMsg)
         }
 
-        override def compilationEnd(sources: Set[File]): Unit = {
-          val fixedSources = Set(originalSourceFile)
+        override def compilationEnd(sources: Set[java.io.File]): Unit = {
+          val fixedSources = Set(originalSourceFile.toFile)
           client.compilationEnd(fixedSources)
         }
       }
@@ -151,15 +150,15 @@ private final class DocumentCompiler(project: Project) {
       val arguments = DocumentCompilationArguments(
         sbtData = sbtData,
         compilerData = CompilerData(
-          compilerJars = CompilerJarsFactory.fromFiles(compilerClasspath, module.customScalaCompilerBridgeJar.map(_.toFile)).toOption,
-          javaHome = Some(findJdk),
+          compilerJars = CompilerJarsFactory.fromFiles(compilerClasspath.map(_.toFile), module.customScalaCompilerBridgeJar.map(_.toFile)).toOption,
+          javaHome = Some(findJdk.toFile),
           incrementalType = IncrementalityType.IDEA
         ),
         compilationData = DocumentCompilationData(
           sourcePath = sourcePath,
           sourceContent = sourceContent,
           output = workingDirectory,
-          classpath = runtimeClasspath.map(_.toPath),
+          classpath = runtimeClasspath,
           scalacOptions = scalaParameters
         )
       )
@@ -170,8 +169,8 @@ private final class DocumentCompiler(project: Project) {
     }
   }
 
-  private abstract class AbstractRemoteServerConnector(filesToCompile: Option[Seq[File]], module: Module, sourceScope: SourceScope)
-    extends RemoteServerConnectorBase(module, filesToCompile, workingDirectory.toFile) {
+  private abstract class AbstractRemoteServerConnector(filesToCompile: Option[Seq[Path]], module: Module, sourceScope: SourceScope)
+    extends RemoteServerConnectorBase(module, filesToCompile, workingDirectory) {
 
     var requiresCleanup: Boolean = false
 
@@ -210,7 +209,7 @@ private final class DocumentCompiler(project: Project) {
       scalacOptions
     }
 
-    override protected def assemblyRuntimeClasspath(): Seq[File] = {
+    override protected def assemblyRuntimeClasspath(): Seq[Path] = {
       val fromSuper = super.assemblyRuntimeClasspath()
       val forTestClasses = sourceScope match {
         case SourceScope.Production => false
@@ -219,7 +218,7 @@ private final class DocumentCompiler(project: Project) {
 
       val outputDir =
         Option(CompilerPaths.getModuleOutputPath(module, forTestClasses))
-          .map(Path.of(_).toFile)
+          .map(Path.of(_))
       (fromSuper ++ outputDir).distinct
     }
   }

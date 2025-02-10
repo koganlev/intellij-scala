@@ -8,8 +8,6 @@ import org.jetbrains.jps.incremental.scala.{Client, DummyClient, MessageKind}
 import org.jetbrains.plugins.scala.compiler.{CompilerEvent, CompilerEventListener, CompilerIntegrationBundle}
 import org.jetbrains.plugins.scala.util.{CanonicalPath, CompilationId}
 
-import java.io.File
-
 private class CompilerEventGeneratingClient(
   project: Project,
   indicator: ProgressIndicator,
@@ -51,9 +49,9 @@ private class CompilerEventGeneratingClient(
   override def compilationStart(): Unit =
     sendEvent(CompilerEvent.CompilationStarted(compilationId, None))
 
-  override def compilationEnd(sources: Set[File]): Unit = {
+  override def compilationEnd(sources: Set[java.io.File]): Unit = {
     if (refreshVfs) {
-      VfsUtil.refreshOutputPaths(project, sources)
+      VfsUtil.refreshOutputPaths(project, sources.map(_.toPath))
     }
     sendEvent(CompilerEvent.CompilationFinished(compilationId, None, sources))
   }

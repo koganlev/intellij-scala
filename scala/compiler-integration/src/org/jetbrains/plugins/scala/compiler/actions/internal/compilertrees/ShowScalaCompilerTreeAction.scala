@@ -20,7 +20,7 @@ import org.jetbrains.plugins.scala.project.settings.ScalaCompilerSettings
 import org.jetbrains.plugins.scala.project.{ModuleExt, ScalaLanguageLevel}
 import org.jetbrains.plugins.scala.util.ScalaNotificationGroups
 
-import java.io.File
+import java.nio.file.Path
 import scala.collection.mutable
 
 //TODO: (big feature) don't ignore last bytecode generation phase, show decompiled classes (1. bytecode and 2. as Java)
@@ -140,7 +140,7 @@ object ShowScalaCompilerTreeAction {
   private def compileFileAndGetCompilerMessages(virtualFile: VirtualFile, module: Module): Seq[Client.ClientMsg] = {
     val collectingClient = new ClientCollectingCompilerMessages
 
-    val tempOutputDir = FileUtil.createTempDirectory("ShowScalaCompilerTreeAction", null, true)
+    val tempOutputDir = FileUtil.createTempDirectory("ShowScalaCompilerTreeAction", null, true).toPath
     val serverConnector = new MyRemoteServerConnector(
       virtualFile,
       module,
@@ -163,11 +163,11 @@ object ShowScalaCompilerTreeAction {
   private class MyRemoteServerConnector(
     virtualFile: VirtualFile,
     module: Module,
-    outputDir: File,
+    outputDir: Path,
     client: Client
   ) extends RemoteServerConnectorBase(
     module,
-    Some(Seq(virtualFile.toNioPath.toFile)),
+    Some(Seq(virtualFile.toNioPath)),
     outputDir
   ) {
     override protected def compilerSettings: ScalaCompilerSettings = {

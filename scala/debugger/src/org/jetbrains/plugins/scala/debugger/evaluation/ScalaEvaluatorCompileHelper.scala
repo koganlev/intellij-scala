@@ -88,7 +88,7 @@ object ScalaEvaluatorCompileHelper {
 
 
 private class ServerConnector(module: Module, filesToCompile: Seq[Path], outputDir: Path)
-  extends RemoteServerConnectorBase(module, Some(filesToCompile.map(_.toFile)), outputDir.toFile) {
+  extends RemoteServerConnectorBase(module, Some(filesToCompile), outputDir) {
 
   private val errors = Seq.newBuilder[NlsString]
 

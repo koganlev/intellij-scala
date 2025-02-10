@@ -30,7 +30,7 @@ class TransitiveDependencyClasspathTest extends ScalaCompilerReferenceServiceFix
   }
 
   private final class TestRemoteServerConnectorBase (module: Module, outputDir: Path)
-    extends RemoteServerConnectorBase(module, None, outputDir.toFile) {
-    def result(): Seq[Path] = assemblyRuntimeClasspath().map(_.toPath)
+    extends RemoteServerConnectorBase(module, None, outputDir) {
+    def result(): Seq[Path] = assemblyRuntimeClasspath()
   }
 }

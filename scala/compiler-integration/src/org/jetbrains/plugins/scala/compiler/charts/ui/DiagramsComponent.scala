@@ -12,7 +12,6 @@ import org.jetbrains.plugins.scala.extensions.invokeLater
 import java.awt._
 import java.awt.event.{MouseAdapter, MouseEvent}
 import java.awt.geom.{Point2D, Rectangle2D}
-import java.io.File
 import javax.swing.UIManager
 import scala.collection.mutable
 import scala.concurrent.duration.{Duration, DurationInt, DurationLong, FiniteDuration}
@@ -47,7 +46,7 @@ class DiagramsComponent(chartsComponent: CompilationChartsComponent,
       val selectedTime = currentZoom.fromPixels(e.getPoint.x)
 
       def fileNameIn(path: String): String = {
-        val i = path.lastIndexOf(File.separatorChar)
+        val i = path.lastIndexOf(java.io.File.separatorChar)
         if (i >= 0) path.substring(i + 1) else "?"
       }
 

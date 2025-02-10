@@ -11,7 +11,7 @@ import org.jetbrains.jps.incremental.scala.Client
 import org.jetbrains.jps.incremental.scala.remote.{CompileServerCommand, SourceScope}
 import org.jetbrains.plugins.scala.compiler.CompileServerClient
 
-import java.io.File
+import java.nio.file.Path
 
 private object IncrementalCompiler {
 
@@ -20,10 +20,8 @@ private object IncrementalCompiler {
       .map(VirtualFileManager.extractPath)
       .getOrElse(throw new IllegalStateException("Can't determine project path"))
     val globalOptionsPath = PathManager.getOptionsPath
-    val dataStorageRootPath = Utils.getDataStorageRoot(
-      new File(PathKt.getSystemIndependentPath(BuildManager.getInstance.getBuildSystemDirectory(project))),
-      projectPath
-    ).getCanonicalPath
+    val rootPath = Path.of(PathKt.getSystemIndependentPath(BuildManager.getInstance.getBuildSystemDirectory(project)))
+    val dataStorageRootPath = Utils.getDataStorageRoot(rootPath.toFile, projectPath).getCanonicalPath
 
     /** @see `org.jetbrains.jps.incremental.scala.remote.Main.withModifiedExternalProjectPath` */
     val externalConfigurationDir =

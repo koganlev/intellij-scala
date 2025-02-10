@@ -37,8 +37,8 @@ final class RemoteServerConnector(
   makeType: WorksheetMakeType
 ) extends RemoteServerConnectorBase(
   module,
-  filesToCompile = args.compiledFile.map(_.toFile).map(Seq(_)),
-  outputDir = args.compilationOutputDir.getOrElse(Path.of("")).toFile
+  filesToCompile = args.compiledFile.map(Seq(_)),
+  outputDir = args.compilationOutputDir.getOrElse(Path.of(""))
 ) {
 
   override protected def compilerSettings: ScalaCompilerSettings =
@@ -107,7 +107,7 @@ final class RemoteServerConnector(
     ScalaSdkJLineFixer.validateJLineInCompilerClassPath(module) match {
       case JlineResolveResult.NotRequired =>
       case JlineResolveResult.RequiredFound(file) =>
-        additionalCompilerClasspath = Seq(file.toFile)
+        additionalCompilerClasspath = Seq(file)
       case JlineResolveResult.RequiredNotFound =>
         callback(RemoteServerConnectorResult.RequiredJLineIsMissingFromClasspathError(module))
         return
@@ -168,8 +168,8 @@ final class RemoteServerConnector(
     paths.map(Path.of(_)).toSeq
   }
 
-  override protected def assemblyRuntimeClasspath(): Seq[java.io.File] = {
-    val extensionCp = BspWorksheetCompilerExtension.worksheetClasspath(module).map(_.map(_.toFile))
+  override protected def assemblyRuntimeClasspath(): Seq[Path] = {
+    val extensionCp = BspWorksheetCompilerExtension.worksheetClasspath(module)
     extensionCp.getOrElse {
       // This workaround specifically covers the following edge case.
       // `super.assemblyRuntimeClasspath()` uses platform APIs (OrderEnumerator) to obtain the compilation classpath.
@@ -178,7 +178,7 @@ final class RemoteServerConnector(
       // already been produced. I currently do not have time before the release to dig into it more.
       // External implementations of the `WorksheetCompilerExtension` extension point are not affected by this.
       // TODO: Explore a more elegant solution to this problem.
-      (super.assemblyRuntimeClasspath() ++ outputDirs.map(_.toFile)).distinct
+      (super.assemblyRuntimeClasspath() ++ outputDirs).distinct
     }
   }
 }

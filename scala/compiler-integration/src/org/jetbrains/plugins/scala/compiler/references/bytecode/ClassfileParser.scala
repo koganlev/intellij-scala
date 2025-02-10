@@ -7,7 +7,7 @@ import org.jetbrains.plugins.scala.decompiler.Decompiler.{BYTES_VALUE, SCALA_LON
 import org.jetbrains.plugins.scala.decompiler.scalasig._
 import org.jetbrains.plugins.scala.extensions.PathExt
 
-import java.io._
+import java.io.{BufferedInputStream, InputStream}
 import java.nio.charset.StandardCharsets
 import java.nio.file.{Files, Path}
 import java.util.regex.Pattern
