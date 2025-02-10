@@ -1,8 +1,7 @@
 package org.jetbrains.plugins.scala.compiler
 
 import com.intellij.compiler.server.BuildProcessParametersProvider
-import com.intellij.openapi.module.ModuleManager
-import com.intellij.openapi.module.Module
+import com.intellij.openapi.module.{Module, ModuleManager}
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.registry.Registry
 import org.jetbrains.jps.api.GlobalOptions
@@ -84,7 +83,7 @@ class ScalaBuildProcessParametersProvider(project: Project)
     if (settings.COMPILE_SERVER_ENABLED) Seq.empty
     else {
       val sdk = CompileServerJdkManager.getBuildProcessRuntimeJdk(project)._1
-      toJdk(sdk).map(CompileServerLauncher.prepareJava9rtJar).getOrElse(Seq.empty)
+      JDK.fromSdk(sdk).map(CompileServerLauncher.prepareJava9rtJar).getOrElse(Seq.empty)
     }
   }
 

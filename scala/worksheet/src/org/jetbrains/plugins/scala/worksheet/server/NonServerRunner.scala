@@ -50,8 +50,8 @@ class NonServerRunner(project: Project) {
           if (arg.isEmpty) SerializationUtils.EmptyArgumentStub else arg
         }
         val commands: Seq[String] = {
-          val jdkPath = FileUtil.toCanonicalPath(jdk.executable.getPath)
-          val jdkToolsPath = jdk.tools.map(_.toPath).toSeq
+          val jdkPath = jdk.executable.toCanonicalPath.toString
+          val jdkToolsPath = jdk.tools.toSeq
           val runnerClassPath = classPathArg(jdkToolsPath :+ ScalaPluginJars.scalaNailgunRunnerJar)
           val mainClassPath = classPathArg(jdkToolsPath ++ CompileServerLauncher.compileServerJars)
           val scalaCompileServerSystemDir = CompileServerLauncher.scalaCompileServerSystemDir
