@@ -1,9 +1,9 @@
-package org.jetbrains.plugins.scala
+package org.jetbrains.plugins.scala.compiler.references.compilation
 
 import com.intellij.compiler.server.BuildManager
 import com.intellij.openapi.application.ApplicationManager
 
-package object compiler {
+private object BuildThreadUtil {
   def executeOnBuildThread(runnable: Runnable): Unit = {
     if (ApplicationManager.getApplication.isUnitTestMode) {
       runnable.run()

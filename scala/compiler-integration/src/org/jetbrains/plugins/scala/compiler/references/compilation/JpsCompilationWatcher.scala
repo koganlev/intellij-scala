@@ -2,9 +2,9 @@ package org.jetbrains.plugins.scala.compiler.references.compilation
 
 import com.intellij.compiler.server.{BuildManagerListener, CustomBuilderMessageHandler}
 import com.intellij.openapi.project.Project
+import org.jetbrains.plugins.scala.compiler.CompilerIntegrationBundle
 import org.jetbrains.plugins.scala.compiler.references.ScalaCompilerReferenceService.CompilerIndicesState
 import org.jetbrains.plugins.scala.compiler.references.{Builder, Messages, TransactionGuard}
-import org.jetbrains.plugins.scala.compiler.{CompilerIntegrationBundle, executeOnBuildThread}
 import org.jetbrains.plugins.scala.project.ProjectExt
 import org.jetbrains.sbt.project.settings.CompilerMode
 
@@ -73,7 +73,7 @@ private[references] class JpsCompilationWatcher(
         sessionId:  UUID,
         isAutomake: Boolean
       ): Unit = if (project == self.project) {
-        executeOnBuildThread { () =>
+        BuildThreadUtil.executeOnBuildThread { () =>
           processEventInTransaction { publisher =>
             publisher.onCompilationFinish(true)
           }
