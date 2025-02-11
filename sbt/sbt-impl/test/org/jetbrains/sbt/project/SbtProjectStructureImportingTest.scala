@@ -5,6 +5,7 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil
 import com.intellij.openapi.projectRoots.ProjectJdkTable
 import com.intellij.openapi.roots.DependencyScope
+import com.intellij.openapi.util.io.FileUtil
 import com.intellij.pom.java.LanguageLevel
 import com.intellij.testFramework.IdeaTestUtil
 import org.jetbrains.annotations.Nullable
@@ -14,13 +15,13 @@ import org.jetbrains.plugins.scala.compiler.data.CompileOrder
 import org.jetbrains.plugins.scala.extensions.{RichFile, inWriteAction}
 import org.jetbrains.plugins.scala.project.ProjectExt
 import org.jetbrains.plugins.scala.project.external.JdkByName
-import org.jetbrains.sbt.Sbt
+import org.jetbrains.sbt.{Sbt, SbtVersion}
 import org.junit.Assert
 import org.junit.Assert.{assertEquals, assertTrue}
 import org.junit.experimental.categories.Category
 
+import java.io.File
 import java.net.URI
-import scala.annotation.nowarn
 
 @Category(Array(classOf[SlowTests]))
 final class SbtProjectStructureImportingTest extends SbtProjectStructureImportingLike {

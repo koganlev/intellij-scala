@@ -4,7 +4,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiFile
 import org.jetbrains.plugins.scala.projectHighlighting.base.SbtProjectHighlightingLocalProjectsTestBase
 import org.jetbrains.plugins.scala.projectHighlighting.reporter.HighlightingProgressReporter
-import org.jetbrains.sbt.project.ProjectStructureMatcher.ProjectComparisonOptions
+import org.jetbrains.sbt.project.utils.ProjectStructureComparisonContext
 import org.jetbrains.sbt.project.{ExactMatch, ProjectStructureMatcher}
 
 class SbtProjectWithProjectMatrixAndSourceGenerators_ProdTestSourcesSeparatedEnabled
@@ -286,7 +286,8 @@ class SbtProjectWithProjectMatrixAndSourceGenerators_ProdTestSourcesSeparatedEna
       override protected def defaultAssertMatch: ProjectStructureMatcher.AttributeMatchType =
         ProjectStructureMatcher.AttributeMatchType.Exact
     }
-    implicit val comparisonOptions: ProjectComparisonOptions = ProjectComparisonOptions(strictCheckForBuildModules = true)
-    matcher.assertProjectsEqual(expectedProject, getProject, singleContentRootModules = false)(comparisonOptions)
+    val compareContext = ProjectStructureComparisonContext.Implicit.default(getProject)
+      .withOptions(_.copy(strictCheckForBuildModules = true))
+    matcher.assertProjectsEqual(expectedProject, getProject, singleContentRootModules = false)(compareContext)
   }
 }

@@ -14,7 +14,7 @@ import java.nio.file.Path
 @Category(Array(classOf[SlowTests]))
 class UseSeparateCompilerOutputPathsTest extends SbtExternalSystemImportingTestLike {
 
-  override protected def getTestProjectPath: String =
+  override protected def getTestDataProjectPath: String =
     s"${TestUtils.getTestDataPath}/sbt/projects/separateCompilerOutputPaths"
 
   override protected def enableSeparateModulesForProdTest: Boolean = false
@@ -34,7 +34,7 @@ class UseSeparateCompilerOutputPathsTest extends SbtExternalSystemImportingTestL
 
   private def expectedCompilerOutputPath(moduleName: String, scope: String, hasIdeaPrefix: Boolean): Path = {
     val ideaPrefix = if (hasIdeaPrefix) "idea-" else ""
-    Path.of(getTestProjectPath)
+    Path.of(getTestDataProjectPath)
       .resolve(moduleDirectoryMapping(moduleName))
       .resolve("target")
       .resolve("scala-3.3.1")

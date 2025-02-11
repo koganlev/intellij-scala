@@ -18,7 +18,7 @@ import scala.jdk.CollectionConverters.IteratorHasAsScala
 @Category(Array(classOf[SlowTests]))
 class CompileSimpleProjectWithSemanticDbTest extends SbtExternalSystemImportingTestLike {
 
-  override protected lazy val getTestProjectPath: String =
+  override protected lazy val getTestDataProjectPath: String =
     s"${TestUtils.getTestDataPath}/sbt/compilation/projects/${getTestName(true)}"
 
   override protected def enableSeparateModulesForProdTest: Boolean = false
@@ -36,7 +36,7 @@ class CompileSimpleProjectWithSemanticDbTest extends SbtExternalSystemImportingT
     //This is needed because `org.jetbrains.jps.incremental.scala.data.CompilerDataFactory.semanticDbOptionsFor`
     //needs the correct project path to be equal to the project actual root in order correct semanticDb target folder is calculated later
     //(it's done in dotty.tools.dotc.semanticdb.ExtractSemanticDB#write)
-    val testProjectDir = Path.of(getTestProjectPath)
+    val testProjectDir = getTestProjectDir.toPath
     val projectParentFolder = testProjectDir.getParent
     val projectName = testProjectDir.getFileName.toString
     myTestFixture = IdeaTestFixtureFactory.getFixtureFactory.createFixtureBuilder(projectName, projectParentFolder, true).getFixture

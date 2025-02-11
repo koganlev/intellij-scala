@@ -69,7 +69,15 @@ object ProjectStructureDsl {
   object scope      extends Attribute[DependencyScope]("scope") with DependencyAttribute
 
   sealed trait Attributed {
-    protected val attributes = new AttributeMap
+    protected val attributes: AttributeMap = new AttributeMap
+
+    type SelfAttribute[T] <: Attribute[T]
+    type SelfSeqAttribute[T] <: Attribute[Seq[T]]
+
+    implicit def defineAttribute[T : Manifest](attribute: SelfAttribute[T]): AttributeDef[T] =
+      new AttributeDef(attribute, attributes)
+    implicit def defineAttributeSeq[T](attribute: SelfSeqAttribute[T])(implicit m: Manifest[Seq[T]]): AttributeSeqDef[T] =
+      new AttributeSeqDef(attribute, attributes)
 
     def foreach[T : Manifest](attribute: Attribute[T])(body: T => Option[MatchType] => Unit): Unit =
       attributes.get(attribute).foreach { attributeValue: T =>
@@ -82,7 +90,7 @@ object ProjectStructureDsl {
     def get[T: Manifest](attribute: Attribute[T]): Option[T] =
       attributes.get(attribute)
 
-    protected implicit def matchTypeDef(attribute: Attribute[_]): MatchTypeDef =
+     implicit def matchTypeDef(attribute: Attribute[_]): MatchTypeDef =
       new MatchTypeDef(attribute, attributes)
   }
 
@@ -91,10 +99,8 @@ object ProjectStructureDsl {
   }
 
   class project(val name: String) extends Attributed {
-    protected implicit def defineAttribute[T : Manifest](attribute: Attribute[T] with ProjectAttribute): AttributeDef[T] =
-      new AttributeDef(attribute, attributes)
-    protected implicit def defineAttributeSeq[T](attribute: Attribute[Seq[T]] with ProjectAttribute)(implicit m: Manifest[Seq[T]]): AttributeSeqDef[T] =
-      new AttributeSeqDef(attribute, attributes)
+    type SelfAttribute[T] = Attribute[T] with ProjectAttribute
+    type SelfSeqAttribute[T] = Attribute[Seq[T]] with ProjectAttribute
   }
 
   class module(val moduleName: String, var group: Array[String] = null) extends Attributed with Named {
@@ -107,10 +113,8 @@ object ProjectStructureDsl {
         moduleName
       }
 
-    implicit def defineAttribute[T : Manifest](attribute: Attribute[T] with ModuleAttribute): AttributeDef[T] =
-      new AttributeDef(attribute, attributes)
-    implicit def defineAttributeSeq[T](attribute: Attribute[Seq[T]] with ModuleAttribute)(implicit m: Manifest[Seq[T]]): AttributeSeqDef[T] =
-      new AttributeSeqDef(attribute, attributes)
+    type SelfAttribute[T] = Attribute[T] with ModuleAttribute
+    type SelfSeqAttribute[T] = Attribute[Seq[T]] with ModuleAttribute
 
     def dependsOn(modules: dependency[module]*): Unit = {
       defineAttribute(moduleDependencies) := modules
@@ -121,16 +125,15 @@ object ProjectStructureDsl {
   }
 
   class library(override val name: String) extends Attributed with Named {
-    protected implicit def defineAttribute[T : Manifest](attribute: Attribute[T] with LibraryAttribute): AttributeDef[T] =
-      new AttributeDef(attribute, attributes)
-    protected implicit def defineAttributeSeq[T](attribute: Attribute[Seq[T]] with LibraryAttribute)(implicit m: Manifest[Seq[T]]): AttributeSeqDef[T] =
-      new AttributeSeqDef(attribute, attributes)
+    type SelfAttribute[T] = Attribute[T] with LibraryAttribute
+    type SelfSeqAttribute[T] = Attribute[Seq[T]] with LibraryAttribute
   }
 
   class dependency[D <: Named](val reference: D) extends Attributed with Named {
     override val name: String = reference.name
-    protected implicit def defineAttribute[T : Manifest](attribute: Attribute[T] with DependencyAttribute): AttributeDef[T] =
-      new AttributeDef(attribute, attributes)
+
+    type SelfAttribute[T] = Attribute[T] with DependencyAttribute
+    type SelfSeqAttribute[T] = Attribute[Seq[T]] with DependencyAttribute
   }
 
   implicit def module2moduleDependency(module: module): dependency[module] =

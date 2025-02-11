@@ -10,7 +10,7 @@ import org.junit.experimental.categories.Category
 @Category(Array(classOf[SlowTests]))
 class ResolveCompilerBridgeTest_3 extends SbtExternalSystemImportingTestLike {
 
-  override protected def getTestProjectPath: String =
+  override protected def getTestDataProjectPath: String =
     s"${TestUtils.getTestDataPath}/sbt/projects/resolveCompilerBridge_Scala3"
 
   override def setUp(): Unit = {

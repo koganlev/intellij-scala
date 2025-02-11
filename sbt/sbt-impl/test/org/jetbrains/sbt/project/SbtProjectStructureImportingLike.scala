@@ -15,8 +15,8 @@ import org.jetbrains.jps.model.module.JpsModuleSourceRootType
 import org.jetbrains.plugins.scala.util.TestUtils
 import org.jetbrains.plugins.scala.util.assertions.CollectionsAssertions.assertCollectionEquals
 import org.jetbrains.sbt.actions.SbtDirectoryCompletionContributor
-import org.jetbrains.sbt.project.ProjectStructureMatcher.ProjectComparisonOptions
 import org.jetbrains.sbt.project.settings.SbtProjectSettings
+import org.jetbrains.sbt.project.utils.ProjectStructureComparisonContext
 import org.jetbrains.sbt.settings.SbtSettings
 import org.junit.Assert
 import org.junit.Assert.fail
@@ -30,7 +30,7 @@ abstract class SbtProjectStructureImportingLike extends SbtExternalSystemImporti
   with ExactMatch {
 
   import ProjectStructureDsl._
-  override protected def getTestProjectPath: String =
+  override protected def getTestDataProjectPath: String =
     generateTestProjectPath(getTestName(true))
 
   override def setUp(): Unit = {
@@ -53,7 +53,8 @@ abstract class SbtProjectStructureImportingLike extends SbtExternalSystemImporti
         }
     }
 
-    assertProjectsEqual(expected, myProject, !enableSeparateModulesForProdTest)(ProjectComparisonOptions.Implicit.default)
+    val compareContext = ProjectStructureComparisonContext.Implicit.default(getProject)
+    assertProjectsEqual(expected, myProject, !enableSeparateModulesForProdTest)(compareContext)
     assertNoNotificationsShown(myProject)
   }
 
@@ -84,20 +85,20 @@ abstract class SbtProjectStructureImportingLike extends SbtExternalSystemImporti
    }
 
   protected val DefaultSbtContentRootsScala212: Seq[ExpectedDirectoryCompletionVariant] =
-    defaultSbtContentRootsScala2(12)
+    defaultSbtContentRootsScala2("2.12")
 
   protected val DefaultSbtContentRootsScala213: Seq[ExpectedDirectoryCompletionVariant] =
-    defaultSbtContentRootsScala2(13)
+    defaultSbtContentRootsScala2("2.13")
 
-  private def defaultSbtContentRootsScala2: Integer => Seq[ExpectedDirectoryCompletionVariant] = (minorVersion: Integer) => Seq(
+  private def defaultSbtContentRootsScala2(scalaBinVer: String): Seq[ExpectedDirectoryCompletionVariant] = Seq(
     ("src/main/java", JavaSourceRootType.SOURCE),
     ("src/main/scala", JavaSourceRootType.SOURCE),
     ("src/main/scala-2", JavaSourceRootType.SOURCE),
-    (s"src/main/scala-2.$minorVersion", JavaSourceRootType.SOURCE),
+    (s"src/main/scala-$scalaBinVer", JavaSourceRootType.SOURCE),
     ("src/test/java", JavaSourceRootType.TEST_SOURCE),
     ("src/test/scala", JavaSourceRootType.TEST_SOURCE),
     ("src/test/scala-2", JavaSourceRootType.TEST_SOURCE),
-    (s"src/test/scala-2.$minorVersion", JavaSourceRootType.TEST_SOURCE),
+    (s"src/test/scala-$scalaBinVer", JavaSourceRootType.TEST_SOURCE),
     ("src/main/resources", JavaResourceRootType.RESOURCE),
     ("src/test/resources", JavaResourceRootType.TEST_RESOURCE),
   ).map((ExpectedDirectoryCompletionVariant.apply _).tupled)
@@ -210,5 +211,4 @@ abstract class SbtProjectStructureImportingLike extends SbtExternalSystemImporti
       _.getModuleExtension(classOf[LanguageLevelModuleExtension]).setLanguageLevel(source)
     )
   }
-
 }

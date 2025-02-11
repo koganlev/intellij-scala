@@ -10,11 +10,11 @@ import com.intellij.testFramework.JUnit38AssumeSupportRunner
 import org.jetbrains.bsp.BSP
 import org.jetbrains.bsp.protocol.BspCommunicationService
 import org.jetbrains.plugins.scala.extensions.inWriteAction
-import org.jetbrains.sbt.project.{ExactMatch, NewScalaProjectWizardTestBase, ProjectStructureTestUtils}
 import org.jetbrains.sbt.project.ProjectStructureDsl._
-import org.jetbrains.sbt.project.ProjectStructureMatcher.ProjectComparisonOptions
 import org.jetbrains.sbt.project.template.wizard.buildSystem.BuildSystemScalaNewProjectWizardData.scalaBuildSystemData
 import org.jetbrains.sbt.project.template.wizard.buildSystem.ScalaNewProjectWizardData.scalaData
+import org.jetbrains.sbt.project.utils.ProjectComparisonOptions
+import org.jetbrains.sbt.project.{ExactMatch, NewScalaProjectWizardTestBase, ProjectStructureTestUtils}
 import org.junit.Assume
 import org.junit.runner.RunWith
 
@@ -127,8 +127,8 @@ class NewScalaCliProjectWizardTest extends NewScalaProjectWizardTestBase with Ex
       scalaData(step).setScalaVersion(scalaVersion)
     }
 
-    implicit val comparisonOptions: ProjectComparisonOptions = ProjectComparisonOptions(projectName)
-    useProject(project, false, assertProjectsEqual(expectedProject, _: Project))
+    val compareContextNew = compareContext.withOptions(ProjectComparisonOptions(projectName))
+    useProject(project, false, assertProjectsEqual(expectedProject, _: Project)(compareContextNew))
   }
 
   private def installScalaCli(): Unit = {

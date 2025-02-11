@@ -26,7 +26,7 @@ abstract class ScalaProjectHighlightingTestBase extends ScalaExternalSystemImpor
   protected var codeInsightFixture: CodeInsightTestFixture = _
 
   protected val projectFileName = "testHighlighting"
-  private def getProjectFilePath: Path = Paths.get(getTestProjectPath, s"$projectFileName.ipr")
+  private def getProjectFilePath: Path = getTestProjectDir.toPath.resolve(s"$projectFileName.ipr")
   private def isProjectAlreadyCached = Files.exists(getProjectFilePath)
 
   protected def isProjectCachingEnabled: Boolean =
@@ -90,7 +90,7 @@ abstract class ScalaProjectHighlightingTestBase extends ScalaExternalSystemImpor
     val workspaceFile = myProject.getWorkspaceFile
     if (workspaceFile != null && workspaceFile.exists()) {
       val from = workspaceFile.toNioPath
-      val to = Paths.get(getTestProjectPath, s"$projectFileName.iws")
+      val to = getTestProjectDir.toPath.resolve(s"$projectFileName.iws")
       reporter.notify(s"Copy workspace file $from to $to")
       Files.copy(from, to)
     }
@@ -120,7 +120,7 @@ abstract class ScalaProjectHighlightingTestBase extends ScalaExternalSystemImpor
 
   protected def projectName: String
 
-  override protected def getTestProjectPath: String = s"$rootProjectsDirPath/$projectName"
+  override protected def getTestDataProjectPath: String = s"$rootProjectsDirPath/$projectName"
 
   private def forceSaveProject(): Unit = {
     val app = ApplicationManagerEx.getApplicationEx

@@ -36,8 +36,8 @@ trait SbtOverBspExternalSystemImportingTestCase extends ScalaExternalSystemImpor
   }
 
   protected def generateSbtBspConfigurationFileIfNeeded(): Unit = {
-    val projectPath = Path.of(this.getTestProjectPath)
-    val bspConfigFile = projectPath / ".bsp" / "sbt.json"
+    val projectPath = getTestProjectPath
+    val bspConfigFile = projectPath / ".bsp/sbt.json"
 
     //NOTE: we could extract a setting to reuse or not to reuse bsp config file
     if (!bspConfigFile.exists) {

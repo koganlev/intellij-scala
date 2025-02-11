@@ -9,7 +9,7 @@ import org.jetbrains.plugins.scala.projectHighlighting.reporter.HighlightingProg
 import org.jetbrains.plugins.scala.util.TestUtils
 import org.jetbrains.sbt.language.SbtFileType
 import org.jetbrains.sbt.project.ProjectStructureMatcher
-import org.jetbrains.sbt.project.ProjectStructureMatcher.ProjectComparisonOptions
+import org.jetbrains.sbt.project.utils.ProjectStructureComparisonContext
 
 //NOTE:
 //The test is very similar to `org.jetbrains.plugins.scala.projectHighlighting.local.SbtFilesProblemHighlightFilterTest`
@@ -157,7 +157,9 @@ class ProblemHighlightFilterInSbtProjectIntegrationTest_SbtOverBsp
     val matcher = new ProjectStructureMatcher {
       override protected def defaultAssertMatch: ProjectStructureMatcher.AttributeMatchType = ProjectStructureMatcher.AttributeMatchType.Inexact
     }
-    implicit val comparisonOptions: ProjectComparisonOptions = ProjectComparisonOptions(strictCheckForBuildModules = true)
-    matcher.assertProjectsEqual(expectedProject, getProject)(comparisonOptions)
+
+    val compareContext = ProjectStructureComparisonContext.Implicit.default(getProject)
+      .withOptions(_.copy(strictCheckForBuildModules = true))
+    matcher.assertProjectsEqual(expectedProject, getProject)(compareContext)
   }
 }

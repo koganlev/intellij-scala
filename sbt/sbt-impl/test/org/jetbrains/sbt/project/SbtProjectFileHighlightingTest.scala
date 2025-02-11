@@ -6,6 +6,7 @@ import com.intellij.pom.java.LanguageLevel
 import com.intellij.psi.{PsiFile, PsiManager}
 import junit.framework.TestCase.{assertFalse, assertNotNull, assertTrue}
 import org.jetbrains.plugins.scala.SlowTests
+import org.jetbrains.plugins.scala.extensions.PathExt
 import org.jetbrains.plugins.scala.util.TestUtils
 import org.junit.experimental.categories.Category
 
@@ -14,7 +15,7 @@ import java.nio.file.Path
 @Category(Array(classOf[SlowTests]))
 sealed abstract class SbtProjectFileHighlightingTestBase(sbtVersion: String) extends SbtExternalSystemImportingTestLike {
 
-  override protected def getTestProjectPath: String =
+  override protected def getTestDataProjectPath: String =
     s"${TestUtils.getTestDataPath}/sbt/projects/sbtProjectFileHighlighting_$sbtVersion"
 
   override protected def projectJdkLanguageLevel: LanguageLevel = sbtVersion match {
@@ -30,9 +31,9 @@ sealed abstract class SbtProjectFileHighlightingTestBase(sbtVersion: String) ext
   }
 
   def testSbtProjectFileHighlighting(): Unit = {
-    val pluginsSbtPath = Path.of(getTestProjectPath, "project", "plugins.sbt")
-    val buildSbtPath = Path.of(getTestProjectPath, "build.sbt")
-    val scalaFilePath = Path.of(getTestProjectPath, "project", "Dependencies.scala")
+    val pluginsSbtPath = getTestProjectPath / "project" / "plugins.sbt"
+    val buildSbtPath = getTestProjectPath / "build.sbt"
+    val scalaFilePath = getTestProjectPath / "project" / "Dependencies.scala"
 
     val shouldHighlightPluginsSbtBefore = ProblemHighlightFilter.shouldHighlightFile(findPsiFile(pluginsSbtPath))
     val shouldHighlightBuildSbtBefore = ProblemHighlightFilter.shouldHighlightFile(findPsiFile(buildSbtPath))

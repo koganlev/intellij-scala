@@ -10,6 +10,7 @@ import org.jetbrains.plugins.scala.extensions.inWriteAction
 import org.junit.Assert.assertNotNull
 
 import java.io.File
+import java.nio.file.Path
 
 abstract class ScalaExternalSystemImportingTestBase extends ExternalSystemImportingTestCase {
 
@@ -31,10 +32,11 @@ abstract class ScalaExternalSystemImportingTestBase extends ExternalSystemImport
   }
 
   /**
-   * @return path to the project which will be used during the test
+   * @return path to the project in the test data directory.
+   *         Note, the actual runtime project directory can be changed if [[copyTestProjectToTemporaryDir]] is set to true
    * @example `.../testdata/projectsForHighlightingTests/downloaded/scala3-example-project`
    */
-  protected def getTestProjectPath: String
+  protected def getTestDataProjectPath: String
 
   /**
    * When set to true:
@@ -45,14 +47,17 @@ abstract class ScalaExternalSystemImportingTestBase extends ExternalSystemImport
    *   - the test will run in the original project directory from test data
    *   - after test is run, the original test data directory can have modified/deleted/new files
    *     which can make the next test run invalid
-   *
-   * @todo make tru by default for all inherited classes and rerun tests
    */
   protected def copyTestProjectToTemporaryDir: Boolean = false
 
-  /** Same as [[getTestProjectPath]] but as a File */
-  protected final def getTestProjectDir: File = {
-    val originalTestDataProjectDir = new File(getTestProjectPath)
+  protected final lazy val getTestProjectPath: Path = getTestProjectDir.toPath
+
+  /**
+   * - Same as [[getTestDataProjectPath]] but as a File when [[copyTestProjectToTemporaryDir]] is false<br>
+   * - Temp project directory when [[copyTestProjectToTemporaryDir]] is true
+   */
+  protected final lazy val getTestProjectDir: File = {
+    val originalTestDataProjectDir = new File(getTestDataProjectPath)
     if (!copyTestProjectToTemporaryDir)
       originalTestDataProjectDir
     else {

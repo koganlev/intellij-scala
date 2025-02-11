@@ -18,7 +18,7 @@ import scala.collection.mutable
 @Category(Array(classOf[SlowTests]))
 class FindUsagesInSbtBuildModuleTest extends SbtExternalSystemImportingTestLike {
 
-  override protected def getTestProjectPath: String =
+  override protected def getTestDataProjectPath: String =
     s"${TestUtils.getTestDataPath}/findUsages/sbt_projects/${getTestName(true)}"
 
   protected def defaultOptions = new ScalaTypeDefinitionFindUsagesOptions(myTestFixture.getProject)

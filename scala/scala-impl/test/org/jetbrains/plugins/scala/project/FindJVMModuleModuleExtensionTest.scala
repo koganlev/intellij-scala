@@ -11,7 +11,7 @@ import org.junit.experimental.categories.Category
 @Category(Array(classOf[SlowTests]))
 class FindJVMModuleModuleExtensionTest extends SbtExternalSystemImportingTestLike {
 
-  override protected def getTestProjectPath: String =
+  override protected def getTestDataProjectPath: String =
     s"${TestUtils.getTestDataPath}/sbt/projects/${getTestName(true)}"
 
   override protected def enableSeparateModulesForProdTest: Boolean = false

@@ -16,6 +16,7 @@ import org.jetbrains.plugins.scala.project.maven.MavenProjectStructureTestUtils.
 import org.jetbrains.plugins.scala.project.{LibraryExExt, LibraryExt, ProjectExt}
 import org.jetbrains.plugins.scala.util.TestUtils
 import org.jetbrains.sbt.project.ProjectStructureDsl._
+import org.jetbrains.sbt.project.utils.ProjectStructureComparisonContext
 import org.jetbrains.sbt.project.{ExactMatch, ProjectStructureMatcher}
 import org.junit.Assert
 import org.junit.Assert.assertNotNull
@@ -29,8 +30,6 @@ abstract class ScalaMavenImporterTest
   extends MavenImportingTestCase
     with ProjectStructureMatcher
     with ExactMatch {
-
-  import ProjectStructureMatcher.ProjectComparisonOptions.Implicit.default
 
   /** None means use whatever default JDK is chosen by IDEA (most probably internal IDEA JDK) */
   protected def projectJdkVersion: Option[LanguageLevel]
@@ -85,7 +84,9 @@ abstract class ScalaMavenImporterTest
 
     runWithoutStaticSync()
     importProjects(pomVFile)
-    assertProjectsEqual(expected, getProject)
+
+    val compareContext = ProjectStructureComparisonContext.Implicit.default(getProject)
+    assertProjectsEqual(expected, getProject)(compareContext)
   }
 
   private def runImportingTest_Common(
