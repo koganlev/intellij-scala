@@ -14,7 +14,7 @@ import org.jetbrains.plugins.scala.lang.psi.api.toplevel.typedef.{ScClass, ScEnu
 import org.jetbrains.plugins.scala.lang.psi.api.toplevel.{ScNamedElement, ScTypedDefinition}
 import org.jetbrains.plugins.scala.lang.psi.impl.ScalaPsiElementFactory
 import org.jetbrains.plugins.scala.lang.psi.implicits.ImplicitCollector.ImplicitState
-import org.jetbrains.plugins.scala.lang.psi.implicits.{ImplicitCollector, ImplicitsRecursionGuard}
+import org.jetbrains.plugins.scala.lang.psi.implicits.{DivergenceChecker, ImplicitCollector}
 import org.jetbrains.plugins.scala.lang.psi.light.LightContextFunctionParameter
 import org.jetbrains.plugins.scala.lang.psi.types.Compatibility.{ConformanceExtResult, Expression}
 import org.jetbrains.plugins.scala.lang.psi.types.ConstraintSystem.SubstitutionBounds
@@ -201,7 +201,7 @@ object InferUtil {
       val param = iterator.next()
       val paramType = abstractSubstitutor(param.paramType) //we should do all of this with information known before
       val implicitState = ImplicitState(place, paramType, paramType, coreElement, isImplicitConversion = false,
-        searchImplicitsRecursively, None, fullInfo = false, Some(ImplicitsRecursionGuard.currentMap))
+        searchImplicitsRecursively, None, fullInfo = false, Some(DivergenceChecker.currentStack))
       val collector = new ImplicitCollector(implicitState)
       val results = collector.collect()
       if (results.length == 1) {
