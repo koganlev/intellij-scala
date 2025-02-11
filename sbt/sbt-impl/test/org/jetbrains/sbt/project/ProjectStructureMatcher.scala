@@ -3,6 +3,7 @@ package project
 
 import com.intellij.compiler.CompilerConfiguration
 import com.intellij.compiler.impl.javaCompiler.javac.JavacConfiguration
+import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil
 import com.intellij.openapi.module.{Module, ModuleManager}
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots
@@ -20,10 +21,11 @@ import org.jetbrains.plugins.scala.project.{LibraryExt, ModuleExt, ProjectExt, S
 import org.jetbrains.sbt.DslUtils.MatchType
 import org.jetbrains.sbt.project.ProjectStructureDsl._
 import org.jetbrains.sbt.project.ProjectStructureMatcher.AttributeMatchType
-import org.junit.Assert.{assertFalse, assertTrue, fail}
+import org.junit.Assert.{assertFalse, assertNotNull, assertTrue, fail}
 import org.junit.{Assert, ComparisonFailure}
 
 import java.io.File
+import java.nio.file.Path
 import scala.jdk.CollectionConverters._
 import scala.util.matching.Regex
 
@@ -110,6 +112,7 @@ trait ProjectStructureMatcher {
     expected.foreach(moduleDependencies)(assertModuleDependenciesEqual(actual))
     expected.foreach(libraryDependencies)(assertLibraryDependenciesEqual(actual))
     expected.foreach(libraries)(assertModuleLibrariesEqual(actual))
+    expected.foreach0(moduleFileDirectoryPath)(asserModuleFileDirectoryPathEqual(actual))
 
     expected.foreach0(javaLanguageLevel)(assertModuleJavaLanguageLevel(actual))
     expected.foreach0(javaTargetBytecodeLevel)(assertModuleJavaTargetBytecodeLevel(actual))
@@ -332,6 +335,16 @@ trait ProjectStructureMatcher {
         expectedScalaSdk.classpath.foreach(testClasspath("Scala SDK classpath", _, sdkProperties.compilerClasspath.map(_.toFile)))
         expectedScalaSdk.extraClasspath.foreach(testClasspath("Scala SDK extra classpath", _, sdkProperties.scaladocExtraClasspath.map(_.toFile)))
     }
+  }
+
+  private def asserModuleFileDirectoryPathEqual(module: Module)(expected: String): Unit = {
+    val moduleName = module.getName
+    val externalProjectRoot = ExternalSystemApiUtil.getExternalRootProjectPath(module)
+    assertNotNull(s"The external project root for $moduleName is null", externalProjectRoot)
+
+    val defaultModuleFilesDirectory = SbtUtil.getDefaultModuleFilesDirectory(new File(externalProjectRoot))
+    val expectedModuleFileDirectoryPath = Path.of(defaultModuleFilesDirectory, expected)
+    assertEquals(s"The module file directory for $moduleName is incorrect", expectedModuleFileDirectoryPath, module.getModuleNioFile.getParent)
   }
 
   private def assertModuleLibrariesEqual(module: Module)(expectedLibraries: Seq[library])(mt: Option[MatchType])

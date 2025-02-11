@@ -87,6 +87,30 @@ final class SbtProjectStructureImportingTest extends SbtProjectStructureImportin
     )
   }
 
+  /**
+   * Test #SCL-23505
+   */
+  def testMainTestSbtModules(): Unit = {
+    runTest(
+      new project("root") {
+        modules := Seq(
+          new module("root") {
+            moduleFileDirectoryPath := "mainTestSbtModules"
+          },
+          new module(s"root.root-build") {
+            moduleFileDirectoryPath := "mainTestSbtModules"
+          },
+          new module("root.Main") {
+            moduleFileDirectoryPath := "mainTestSbtModules/Main"
+          },
+          new module("root.test") {
+            moduleFileDirectoryPath := "mainTestSbtModules/test"
+          },
+        )
+      }
+    )
+  }
+
   // note: this test is for the case in which an additional project is linked to the project.
   // The linked project is project "simple". The ideProject is generated from "twoLinkedProjects" project
   def testTwoLinkedProjects(): Unit = {
@@ -106,10 +130,12 @@ final class SbtProjectStructureImportingTest extends SbtProjectStructureImportin
             testSources := Seq("src/test/scala", "src/test/java")
             testResources := Seq("src/test/resources")
             libraryDependencies := expectedScalaLibraries
+            moduleFileDirectoryPath := "twoLinkedProjects"
           },
           new module(s"$originalProjectName.$originalProjectName-build") {
             ProjectStructureDsl.sources := Seq("")
             excluded := Seq("project/target", "target")
+            moduleFileDirectoryPath := "twoLinkedProjects"
           },
           new module(linkedProjectName) {
             contentRoots += linkedSbtProjectPath
@@ -119,10 +145,12 @@ final class SbtProjectStructureImportingTest extends SbtProjectStructureImportin
             testSources := Seq("src/test/scala", "src/test/java")
             testResources := Seq("src/test/resources")
             libraryDependencies := expectedScalaLibraries
+            moduleFileDirectoryPath := "simple"
           },
           new module(s"$linkedProjectName.$linkedProjectName-build") {
             sources := Seq("")
             excluded := Seq("project/target", "target")
+            moduleFileDirectoryPath := "simple"
           }
         )
       }
@@ -342,6 +370,7 @@ final class SbtProjectStructureImportingTest extends SbtProjectStructureImportin
     new project("scl12520") {
       val sharedModule: module = new module("scl12520.p1-sources") {
         contentRoots += getProjectPath + "/p1/shared"
+        moduleFileDirectoryPath := "SCL12520/p1/jvm"
       }
 
       val jvmModule: module = new module("scl12520.p1") {
@@ -349,10 +378,15 @@ final class SbtProjectStructureImportingTest extends SbtProjectStructureImportin
           isExported := true
         }
         contentRoots += getProjectPath + "/p1/jvm"
+        moduleFileDirectoryPath := "SCL12520/p1/jvm"
       }
 
-      val rootModule: module = new module("scl12520") {}
-      val rootBuildModule: module = new module("scl12520.scl12520-build") {}
+      val rootModule: module = new module("scl12520") {
+        moduleFileDirectoryPath := "SCL12520"
+      }
+      val rootBuildModule: module = new module("scl12520.scl12520-build") {
+        moduleFileDirectoryPath := "SCL12520"
+      }
 
       modules := Seq(sharedModule, rootModule, rootBuildModule, jvmModule)
     }

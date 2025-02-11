@@ -67,42 +67,50 @@ final class SbtProjectStructureImportingTest_ProdTestSourcesSeparatedEnabled ext
           new module(originalProjectName) {
             contentRoots += getProjectPath
             excluded := Seq("target")
+            moduleFileDirectoryPath := "twoLinkedProjects"
           },
           new module(s"$originalProjectName.main") {
             contentRoots := Seq(s"$getProjectPath/src/main", s"$getProjectPath/target/scala-2.13/src_managed/main", s"$getProjectPath/target/scala-2.13/resource_managed/main")
             ProjectStructureDsl.sources := Seq("scala", "java")
             resources := Seq("resources")
             libraryDependencies := expectedScalaLibraries
+            moduleFileDirectoryPath := "twoLinkedProjects"
           },
           new module(s"$originalProjectName.test") {
             contentRoots := Seq(s"$getProjectPath/src/test", s"$getProjectPath/target/scala-2.13/src_managed/test", s"$getProjectPath/target/scala-2.13/resource_managed/test")
             testSources := Seq("scala", "java")
             testResources := Seq("resources")
             libraryDependencies := expectedScalaLibraries
+            moduleFileDirectoryPath := "twoLinkedProjects"
           },
           new module(s"$originalProjectName.$originalProjectName-build") {
             ProjectStructureDsl.sources := Seq("")
             excluded := Seq("project/target", "target")
+            moduleFileDirectoryPath := "twoLinkedProjects"
           },
           new module(linkedProjectName) {
             contentRoots += linkedSbtProjectPath
             excluded := Seq("target")
+            moduleFileDirectoryPath := "simple"
           },
           new module(s"$linkedProjectName.main") {
             contentRoots := Seq(s"$linkedSbtProjectPath/src/main", s"$linkedSbtProjectPath/target/scala-2.13/src_managed/main", s"$linkedSbtProjectPath/target/scala-2.13/resource_managed/main")
             ProjectStructureDsl.sources := Seq("scala", "java")
             resources := Seq("resources")
             libraryDependencies := expectedScalaLibraries
+            moduleFileDirectoryPath := "simple"
           },
           new module(s"$linkedProjectName.test") {
             contentRoots := Seq(s"$linkedSbtProjectPath/src/test", s"$linkedSbtProjectPath/target/scala-2.13/src_managed/test", s"$linkedSbtProjectPath/target/scala-2.13/resource_managed/test")
             testSources := Seq("scala", "java")
             testResources := Seq("resources")
             libraryDependencies := expectedScalaLibraries
+            moduleFileDirectoryPath := "simple"
           },
           new module(s"$linkedProjectName.$linkedProjectName-build") {
             ProjectStructureDsl.sources := Seq("")
             excluded := Seq("project/target", "target")
+            moduleFileDirectoryPath := "simple"
           }
         )
       }
@@ -175,6 +183,48 @@ final class SbtProjectStructureImportingTest_ProdTestSourcesSeparatedEnabled ext
         assertSbtDirectoryCompletionContributorVariants(findVirtualFile(path), variants)
       }
     }
+  }
+
+  /**
+   * Test #SCL-23505
+   */
+  def testMainTestSbtModules(): Unit = {
+    runTest(
+      new project("root") {
+        modules := Seq(
+          new module("root") {
+            moduleFileDirectoryPath := "mainTestSbtModules"
+          },
+          new module("root.main") {
+            moduleFileDirectoryPath := "mainTestSbtModules"
+          },
+          new module("root.test~1") {
+            moduleFileDirectoryPath := "mainTestSbtModules"
+          },
+          new module(s"root.root-build") {
+            moduleFileDirectoryPath := "mainTestSbtModules"
+          },
+          new module("root.Main") {
+            moduleFileDirectoryPath := "mainTestSbtModules/Main"
+          },
+          new module("root.Main.main") {
+            moduleFileDirectoryPath := "mainTestSbtModules/Main"
+          },
+          new module("root.Main.test") {
+            moduleFileDirectoryPath := "mainTestSbtModules/Main"
+          },
+          new module("root.test") {
+            moduleFileDirectoryPath := "mainTestSbtModules/test"
+          },
+          new module("root.test.main") {
+            moduleFileDirectoryPath := "mainTestSbtModules/test"
+          },
+          new module("root.test.test") {
+            moduleFileDirectoryPath := "mainTestSbtModules/test"
+          },
+        )
+      }
+    )
   }
 
   def testMultiModule(): Unit = runTest(
@@ -364,20 +414,25 @@ final class SbtProjectStructureImportingTest_ProdTestSourcesSeparatedEnabled ext
     new project("scl12520") {
       val sharedModule: module = new module("scl12520.p1-sources") {
         contentRoots += getProjectPath + "/p1/shared"
+        moduleFileDirectoryPath := "SCL12520/p1/jvm"
       }
       val sharedModuleMain: module = new module("scl12520.p1-sources.main") {
         contentRoots += getProjectPath + "/p1/shared/src/main"
+        moduleFileDirectoryPath := "SCL12520/p1/jvm"
       }
       val sharedModuleTest: module = new module("scl12520.p1-sources.test") {
         contentRoots += getProjectPath + "/p1/shared/src/test"
+        moduleFileDirectoryPath := "SCL12520/p1/jvm"
       }
 
       val jvmModule: module = new module("scl12520.p1") {
         contentRoots += getProjectPath + "/p1/jvm"
+        moduleFileDirectoryPath := "SCL12520/p1/jvm"
       }
       val jvmModuleMain: module = new module("scl12520.p1.main") {
         moduleDependencies += new dependency(sharedModuleMain) { isExported := true }
         contentRoots := Seq(s"$getProjectPath/p1/jvm/src/main", s"$getProjectPath/p1/jvm/target/scala-2.12/src_managed/main", s"$getProjectPath/p1/jvm/target/scala-2.12/resource_managed/main")
+        moduleFileDirectoryPath := "SCL12520/p1/jvm"
       }
       val jvmModuleTest: module = new module("scl12520.p1.test") {
         moduleDependencies := Seq(
@@ -386,12 +441,13 @@ final class SbtProjectStructureImportingTest_ProdTestSourcesSeparatedEnabled ext
           new dependency(jvmModuleMain) { isExported := false }
         )
         contentRoots := Seq(s"$getProjectPath/p1/jvm/src/test", s"$getProjectPath/p1/jvm/target/scala-2.12/src_managed/test", s"$getProjectPath/p1/jvm/target/scala-2.12/resource_managed/test")
+        moduleFileDirectoryPath := "SCL12520/p1/jvm"
       }
 
-      val rootModule: module = new module("scl12520")
-      val rootModuleMain: module = new module("scl12520.main")
-      val rootModuleTest: module = new module("scl12520.test")
-      val rootBuildModule: module = new module("scl12520.scl12520-build")
+      val rootModule: module = new module("scl12520") { moduleFileDirectoryPath := "SCL12520" }
+      val rootModuleMain: module = new module("scl12520.main") { moduleFileDirectoryPath := "SCL12520" }
+      val rootModuleTest: module = new module("scl12520.test") { moduleFileDirectoryPath := "SCL12520" }
+      val rootBuildModule: module = new module("scl12520.scl12520-build") { moduleFileDirectoryPath := "SCL12520" }
 
       modules := Seq(
         sharedModule, sharedModuleMain, sharedModuleTest,
