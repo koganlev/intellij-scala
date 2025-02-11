@@ -1134,10 +1134,8 @@ final class SbtProjectStructureImportingTest extends SbtProjectStructureImportin
   )
 
   def testSimpleSbt2Latest(): Unit = {
-    val expectedScala_3_3 = ProjectStructureTestUtils.expectedScalaLibraryWithScalaSdkForSbt(useEnv = true)("3.3.3") :+
-      ProjectStructureTestUtils.expectedScalaLibrary(useEnv = true)("2.13.12", SbtProjectSystem.Id)
-    val expectedScala_3_6 = ProjectStructureTestUtils.expectedScalaLibraryWithScalaSdkForSbt(useEnv = true)("3.6.2") :+
-      ProjectStructureTestUtils.expectedScalaLibrary(useEnv = true)("2.13.15", SbtProjectSystem.Id)
+    val expectedScala_3_3 = ProjectStructureTestUtils.expectedScalaLibraryWithScalaSdkForSbt(useEnv = true)("3.3.3")
+    val expectedScala_3_6 = ProjectStructureTestUtils.expectedScalaLibraryWithScalaSdkForSbt(useEnv = true)("3.6.2")
 
     val expectedScalaLibraries = expectedScala_3_3 ++ expectedScala_3_6
 
