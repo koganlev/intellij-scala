@@ -11,10 +11,10 @@ import org.jetbrains.annotations.Nullable
 import org.jetbrains.jps.model.java.compiler.JpsJavaCompilerOptions
 import org.jetbrains.plugins.scala.SlowTests
 import org.jetbrains.plugins.scala.compiler.data.CompileOrder
-import org.jetbrains.plugins.scala.extensions.{PathExt, inWriteAction}
+import org.jetbrains.plugins.scala.extensions.{PathExt, RichFile, inWriteAction}
 import org.jetbrains.plugins.scala.project.ProjectExt
 import org.jetbrains.plugins.scala.project.external.JdkByName
-import org.jetbrains.sbt.Sbt
+import org.jetbrains.sbt.{Sbt, SbtVersion}
 import org.junit.Assert
 import org.junit.Assert.{assertEquals, assertTrue}
 import org.junit.experimental.categories.Category
@@ -145,10 +145,14 @@ final class SbtProjectStructureImportingTest_ProdTestSourcesSeparatedEnabled ext
             contentRoots := Seq(s"$getProjectPath/src/main", s"$getProjectPath/target/scala-$scalaVersion/src_managed/main", s"$getProjectPath/target/scala-$scalaVersion/resource_managed/main")
             sources := Seq("scala", "java")
             resources := Seq("resources")
+            testSources := Nil
+            testResources:= Nil
             libraryDependencies := expectedScalaLibraries
           },
           new module(s"$projectName.test") {
             contentRoots := Seq(s"$getProjectPath/src/test", s"$getProjectPath/target/scala-$scalaVersion/src_managed/test", s"$getProjectPath/target/scala-$scalaVersion/resource_managed/test")
+            sources := Nil
+            resources := Nil
             testSources := Seq("scala", "java")
             testResources := Seq("resources")
             libraryDependencies := expectedScalaLibraries
@@ -2065,6 +2069,195 @@ final class SbtProjectStructureImportingTest_ProdTestSourcesSeparatedEnabled ext
       modules := Seq(root, rootMain, rootTest)
     }
   )
+
+  def testSimpleSbt2Latest(): Unit = {
+    val expectedScala_3_3 = ProjectStructureTestUtils.expectedScalaLibraryWithScalaSdkForSbt(useEnv = true)("3.3.3")
+    val expectedScala_3_6 = ProjectStructureTestUtils.expectedScalaLibraryWithScalaSdkForSbt(useEnv = true)("3.6.2")
+
+    val expectedScalaLibraries = expectedScala_3_3 ++ expectedScala_3_6
+
+    injectVariable(
+      getTestProjectDir / "project" / "build.properties",
+      "$LATEST_SBT_2$",
+      SbtVersion.Latest.Sbt_2.minor
+    )
+
+    runTest(
+      new project("root") {
+        libraries := expectedScalaLibraries
+
+        // ATTENTION: since sbt 2.0:
+        // 1. there is only one target dir in the build root and it's hardcoded as "target".
+        // 2. all compilation output is located in the root target directory
+        // See details:
+        //   - https://github.com/sbt/sbt/issues/3681 (it's WIP currently, 10 Feb 2025)
+        //   - https://github.com/sbt/sbt/issues/8037
+        modules := Seq(
+          new module("root.root-build") {
+            ProjectStructureDsl.sources := Seq("")
+            excluded := Seq("project/target", "target")
+          },
+          new module("root") {
+            contentRoots := Seq(getProjectPath)
+            libraryDependencies := Nil
+            sources := Nil
+            resources := Nil
+            testSources := Nil
+            testResources := Nil
+            excluded := Seq("target")
+            compileOutputPath := null
+            compileTestOutputPath := null
+          },
+          new module("root.main") {
+            contentRoots :=  Seq(
+              s"$getProjectPath/src/main",
+              s"$getProjectPath/target/out/jvm/scala-3.3.3/root/src_managed/main",
+              s"$getProjectPath/target/out/jvm/scala-3.3.3/root/resource_managed/main"
+            )
+            libraryDependencies := expectedScala_3_3
+            sources := Seq("scala", "java")
+            resources := Seq("resources")
+            testSources := Nil
+            testResources := Nil
+            excluded := Nil
+            compileOutputPath := "$PROJECT_ROOT$/target/out/jvm/scala-3.3.3/root/classes"
+            compileTestOutputPath := null
+          },
+          new module("root.test") {
+            contentRoots :=  Seq(
+              s"$getProjectPath/src/test",
+              s"$getProjectPath/target/out/jvm/scala-3.3.3/root/src_managed/test",
+              s"$getProjectPath/target/out/jvm/scala-3.3.3/root/resource_managed/test"
+            )
+            libraryDependencies := expectedScala_3_3
+            sources := Nil
+            resources := Nil
+            testSources := Seq("scala", "java")
+            testResources := Seq("resources")
+            excluded := Nil
+            compileOutputPath := null
+            compileTestOutputPath := "$PROJECT_ROOT$/target/out/jvm/scala-3.3.3/root/test-classes"
+          },
+
+          new module("root.subProject1") {
+            contentRoots := Seq(s"$getProjectPath/subProject1")
+            libraryDependencies := Nil
+            sources := Nil
+            resources := Nil
+            testSources := Nil
+            testResources := Nil
+            excluded := Seq("target")
+            compileOutputPath := null
+            compileTestOutputPath := null
+          },
+          new module("root.subProject1.main") {
+            contentRoots :=  Seq(
+              s"$getProjectPath/subProject1/src/main",
+              s"$getProjectPath/target/out/jvm/scala-3.3.3/subproject1/src_managed/main",
+              s"$getProjectPath/target/out/jvm/scala-3.3.3/subproject1/resource_managed/main"
+            )
+            libraryDependencies := expectedScala_3_3
+            sources := Seq("scala", "java")
+            resources := Seq("resources")
+            testSources := Nil
+            testResources := Nil
+            excluded := Nil
+            compileOutputPath := "$PROJECT_ROOT$/target/out/jvm/scala-3.3.3/subproject1/classes"
+            compileTestOutputPath := null
+          },
+          new module("root.subProject1.test") {
+            contentRoots :=  Seq(
+              s"$getProjectPath/subProject1/src/test",
+              s"$getProjectPath/target/out/jvm/scala-3.3.3/subproject1/src_managed/test",
+              s"$getProjectPath/target/out/jvm/scala-3.3.3/subproject1/resource_managed/test"
+            )
+            libraryDependencies := expectedScala_3_3
+            sources := Nil
+            resources := Nil
+            testSources := Seq("scala", "java")
+            testResources := Seq("resources")
+            excluded := Nil
+            compileOutputPath := null
+            compileTestOutputPath := "$PROJECT_ROOT$/target/out/jvm/scala-3.3.3/subproject1/test-classes"
+          },
+
+
+          new module("root.subProject2") {
+            contentRoots := Seq(s"$getProjectPath/subProject2")
+            libraryDependencies := Nil
+            sources := Nil
+            resources := Nil
+            testSources := Nil
+            testResources := Nil
+            excluded := Seq("target")
+            compileOutputPath := null
+            compileTestOutputPath := null
+          },
+          new module("root.subProject2.main") {
+            contentRoots :=  Seq(
+              s"$getProjectPath/subProject2/src/main",
+              s"$getProjectPath/target/out/jvm/scala-3.6.2/subproject2/src_managed/main",
+              s"$getProjectPath/target/out/jvm/scala-3.6.2/subproject2/resource_managed/main"
+            )
+            libraryDependencies := expectedScala_3_6
+            sources := Seq("scala", "java")
+            resources := Seq("resources")
+            testSources := Nil
+            testResources := Nil
+            excluded := Nil
+            compileOutputPath := "$PROJECT_ROOT$/target/out/jvm/scala-3.6.2/subproject2/classes"
+            compileTestOutputPath := null
+          },
+          new module("root.subProject2.test") {
+            contentRoots :=  Seq(
+              s"$getProjectPath/subProject2/src/test",
+              s"$getProjectPath/target/out/jvm/scala-3.6.2/subproject2/src_managed/test",
+              s"$getProjectPath/target/out/jvm/scala-3.6.2/subproject2/resource_managed/test"
+            )
+            libraryDependencies := expectedScala_3_6
+            sources := Nil
+            resources := Nil
+            testSources := Seq("scala", "java")
+            testResources := Seq("resources")
+            excluded := Nil
+            compileOutputPath := null
+            compileTestOutputPath := "$PROJECT_ROOT$/target/out/jvm/scala-3.6.2/subproject2/test-classes"
+          },
+        )
+      }
+    )
+
+    // Adding the assertion here not to create a separate heavy test for such a tiny check
+    // org.jetbrains.plugins.scala.project.ProjectExt#modulesWithScala
+    Assert.assertEquals(
+      "modulesWithScala should return list of non *-build modules",
+      Seq(
+        "root.main",
+        "root.test",
+        "root.subProject1.main",
+        "root.subProject1.test",
+        "root.subProject2.main",
+        "root.subProject2.test",
+      ).sorted,
+      myProject.modulesWithScala.map(_.getName).sorted,
+    )
+
+    val expectedLineInProcessOutput = "[error] Some error message which shouldn't fail the whole build, see SCL-21478 and SCL-13038"
+    assertTrue(
+      s"Can't find this line in sbt process output during sbt structure extraction:\n$expectedLineInProcessOutput",
+      SbtProjectResolver.processOutputOfLatestStructureDump.contains(expectedLineInProcessOutput)
+    )
+
+    assertDirectoryCompletionVariantsForProjectPaths(
+      DefaultSbtContentRootsScala3,
+      DefaultMainSbtContentRootsScala3,
+      DefaultTestSbtContentRootsScala3,
+      myProject.baseDir.getPath,
+      myProject.baseDir.getPath + "/subProject1",
+      myProject.baseDir.getPath + "/subProject2"
+    )
+  }
+
 
   private def createModuleWithSourceSet(moduleName: String, group: Array[String] = null): Seq[module] =
     Seq(moduleName, s"$moduleName.main", s"$moduleName.test").map { name =>

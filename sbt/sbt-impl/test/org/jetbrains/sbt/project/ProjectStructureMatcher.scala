@@ -21,7 +21,7 @@ import org.jetbrains.plugins.scala.project.{LibraryExt, ModuleExt, ProjectExt, S
 import org.jetbrains.sbt.DslUtils.MatchType
 import org.jetbrains.sbt.project.ProjectStructureDsl._
 import org.jetbrains.sbt.project.ProjectStructureMatcher.AttributeMatchType
-import org.jetbrains.sbt.project.utils.{ProjectStructureComparisonContext, ScalaCliStructureHelper}
+import org.jetbrains.sbt.project.utils.{MacroSubstitutor, ProjectStructureComparisonContext, ScalaCliStructureHelper}
 import org.junit.Assert.{assertFalse, assertNotNull, assertTrue, fail}
 import org.junit.{Assert, ComparisonFailure}
 
@@ -170,16 +170,19 @@ trait ProjectStructureMatcher {
   private def assertModuleCompileOutputPath(module: Module, test: Boolean = false)
                                            (expected: String)
                                            (implicit compareContext: ProjectStructureComparisonContext): Unit = {
-    val contentRoots = getContentRoots(module)
-    assertTrue("assertModuleCompileOutputPath expects a single content root", contentRoots.size == 1)
-    val contentRoot = contentRoots.head
-
     val extension = CompilerModuleExtension.getInstance(module)
     val actualPath = if (test) extension.getCompilerOutputUrlForTests else extension.getCompilerOutputUrl
-    val actualPathString = if (compareContext.macroSubstitutor.containsMacro(expected))
+    val actualPathString = if (actualPath == null)
+      null
+    else if (compareContext.macroSubstitutor.containsSomeMacro(expected))
       actualPath.stripPrefix("file://")
-    else
+    else {
+      val contentRoots = getContentRoots(module)
+      assertTrue(s"assertModuleCompileOutputPath expects a single content root or ${MacroSubstitutor.Keys.ProjectRoot} macro key in the expected path", contentRoots.size == 1)
+      val contentRoot = contentRoots.head
+
       mapContentFolderToUrl(actualPath, contentRoot.getUrl)
+    }
     assertEquals("Compilation output path", expected, actualPathString)
   }
 
@@ -251,7 +254,7 @@ trait ProjectStructureMatcher {
     implicit compareContext: ProjectStructureComparisonContext
   ): Unit = {
     val actualFolders = contentRootToFolders.flatMap { case (contentRoot, contentFolders) =>
-      if (expected.exists(compareContext.macroSubstitutor.containsMacro))
+      if (expected.exists(compareContext.macroSubstitutor.containsSomeMacro))
         contentFolders.map(_.getUrl)
       else
         contentFolders.map(mapContentFolderToUrl(_, contentRoot))

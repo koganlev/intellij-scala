@@ -94,7 +94,7 @@ trait ExternalSourceRootResolution { self: SbtProjectResolver =>
 
       //add library dependencies of the representative project
       val libraryDependencies = representativeProjectDependencies.modules
-      moduleNode.addAll(createLibraryDependencies(libraryDependencies.forProduction)(moduleNode, libraryNodes.map(_.data), offset = unmanagedDependencies.size + 1, separateModulesForProdTest = false))
+      moduleNode.addAll(createLibraryDependencies(libraryDependencies.forProduction)(moduleNode, libraryNodes.map(_.data), offset = unmanagedDependencies.size + 1, useSeparateProdTestSources = false))
 
       //add unmanaged jars/libraries dependencies of the representative project
       moduleNode.addAll(unmanagedDependencies)
@@ -460,14 +460,17 @@ trait ExternalSourceRootResolution { self: SbtProjectResolver =>
       else !sourceType.isTest
 
     // it is not needed to care about excluded because it is not possible to have excluded type see #calculateEsSourceType
-    val roots = rootsToSourceType
+    val sourceRoots = rootsToSourceType
       .filter { case (_, sourceType) => isApplicableSource(sourceType) }
       .map { case (root, sourceType) => (root.directory.path, sourceType) }
 
-    if (roots.nonEmpty) {
+    if (sourceRoots.nonEmpty) {
       // it is correct to hardcode a root path to src/main or src/test, because the current logic with shared sources
       // allows the creation of shared source only in those directories. See #basePathFromKnownHardcodedDefaultPaths
-      val contentRootNodes = createContentRootNodes(roots, Seq(s"$groupPath/src/$sourceSetName"))
+      val contentRootNodes = createContentRootNodes(
+        sourceRootBaseDirs = Seq(s"$groupPath/src/$sourceSetName"),
+        sourceRoots = sourceRoots,
+      )
       moduleNode.addAll(contentRootNodes)
     } else {
       // when roots are empty, we shouldn't create a shared sources module
@@ -500,7 +503,7 @@ trait ExternalSourceRootResolution { self: SbtProjectResolver =>
     //add library dependencies of the representative project
     val librariesNodeData = libraryNodes.map(_.data)
     val libraryDependencies = getScopedDependencies(representativeProjectDependencies.modules)
-    moduleNode.addAll(createLibraryDependencies(libraryDependencies)(moduleNode, librariesNodeData, offset = unmanagedDependencies.size + 1, separateModulesForProdTest = true))
+    moduleNode.addAll(createLibraryDependencies(libraryDependencies)(moduleNode, librariesNodeData, offset = unmanagedDependencies.size + 1, useSeparateProdTestSources = true))
 
     //add unmanaged jars/libraries dependencies of the representative project
     moduleNode.addAll(unmanagedDependencies)
@@ -512,26 +515,44 @@ trait ExternalSourceRootResolution { self: SbtProjectResolver =>
     Some(moduleNode)
   }
 
+  /**
+   * @param sourceRootBaseDirs Examples:
+   *                           - `.../src/main`
+   *                           - `.../src/test`
+   * @param sourceRoots Examples:
+   *                    - `.../src/main/scala`
+   *                    - `.../src/main/scala-3`
+   *                    - `.../src/main/resources`
+   *                    - `.../target/.../src_managed/main`
+   */
   protected def createContentRootNodes(
-    roots: Seq[(String, ExternalSystemSourceType)],
-    rootPaths: Seq[String]
+    sourceRootBaseDirs: Seq[String],
+    sourceRoots: Seq[(String, ExternalSystemSourceType)],
   ): Seq[ContentRootNode] = {
-    val contentRootNodes = rootPaths.distinct.map(path => new ContentRootNode(path))
-    roots.foldLeft(contentRootNodes) { case (nodes, (root, sourceType)) =>
-      val rootFile = new File(root)
-      val suitableContentRootNode = nodes.find { node =>
-        val dataRootFile = new File(node.data.getRootPath)
-        rootFile.isUnder(dataRootFile, strict = false)
-      }
+    val contentRootsForSourceBaseDirs = sourceRootBaseDirs.distinct.map(new ContentRootNode(_))
+
+    // First, use content roots corresponding to source root base directories
+    // Then add those content roots which are not represented by source dir roots
+    // (Primarily, generated sources in external directories)
+    sourceRoots.foldLeft(contentRootsForSourceBaseDirs) { case (contentRootNodes, (sourceRootPath, sourceType)) =>
+      val suitableContentRootNode = findContentRootContainingPath(contentRootNodes, sourceRootPath)
       suitableContentRootNode match {
         case Some(contentRootNode) =>
-          contentRootNode.storePath(sourceType, root)
-          nodes
+          contentRootNode.storePath(sourceType, sourceRootPath)
+          contentRootNodes
         case None =>
-          val node = new ContentRootNode(root)
-          node.storePath(sourceType, root)
-          nodes :+ node
+          val node = new ContentRootNode(sourceRootPath)
+          node.storePath(sourceType, sourceRootPath)
+          contentRootNodes :+ node
       }
+    }
+  }
+
+  private def findContentRootContainingPath(contentRoots: Seq[ContentRootNode], path: String): Option[ContentRootNode] = {
+    val dir = new File(path)
+    contentRoots.find { contentRoot =>
+      val contentRootDir = new File(contentRoot.data.getRootPath)
+      dir.isUnder(contentRootDir, strict = false)
     }
   }
 

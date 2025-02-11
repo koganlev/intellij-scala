@@ -7,6 +7,7 @@ import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.roots.{LanguageLevelModuleExtension, LanguageLevelProjectExtension, ModuleRootModificationUtil}
+import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.{VirtualFile, VirtualFileManager}
 import com.intellij.pom.java.LanguageLevel
 import com.intellij.psi.PsiManager
@@ -21,6 +22,7 @@ import org.jetbrains.sbt.settings.SbtSettings
 import org.junit.Assert
 import org.junit.Assert.fail
 
+import java.io.File
 import java.nio.file.Path
 import scala.jdk.CollectionConverters.{CollectionHasAsScala, SeqHasAsJava}
 
@@ -30,8 +32,11 @@ abstract class SbtProjectStructureImportingLike extends SbtExternalSystemImporti
   with ExactMatch {
 
   import ProjectStructureDsl._
+
   override protected def getTestDataProjectPath: String =
     generateTestProjectPath(getTestName(true))
+
+  override protected def copyTestProjectToTemporaryDir: Boolean = true
 
   override def setUp(): Unit = {
     super.setUp()
@@ -210,5 +215,20 @@ abstract class SbtProjectStructureImportingLike extends SbtExternalSystemImporti
     ModuleRootModificationUtil.updateModel(module,
       _.getModuleExtension(classOf[LanguageLevelModuleExtension]).setLanguageLevel(source)
     )
+  }
+
+  protected def commonSourceResourceAndTargetDirs(module: module): Unit = {
+    import module._
+    ProjectStructureDsl.sources := Seq("src/main/scala", "src/main/java")
+    ProjectStructureDsl.testSources := Seq("src/test/scala", "src/test/java")
+    ProjectStructureDsl.resources := Seq("src/main/resources")
+    ProjectStructureDsl.testResources := Seq("src/test/resources")
+    ProjectStructureDsl.excluded := Seq("target")
+  }
+
+  protected def injectVariable(file: File, variableName: String, value: String): Unit = {
+    val fileContent = FileUtil.loadFile(file)
+    val updatedContent = fileContent.replace(variableName, value)
+    FileUtil.writeToFile(file, updatedContent)
   }
 }

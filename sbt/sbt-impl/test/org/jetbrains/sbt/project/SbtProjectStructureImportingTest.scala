@@ -30,8 +30,6 @@ final class SbtProjectStructureImportingTest extends SbtProjectStructureImportin
 
   override protected def enableSeparateModulesForProdTest: Boolean = false
 
-  override protected def copyTestProjectToTemporaryDir: Boolean = true
-
   def testSimple(): Unit = {
     val scalaLibraries = ProjectStructureTestUtils.expectedScalaLibraryWithScalaSdkForSbt(useEnv = true)("2.13.14")
     runSimpleTest("simple", scalaLibraries)
@@ -1133,6 +1131,9 @@ final class SbtProjectStructureImportingTest extends SbtProjectStructureImportin
     }
   )
 
+  /**
+   * @see [[org.jetbrains.sbt.project.SbtProjectStructureImportingTest_ProdTestSourcesSeparatedEnabled.testSimpleSbt2Latest]]
+   */
   def testSimpleSbt2Latest(): Unit = {
     val expectedScala_3_3 = ProjectStructureTestUtils.expectedScalaLibraryWithScalaSdkForSbt(useEnv = true)("3.3.3")
     val expectedScala_3_6 = ProjectStructureTestUtils.expectedScalaLibraryWithScalaSdkForSbt(useEnv = true)("3.6.2")
@@ -1165,20 +1166,23 @@ final class SbtProjectStructureImportingTest extends SbtProjectStructureImportin
             contentRoots += getProjectPath
             libraryDependencies := expectedScala_3_3
             commonSourceResourceAndTargetDirs(this)
-            compileOutputPath := "$PROJECT_ROOT$/target/out/jvm/scala-3.3.3/root/classes"
             excluded := Seq("target")
+            compileOutputPath := "$PROJECT_ROOT$/target/out/jvm/scala-3.3.3/root/classes"
+            compileTestOutputPath := "$PROJECT_ROOT$/target/out/jvm/scala-3.3.3/root/test-classes"
           },
           new module("root.subProject1") {
             libraryDependencies := expectedScala_3_3
             commonSourceResourceAndTargetDirs(this)
+            excluded := Seq("target")
             compileOutputPath := "$PROJECT_ROOT$/target/out/jvm/scala-3.3.3/subproject1/classes"
-            excluded := Nil
+            compileTestOutputPath := "$PROJECT_ROOT$/target/out/jvm/scala-3.3.3/subproject1/test-classes"
           },
           new module("root.subProject2") {
             libraryDependencies := expectedScala_3_6
             commonSourceResourceAndTargetDirs(this)
+            excluded := Seq("target")
             compileOutputPath := "$PROJECT_ROOT$/target/out/jvm/scala-3.6.2/subproject2/classes"
-            excluded := Nil
+            compileTestOutputPath := "$PROJECT_ROOT$/target/out/jvm/scala-3.6.2/subproject2/test-classes"
           },
         )
       }
@@ -1202,20 +1206,5 @@ final class SbtProjectStructureImportingTest extends SbtProjectStructureImportin
       myProject.baseDir,
       DefaultSbtContentRootsScala3
     )
-  }
-
-  private def commonSourceResourceAndTargetDirs(module: module): Unit = {
-    import module._
-    ProjectStructureDsl.sources := Seq("src/main/scala", "src/main/java")
-    testSources := Seq("src/test/scala", "src/test/java")
-    resources := Seq("src/main/resources")
-    testResources := Seq("src/test/resources")
-    excluded := Seq("target")
-  }
-
-  private def injectVariable(file: File, variableName: String, value: String): Unit = {
-    val fileContent = FileUtil.loadFile(file)
-    val updatedContent = fileContent.replace(variableName, value)
-    FileUtil.writeToFile(file, updatedContent)
   }
 }

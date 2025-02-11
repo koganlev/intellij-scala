@@ -20,7 +20,7 @@ class MacroSubstitutor(val substitutions: Map[String, String]) {
     }
   }
 
-  def containsMacro(value: String): Boolean =
+  def containsSomeMacro(value: String): Boolean =
     value != null && substitutions.exists { case (key, _) => value.contains(key) }
 }
 
