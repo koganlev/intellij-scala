@@ -17,7 +17,7 @@ import org.jetbrains.annotations.{ApiStatus, NonNls, Nullable, TestOnly}
 import org.jetbrains.plugins.scala._
 import org.jetbrains.plugins.scala.build._
 import org.jetbrains.plugins.scala.compiler.data.CompileOrder
-import org.jetbrains.plugins.scala.extensions.RichFile
+import org.jetbrains.plugins.scala.extensions.{PathExt, RichFile}
 import org.jetbrains.plugins.scala.project.Version
 import org.jetbrains.plugins.scala.project.external.{JdkByHome, JdkByName, SdkReference}
 import org.jetbrains.plugins.scala.util.ScalaNotificationGroups
@@ -338,9 +338,6 @@ class SbtProjectResolver extends ExternalSystemProjectResolver[SbtExecutionSetti
 
     projectNode
   }
-
-  private def getDefaultModuleFilesDirectory(projectRoot: File): String =
-    (projectRoot / Sbt.ModulesDirectory).path
 
   /**
    * This implementation is the same as in sbt.Project.normalizeModuleId to avoid inconsistencies in the import process.
@@ -872,8 +869,11 @@ class SbtProjectResolver extends ExternalSystemProjectResolver[SbtExecutionSetti
       if (relativeToRoot == null || relativeToRoot.equals(".")) ""
       else relativeToRoot
 
+    val projectRootDirectory = Seq(projectRoot.getName).filter(_.nonEmpty)
+    val pathComponents = projectRootDirectory ++ Seq(relativePath)
+
     val defaultModuleFilesDir = getDefaultModuleFilesDirectory(projectRoot)
-    (new File(defaultModuleFilesDir) / relativePath).path
+    Path.of(defaultModuleFilesDir, pathComponents: _*).toCanonicalPath.toString
   }
 
   private def createModuleWithAllRequiredData(

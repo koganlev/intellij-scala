@@ -428,6 +428,9 @@ object SbtUtil {
       .getOrElse(throw new IllegalStateException(s"no project directory found for project ${project.getName}"))
   }
 
+  def getDefaultModuleFilesDirectory(projectRoot: File): String =
+    (projectRoot / Sbt.ModulesDirectory).path
+
   /**
    * Determines if the project the provided file is in should be treated as an sbt project (has been imported using our
    * built-in sbt support). Alternatively, the project could be imported as such, but only if it hasn't been imported
