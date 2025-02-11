@@ -180,9 +180,9 @@ abstract class ScalaMavenImporterTest
       Seq("src/main/scala", "src/main/java"),
       Seq("src/test/scala", "src/test/java"),
       Seq(
-        MavenScalaLibrary(Scala_2_13_5),
-        MavenScalaLibrary(Scala_3_0_0),
-        MavenScalaSdk(Scala_3_0_0)
+        MavenScalaLibrary(Scala_2_13_6),
+        MavenScalaLibrary(Scala_3_0_2),
+        MavenScalaSdk(Scala_3_0_2)
       )
     )
   }
@@ -217,7 +217,7 @@ abstract class ScalaMavenImporterTest
   def testWithImplicitScalaLibraryDependency_compilerVersionLargest(): Unit = {
     val expectedLibraries = Seq(
       MavenScalaLibrary(Scala_2_13_6),
-      MavenScalaSdk(Scala_2_13_8)
+      MavenScalaSdk(Scala_2_13_14)
     ) ++ CommonLibrariesForImplicitScalaLibraryDependencyTests
 
     runImportingTest(new project("testWithImplicitScalaLibraryDependency_compilerVersionLargest") {

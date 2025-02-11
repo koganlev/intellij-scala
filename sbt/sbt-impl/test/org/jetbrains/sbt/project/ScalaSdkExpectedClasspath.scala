@@ -2,6 +2,8 @@ package org.jetbrains.sbt.project
 
 import org.jetbrains.plugins.scala.ScalaVersion
 
+import scala.collection.mutable
+
 case class ScalaSdkExpectedClasspath(
   classpath: Seq[String],
   extraClasspath: Seq[String]
@@ -9,12 +11,37 @@ case class ScalaSdkExpectedClasspath(
 
 object ScalaSdkExpectedClasspath {
 
-  private def create(
+  private val VersionToData = mutable.Map[String, ScalaSdkExpectedClasspath]()
+
+  private def createAndRegister(
+    scalaVersion: String,
+    classpath: Seq[String],
+    extraClasspath: Seq[String]
+  ): ScalaSdkExpectedClasspath = {
+    val data = ScalaSdkExpectedClasspath(classpath, extraClasspath)
+    VersionToData += scalaVersion -> data
+    data
+  }
+
+  private def createAndRegister(
+    scalaVersion: String,
     classpathText: String,
     extraClasspathText: String
-  ): ScalaSdkExpectedClasspath = ScalaSdkExpectedClasspath(
+  ): ScalaSdkExpectedClasspath = createAndRegister(
+    scalaVersion,
     classpathText.linesIterator.filter(_.nonEmpty).toSeq,
     extraClasspathText.linesIterator.filter(_.nonEmpty).toSeq,
+  )
+
+  private val UnusedAtTheMomentPlaceholder = "TODO: till now this field was effectively unused in tests. Please update it to the actual data"
+
+  private def createAndRegisterIncomplete(
+    scalaVersion: String,
+    classpath: Seq[String]
+  ): ScalaSdkExpectedClasspath = createAndRegister(
+    scalaVersion,
+    classpath,
+    Seq(UnusedAtTheMomentPlaceholder)
   )
 
   object Coursier {
@@ -24,7 +51,31 @@ object ScalaSdkExpectedClasspath {
       s"org/scala-lang/scala-reflect/$scalaVersion/scala-reflect-$scalaVersion.jar",
     )
 
-    private val Scala_2_13_14: ScalaSdkExpectedClasspath = ScalaSdkExpectedClasspath(
+    createAndRegisterIncomplete(
+      "2.13.0",
+      scalaLibs("2.13.0") ++ Seq(
+        "jline/jline/2.14.6/jline-2.14.6.jar",
+      )
+    )
+
+    createAndRegisterIncomplete(
+      "2.13.5",
+      scalaLibs("2.13.5") ++ Seq(
+        "net/java/dev/jna/jna/5.3.1/jna-5.3.1.jar",
+        "org/jline/jline/3.19.0/jline-3.19.0.jar",
+      )
+    )
+
+    createAndRegisterIncomplete(
+      "2.13.6",
+      scalaLibs("2.13.6") ++ Seq(
+        "org/jline/jline/3.19.0/jline-3.19.0.jar",
+        "net/java/dev/jna/jna/5.3.1/jna-5.3.1.jar",
+      )
+    )
+
+    createAndRegister(
+      "2.13.14",
       scalaLibs("2.13.14") ++ Seq(
         "io/github/java-diff-utils/java-diff-utils/4.12/java-diff-utils-4.12.jar",
         "net/java/dev/jna/jna/5.14.0/jna-5.14.0.jar",
@@ -33,7 +84,8 @@ object ScalaSdkExpectedClasspath {
       Nil
     )
 
-    private val Scala_3_0_2: ScalaSdkExpectedClasspath = create(
+    createAndRegister(
+      "3.0.2",
       """org/scala-lang/scala-library/2.13.6/scala-library-2.13.6.jar
         |org/scala-lang/scala3-library_3/3.0.2/scala3-library_3-3.0.2.jar
         |com/google/protobuf/protobuf-java/3.7.0/protobuf-java-3.7.0.jar
@@ -81,7 +133,27 @@ object ScalaSdkExpectedClasspath {
 
     )
 
-    private val Scala_3_3_3: ScalaSdkExpectedClasspath = create(
+    createAndRegisterIncomplete(
+      "3.1.0",
+      Seq(
+        "com/google/protobuf/protobuf-java/3.7.0/protobuf-java-3.7.0.jar",
+        "net/java/dev/jna/jna/5.3.1/jna-5.3.1.jar",
+        "org/jline/jline-reader/3.19.0/jline-reader-3.19.0.jar",
+        "org/jline/jline-terminal-jna/3.19.0/jline-terminal-jna-3.19.0.jar",
+        "org/jline/jline-terminal/3.19.0/jline-terminal-3.19.0.jar",
+        "org/scala-lang/modules/scala-asm/9.1.0-scala-1/scala-asm-9.1.0-scala-1.jar",
+        "org/scala-lang/scala-library/2.13.6/scala-library-2.13.6.jar",
+        "org/scala-lang/scala3-compiler_3/3.1.0/scala3-compiler_3-3.1.0.jar",
+        "org/scala-lang/scala3-interfaces/3.1.0/scala3-interfaces-3.1.0.jar",
+        "org/scala-lang/scala3-library_3/3.1.0/scala3-library_3-3.1.0.jar",
+        "org/scala-lang/tasty-core_3/3.1.0/tasty-core_3-3.1.0.jar",
+        "org/scala-sbt/compiler-interface/1.3.5/compiler-interface-1.3.5.jar",
+        "org/scala-sbt/util-interface/1.3.0/util-interface-1.3.0.jar"
+      )
+    )
+
+    createAndRegister(
+      "3.3.3",
       """net/java/dev/jna/jna/5.3.1/jna-5.3.1.jar
         |org/jline/jline-reader/3.19.0/jline-reader-3.19.0.jar
         |org/jline/jline-terminal-jna/3.19.0/jline-terminal-jna-3.19.0.jar
@@ -134,10 +206,10 @@ object ScalaSdkExpectedClasspath {
         |org/yaml/snakeyaml/2.0/snakeyaml-2.0.jar
         |ua/co/k/strftime4j/1.0.5/strftime4j-1.0.5.jar
         |""".stripMargin,
-
     )
 
-    private val Scala_3_6_2: ScalaSdkExpectedClasspath = create(
+    createAndRegister(
+      "3.6.2",
       """net/java/dev/jna/jna/5.15.0/jna-5.15.0.jar
         |org/jline/jline-native/3.27.0/jline-native-3.27.0.jar
         |org/jline/jline-reader/3.27.0/jline-reader-3.27.0.jar
@@ -193,13 +265,14 @@ object ScalaSdkExpectedClasspath {
         |""".stripMargin,
     )
 
-    def getForVersion(scalaVersion: ScalaVersion): ScalaSdkExpectedClasspath = scalaVersion.minor match {
-      case "2.13.14" => Scala_2_13_14
-      case "3.0.2" => Scala_3_0_2
-      case "3.3.3" => Scala_3_3_3
-      case "3.6.2" => Scala_3_6_2
-      case _ => throw new IllegalArgumentException(s"No expected scala sdk classpath for version: $scalaVersion (Coursier)")
-    }
+    def getForVersion(scalaVersion: ScalaVersion): ScalaSdkExpectedClasspath = VersionToData.getOrElse(scalaVersion.minor, {
+      throw new IllegalArgumentException(s"No expected scala sdk classpath for version: $scalaVersion (Coursier/Maven)")
+    })
+  }
+
+  object Maven {
+    // NOTE: Coursier uses the same relative path format as Maven (in apposed to Ivy)
+    def getForVersion(scalaVersion: ScalaVersion): ScalaSdkExpectedClasspath = Coursier.getForVersion(scalaVersion)
   }
 
   object Ivy {

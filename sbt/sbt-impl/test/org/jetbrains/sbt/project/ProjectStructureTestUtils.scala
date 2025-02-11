@@ -82,14 +82,31 @@ object ProjectStructureTestUtils {
   }
 
   private def expectedScalaLibraryFromCoursier(useEnv: Boolean)(scalaVersion: ScalaVersion, libraryName: String): library = {
-    val version = scalaVersion.minor
-    val artifact = if (scalaVersion.languageLevel.isScala2) "scala-library" else "scala3-library_3"
+    val jars = expectedScalaLibraryJars(scalaVersion)
     new library(libraryName) {
-      libClasses := coursierCacheArtifacts(useEnv)(s"org/scala-lang/$artifact/$version/$artifact-$version.jar")
-      libSources := coursierCacheArtifacts(useEnv)(s"org/scala-lang/$artifact/$version/$artifact-$version-sources.jar")
+      libClasses := coursierCacheArtifacts(useEnv)(jars.libClasses: _*)
+      libSources := coursierCacheArtifacts(useEnv)(jars.libSources: _*)
       //SCL-8356
       //libJavadocs := coursierCacheArtifacts(s"org/scala-lang/$artifact/$version/$artifact-$version-javadoc.jar")
     }
+  }
+
+  /**
+   * @param libClasses relative paths of library classes jars in Maven/Coursier format relative to the repo root
+   * @param libSources relative paths of library sources jars in Maven/Coursier format relative to the repo root
+   */
+  case class ScalaLibraryJars(libClasses: Seq[String], libSources: Seq[String])
+
+  def expectedScalaLibraryJars(version: ScalaVersion): ScalaLibraryJars = {
+    val versionStr = version.minor
+    val baseJarName = if (version.isScala2)
+      s"org/scala-lang/scala-library/$versionStr/scala-library-$versionStr"
+    else
+      s"org/scala-lang/scala3-library_3/$versionStr/scala3-library_3-$versionStr"
+    ScalaLibraryJars(
+      Seq(s"$baseJarName.jar"),
+      Seq(s"$baseJarName-sources.jar")
+    )
   }
 
   private def expectedScalaSdkLibraryFromCoursier(useEnv: Boolean)(scalaVersion: ScalaVersion, projectSystemId: ProjectSystemId): library = {
