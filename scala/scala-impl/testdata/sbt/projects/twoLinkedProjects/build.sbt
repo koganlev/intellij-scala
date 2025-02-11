@@ -3,4 +3,4 @@ name := {
   "twoLinkedProjects"
 }
 version := "SNAPSHOT"
-scalaVersion := "2.13.5"
+scalaVersion := "2.13.14"

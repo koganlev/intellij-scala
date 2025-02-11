@@ -77,8 +77,8 @@ class NewScalaCliProjectWizardTest extends NewScalaProjectWizardTestBase with Ex
   }
 
   def testCreateSimpleProjectScala2(): Unit = {
-    val scalaLibraries = ProjectStructureTestUtils.expectedScalaLibraryWithScalaSdk(useEnv = false)("2.13.6", BSP.ProjectSystemId)
-    runSimpleCreateSbtProjectTest("2.13.6", scalaLibraries)
+    val scalaLibraries = ProjectStructureTestUtils.expectedScalaLibraryWithScalaSdk(useEnv = false)("2.13.14", BSP.ProjectSystemId)
+    runSimpleCreateSbtProjectTest("2.13.14", scalaLibraries)
   }
 
   //TODO #SCL-23031
@@ -87,8 +87,7 @@ class NewScalaCliProjectWizardTest extends NewScalaProjectWizardTestBase with Ex
 
   def testCreateSimpleProjectScala3(): Unit = {
     val scalaVersion = "3.0.2"
-    val scalaLibraries =
-      ProjectStructureTestUtils.expectedScalaLibrary(useEnv = false)("2.13.6", BSP.ProjectSystemId) +: ProjectStructureTestUtils.expectedScalaLibraryWithScalaSdk(useEnv = false)(scalaVersion,  BSP.ProjectSystemId)
+    val scalaLibraries = ProjectStructureTestUtils.expectedScalaLibraryWithScalaSdk(useEnv = false)(scalaVersion, BSP.ProjectSystemId)
     runSimpleCreateSbtProjectTest(scalaVersion, scalaLibraries)
   }
 

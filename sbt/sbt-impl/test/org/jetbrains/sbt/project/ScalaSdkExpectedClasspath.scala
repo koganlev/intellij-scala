@@ -24,22 +24,6 @@ object ScalaSdkExpectedClasspath {
       s"org/scala-lang/scala-reflect/$scalaVersion/scala-reflect-$scalaVersion.jar",
     )
 
-    private val Scala_2_13_5: ScalaSdkExpectedClasspath = ScalaSdkExpectedClasspath(
-      scalaLibs("2.13.5") ++ Seq(
-        "net/java/dev/jna/jna/5.3.1/jna-5.3.1.jar",
-        "org/jline/jline/3.19.0/jline-3.19.0.jar",
-      ),
-      Nil
-    )
-
-    private val Scala_2_13_6: ScalaSdkExpectedClasspath = ScalaSdkExpectedClasspath(
-      scalaLibs("2.13.6") ++ Seq(
-        "net/java/dev/jna/jna/5.3.1/jna-5.3.1.jar",
-        "org/jline/jline/3.19.0/jline-3.19.0.jar",
-      ),
-      Nil
-    )
-
     private val Scala_2_13_14: ScalaSdkExpectedClasspath = ScalaSdkExpectedClasspath(
       scalaLibs("2.13.14") ++ Seq(
         "io/github/java-diff-utils/java-diff-utils/4.12/java-diff-utils-4.12.jar",
@@ -210,8 +194,6 @@ object ScalaSdkExpectedClasspath {
     )
 
     def getForVersion(scalaVersion: ScalaVersion): ScalaSdkExpectedClasspath = scalaVersion.minor match {
-      case "2.13.5" => Scala_2_13_5
-      case "2.13.6" => Scala_2_13_6
       case "2.13.14" => Scala_2_13_14
       case "3.0.2" => Scala_3_0_2
       case "3.3.3" => Scala_3_3_3
