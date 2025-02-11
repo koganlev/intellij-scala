@@ -43,6 +43,16 @@ private final class SetupScalaHighlightingNotificationProvider extends EditorNot
       val psiFile = PsiManager.getInstance(project).findFile(file)
       if (psiFile eq null) return null
 
+      // The currently open file is not a writable project source, do not show any notifications.
+      // This check filters out files created from reconstructed VCS history,
+      // which do not seem to belong to any IDE module and thus would return a "not imported" project state.
+      // This check also filters out library source files.
+      // These seem tough and could result in false positive notification banners being shown, because the project
+      // could be in a very strange imported state, if the user had manually scrambled the project structure.
+      // The original ticket scope also only considers writable project source files, so let's reconsider this
+      // decision in the future, when it becomes necessary.
+      if (!SbtProjectImportStateProblemHighlightFilter.isWritableSourceFile(psiFile)) return null
+
       // The project is fully imported, do not show any notifications.
       if (SbtProjectImportStateService.instance(project).isImported(psiFile)) return null
 

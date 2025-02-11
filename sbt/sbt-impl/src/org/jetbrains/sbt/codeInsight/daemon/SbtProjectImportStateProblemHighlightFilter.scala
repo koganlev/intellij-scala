@@ -12,7 +12,7 @@ import org.jetbrains.sbt.SbtUtil
 import org.jetbrains.sbt.project.SbtProjectImportStateService
 
 private final class SbtProjectImportStateProblemHighlightFilter extends ProblemHighlightFilter {
-  import SbtProjectImportStateProblemHighlightFilter.{isQodanaTestExclusionEnabled, isTrackedFileType}
+  import SbtProjectImportStateProblemHighlightFilter.{isQodanaTestExclusionEnabled, isTrackedFileType, isWritableSourceFile}
 
   override def shouldHighlight(psiFile: PsiFile): Boolean = {
     // If the source has a file type which we do not track, this filter does not decide whether the file should be highlighted.
@@ -27,7 +27,7 @@ private final class SbtProjectImportStateProblemHighlightFilter extends ProblemH
     if (SbtProjectImportStateService.instance(project).isImported(psiFile)) return true
 
     // If the sbt project is not imported, disable highlighting for source files.
-    val isSource = psiFile.getVirtualFile.isWritable && !JavaProjectRootsUtil.isOutsideJavaSourceRoot(psiFile)
+    val isSource = isWritableSourceFile(psiFile)
     !isSource || isQodanaTestExclusionEnabled
   }
 }
@@ -39,6 +39,9 @@ private[jetbrains] object SbtProjectImportStateProblemHighlightFilter {
     case _: JavaFileType => true
     case ft => trackedFileExtensions.contains(ft.getDefaultExtension)
   }
+
+  private[sbt] def isWritableSourceFile(psiFile: PsiFile): Boolean =
+    psiFile.getVirtualFile.isWritable && !JavaProjectRootsUtil.isOutsideJavaSourceRoot(psiFile)
 
   // Ideally, this would hold references to each of the file types, but we're trying to avoid dependencies on
   // other plugins.
