@@ -11,7 +11,7 @@ import org.jetbrains.plugins.scala.compiler.data.worksheet.WorksheetArgs
 import org.jetbrains.plugins.scala.compiler.data.{Arguments, ComputeStampsArguments, DocumentCompilationArguments, ExpressionEvaluationArguments}
 import org.jetbrains.plugins.scala.server.CompileServerToken
 
-import java.io._
+import java.io.{IOException, PrintStream}
 import java.lang.reflect.Method
 import java.net.URLClassLoader
 import java.nio.charset.StandardCharsets
@@ -241,7 +241,7 @@ object Main {
 
     val consumer: java.util.function.Consumer[String] = client.error(_)
 
-    method.invoke(instance, outDir, "CompiledExpression", classpath.mkString(File.pathSeparator), scalacOptions.toArray, source, line,
+    method.invoke(instance, outDir, "CompiledExpression", classpath.mkString(java.io.File.pathSeparator), scalacOptions.toArray, source, line,
       expression, localVariableNames.asJava, packageName, consumer, false)
   }
 

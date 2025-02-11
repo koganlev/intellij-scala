@@ -63,8 +63,8 @@ class IdeClientIdea(compilerName: String,
             val sourcePaths = Collections.singleton(sourcePath)
             if (isClassFile) {
               consumer.registerCompiledClass(rootDescriptor.target, compiledClass)
-              ClassFileUtils.correspondingTastyFile(outputFile).foreach { tastyFile =>
-                consumer.registerOutputFile(rootDescriptor.target, tastyFile, sourcePaths)
+              ClassFileUtils.correspondingTastyFile(outputFile.toPath).foreach { tastyFile =>
+                consumer.registerOutputFile(rootDescriptor.target, tastyFile.toFile, sourcePaths)
               }
             } else {
               consumer.registerOutputFile(rootDescriptor.target, outputFile, sourcePaths)

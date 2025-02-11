@@ -6,12 +6,12 @@ import org.jetbrains.plugins.scala.compiler.data.{CompilationData, CompileOrder}
 import sbt.internal.inc._
 import xsbti.compile.{CompileOrder => SbtCompileOrder, _}
 
-import java.io.File
+import java.nio.file.Path
 import java.util.Optional
 import scala.jdk.OptionConverters._
 import scala.util.Try
 
-class SbtCompiler(javaTools: JavaTools, scalac: ScalaCompiler, fileToStore: File => AnalysisStore) extends AbstractCompiler {
+class SbtCompiler(javaTools: JavaTools, scalac: ScalaCompiler, fileToStore: Path => AnalysisStore) extends AbstractCompiler {
 
   override def compile(compilationData: CompilationData, client: Client): Unit = {
     doCompile(compilationData, client, scalac)
@@ -28,7 +28,7 @@ class SbtCompiler(javaTools: JavaTools, scalac: ScalaCompiler, fileToStore: File
       case CompileOrder.ScalaThenJava => SbtCompileOrder.ScalaThenJava
     }
 
-    val analysisStore = fileToStore(compilationData.cacheFile)
+    val analysisStore = fileToStore(compilationData.cacheFile.toPath)
     val zincMetadata = CompilationMetadata.load(analysisStore)
     import zincMetadata._
 
@@ -89,13 +89,13 @@ class SbtCompiler(javaTools: JavaTools, scalac: ScalaCompiler, fileToStore: File
       if (result.hasModified) {
         analysisStore.set(AnalysisContents.create(result.analysis(), result.setup()))
 
-        intellijClassfileManager.deletedDuringCompilation().foreach(_.foreach(client.deleted))
+        intellijClassfileManager.deletedDuringCompilation().foreach(_.foreach(p => client.deleted(p.toFile)))
 
         val binaryToSource = BinaryToSource(result.analysis, compilationData)
 
-        def processGeneratedFile(classFile: File): Unit = {
+        def processGeneratedFile(classFile: Path): Unit = {
           for (source <- binaryToSource.classfileToSources(classFile))
-            client.generated(source, classFile, binaryToSource.className(classFile))
+            client.generated(source.toFile, classFile.toFile, binaryToSource.className(classFile))
         }
 
         intellijClassfileManager.generatedDuringCompilation().flatten.foreach(processGeneratedFile)
@@ -107,12 +107,12 @@ class SbtCompiler(javaTools: JavaTools, scalac: ScalaCompiler, fileToStore: File
       case _: CompileFailed =>
         // The error should be already handled via the `reporter`
         // However we need to invalidate source from last compilation
-        val sourcesForInvalidation: Iterable[File] =
-          if (intellijClassfileManager.deletedDuringCompilation().isEmpty) compilationData.sources
+        val sourcesForInvalidation: Iterable[Path] =
+          if (intellijClassfileManager.deletedDuringCompilation().isEmpty) compilationData.sources.map(_.toPath)
           else BinaryToSource(previousAnalysis, compilationData)
-            .classfilesToSources(intellijClassfileManager.deletedDuringCompilation().last) ++ compilationData.sources
+            .classfilesToSources(intellijClassfileManager.deletedDuringCompilation().last) ++ compilationData.sources.map(_.toPath)
 
-        sourcesForInvalidation.foreach(source => client.sourceStarted(source.getAbsolutePath))
+        sourcesForInvalidation.foreach(source => client.sourceStarted(source.toAbsolutePath.normalize().toString))
       case e: Throwable =>
         // Invalidate analysis
         previousSetup.foreach(previous => analysisStore.set( AnalysisContents.create(Analysis.empty, previous)))

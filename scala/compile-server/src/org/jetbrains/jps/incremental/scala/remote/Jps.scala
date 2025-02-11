@@ -13,8 +13,8 @@ import org.jetbrains.plugins.scala.compiler.CompilerEvent.BuilderId
 import org.jetbrains.plugins.scala.compiler.{CompilerEvent, CompilerEventType}
 import org.jetbrains.plugins.scala.util.ObjectSerialization
 
-import java.io.{DataOutputStream, File, FileNotFoundException, FileOutputStream}
-import java.nio.file.{Path, Paths}
+import java.io.{DataOutputStream, FileNotFoundException, FileOutputStream, IOException}
+import java.nio.file.{Files, Path, Paths}
 import java.util.Collections
 import java.util.concurrent.ConcurrentMap
 import java.util.concurrent.atomic.AtomicBoolean
@@ -40,13 +40,13 @@ private object Jps {
       val loader = new JpsModelLoaderImpl(projectPath, globalOptionsPath, false, null)
       val buildRunner = new BuildRunner(loader)
       buildRunner.setBuilderParams(Map(BuildParameters.BuildTriggeredByCBH -> true.toString).asJava)
-      var compiledFiles = Set.empty[File]
+      var compiledFiles = Set.empty[Path]
       val messageHandler = new MessageHandler {
         override def processMessage(msg: BuildMessage): Unit = msg match {
           case customMessage: CustomBuilderMessage =>
             fromCustomMessage(customMessage).foreach {
               case CompilerEvent.MessageEmitted(_, _, _, msg) => client.message(msg)
-              case CompilerEvent.CompilationFinished(_, _, sources) => compiledFiles ++= sources
+              case CompilerEvent.CompilationFinished(_, _, sources) => compiledFiles ++= sources.map(_.toPath)
               case _ => ()
             }
           case progressMessage: ProgressMessage =>
@@ -86,16 +86,16 @@ private object Jps {
         )
       } finally {
         // Save the FS state data to disk, so that we do not corrupt the IDEA JPS process expected data.
-        saveData(fsState, descriptor, descriptor.dataManager.getDataPaths.getDataStorageDir.toFile) // TODO: SCL-23310
-        client.compilationEnd(compiledFiles)
+        saveData(fsState, descriptor, descriptor.dataManager.getDataPaths.getDataStorageDir)
+        client.compilationEnd(compiledFiles.map(_.toFile))
       }
     } finally {
       lock.unlock()
     }
   }
 
-  private def saveData(fsState: BuildFSState, descriptor: ProjectDescriptor, dataStorageRoot: File): Unit = {
-    try saveFsState(fsState, dataStorageRoot)
+  private def saveData(fsState: BuildFSState, descriptor: ProjectDescriptor, dataStorageRoot: Path): Unit = {
+    try saveFsState(dataStorageRoot, fsState)
     finally descriptor.release()
   }
 
@@ -105,8 +105,11 @@ private object Jps {
    */
   private final val FsStateFile = "fs_state.dat"
 
-  private def saveFsState(fsState: BuildFSState, dataStorageRoot: File): Unit = {
-    val file = new File(dataStorageRoot, FsStateFile)
+  /**
+   * This is a Scala translation of `org.jetbrains.jps.cmdline.BuildSession.saveFsState`.
+   */
+  private def saveFsState(dataStorageRoot: Path, state: BuildFSState): Unit = {
+    val file = dataStorageRoot.resolve(FsStateFile)
     try {
       val bytes = new BufferExposingByteArrayOutputStream()
       Using.resource(new DataOutputStream(bytes)) { out =>
@@ -118,13 +121,16 @@ private object Jps {
         // and re-run all JPS builders to check that all targets are actually built. This avoids bugs like SCL-17303
         // where old bytecode is loaded in artifacts and run configurations.
         out.writeBoolean(true)
-        fsState.save(out)
+        state.save(out)
       }
       saveOnDisk(bytes, file)
     } catch {
       case t: Throwable =>
         t.printStackTrace()
-        FileUtil.delete(file)
+        try Files.deleteIfExists(file)
+        catch {
+          case _: IOException =>
+        }
     }
   }
 
@@ -133,13 +139,17 @@ private object Jps {
    * `org.jetbrains.jps.cmdline.BuildSession.writeOrCreate`.
    */
 
-  private def saveOnDisk(bytes: BufferExposingByteArrayOutputStream, file: File): Unit = {
-    Using.resource(writeOrCreate(file)) { fos =>
+  private def saveOnDisk(bytes: BufferExposingByteArrayOutputStream, file: Path): Unit = {
+    Using.resource(writeOrCreate(file.toFile)) { fos =>
       fos.write(bytes.getInternalBuffer, 0, bytes.size())
     }
   }
 
-  private def writeOrCreate(file: File): FileOutputStream =
+  /**
+   * This is a Scala translation of `org.jetbrains.jps.cmdline.BuildSession.writeOrCreate`. That function still uses
+   * the `java.io.File` API, so we do too.
+   */
+  private def writeOrCreate(file: java.io.File): FileOutputStream =
     try new FileOutputStream(file)
     catch {
       case _: FileNotFoundException =>

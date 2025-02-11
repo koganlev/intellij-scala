@@ -5,12 +5,12 @@ import org.jetbrains.jps.incremental.scala.Client.PosInfo
 import org.jetbrains.jps.incremental.scala.local.JavacOutputParsing._
 import xsbti.Logger
 
-import java.io.File
+import java.nio.file.{Path, Paths}
 import java.util.function.Supplier
 import scala.util.matching.Regex
 
 trait JavacOutputParsing extends Logger {
-  private case class Header(file: File, line: Int, kind: MessageKind)
+  private case class Header(file: Path, line: Int, kind: MessageKind)
 
   private var header: Option[Header] = None
   private var lines: Vector[String] = Vector.empty
@@ -29,7 +29,7 @@ trait JavacOutputParsing extends Logger {
   private def process(line: String, kind: MessageKind): Unit = {
     line match {
       case HeaderPattern(path, row, modifier, message) =>
-        header = Some(Header(new File(path), row.toInt, if (modifier == null) kind else MessageKind.Warning))
+        header = Some(Header(Paths.get(path), row.toInt, if (modifier == null) kind else MessageKind.Warning))
         lines :+= message
       case PointerPattern(prefix) if header.isDefined =>
         val text = (lines :+ line).mkString("\n")
@@ -37,7 +37,7 @@ trait JavacOutputParsing extends Logger {
           line = header.get.line,
           column = 1 + prefix.length
         )
-        client.message(header.get.kind, text, header.map(_.file), Some(pointer))
+        client.message(header.get.kind, text, header.map(_.file.toFile), Some(pointer))
         header = None
         lines = Vector.empty
       case NotePattern(message) =>

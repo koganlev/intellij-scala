@@ -8,7 +8,6 @@ import xsbti.api.{ClassLike, DependencyContext}
 import xsbti.compile.DependencyChanges
 import xsbti.compile.analysis.{ReadSourceInfos, SourceInfo}
 
-import java.io.File
 import java.nio.file.Path
 import java.util.Optional
 import scala.jdk.CollectionConverters._
@@ -131,7 +130,7 @@ abstract class ClientCallbackBase(converter: FileConverter) extends xsbti.Analys
   override def api(sourceFile: VirtualFileRef, classApi: ClassLike): Unit = {}
 
   //noinspection ScalaDeprecation
-  final override def api(sourceFile: File, classApi: ClassLike): Unit =
+  final override def api(sourceFile: java.io.File, classApi: ClassLike): Unit =
     api(converter.toVirtualFile(sourceFile.toPath), classApi)
 
   override def binaryDependency(onBinaryEntry: Path,
@@ -141,10 +140,10 @@ abstract class ClientCallbackBase(converter: FileConverter) extends xsbti.Analys
                                 context: DependencyContext): Unit = {}
 
   //noinspection ScalaDeprecation
-  final override def binaryDependency(onBinary: File,
+  final override def binaryDependency(onBinary: java.io.File,
                                       onBinaryClassName: String,
                                       fromClassName: String,
-                                      fromSourceFile: File,
+                                      fromSourceFile: java.io.File,
                                       context: DependencyContext): Unit =
     binaryDependency(
       onBinary.toPath,
@@ -160,12 +159,12 @@ abstract class ClientCallbackBase(converter: FileConverter) extends xsbti.Analys
     Set.empty[String].asJava
 
   //noinspection ScalaDeprecation
-  override def generatedLocalClass(source: File, classFile: File): Unit =
+  override def generatedLocalClass(source: java.io.File, classFile: java.io.File): Unit =
     generatedLocalClass(converter.toVirtualFile(source.toPath), classFile.toPath)
 
   //noinspection ScalaDeprecation
-  final override def generatedNonLocalClass(source: File,
-                                            classFile: File,
+  final override def generatedNonLocalClass(source: java.io.File,
+                                            classFile: java.io.File,
                                             binaryClassName: String,
                                             srcClassName: String): Unit =
     generatedNonLocalClass(
@@ -192,7 +191,7 @@ abstract class ClientCallbackBase(converter: FileConverter) extends xsbti.Analys
   override def startSource(source: VirtualFile): Unit = {}
 
   //noinspection ScalaDeprecation
-  final override def startSource(source: File): Unit =
+  final override def startSource(source: java.io.File): Unit =
     startSource(converter.toVirtualFile(source.toPath))
 
   override def usedName(className: String, name: String, useScopes: java.util.EnumSet[xsbti.UseScope]): Unit = {}
@@ -206,7 +205,7 @@ abstract class ClientCallbackBase(converter: FileConverter) extends xsbti.Analys
   override def mainClass(sourceFile: VirtualFileRef, className: String): Unit = {}
 
   //noinspection ScalaDeprecation
-  final override def mainClass(sourceFile: File, className: String): Unit =
+  final override def mainClass(sourceFile: java.io.File, className: String): Unit =
     mainClass(converter.toVirtualFile(sourceFile.toPath), className)
 
   override def toVirtualFile(path: Path): VirtualFile = converter.toVirtualFile(path)
@@ -225,7 +224,7 @@ abstract class ClientCallbackBase(converter: FileConverter) extends xsbti.Analys
 }
 
 private object emptyChanges extends DependencyChanges {
-  override val modifiedBinaries: Array[File] = Array.empty
+  override val modifiedBinaries: Array[java.io.File] = Array.empty
   override val modifiedClasses: Array[String] = Array.empty
   override val modifiedLibraries: Array[VirtualFileRef] = Array.empty
 

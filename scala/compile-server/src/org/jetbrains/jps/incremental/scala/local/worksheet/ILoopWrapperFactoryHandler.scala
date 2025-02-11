@@ -8,9 +8,10 @@ import org.jetbrains.plugins.scala.compiler.data.{CompilerJars, SbtData}
 import org.jetbrains.plugins.scala.project.Version
 import sbt.util.{Level, Logger}
 
-import java.io.{File, PrintStream}
+import java.io.PrintStream
 import java.lang.reflect.InvocationTargetException
 import java.net.{URLClassLoader, URLDecoder}
+import java.nio.file.{Files, Path, Paths}
 
 class ILoopWrapperFactoryHandler {
   import ILoopWrapperFactoryHandler._
@@ -112,7 +113,7 @@ object ILoopWrapperFactoryHandler {
 
   private val FallBackScalaVersion = ScalaVersion("2.12.0")
 
-  private def findContainingJar(clazz: Class[_]): Option[File] = {
+  private def findContainingJar(clazz: Class[_]): Option[Path] = {
     val resource = clazz.getResource(s"/${clazz.getName.replace('.', '/')}.class")
 
     if (resource == null) return None
@@ -121,19 +122,19 @@ object ILoopWrapperFactoryHandler {
     val idx = url.indexOf(".jar!")
     if (idx == -1) return None
 
-    Some(new File(url.substring(0, idx + 4))).filter(_.exists())
+    Some(Paths.get(url.substring(0, idx + 4))).filter(Files.exists(_))
   }
 
   private def createClassLoader(compilerJars: CompilerJars): URLClassLoader = {
     val iLoopWrapperClass = classOf[ILoopWrapper]
     val wrapperImplsJar =
       findContainingJar(iLoopWrapperClass)
-        .map(_.toPath.getParent.getParent.resolve("worksheet-repl-interface").resolve("impls.jar").toFile)
+        .map(_.getParent.getParent.resolve("worksheet-repl-interface").resolve("impls.jar"))
         .toSeq
 
-    val jars = wrapperImplsJar ++ compilerJars.allJars
+    val jars = wrapperImplsJar ++ compilerJars.allJars.map(_.toPath)
     val replInterfaceLoader = classOf[ILoopWrapper].getClassLoader
-    new URLClassLoader(sbt.io.Path.toURLs(jars), replInterfaceLoader)
+    new URLClassLoader(jars.map(_.toUri.toURL).toArray, replInterfaceLoader)
   }
 
   // use for debugging
@@ -152,6 +153,6 @@ object ILoopWrapperFactoryHandler {
 
   case class ReplContext(sbtData: SbtData,
                          compilerJars: CompilerJars,
-                         classpath: Seq[File],
+                         classpath: Seq[Path],
                          scalacOptions: Seq[String])
 }

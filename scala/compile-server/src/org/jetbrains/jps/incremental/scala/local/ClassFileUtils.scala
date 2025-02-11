@@ -1,8 +1,6 @@
 package org.jetbrains.jps.incremental.scala.local
 
-import java.io.File
-
-import com.intellij.openapi.util.io.FileUtil
+import java.nio.file.{Files, Path, Paths}
 
 object ClassFileUtils {
 
@@ -12,12 +10,12 @@ object ClassFileUtils {
    *
    * @return .tasty-file if it exists
    */
-  def correspondingTastyFile(classFile: File): Option[File] = {
-    val canonicalPath = FileUtil.toCanonicalPath(classFile.getPath)
+  def correspondingTastyFile(classFile: Path): Option[Path] = {
+    val canonicalPath = classFile.toAbsolutePath.normalize().toString
     if (canonicalPath.endsWith(".class")) {
       val tastyCanonicalPath = canonicalPath.split('.').init.mkString("", ".", ".tasty")
-      val tastyFile = new File(tastyCanonicalPath)
-      Some(tastyFile).filter(_.exists)
+      val tastyFile = Paths.get(tastyCanonicalPath)
+      Some(tastyFile).filter(Files.exists(_))
     } else {
       None
     }

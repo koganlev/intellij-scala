@@ -1,6 +1,5 @@
 package org.jetbrains.jps.incremental.scala.local
 
-import org.jetbrains.jps.incremental.scala.{Client, CompileServerBundle, compilerVersion}
 import org.jetbrains.jps.incremental.scala.local.CompilerFactoryImpl._
 import org.jetbrains.jps.incremental.scala.{Client, CompileServerBundle, compilerVersion}
 import org.jetbrains.plugins.scala.compiler.data.{CompilerData, CompilerJars, IncrementalityType, SbtData}
@@ -8,16 +7,15 @@ import org.jetbrains.plugins.scala.project.Version
 import sbt.internal.inc._
 import sbt.internal.inc.classpath.{ClassLoaderCache, ClasspathUtil}
 import sbt.internal.inc.javac.JavaTools
-import sbt.io.Path
 import sbt.util.Logger
 import xsbti.compile.{ScalaInstance => _, _}
 
-import java.io.File
 import java.net.URLClassLoader
+import java.nio.file.{Files, Path, Paths}
 
 class CompilerFactoryImpl(sbtData: SbtData) extends CompilerFactory {
 
-  override def createCompiler(compilerData: CompilerData, client: Client, fileToStore: File => AnalysisStore): Compiler = {
+  override def createCompiler(compilerData: CompilerData, client: Client, fileToStore: Path => AnalysisStore): Compiler = {
 
     val scalacOption: Option[AnalyzingCompiler] = getScalac(sbtData, compilerData.compilerJars, client)
 
@@ -28,16 +26,16 @@ class CompilerFactoryImpl(sbtData: SbtData) extends CompilerFactory {
         // https://github.com/sbt/zinc/discussions/1263
         // The dummy ScalaInstance is necessary in build modules that do not have a Scala SDK configured, for example,
         // pure Java modules in gradle and Maven.
-        def dummyScalaInstance: (ScalaInstance, File) = {
-          val dummyFile = new File("")
+        def dummyScalaInstance: (ScalaInstance, Path) = {
+          val dummyFile = Paths.get("")
 
           val scalaInstance = new ScalaInstance(
             version = "",
             loader = null,
             loaderCompilerOnly = null,
             loaderLibraryOnly = null,
-            libraryJars = Array(dummyFile),
-            compilerJars = Array(dummyFile),
+            libraryJars = Array(dummyFile.toFile),
+            compilerJars = Array(dummyFile.toFile),
             allJars = Array.empty,
             explicitActual = Some("")
           )
@@ -79,10 +77,10 @@ class CompilerFactoryImpl(sbtData: SbtData) extends CompilerFactory {
         case other => other
       }
 
-      val compiledInterfaceJar = customCompilerBridge.getOrElse(getOrCompileInterfaceJar(
-        home = sbtData.interfacesHome,
+      val compiledInterfaceJar = customCompilerBridge.map(_.toPath).getOrElse(getOrCompileInterfaceJar(
+        home = sbtData.interfacesHome.toPath,
         compilerBridges = sbtData.compilerBridges,
-        interfaceJars = Seq(sbtData.sbtInterfaceJar, sbtData.compilerInterfaceJar),
+        interfaceJars = Seq(sbtData.sbtInterfaceJar, sbtData.compilerInterfaceJar).map(_.toPath),
         scalaInstance = scalaInstance,
         javaClassVersion = sbtData.javaClassVersion,
         client = Option(client)
@@ -90,7 +88,7 @@ class CompilerFactoryImpl(sbtData: SbtData) extends CompilerFactory {
 
       new AnalyzingCompiler(
         scalaInstance,
-        ZincCompilerUtil.constantBridgeProvider(scalaInstance, compiledInterfaceJar),
+        ZincCompilerUtil.constantBridgeProvider(scalaInstance, compiledInterfaceJar.toFile),
         ClasspathOptionsUtil.javac(false), _ => (),
         classloaderCache
       )
@@ -102,14 +100,14 @@ object CompilerFactoryImpl {
 
   private val scalaInstanceCache = new Cache[CompilerJars, ScalaInstance](3)
 
-  private var classLoadersMap = Map[Seq[File], ClassLoader]()
+  private var classLoadersMap = Map[Seq[Path], ClassLoader]()
 
   private def getOrCreateScalaInstance(jars: CompilerJars): ScalaInstance =
     scalaInstanceCache.getOrUpdate(jars)(() => createScalaInstance(jars))
 
   private def createScalaInstance(jars: CompilerJars) = {
-    def createClassLoader(paths: Seq[File]) = {
-      val urls = Path.toURLs(paths)
+    def createClassLoader(paths: Seq[Path]) = {
+      val urls = paths.map(_.toUri.toURL).toArray
 
       // NOTE: it's required for only for Scala3 compilation, cause they moved to `xsbti.CompilerInterface2`
       // We need to use same compile-interface classes in the Scala3 compiler and Scala Compile Server
@@ -132,13 +130,13 @@ object CompilerFactoryImpl {
       newClassloader
     }
 
-    def getOrCreateClassLoader(paths: Seq[File]) = synchronized {
+    def getOrCreateClassLoader(paths: Seq[Path]) = synchronized {
       classLoadersMap.getOrElse(paths, createClassLoader(paths))
     }
 
-    val classLoader = getOrCreateClassLoader(jars.allJars)
-    val loaderCompilerOnly = getOrCreateClassLoader(jars.libraryJars ++ jars.compilerJars)
-    val loaderLibraryOnly = getOrCreateClassLoader(jars.libraryJars)
+    val classLoader = getOrCreateClassLoader(jars.allJars.map(_.toPath))
+    val loaderCompilerOnly = getOrCreateClassLoader((jars.libraryJars ++ jars.compilerJars).map(_.toPath))
+    val loaderLibraryOnly = getOrCreateClassLoader(jars.libraryJars.map(_.toPath))
 
     val version = compilerVersion(classLoader)
 
@@ -154,41 +152,42 @@ object CompilerFactoryImpl {
     )
   }
 
-  private def getOrCompileInterfaceJar(home: File,
+  private def getOrCompileInterfaceJar(home: Path,
                                        compilerBridges: SbtData.CompilerBridges,
-                                       interfaceJars: Seq[File],
+                                       interfaceJars: Seq[Path],
                                        scalaInstance: ScalaInstance,
                                        javaClassVersion: String,
-                                       client: Option[Client]): File = {
+                                       client: Option[Client]): Path = {
     val scalaVersion = Version(scalaInstance.actualVersion)
     if (is3_0(scalaVersion))
-      compilerBridges.scala3._3_0
+      compilerBridges.scala3._3_0.toPath
     else if (is3_1(scalaVersion))
-      compilerBridges.scala3._3_1
+      compilerBridges.scala3._3_1.toPath
     else if (is3_2(scalaVersion))
-      compilerBridges.scala3._3_2
+      compilerBridges.scala3._3_2.toPath
     else if (is3_3(scalaVersion)) {
-      if (scalaVersion.major(3) <= Version("3.3.1")) compilerBridges.scala3._3_3_1
-      else compilerBridges.scala3._3_3
+      if (scalaVersion.major(3) <= Version("3.3.1")) compilerBridges.scala3._3_3_1.toPath
+      else compilerBridges.scala3._3_3.toPath
     } else if (isLatest3(scalaVersion))
-      compilerBridges.scala3._3_4
+      compilerBridges.scala3._3_4.toPath
     else {
-      val sourceJar: File =
+      val sourceJar: Path = {
         if (isBefore_2_11(scalaVersion)) compilerBridges.scala._2_10
         else if (isBefore_2_13(scalaVersion)) compilerBridges.scala._2_11
         else compilerBridges.scala._2_13
+      }.toPath
 
-      val bridgeFileName = s"compiler-bridge-${scalaVersion.presentation}-$javaClassVersion"
-      val targetJar = new File(home, s"$bridgeFileName.jar")
+      val bridgeFileName = s"compiler-bridge-${scalaVersion.presentation}-$javaClassVersion.jar"
+      val targetJar = home.resolve(bridgeFileName)
 
-      if (!targetJar.exists) {
+      if (!Files.exists(targetJar)) {
         client.foreach(_.progress(CompileServerBundle.message("compiling.scalac.interface", scalaVersion)))
-        home.mkdirs()
+        Files.createDirectories(home)
         val raw = new RawCompiler(scalaInstance, ClasspathOptionsUtil.auto, NullLogger)
         AnalyzingCompiler.compileSources(
-          Seq(sourceJar.toPath),
-          targetJar.toPath,
-          interfaceJars.map(_.toPath),
+          Seq(sourceJar),
+          targetJar,
+          interfaceJars,
           id = bridgeFileName,
           raw,
           NullLogger

@@ -1,12 +1,13 @@
 package org.jetbrains.jps.incremental.scala.local.worksheet
 
-import java.io.{File, OutputStream, PrintStream}
-import java.lang.reflect.InvocationTargetException
-import java.net.{URL, URLClassLoader}
-
 import org.jetbrains.jps.incremental.scala.Client
 import org.jetbrains.jps.incremental.scala.local.worksheet.util.IOUtils
 import org.jetbrains.plugins.scala.compiler.data.worksheet.WorksheetArgs
+
+import java.io.{OutputStream, PrintStream}
+import java.lang.reflect.InvocationTargetException
+import java.net.{URL, URLClassLoader}
+import java.nio.file.Paths
 
 class WorksheetInProcessRunnerFactory {
 
@@ -37,11 +38,11 @@ class WorksheetInProcessRunnerFactory {
     private val WORKSHEET = "#worksheet#"
 
     override def loadAndRun(args: WorksheetArgs.RunPlain, context: WorksheetRunnerContext, client: Client): Unit = {
-      def toUrlSpec(p: String): URL = new File(p).toURI.toURL
+      def toUrlSpec(p: String): URL = Paths.get(p).toUri.toURL
 
       val classLoader: URLClassLoader = {
         val worksheetUrls = (Seq(args.pathToRunnersJar, args.worksheetTempFile) ++ args.outputDirs).map(_.toURI.toURL)
-        val classpathUrls = context.classpath.map(_.toURI.toURL)
+        val classpathUrls = context.classpath.map(_.toUri.toURL)
         val compilerUrls  = {
           val jars = context.compilerJars.allJars
           jars.map(_.getCanonicalPath).map(toUrlSpec)

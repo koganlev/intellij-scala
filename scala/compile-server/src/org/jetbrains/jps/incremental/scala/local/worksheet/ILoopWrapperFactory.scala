@@ -1,13 +1,14 @@
 package org.jetbrains.jps.incremental.scala.local.worksheet
 
-import org.jetbrains.jps.incremental.scala.{Client, CompileServerBundle}
 import org.jetbrains.jps.incremental.scala.local.worksheet.ILoopWrapperFactory.{ILoopCreationException, MyUpdatePrintStream, MyUpdatePrintWriter}
 import org.jetbrains.jps.incremental.scala.local.worksheet.ILoopWrapperFactoryHandler.{ReplContext, ScalaVersion}
 import org.jetbrains.jps.incremental.scala.local.worksheet.repl_interface.{ILoopWrapper, ILoopWrapperReporter, NoopReporter, PrintWriterReporter}
+import org.jetbrains.jps.incremental.scala.{Client, CompileServerBundle}
 import org.jetbrains.plugins.scala.compiler.data.worksheet.{ReplMessages, WorksheetArgs}
 
-import java.io._
+import java.io.{BufferedWriter, Flushable, IOException, OutputStream, OutputStreamWriter, PrintStream, PrintWriter}
 import java.nio.charset.StandardCharsets
+import java.nio.file.Files
 import java.util.Base64
 import java.util.regex.Pattern
 import java.{util => ju}
@@ -143,12 +144,12 @@ class ILoopWrapperFactory {
     }
 
     val replClasspathChunks = Seq(
-      replContext.compilerJars.allJars,
-      args.outputDirs,
+      replContext.compilerJars.allJars.map(_.toPath),
+      args.outputDirs.map(_.toPath),
       replContext.classpath
     )
     val replClasspath = replClasspathChunks.flatten
-    val classpathStrings = replClasspath.filter(_.exists).map(_.getAbsolutePath).distinct.sorted.asJava
+    val classpathStrings = replClasspath.filter(Files.exists(_)).map(_.toAbsolutePath.normalize().toString).distinct.sorted.asJava
     val scalaOptions = replContext.scalacOptions.asJava
 
     try {

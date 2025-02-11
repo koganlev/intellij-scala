@@ -4,9 +4,8 @@ import org.jetbrains.jps.incremental.scala.local.zinc.{AnalysisStoreFactory, Sta
 import org.jetbrains.jps.incremental.scala.{Client, CompileServerBundle, DelegateClient, ExitCode, Server}
 import org.jetbrains.plugins.scala.compiler.data.{CompilationData, CompilerData, DocumentCompilationArguments, SbtData}
 import sbt.internal.inc.{Analysis, PlainVirtualFileConverter}
-import xsbti.compile.{AnalysisContents, AnalysisStore}
+import xsbti.compile.AnalysisContents
 
-import java.io.File
 import java.nio.file.Path
 import java.util.ServiceLoader
 import scala.jdk.CollectionConverters._
@@ -38,8 +37,7 @@ final class LocalServer extends Server {
     val compiler = try {
       val compilerFactory = lock.synchronized(compilerFactoryFrom(sbtData, compilerData, client))
       collectingSourcesClient.progress(CompileServerBundle.message("instantiating.compiler"))
-      val fileToStore: File => AnalysisStore = (AnalysisStoreFactory.createAnalysisStore _).compose(_.toPath)
-      compilerFactory.createCompiler(compilerData, collectingSourcesClient, fileToStore)
+      compilerFactory.createCompiler(compilerData, collectingSourcesClient, AnalysisStoreFactory.createAnalysisStore)
     } catch {
       case e: Throwable =>
         compilationData.sources.foreach(f => collectingSourcesClient.sourceStarted(f.toString))
@@ -133,9 +131,9 @@ final class LocalServer extends Server {
 object LocalServer {
   private trait CollectingSourcesClient extends Client {
 
-    var sources = Set.empty[File]
+    var sources = Set.empty[java.io.File]
 
-    abstract override def generated(source: File, module: File, name: String): Unit = {
+    abstract override def generated(source: java.io.File, module: java.io.File, name: String): Unit = {
       super.generated(source, module, name)
       sources += source
     }

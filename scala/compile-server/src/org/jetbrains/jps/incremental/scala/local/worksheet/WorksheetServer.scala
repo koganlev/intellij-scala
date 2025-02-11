@@ -1,12 +1,12 @@
 package org.jetbrains.jps.incremental.scala.local.worksheet
 
-import java.io._
-import java.nio.{Buffer, ByteBuffer}
-
 import org.jetbrains.jps.incremental.scala.local.worksheet.ILoopWrapperFactoryHandler.ReplContext
 import org.jetbrains.jps.incremental.scala.{Client, CompileServerBundle}
 import org.jetbrains.plugins.scala.compiler.data.worksheet._
 import org.jetbrains.plugins.scala.compiler.data.{Arguments, CompilerJars}
+
+import java.io.{OutputStream, PrintStream}
+import java.nio.{Buffer, ByteBuffer}
 
 class WorksheetServer {
   import WorksheetServer._
@@ -40,7 +40,7 @@ class WorksheetServer {
     ReplContext(
       args.sbtData,
       compilerJars,
-      compilationData.classpath,
+      compilationData.classpath.map(_.toPath),
       compilationData.scalaOptions
     )
   }
@@ -48,7 +48,7 @@ class WorksheetServer {
   private def plainContext(args: Arguments, compilerJars: CompilerJars): WorksheetRunnerContext =
     WorksheetRunnerContext(
       compilerJars,
-      args.compilationData.classpath
+      args.compilationData.classpath.map(_.toPath)
     )
 }
 
