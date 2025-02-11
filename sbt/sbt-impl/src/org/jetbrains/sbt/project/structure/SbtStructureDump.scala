@@ -328,7 +328,7 @@ class SbtStructureDump {
 
     val processListener: (OutputType, String) => Unit = (typ, line) => {
       if (collectProcessOutput) {
-        processOutputBuilder.append(s"[${typ.getClass.getSimpleName}] $line")
+        processOutputBuilder.append(s"[${typ.name}] $line")
         if (!line.endsWith("\n")) {
           processOutputBuilder.append('\n')
         }

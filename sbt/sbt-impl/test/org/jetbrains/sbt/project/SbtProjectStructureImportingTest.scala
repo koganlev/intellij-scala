@@ -30,6 +30,8 @@ final class SbtProjectStructureImportingTest extends SbtProjectStructureImportin
 
   override protected def enableSeparateModulesForProdTest: Boolean = false
 
+  override protected def copyTestProjectToTemporaryDir: Boolean = true
+
   def testSimple(): Unit = {
     val scalaLibraries = ProjectStructureTestUtils.expectedScalaLibraryWithScalaSdkForSbt(useEnv = true)("2.13.14")
     runSimpleTest("simple", scalaLibraries)
@@ -1130,4 +1132,92 @@ final class SbtProjectStructureImportingTest extends SbtProjectStructureImportin
       modules := root :: project1 :: project2 :: Nil
     }
   )
+
+  def testSimpleSbt2Latest(): Unit = {
+    val expectedScala_3_3 = ProjectStructureTestUtils.expectedScalaLibraryWithScalaSdkForSbt(useEnv = true)("3.3.3") :+
+      ProjectStructureTestUtils.expectedScalaLibrary(useEnv = true)("2.13.12", SbtProjectSystem.Id)
+    val expectedScala_3_6 = ProjectStructureTestUtils.expectedScalaLibraryWithScalaSdkForSbt(useEnv = true)("3.6.2") :+
+      ProjectStructureTestUtils.expectedScalaLibrary(useEnv = true)("2.13.15", SbtProjectSystem.Id)
+
+    val expectedScalaLibraries = expectedScala_3_3 ++ expectedScala_3_6
+
+    injectVariable(
+      getTestProjectDir / "project" / "build.properties",
+      "$LATEST_SBT_2$",
+      SbtVersion.Latest.Sbt_2.minor
+    )
+
+    runTest(
+      new project("root") {
+        libraries := expectedScalaLibraries
+
+        // ATTENTION: since sbt 2.0:
+        // 1. there is only one target dir in the build root and it's hardcoded as "target".
+        // 2. all compilation output is located in the root target directory
+        // See details:
+        //   - https://github.com/sbt/sbt/issues/3681 (it's WIP currently, 10 Feb 2025)
+        //   - https://github.com/sbt/sbt/issues/8037
+        modules := Seq(
+          new module("root.root-build") {
+            ProjectStructureDsl.sources := Seq("")
+            excluded := Seq("project/target", "target")
+          },
+
+          new module("root") {
+            contentRoots += getProjectPath
+            libraryDependencies := expectedScala_3_3
+            commonSourceResourceAndTargetDirs(this)
+            compileOutputPath := "$PROJECT_ROOT$/target/out/jvm/scala-3.3.3/root/classes"
+            excluded := Seq("target")
+          },
+          new module("root.subProject1") {
+            libraryDependencies := expectedScala_3_3
+            commonSourceResourceAndTargetDirs(this)
+            compileOutputPath := "$PROJECT_ROOT$/target/out/jvm/scala-3.3.3/subproject1/classes"
+            excluded := Nil
+          },
+          new module("root.subProject2") {
+            libraryDependencies := expectedScala_3_6
+            commonSourceResourceAndTargetDirs(this)
+            compileOutputPath := "$PROJECT_ROOT$/target/out/jvm/scala-3.6.2/subproject2/classes"
+            excluded := Nil
+          },
+        )
+      }
+    )
+
+    // Adding the assertion here not to create a separate heavy test for such a tiny check
+    // org.jetbrains.plugins.scala.project.ProjectExt#modulesWithScala
+    Assert.assertEquals(
+      "modulesWithScala should return list of non *-build modules",
+      Seq("root", "root.subProject1", "root.subProject2"),
+      myProject.modulesWithScala.map(_.getName),
+    )
+
+    val expectedLineInProcessOutput = "[error] Some error message which shouldn't fail the whole build, see SCL-21478 and SCL-13038"
+    assertTrue(
+      s"Can't find this line in sbt process output during sbt structure extraction:\n$expectedLineInProcessOutput",
+      SbtProjectResolver.processOutputOfLatestStructureDump.contains(expectedLineInProcessOutput)
+    )
+
+    assertSbtDirectoryCompletionContributorVariants(
+      myProject.baseDir,
+      DefaultSbtContentRootsScala3
+    )
+  }
+
+  private def commonSourceResourceAndTargetDirs(module: module): Unit = {
+    import module._
+    ProjectStructureDsl.sources := Seq("src/main/scala", "src/main/java")
+    testSources := Seq("src/test/scala", "src/test/java")
+    resources := Seq("src/main/resources")
+    testResources := Seq("src/test/resources")
+    excluded := Seq("target")
+  }
+
+  private def injectVariable(file: File, variableName: String, value: String): Unit = {
+    val fileContent = FileUtil.loadFile(file)
+    val updatedContent = fileContent.replace(variableName, value)
+    FileUtil.writeToFile(file, updatedContent)
+  }
 }
