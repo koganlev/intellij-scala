@@ -310,6 +310,43 @@ class ImplicitParametersAnnotatorTest extends ImplicitParametersAnnotatorTestBas
       Error("unbox[Int]", notFound("B[Int]"))
     )
   }
+
+  def testNonDivergentTypeWithEvolvingCoverSet(): Unit = {
+    val actualMessages = messages(
+      """
+        |object Test {
+        |  trait +[L, R]
+        |
+        |  trait Atomic[V]
+        |  trait Assign[V, X]
+        |  trait AsString[X]
+        |
+        |  object AsString {
+        |    implicit def atomic[V](implicit a: Atomic[V]): AsString[V]
+        |    implicit def assign[V, X](implicit a: Assign[V, X], asx: AsString[X]): AsString[V]
+        |    implicit def plus[L, R](implicit asl: AsString[L], asr: AsString[R]): AsString[+[L, R]]
+        |  }
+        |
+        |  trait X
+        |  implicit val declareX: Atomic[X]
+        |  trait Y
+        |  implicit val declareY: Atomic[Y]
+        |  trait Z
+        |  implicit val declareZ: Atomic[Z]
+        |
+        |  trait Q
+        |  implicit val declareQ: Assign[Q, (X + Y) + Z]
+        |  trait R
+        |  implicit val declareR: Assign[R, Q + Z]
+        |
+        |  def implicitly[T](implicit t: T): T
+        |  implicitly[AsString[R]]
+        |}
+        |""".stripMargin
+    ).get
+
+    assertNothing(actualMessages)
+  }
 }
 
 class ImplicitParametersAnnotatorTest_Scala3 extends ImplicitParametersAnnotatorTestBase {
@@ -354,6 +391,8 @@ class ImplicitParametersAnnotatorTest_Scala3 extends ImplicitParametersAnnotator
 //annotator tests doesn't have scala library, so it's not possible to use FunctionType, for example
 @Category(Array(classOf[TypecheckerTests]))
 class ImplicitParametersAnnotatorHeavyTest extends ScalaLightCodeInsightFixtureTestCase {
+  import Message._
+
   def testSCL16246(): Unit = checkTextHasNoErrors(
     """
       |trait Info[A] {

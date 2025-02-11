@@ -855,7 +855,9 @@ class ImplicitCollector(
     lazy val tltcT = topLevelTypeConstructors(t)
     lazy val tltcU = topLevelTypeConstructors(u)
     //println(s"complexity($t) [$ct] > complexity($u) [$ut] && [$tltcT] intersects [$tltcU] = [${tltcT.exists(tltcU.contains)}]")
-    ct > ut && tltcT.exists(tltcU.contains)
+    ct > ut &&
+      tltcT.exists(tltcU.contains) &&
+      coveringSet(t) == coveringSet(u)
   }
 
   private def topLevelTypeConstructors(tp: ScType): Set[ScType] = {
@@ -883,6 +885,28 @@ class ImplicitCollector(
       case ScCompoundType(comps, _, _) => comps.foldLeft(0)(_ + complexity(_))
       case _                           => 1
     }
+
+  def coveringSet(coreTp: ScType): Set[PsiNamedElement] = {
+    val designators = Set.newBuilder[PsiNamedElement]
+
+    def extract(tp: ScType): Unit = tp match {
+      case ParameterizedType(designator, args) =>
+        extract(designator)
+        args.foreach(extract)
+      case ScCompoundType(comps, _, _) => comps.foreach(extract)
+      case ScExistentialType(quant, wildcards) => extract(quant)
+        wildcards.iterator
+          .map(_.upper)
+          .filterNot(_.isAny)
+          .foreach(extract)
+      case ScDesignatorType(designator) => designators += designator
+      case _ => tp.extractDesignated(expandAliases = true).foreach(designators += _)
+    }
+
+    extract(coreTp)
+    //println(s"$coreTp: ${designators.result().toSeq.map(_.getName).sorted.mkString(",")}")
+    designators.result()
+  }
 
   private def checkWeakConformance(place: PsiElement, left: ScType, right: ScType): ConstraintsResult = {
     import SmartSuperTypeUtil.{TraverseSupers, traverseSuperTypes}
