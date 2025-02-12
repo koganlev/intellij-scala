@@ -11,6 +11,7 @@ import org.jetbrains.plugins.scala.lang.psi.api.ScalaPsiElement
 import org.jetbrains.plugins.scala.lang.psi.api.expr.{ScExpression, ScFunctionExpr, ScTypedExpression, ScUnderscoreSection}
 import org.jetbrains.plugins.scala.lang.psi.api.statements.params.ScParameter
 import org.jetbrains.plugins.scala.lang.psi.api.statements.{ScFunctionDefinition, ScPatternDefinition, ScVariableDefinition}
+import org.jetbrains.plugins.scala.settings.annotations.ScalaTypeAnnotationSettings.TypeAnnotationReasons
 import org.jetbrains.plugins.scala.settings.annotations._
 import org.jetbrains.plugins.scala.util._
 
@@ -24,12 +25,7 @@ class TypeAnnotationInspection extends LocalInspectionTool {
       inspect(value, value.bindings.head, value.expr, holder)
     case variable: ScVariableDefinition if variable.isSimple && !variable.hasExplicitType =>
       inspect(variable, variable.bindings.head, variable.expr, holder)
-    case method: ScFunctionDefinition
-      if method.hasAssign
-        && !method.hasExplicitType
-        && !method.isConstructor
-        // Mill build files often elide type annotations of tasks
-        && !method.containingScalaFile.exists(_.isMillFile) =>
+    case method: ScFunctionDefinition if method.hasAssign && !method.hasExplicitType && !method.isConstructor =>
       inspect(method, method.nameId, method.body, holder)
     case (parameter: ScParameter) & Parent(Parent(Parent(_: ScFunctionExpr))) if parameter.typeElement.isEmpty =>
       inspect(parameter, parameter.nameId, implementation = None, holder)
@@ -45,12 +41,13 @@ object TypeAnnotationInspection {
 
   def highlightKey: HighlightDisplayKey = HighlightDisplayKey.find("TypeAnnotation")
 
-  def getReasonForTypeAnnotationOn(element: ScalaPsiElement, implementation: Option[ScExpression]): Option[String] = {
+  def getReasonForTypeAnnotationOn(element: ScalaPsiElement, implementation: Option[ScExpression]): Option[TypeAnnotationReasons] = {
     val declaration = Declaration(element)
     val location = Location(element)
 
     ScalaTypeAnnotationSettings(element.getProject).reasonForTypeAnnotationOn(
-      declaration, location, implementation.map(Expression))
+      declaration, location, implementation.map(Expression)
+    )
   }
 
   private def inspect(element: ScalaPsiElement,
@@ -60,10 +57,14 @@ object TypeAnnotationInspection {
 
     getReasonForTypeAnnotationOn(element, implementation).foreach { reason =>
 
-      val fixes =
-          Seq(new AddTypeAnnotationQuickFix(anchor), new ModifyCodeStyleQuickFix())
+      val fixes = Seq(new AddTypeAnnotationQuickFix(anchor), new ModifyCodeStyleQuickFix())
 
-      holder.registerProblem(anchor, ScalaInspectionBundle.message("type.annotation.required.for", reason), fixes: _*)
+      holder.registerProblem(
+        anchor,
+        ScalaInspectionBundle.message("type.annotation.required.for", reason.reasonToEnforceOrUse),
+        reason.severity,
+        fixes: _*
+      )
     }
   }
 

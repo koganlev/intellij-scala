@@ -1,5 +1,6 @@
 package org.jetbrains.plugins.scala.settings.annotations
 
+import com.intellij.codeInspection.ProblemHighlightType
 import com.intellij.openapi.project.Project
 import org.jetbrains.plugins.scala.extensions.BooleanExt
 import org.jetbrains.plugins.scala.lang.formatting.settings.ScalaCodeStyleSettings
@@ -22,9 +23,9 @@ trait ScalaTypeAnnotationSettings {
     declaration: Declaration,
     location: Location,
     implementation: Option[Implementation]
-  ): Option[String] = {
+  ): Option[TypeAnnotationReasons] = {
     val reasons = reasonForTypeAnnotationOnImpl(declaration, location, implementation)
-    reasons.filter(_.reasonToExclude.isEmpty).map(_.reasonToEnforceOrUse)
+    reasons.filter(_.reasonToExclude.isEmpty)
   }
 
   def reasonForTypeAnnotationOnImpl(
@@ -39,7 +40,11 @@ object ScalaTypeAnnotationSettings {
   def apply(project: Project): ScalaTypeAnnotationSettings =
     new TypeAnnotationSettingsImpl(ScalaCodeStyleSettings.getInstance(project))
 
-  private[annotations] case class TypeAnnotationReasons(reasonToEnforceOrUse: String, reasonToExclude: Option[String])
+  case class TypeAnnotationReasons(
+    reasonToEnforceOrUse: String,
+    reasonToExclude:      Option[String],
+    severity:             ProblemHighlightType
+  )
 
   private class TypeAnnotationSettingsImpl(style: ScalaCodeStyleSettings) extends ScalaTypeAnnotationSettings {
 
@@ -53,12 +58,30 @@ object ScalaTypeAnnotationSettings {
 
       import style._
 
+      val implicitDefinition = "implicit definition"
+
       lazy val reasonToEnforce: Option[String] =
-        (TYPE_ANNOTATION_IMPLICIT_MODIFIER && !entity.isParameter && declaration.isImplicit).option("implicit definition")
-          .orElse((TYPE_ANNOTATION_UNIT_TYPE && !entity.isParameter && declaration.hasUnitType).option("Unit definition"))
-          .orElse((entity == Entity.Method && implementation.exists(_.containsReturn)).option("method with 'return'"))
-          .orElse((TYPE_ANNOTATION_STRUCTURAL_TYPE && !entity.isParameter && declaration.hasAccidentalStructuralType).option("structural type definition"))
-          .orElse((!entity.isParameter && declaration.isAbstractOrReturnsNullOrThrows).option("abstract or returns null"))
+        (
+          (TYPE_ANNOTATION_IMPLICIT_MODIFIER || location.isInScala3File)
+            && !entity.isParameter && declaration.isImplicit).option(implicitDefinition)
+          .orElse(
+            (TYPE_ANNOTATION_UNIT_TYPE && !entity.isParameter && declaration.hasUnitType).option("Unit definition")
+          ).orElse(
+            (entity == Entity.Method && implementation.exists(_.containsReturn)).option("method with 'return'")
+          ).orElse(
+            (
+              TYPE_ANNOTATION_STRUCTURAL_TYPE
+                && !entity.isParameter && declaration.hasAccidentalStructuralType
+              ).option("structural type definition")
+          ).orElse(
+            (!entity.isParameter && declaration.isAbstractOrReturnsNullOrThrows).option("abstract or returns null")
+          )
+
+      lazy val severity = reasonToEnforce.collect {
+        case `implicitDefinition` if location.isInScala3File =>
+          if (location.isInLocalScope) ProblemHighlightType.GENERIC_ERROR_OR_WARNING
+          else                         ProblemHighlightType.GENERIC_ERROR
+      }.getOrElse(ProblemHighlightType.GENERIC_ERROR_OR_WARNING)
 
       lazy val reasonToUse: Option[String] = entity match {
         case Entity.Parameter => TYPE_ANNOTATION_FUNCTION_PARAMETER.option("function literal parameter")
@@ -84,9 +107,9 @@ object ScalaTypeAnnotationSettings {
           .orElse(declaration.isAnnotatedWith(TYPE_ANNOTATION_EXCLUDE_ANNOTATED_WITH.asScala).option("is in 'exclude annotated with' set"))
           .orElse(declaration.typeMatches(TYPE_ANNOTATION_EXCLUDE_WHEN_TYPE_MATCHES.asScala).option("is in 'exclude when type matches' set"))
 
-      val _reasonToEnforce = reasonToEnforce.map(r => TypeAnnotationReasons(r, None))
+      val _reasonToEnforce = reasonToEnforce.map(r => TypeAnnotationReasons(r, None, severity))
       _reasonToEnforce.orElse {
-        reasonToUse.map(r => TypeAnnotationReasons(r, reasonToExclude))
+        reasonToUse.map(r => TypeAnnotationReasons(r, reasonToExclude, severity))
       }
     }
   }

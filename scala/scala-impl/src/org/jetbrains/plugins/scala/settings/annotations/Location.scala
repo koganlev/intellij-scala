@@ -3,7 +3,7 @@ package org.jetbrains.plugins.scala.settings.annotations
 import com.intellij.openapi.roots.TestSourcesFilter.isTestSources
 import com.intellij.psi.search.GlobalSearchScope.moduleWithDependenciesAndLibrariesScope
 import com.intellij.psi.{FileViewProvider, PsiClass, PsiCodeFragment, PsiElement, PsiModifier}
-import org.jetbrains.plugins.scala.extensions.{ObjectExt, ViewProviderExt}
+import org.jetbrains.plugins.scala.extensions.{ObjectExt, PsiElementExt, ViewProviderExt}
 import org.jetbrains.plugins.scala.lang.psi.ScalaPsiUtil.getModule
 import org.jetbrains.plugins.scala.lang.psi.api.ScalaFile
 import org.jetbrains.plugins.scala.lang.psi.api.expr.ScNewTemplateDefinition
@@ -21,6 +21,7 @@ sealed trait Location {
   def isInsideAnonymousClass: Boolean
   def isInsidePrivateClass: Boolean
   def isInsideOf(classesFqn: collection.Set[String]): Boolean
+  def isInScala3File: Boolean
 }
 
 object Location {
@@ -51,6 +52,8 @@ object Location {
 
     override final def isInCodeFragment: Boolean =
       element.getContainingFile.isInstanceOf[PsiCodeFragment]
+
+    override def isInScala3File: Boolean = element.isInScala3File
 
     override final def isInDialectSources: Boolean =
       findScalaViewProvider.exists {
