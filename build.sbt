@@ -784,7 +784,8 @@ lazy val mavenIntegration =
     .settings(
       intellijPlugins += "org.jetbrains.idea.maven".toPlugin,
       libraryDependencies += Dependencies.intellijMavenTestFramework % Test,
-      resolvers += Versions.intellijRepository_ForManagedIntellijDependencies
+      resolvers += Versions.intellijRepository_ForManagedIntellijDependencies,
+      packageMethod := PackagingMethod.PluginModule("scalaCommunity.maven")
     )
 
 lazy val junitIntegration =
