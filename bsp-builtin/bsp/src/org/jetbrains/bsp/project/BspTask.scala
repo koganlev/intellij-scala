@@ -184,10 +184,10 @@ class BspTask[T](project: Project,
 
   private def buildRequests(targets: Iterable[BspTarget], targetsToClean: Iterable[BspTarget])
                            (implicit server: BspServer, capabilities: BuildServerCapabilities, reporter: BuildReporter) = {
-    val targetsWithCompileCap: Iterable[BspTarget] = PersistentBspTargetCapabilitiesHolder.getInstance(project).btIdToCapabilities
-      .filter { case (id, cap) => targets.exists(_.target.toString == id.getUri) && cap.canCompile }
-      .keys
-      .map(id => BspTarget(targets.find(_.target.toString == id.getUri).get.workspace, new URI(id.getUri)))
+    val btIdCanCompile = BspTargetCanCompile.getInstance(project).getBtIdToCanCompile()
+    val targetsWithCompileCap: Iterable[BspTarget] = targets.filter {bt =>
+      val id = bt.target.toString
+      btIdCanCompile.containsKey(id) && btIdCanCompile.get(id) }
     if (targetsToClean.isEmpty) compileRequest(targetsWithCompileCap)
     else {
       cleanRequest(targetsToClean)

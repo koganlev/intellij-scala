@@ -42,6 +42,7 @@
         <externalProjectDataService implementation="org.jetbrains.bsp.data.BspMetadataService"/>
         <externalProjectDataService implementation="org.jetbrains.bsp.data.BspProjectDataService"/>
         <externalProjectDataService implementation="org.jetbrains.bsp.data.SbtBuildModuleDataBspService"/>
+        <externalProjectDataService implementation="org.jetbrains.bsp.data.BspTargetCanCompileDataService"/>
 
         <externalIconProvider key="BSP" implementationClass="org.jetbrains.bsp.BspIconProvider" />
 

@@ -667,7 +667,8 @@ private[importing] object BspResolverLogic {
     workspace: File,
     projectModules: ProjectModules,
     excludedPaths: List[File],
-    displayName: String
+    displayName: String,
+    canCompile: Map[String, java.lang.Boolean]
   ): DataNode[ProjectData] = {
 
     val projectRootPath = workspace.getCanonicalPathOptimized
@@ -675,6 +676,9 @@ private[importing] object BspResolverLogic {
     val projectRoot = new File(projectRootPath)
     val projectData = new ProjectData(BSP.ProjectSystemId, projectRoot.getName, projectRootPath, projectRootPath)
     val projectNode = new DataNode[ProjectData](ProjectKeys.PROJECT, projectData, null)
+
+    // somewhere here add to datanode[projectdata] my new node - create data and datanode with this data
+    // breakpoint in projectImport to see
 
     // synthetic root module when no natural module is at root
     val rootModule =
@@ -772,12 +776,15 @@ private[importing] object BspResolverLogic {
       val vcsRootsCandidates = projectModules.modules.flatMap(_.data.basePath).distinct
       new DataNode[BspProjectData](BspProjectData.Key, BspProjectData(jdkReference, vcsRootsCandidates.asJava, displayName), projectNode)
     }
+    
+    val bspCanCompileData = new DataNode[BspTargetCanCompileData](BspTargetCanCompileData.Key, BspTargetCanCompileData(canCompile.asJava), projectNode)
 
     // effects
     addModuleDependencies(moduleDeps ++ synthDeps, idToModuleMap)
     addRootExclusions(modules, projectRoot, excludedPaths)
     modules.foreach(projectNode.addChild)
     projectNode.addChild(bspProjectData)
+    projectNode.addChild(bspCanCompileData)
 
     projectLibraryDependencies.values.foreach { data =>
       val node = new DataNode[LibraryData](ProjectKeys.LIBRARY, data, projectNode)
