@@ -3,7 +3,7 @@ package org.jetbrains.plugins.scala.lang.psi.implicits
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.util.PsiTreeUtil
-import com.intellij.psi.{PsiClass, PsiElement, PsiNamedElement, ResolveState}
+import com.intellij.psi.{PsiClass, PsiElement, PsiFile, PsiNamedElement, ResolveState}
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenCustomHashMap
 import org.jetbrains.annotations.Nullable
 import org.jetbrains.plugins.scala.extensions._
@@ -33,13 +33,11 @@ import java.{util => ju}
 import scala.annotation.tailrec
 import scala.collection.mutable
 
-/**
-  * This class mark processor that only implicit object important among all PsiClasses
-  */
-abstract class ImplicitProcessor(override protected val getPlace: PsiElement,
-                                 protected val withoutPrecedence: Boolean)
-  extends BaseProcessor(StdKinds.refExprLastRef)(getPlace.projectContext)
-    with SubstitutablePrecedenceHelper {
+abstract class ImplicitProcessor(
+  override protected val getPlace: PsiElement,
+  protected val withoutPrecedence: Boolean
+) extends BaseProcessor(StdKinds.refExprLastRef)(getPlace.projectContext)
+  with SubstitutablePrecedenceHelper {
 
   private object ImplicitStrategy extends NameUniquenessStrategy
 
@@ -173,6 +171,8 @@ object ImplicitProcessor {
   private def lowerInFileWithoutType(element: PsiElement, place: PsiElement) = {
     val commonContext = PsiTreeUtil.findCommonContext(element, place)
 
+    def contextFile(e: PsiElement) = Option(PsiTreeUtil.getContextOfType(e, classOf[PsiFile]))
+
     def lowerInFile =
       strictlyOrderedByContext(
         before   = place,
@@ -180,7 +180,7 @@ object ImplicitProcessor {
         topLevel = Option(commonContext)
       )
 
-    if (place == commonContext) false
+    if (place == commonContext || contextFile(element) != contextFile(place)) false
     else
       element match {
         case fun: ScFunction if fun.returnTypeElement.isEmpty && !fun.isExtensionMethod => lowerInFile

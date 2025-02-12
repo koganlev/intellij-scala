@@ -471,29 +471,36 @@ class ImplicitCollector(
     val fun            = c.element.asInstanceOf[ScFunction]
     val canContainExts = canContainTargetMethod(c)
 
-    def wrongTypeParam(nonValueType: ScType, result: ImplicitResult): Some[ScalaResolveResult] = {
+    def wrongTypeParam(nonValueType: ScType, result: ImplicitResult): Option[ScalaResolveResult] = {
       val (valueType, typeParams) = inferValueType(nonValueType)
-      Some(c.copy(
-        problems = Seq(WrongTypeParameterInferred),
-        implicitParameterType = Some(valueType),
-        implicitReason = result,
-        unresolvedTypeParameters = Some(typeParams)
+      Option(c.copy(
+        problems                 = Seq(WrongTypeParameterInferred),
+        implicitParameterType    = Option(valueType),
+        implicitReason           = result,
+        unresolvedTypeParameters = Option(typeParams)
       ))
     }
 
-    def reportParamNotFoundResult(resType: ScType, implicitParams: Seq[ScalaResolveResult]): Option[ScalaResolveResult] = {
+    def reportParamNotFoundResult(resType: ScType, implicitArgs: Seq[ScalaResolveResult]): Option[ScalaResolveResult] = {
       val (valueType, typeParams) = inferValueType(resType)
+
+      val isOnlyProblemAmbiguity = implicitArgs.forall {
+        _.problems.forall(_.is[AmbiguousImplicitParameters])
+      }
+
       reportWrong(
         c.copy(
-          implicitParameters       = implicitParams,
-          implicitParameterType    = Some(valueType),
-          unresolvedTypeParameters = Some(typeParams)
+          implicitParameters       = implicitArgs,
+          implicitParameterType    = Option(valueType),
+          unresolvedTypeParameters = Option(typeParams)
         ),
-        ImplicitParameterNotFoundResult
+        ImplicitParameterNotFoundResult,
+        problems          = implicitArgs.flatMap(_.problems),
+        propagateFailures = isOnlyProblemAmbiguity
       )
     }
 
-    def noImplicitParametersResult(nonValueType: ScType): Some[ScalaResolveResult] = {
+    def noImplicitParametersResult(nonValueType: ScType): Option[ScalaResolveResult] = {
       val (valueType, typeParams) = inferValueType(nonValueType)
 
       val subst = expectedTypeConstraints match {
@@ -503,11 +510,11 @@ class ImplicitCollector(
 
       val result = c.copy(
         subst                    = c.substitutor.followed(subst),
-        implicitParameterType    = Some(valueType),
+        implicitParameterType    = Option(valueType),
         implicitReason           = OkResult,
-        unresolvedTypeParameters = Some(typeParams)
+        unresolvedTypeParameters = Option(typeParams)
       )
-      Some(result)
+      Option(result)
     }
 
     def fullResult(
@@ -581,7 +588,7 @@ class ImplicitCollector(
           else                return result
       }
 
-    val depth = ScalaProjectSettings.getInstance(project).getImplicitParametersSearchDepth
+    val depth            = ScalaProjectSettings.getInstance(project).getImplicitParametersSearchDepth
     val notTooDeepSearch = depth < 0 || searchImplicitsRecursively < depth
 
     if (hasImplicitClause && notTooDeepSearch && !c.isExtensionCall) {
@@ -597,27 +604,28 @@ class ImplicitCollector(
       }
 
       try {
-        val (resType, implicitParams0, constraints) =
+        val (resType, implicitArgs0, constraints) =
           InferUtil.updateTypeWithImplicitParameters(
             nonValueType,
             place,
-            Some(fun),
-            canThrowSCE = !fullInfo,
-            searchImplicitsRecursively + 1,
-            fullInfo
+            Option(fun),
+            canThrowSCE                = !fullInfo,
+            throwOnAmbiguous           = !place.isInScala3File,
+            searchImplicitsRecursively = searchImplicitsRecursively + 1,
+            fullInfo                   = fullInfo
           )
 
-        val implicitParams = implicitParams0.getOrElse(Seq.empty)
+        val implicitArgs = implicitArgs0.getOrElse(Seq.empty)
 
-        if (implicitParams.exists(_.isImplicitParameterProblem))
-          reportParamNotFoundResult(resType, implicitParams)
+        if (implicitArgs.exists(_.isImplicitParameterProblem))
+          reportParamNotFoundResult(resType, implicitArgs)
         else
           conversionDataCheckedResult match {
             case Some(earlierError) =>
               constraints.toSubst.fold(earlierError)(constraintSubst =>
                 earlierError.copy(subst = earlierError.substitutor.followed(constraintSubst))
               ).toOption
-            case _ => fullResult(resType, implicitParams, constraints, hadDependents)
+            case _ => fullResult(resType, implicitArgs, constraints, hadDependents)
           }
       } catch {
         case _: SafeCheckException => wrongTypeParam(nonValueType, CantInferTypeParameterResult)
