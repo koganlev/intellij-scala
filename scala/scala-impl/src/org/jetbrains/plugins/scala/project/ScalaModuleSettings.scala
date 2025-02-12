@@ -132,6 +132,9 @@ private class ScalaModuleSettings private(
   val hasSourceFutureFlag: Boolean =
     additionalCompilerOptions.contains("-source:future") || additionalCompilerOptions.contains("--source:future")
 
+  val hasSource3Migration: Boolean =
+    additionalCompilerOptions.contains("-source:3.0-migration") || additionalCompilerOptions.contains("--source:3.0-migration")
+
   val hasDeprecationFlag: Boolean =
     additionalCompilerOptions.contains("-deprecation") || additionalCompilerOptions.contains("--deprecation")
 

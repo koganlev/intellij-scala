@@ -62,8 +62,8 @@ class ScalaPsiManager(implicit val project: Project) extends Disposable {
   private val clearCacheOnTopLevelChange = new CleanupScheduler
   private val clearCacheOnRootsChange = new CleanupScheduler
 
-  val collectImplicitObjectsCache: ConcurrentMap[(ScType, GlobalSearchScope), Seq[ScType]] =
-    new ConcurrentHashMap[(ScType, GlobalSearchScope), Seq[ScType]]()
+  val collectImplicitObjectsCache: ConcurrentMap[(ScType, GlobalSearchScope, Boolean), Seq[ScType]] =
+    new ConcurrentHashMap[(ScType, GlobalSearchScope, Boolean), Seq[ScType]]()
 
   val implicitCollectorCache: ImplicitCollectorCache =
     CacheTracker.alwaysTrack("ScalaPsiManager.implicitCollectorCache", "ScalaPsiManager.implicitCollectorCache") {

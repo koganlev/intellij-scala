@@ -3,19 +3,17 @@ package org.jetbrains.plugins.scala.lang.psi.implicits
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.util.PsiTreeUtil
-import com.intellij.psi.util.PsiTreeUtil.isContextAncestor
 import com.intellij.psi.{PsiClass, PsiElement, PsiNamedElement, ResolveState}
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenCustomHashMap
 import org.jetbrains.annotations.Nullable
 import org.jetbrains.plugins.scala.extensions._
-import org.jetbrains.plugins.scala.lang.psi.ElementScope
 import org.jetbrains.plugins.scala.lang.psi.ScalaPsiUtil._
 import org.jetbrains.plugins.scala.lang.psi.api.ScPackageLike
 import org.jetbrains.plugins.scala.lang.psi.api.base.ScFieldId
 import org.jetbrains.plugins.scala.lang.psi.api.base.patterns.ScBindingPattern
-import org.jetbrains.plugins.scala.lang.psi.api.expr.{ScBlockExpr, ScExpression}
+import org.jetbrains.plugins.scala.lang.psi.api.expr.ScExpression
 import org.jetbrains.plugins.scala.lang.psi.api.statements.params.ScParameter
-import org.jetbrains.plugins.scala.lang.psi.api.statements.{ScExtensionBody, ScFunction, ScTypeAlias, ScTypeAliasDeclaration, ScTypeAliasDefinition}
+import org.jetbrains.plugins.scala.lang.psi.api.statements.{ScExtensionBody, ScFunction, ScPatternDefinition, ScTypeAlias, ScTypeAliasDeclaration, ScTypeAliasDefinition}
 import org.jetbrains.plugins.scala.lang.psi.api.toplevel.templates.{ScExtendsBlock, ScTemplateBody}
 import org.jetbrains.plugins.scala.lang.psi.api.toplevel.typedef.{ScMember, ScObject, ScTemplateDefinition}
 import org.jetbrains.plugins.scala.lang.psi.impl.ScalaPsiManager
@@ -24,11 +22,12 @@ import org.jetbrains.plugins.scala.lang.psi.types.api.{JavaArrayType, Parameteri
 import org.jetbrains.plugins.scala.lang.psi.types.recursiveUpdate.ScSubstitutor
 import org.jetbrains.plugins.scala.lang.psi.types.result.TypeResult
 import org.jetbrains.plugins.scala.lang.psi.types.{AliasType, ScAbstractType, ScAndType, ScCompoundType, ScExistentialArgument, ScExistentialType, ScOrType, ScParameterizedType, ScType}
+import org.jetbrains.plugins.scala.lang.psi.{ElementScope, ScalaPsiUtil}
 import org.jetbrains.plugins.scala.lang.resolve.ScalaResolveState.ResolveStateExt
 import org.jetbrains.plugins.scala.lang.resolve.processor.BaseProcessor
 import org.jetbrains.plugins.scala.lang.resolve.processor.precedence._
 import org.jetbrains.plugins.scala.lang.resolve.{ResolveUtils, ScalaResolveResult, ScalaResolveState, StdKinds}
-import org.jetbrains.plugins.scala.project.ProjectContext
+import org.jetbrains.plugins.scala.project.{ProjectContext, ProjectPsiElementExt}
 
 import java.{util => ju}
 import scala.annotation.tailrec
@@ -137,11 +136,27 @@ abstract class ImplicitProcessor(override protected val getPlace: PsiElement,
   }
 
   final def candidatesByType(expandedType: ScType): Set[ScalaResolveResult] = {
-    ImplicitProcessor
-      .findImplicitObjects(expandedType.removeAliasDefinitions(place = Some(getPlace)), getPlace.resolveScope)
-      .foreach(objectTpe =>
-        processType(objectTpe, getPlace, ScalaResolveState.withImplicitScopeObject(objectTpe))
-      )
+    val isScala3OrEquivalent =
+      getPlace.isInScala3File ||
+        getPlace.source3Options.isSource3Enabled ||
+        getPlace.source3Options.implicitResolution
+
+    val includePackagePrefix =
+      !isScala3OrEquivalent || getPlace.isSource3MigrationEnabled
+
+
+    val objects =
+      ImplicitProcessor
+        .findImplicitObjects(
+          expandedType.removeAliasDefinitions(place = Option(getPlace)),
+          getPlace.resolveScope,
+          includePackagePrefix
+        )
+
+    objects.foreach(objectTpe =>
+      processType(objectTpe, getPlace, ScalaResolveState.withImplicitScopeObject(objectTpe))
+    )
+
     candidatesS
   }
 }
@@ -149,59 +164,70 @@ abstract class ImplicitProcessor(override protected val getPlace: PsiElement,
 object ImplicitProcessor {
 
   def isAccessible(namedElement: PsiNamedElement, place: PsiElement): Boolean =
-    namedElement match {
-      case f: ScFunction              => ResolveUtils.isAccessible(f, place) && checkFunctionIsEligible(f, place)
+    (namedElement match {
+      case f: ScFunction              => ResolveUtils.isAccessible(f, place)
       case inNameContext(m: ScMember) => ResolveUtils.isAccessible(m, place)
       case _                          => true
-    }
+    }) && !lowerInFileWithoutType(namedElement, place)
 
-  private def checkFunctionIsEligible(function: ScFunction, place: PsiElement): Boolean = {
+  private def lowerInFileWithoutType(element: PsiElement, place: PsiElement) = {
+    val commonContext = PsiTreeUtil.findCommonContext(element, place)
 
-    if (function.hasExplicitType ||
-      function.isExtensionMethod ||
-      !isContextAncestor(function.getContainingFile, place, false))
-      return true
+    def lowerInFile =
+      strictlyOrderedByContext(
+        before   = place,
+        after    = element,
+        topLevel = Option(commonContext)
+      )
 
-    val commonContext = PsiTreeUtil.findCommonContext(function, place)
-
-    //weird case, it covers situation, when function comes from object, not treeWalkUp
-    if (place == commonContext)
-      return true
-
-    if (function == commonContext)
-      return false
-
-    strictlyOrderedByContext(before = function, after = place, topLevel = Some(commonContext))
+    if (place == commonContext) false
+    else
+      element match {
+        case fun: ScFunction if fun.returnTypeElement.isEmpty && !fun.isExtensionMethod => lowerInFile
+        case ScalaPsiUtil.inNameContext(pd: ScPatternDefinition)
+          if pd.typeElement.isEmpty =>
+          lowerInFile
+        case _ => false
+      }
   }
 
 
-  private def findImplicitObjects(`type`: ScType, scope: GlobalSearchScope)
-                                 (implicit context: ProjectContext): Seq[ScType] = {
+  private def findImplicitObjects(
+    `type`:               ScType,
+    scope:                GlobalSearchScope,
+    includePackagePrefix: Boolean
+  )(implicit
+    context: ProjectContext
+  ): Seq[ScType] = {
     val implicitObjectsCache = ScalaPsiManager.instance.collectImplicitObjectsCache
-    val cacheKey = (`type`, scope)
+    val cacheKey             = (`type`, scope, includePackagePrefix)
 
     implicitObjectsCache.get(cacheKey) match {
       case null =>
-        val implicitObjects = findImplicitObjectsImpl(`type`)(ElementScope(context.project, scope))
+        val implicitObjects = findImplicitObjectsImpl(`type`, includePackagePrefix)(ElementScope(context.project, scope))
         implicitObjectsCache.put(cacheKey, implicitObjects)
         implicitObjects
       case cached => cached
     }
   }
 
-  private[this] def findImplicitObjectsImpl(`type`: ScType)
-                                           (implicit elementScope: ElementScope): Seq[ScType] = {
+  private[this] def findImplicitObjectsImpl(
+    `type`:               ScType,
+    includePackagePrefix: Boolean
+  )(implicit
+    elementScope: ElementScope
+  ): Seq[ScType] = {
     val visited = mutable.HashSet.empty[ScType]
     val parts   = mutable.Queue.empty[ScType]
 
-    def collectPartsIter(iterable: IterableOnce[ScType]): Unit = {
+    def collectPartsIterable(iterable: IterableOnce[ScType]): Unit = {
       val iterator = iterable.iterator
       while (iterator.hasNext) {
         collectParts(iterator.next())
       }
     }
 
-    def collectPartsTr(tr: TypeResult): Unit =
+    def collectPartsTypeResult(tr: TypeResult): Unit =
       tr.foreach(collectParts)
 
     // Java Raw types are converted to F[ScExistentialArgument.Deferred("A", .....), ...]
@@ -236,6 +262,27 @@ object ImplicitProcessor {
       }
     }
 
+    def collectPartsFromSuperTypes(clazz: PsiClass, subst: ScSubstitutor): Unit =
+      clazz match {
+        case td: ScTemplateDefinition =>
+          collectPartsIterable(td.superTypes.map(subst))
+          td.selfType.foreach(stpe => collectParts(subst(stpe)))
+        case clazz: PsiClass => collectPartsIterable(clazz.getSuperTypes.map(t => subst(t.toScType())))
+      }
+
+    /**
+     * In scala 3 references to packages and package objects are anchors only under -source:3.0-migration.
+     * https://dotty.epfl.ch/3.0.0/docs/reference/changed-features/implicit-resolution.html
+     */
+    def processPackagePrefix(pack: ScPackageLike): Unit =
+      if (includePackagePrefix) {
+        for {
+          packageObject <- pack.findPackageObject(elementScope.scope)
+          designator     = ScDesignatorType(packageObject)
+        } parts += designator
+        pack.parentScalaPackage.foreach(processPackagePrefix)
+      }
+
     def collectParts(tp: ScType): Unit = {
       ProgressManager.checkCanceled()
       if (!visited.add(convertRawArgs(tp))) return
@@ -249,36 +296,28 @@ object ImplicitProcessor {
         case _ => ()
       }
 
-      def collectSupers(clazz: PsiClass, subst: ScSubstitutor): Unit =
-        clazz match {
-          case td: ScTemplateDefinition =>
-            collectPartsIter(td.superTypes.map(subst))
-            td.selfType.foreach(stpe => collectParts(subst(stpe)))
-          case clazz: PsiClass => collectPartsIter(clazz.getSuperTypes.map(t => subst(t.toScType())))
-        }
-
       tp match {
-        case ScDesignatorType(v: ScBindingPattern) => collectPartsTr(v.`type`())
-        case ScDesignatorType(v: ScFieldId)        => collectPartsTr(v.`type`())
-        case ScDesignatorType(p: ScParameter)      => collectPartsTr(p.`type`())
-        case ScCompoundType(comps, _, _)           => collectPartsIter(comps)
+        case ScDesignatorType(v: ScBindingPattern) => collectPartsTypeResult(v.`type`())
+        case ScDesignatorType(v: ScFieldId)        => collectPartsTypeResult(v.`type`())
+        case ScDesignatorType(p: ScParameter)      => collectPartsTypeResult(p.`type`())
+        case ScCompoundType(comps, _, _)           => collectPartsIterable(comps)
         case ScAndType(lhs, rhs)                   => collectParts(lhs); collectParts(rhs)
         case ScOrType(lhs, rhs)                    => collectParts(lhs); collectParts(rhs)
-        case ScDesignatorType(alias: ScTypeAliasDefinition) if alias.isOpaque => parts += tp
+        case ScDesignatorType(alias: ScTypeAliasDefinition) if alias.isOpaque        => parts += tp
         case ScDesignatorType(alias: ScTypeAliasDeclaration) if alias.isInScala3File => parts += tp
         case ParameterizedType(a: ScAbstractType, args) =>
           collectParts(a)
-          collectPartsIter(args)
+          collectPartsIterable(args)
         case p @ ParameterizedType(des, args) =>
           p.extractClassType match {
             case Some((clazz, subst)) =>
               parts += des
               collectParts(des)
-              collectPartsIter(args)
-              collectSupers(clazz, subst)
+              collectPartsIterable(args)
+              collectPartsFromSuperTypes(clazz, subst)
             case _ =>
               collectParts(des)
-              collectPartsIter(args)
+              collectPartsIterable(args)
           }
         case j: JavaArrayType =>
           val parameterizedType = j.getParameterizedType
@@ -290,9 +329,9 @@ object ImplicitProcessor {
         case proj @ ScProjectionType(projected, _) =>
           collectParts(projected)
           proj.actualElement match {
-            case v: ScBindingPattern => collectPartsTr(v.`type`().map(proj.actualSubst))
-            case v: ScFieldId        => collectPartsTr(v.`type`().map(proj.actualSubst))
-            case v: ScParameter      => collectPartsTr(v.`type`().map(proj.actualSubst))
+            case v: ScBindingPattern => collectPartsTypeResult(v.`type`().map(proj.actualSubst))
+            case v: ScFieldId        => collectPartsTypeResult(v.`type`().map(proj.actualSubst))
+            case v: ScParameter      => collectPartsTypeResult(v.`type`().map(proj.actualSubst))
             case v: ScTypeAliasDeclaration if v.isInScala3File => parts += tp
             case _                   =>
           }
@@ -300,7 +339,7 @@ object ImplicitProcessor {
           tp.extractClassType match {
             case Some((clazz, subst)) =>
               parts += tp
-              collectSupers(clazz, subst)
+              collectPartsFromSuperTypes(clazz, subst)
             case _ =>
           }
         case ScAbstractType(_, _, upper) => collectParts(upper)
@@ -310,21 +349,9 @@ object ImplicitProcessor {
           tp.extractClassType match {
             case Some((clazz, subst)) =>
               parts += tp
-
-              @tailrec
-              def packageObjectsInImplicitScope(packOpt: Option[ScPackageLike]): Unit = packOpt match {
-                case Some(pack) =>
-                  for {
-                    packageObject <- pack.findPackageObject(elementScope.scope)
-                    designator = ScDesignatorType(packageObject)
-                  } parts += designator
-                  packageObjectsInImplicitScope(pack.parentScalaPackage)
-                case _ =>
-              }
-
-              packageObjectsInImplicitScope(clazz.parentOfType(classOf[ScPackageLike], strict = false))
-
-              collectSupers(clazz, subst)
+              val packagePrefix = clazz.parentOfType(classOf[ScPackageLike], strict = false)
+              packagePrefix.foreach(processPackagePrefix)
+              collectPartsFromSuperTypes(clazz, subst)
             case _ =>
           }
       }
@@ -362,7 +389,7 @@ object ImplicitProcessor {
       case _ =>
     }
 
-    def collectObjects(tp: ScType): Unit = {
+    def collectObjects(tp: ScType): Unit =
       tp match {
         case _ if tp.isAny =>
         case tp: StdType if stdTypes.contains(tp.name) =>
@@ -397,7 +424,6 @@ object ImplicitProcessor {
             case _ =>
           }
       }
-    }
 
     while (parts.nonEmpty) {
       collectObjects(parts.dequeue())

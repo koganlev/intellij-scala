@@ -416,6 +416,8 @@ package object project {
     def source3Options: Source3Options = scalaModuleSettings.fold(Source3Options.none)(_.source3Options)
     def isSource3Enabled: Boolean      = source3Options.isSource3Enabled
 
+    def isSource3MigrationEnabled: Boolean = scalaModuleSettings.exists(_.hasSource3Migration)
+
     def features: SerializableScalaFeatures =
       scalaModuleSettings.fold(ScalaFeatures.default)(_.features)
 
@@ -716,6 +718,8 @@ package object project {
     def contextAppliedEnabled: Boolean = isDefinedInModuleOrProject(_.contextAppliedPluginEnabled)
 
     def isSAMEnabled: Boolean = isDefinedInModuleOrProject(_.isSAMEnabled)
+
+    def isSource3MigrationEnabled: Boolean = isDefinedInModuleOrProject(_.isSource3MigrationEnabled)
 
     def source3Options: Source3Options = module.fold(Source3Options.none)(_.source3Options)
     def isSource3Enabled: Boolean = isDefinedInModuleOrProject(_.isSource3Enabled)
