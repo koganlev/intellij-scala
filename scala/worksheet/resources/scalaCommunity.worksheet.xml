@@ -1,6 +1,9 @@
 <?xml version="1.0" encoding="iso-8859-1"?>
-
 <idea-plugin>
+    <dependencies>
+        <module name="scalaCommunity.bsp"/>
+        <module name="scalaCommunity.compiler-integration"/>
+    </dependencies>
 
     <extensions defaultExtensionNs="com.intellij">
 
@@ -108,9 +111,4 @@
         <action id="Scala.CleanWorksheet" class="org.jetbrains.plugins.scala.worksheet.actions.topmenu.CleanWorksheetAction" />
         <action id="Scala.CopyWorksheet" class="org.jetbrains.plugins.scala.worksheet.actions.topmenu.CopyWorksheetAction" />
     </actions>
-
-    <dependencies>
-        <module name="scalaCommunity.bsp"/>
-        <module name="scalaCommunity.compiler-integration"/>
-    </dependencies>
 </idea-plugin>

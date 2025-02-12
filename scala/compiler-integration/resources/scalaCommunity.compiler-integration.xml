@@ -1,4 +1,9 @@
+<?xml version="1.0" encoding="iso-8859-1"?>
 <idea-plugin>
+    <dependencies>
+        <module name="scalaCommunity.bsp"/>
+    </dependencies>
+
     <extensionPoints>
         <extensionPoint qualifiedName="org.intellij.scala.worksheetHighlightingCompiler" interface="org.jetbrains.plugins.scala.compiler.highlighting.WorksheetHighlightingCompiler" dynamic="true"/>
         <extensionPoint qualifiedName="org.intellij.scala.compileServerClasspathProvider" beanClass="org.jetbrains.plugins.scala.compiler.CompileServerClasspathProvider" dynamic="true"/>
@@ -109,8 +114,4 @@
                 class="org.jetbrains.plugins.scala.compiler.actions.internal.compilertrees.ShowScalaCompilerTreeAction"
                 internal="true"/>
     </actions>
-
-    <dependencies>
-        <module name="scalaCommunity.bsp"/>
-    </dependencies>
 </idea-plugin>

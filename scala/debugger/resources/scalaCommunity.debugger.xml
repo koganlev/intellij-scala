@@ -1,4 +1,9 @@
+<?xml version="1.0" encoding="iso-8859-1"?>
 <idea-plugin>
+    <dependencies>
+        <module name="scalaCommunity.compiler-integration"/>
+    </dependencies>
+
     <extensionPoints>
         <extensionPoint qualifiedName="org.intellij.scala.evaluatorCompileHelper" interface="org.jetbrains.plugins.scala.debugger.evaluation.EvaluatorCompileHelper" dynamic="true"/>
     </extensionPoints>
@@ -37,8 +42,4 @@
         <listener topic="com.intellij.debugger.impl.DebuggerManagerListener"
                   class="org.jetbrains.plugins.scala.debugger.evaluation.ExpressionCompilerResolverListener"/>
     </projectListeners>
-
-    <dependencies>
-        <module name="scalaCommunity.compiler-integration"/>
-    </dependencies>
 </idea-plugin>
