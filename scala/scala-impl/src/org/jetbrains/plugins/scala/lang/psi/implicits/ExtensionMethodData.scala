@@ -60,7 +60,7 @@ class ExtensionMethodData(val function: ScFunction,
             searchImplicitsRecursively = 0,
             extensionData = None,
             fullInfo = true,
-            previousRecursionState = Some(ImplicitsRecursionGuard.currentMap)
+            previousDivergenceStack = Some(DivergenceChecker.currentStack)
           )
           val resolveResult = new ScalaResolveResult(function, ScSubstitutor.empty)
           val collector = new ImplicitCollector(implicitState)

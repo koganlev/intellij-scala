@@ -62,7 +62,7 @@ object ImplicitCollector {
                            searchImplicitsRecursively: Int,
                            extensionData: Option[ExtensionConversionData],
                            fullInfo: Boolean,
-                           previousRecursionState: Option[ImplicitsRecursionGuard.RecursionMap]) {
+                           previousDivergenceStack: Option[DivergenceChecker.DivergenceStack]) {
 
     def presentableTypeText: String =
       Using.resource(SlowOperations.knownIssue("SCL-23054"))(_ => tp.presentableText(place))
@@ -107,21 +107,21 @@ class ImplicitCollector(
   expandedTp:                 ScType,
   coreElement:                Option[ScNamedElement],
   isImplicitConversion:       Boolean,
-  searchImplicitsRecursively: Int                                          = 0,
-  extensionData:              Option[ExtensionConversionData]              = None,
-  fullInfo:                   Boolean                                      = false,
-  previousRecursionState:     Option[ImplicitsRecursionGuard.RecursionMap] = None,
-  withExtensions:             Boolean                                      = false,
-  forCompletion:              Boolean                                      = false,
-  forDeferredGivenInClass:    Option[ScTemplateDefinition]                 = None
+  searchImplicitsRecursively: Int                                       = 0,
+  extensionData:              Option[ExtensionConversionData]           = None,
+  fullInfo:                   Boolean                                   = false,
+  previousDivergenceStack:    Option[DivergenceChecker.DivergenceStack] = None,
+  withExtensions:             Boolean                                   = false,
+  forCompletion:              Boolean                                   = false,
+  forDeferredGivenInClass:    Option[ScTemplateDefinition]              = None
 ) {
   def this(state: ImplicitState) = {
     this(state.place, state.tp, state.expandedTp, state.coreElement, state.isImplicitConversion,
-       state.searchImplicitsRecursively, state.extensionData, state.fullInfo, state.previousRecursionState)
+       state.searchImplicitsRecursively, state.extensionData, state.fullInfo, state.previousDivergenceStack)
   }
 
   lazy val collectorState: ImplicitState = ImplicitState(place, tp, expandedTp, coreElement, isImplicitConversion,
-    searchImplicitsRecursively, extensionData, fullInfo, Some(ImplicitsRecursionGuard.currentMap))
+    searchImplicitsRecursively, extensionData, fullInfo, Some(DivergenceChecker.currentStack))
 
   private val project = place.getProject
   private implicit def ctx: ProjectContext = project
@@ -155,7 +155,7 @@ class ImplicitCollector(
   }
 
   def collect(): Seq[ScalaResolveResult] = {
-    def calc(): Seq[ScalaResolveResult] = {
+    DivergenceChecker.withDivergenceStackOpt(previousDivergenceStack) {
       clazz match {
         case Some(c) if InferUtil.tagsAndManifists.contains(c.qualifiedName) => return Seq.empty
         case _                                                               =>
@@ -216,18 +216,6 @@ class ImplicitCollector(
             }
           }
       }
-    }
-
-    previousRecursionState match {
-      case Some(m) =>
-        val currentMap = ImplicitsRecursionGuard.currentMap
-        try {
-          ImplicitsRecursionGuard.setRecursionMap(m)
-          calc()
-        } finally {
-          ImplicitsRecursionGuard.setRecursionMap(currentMap)
-        }
-      case _ => calc()
     }
   }
 
@@ -671,24 +659,12 @@ class ImplicitCollector(
 
     if (isImplicitConversion) compute()
     else {
-      val coreTypeForTp = coreType(tp)
       val element = coreElement.getOrElse(place)
-
-      def equivOrDominates(tp: ScType, found: ScType): Boolean =
-        found.equiv(tp, ConstraintSystem.empty, falseUndef = false).isRight || dominates(tp, found)
-
-      def checkRecursive(tp: ScType, searches: Seq[ScType]): Boolean = searches.exists(equivOrDominates(tp, _))
 
       def divergedResult = reportWrong(c, DivergedImplicitResult)
 
-      if (ImplicitsRecursionGuard.isRecursive(element, coreTypeForTp, checkRecursive)) divergedResult
-      else {
-        ImplicitsRecursionGuard.beforeComputation(element, coreTypeForTp)
-        try {
-          compute().orElse(divergedResult)
-        } finally {
-          ImplicitsRecursionGuard.afterComputation(element)
-        }
+      DivergenceChecker.withDivergenceCheck(element, tp, divergedResult) {
+        compute().orElse(divergedResult)
       }
     }
   }
@@ -829,54 +805,6 @@ class ImplicitCollector(
       fun.parameterClausesWithExtension(exportedInExtension).exists(!_.isImplicit)
     case _ => false
   }
-
-  private def abstractsToUpper(tp: ScType): ScType = {
-    val noAbstracts = tp.updateLeaves {
-      case ScAbstractType(_, _, upper) => upper
-    }
-
-    noAbstracts.removeAliasDefinitions()
-  }
-
-  private def coreType(tp: ScType): ScType = {
-    tp match {
-      case ScCompoundType(comps, _, _) => abstractsToUpper(ScCompoundType(comps, Map.empty, Map.empty)).removeUndefines()
-      case ScExistentialType(quant, _) => abstractsToUpper(ScExistentialType(quant.recursiveUpdate {
-        case arg: ScExistentialArgument => ReplaceWith(arg.upper)
-        case _ => ProcessSubtypes
-      })).removeUndefines()
-      case _ => abstractsToUpper(tp).removeUndefines()
-    }
-  }
-
-  private def dominates(t: ScType, u: ScType): Boolean = {
-    complexity(t) > complexity(u) && topLevelTypeConstructors(t).intersect(topLevelTypeConstructors(u)).nonEmpty
-  }
-
-  private def topLevelTypeConstructors(tp: ScType): Set[ScType] = {
-    tp match {
-      case ScProjectionType(_, element) => Set(ScDesignatorType(element))
-      case ParameterizedType(designator, _) => Set(designator)
-      case tp@ScDesignatorType(_: ScObject) => Set(tp)
-      case ScDesignatorType(v: ScTypedDefinition) =>
-        val valueType: ScType = v.`type`().getOrAny
-        topLevelTypeConstructors(valueType)
-      case ScCompoundType(comps, _, _) => comps.flatMap(topLevelTypeConstructors).toSet
-      case _ => Set(tp)
-    }
-  }
-
-  private def complexity(tp: ScType): Int =
-    tp match {
-      case ScProjectionType(proj, _)     => 1 + complexity(proj)
-      case ParameterizedType(_, args)    => 1 + args.foldLeft(0)(_ + complexity(_))
-      case ScDesignatorType(_: ScObject) => 1
-      case ScDesignatorType(v: ScTypedDefinition) =>
-        val valueType: ScType = v.`type`().getOrAny
-        1 + complexity(valueType)
-      case ScCompoundType(comps, _, _) => comps.foldLeft(0)(_ + complexity(_))
-      case _                           => 1
-    }
 
   private def checkWeakConformance(place: PsiElement, left: ScType, right: ScType): ConstraintsResult = {
     import SmartSuperTypeUtil.{TraverseSupers, traverseSuperTypes}
