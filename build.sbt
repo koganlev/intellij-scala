@@ -348,7 +348,7 @@ lazy val packageSearchClient: sbt.Project =
       scalaVersion := Versions.scala3Version,
       Compile / scalacOptions := globalScala3ScalacOptions,
       resolvers += DependencyResolvers.PackageSearch,
-      libraryDependencies += Dependencies.packageSearchClientJvm,
+      libraryDependencies ++= Dependencies.packageSearchDependencies,
     )
 
 lazy val scalaImpl: sbt.Project =

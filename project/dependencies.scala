@@ -177,8 +177,10 @@ object Dependencies {
   val intellijIdeMetricsCollector: ModuleID = ("com.jetbrains.intellij.tools" % "ide-metrics-collector" % Versions.intellijVersion_ForManagedIntellijDependencies).notTransitive()
   val intellijIdeUtilCommon: ModuleID = ("com.jetbrains.intellij.tools" % "ide-util-common" % Versions.intellijVersion_ForManagedIntellijDependencies).notTransitive.notTransitive()
 
-  val packageSearchClientJvm = ("org.jetbrains.packagesearch" % "packagesearch-api-client-jvm" % "3.0.0").excludeAll(
+  // TODO(SCL-23246): remove after migration from the Package Search API
+  val packageSearchClientJvm = ("org.jetbrains.packagesearch" % "packagesearch-api-client-jvm" % "3.4.0").excludeAll(
     ExclusionRule(organization = "ch.qos.logback"),
+    ExclusionRule(organization = "com.github.lamba92"),
     ExclusionRule(organization = "com.soywiz.korlibs.krypto"),
     ExclusionRule(organization = "io.ktor", name = "ktor-client-content-negotiation-jvm"),
     ExclusionRule(organization = "io.ktor", name = "ktor-client-encoding-jvm"),
@@ -187,7 +189,19 @@ object Dependencies {
     ExclusionRule(organization = "io.ktor", name = "ktor-serialization-kotlinx-jvm"),
     ExclusionRule(organization = "org.jetbrains.kotlin"),
     ExclusionRule(organization = "org.jetbrains.kotlinx"),
-    ExclusionRule(organization = "org.slf4j"),
+  )
+
+  // TODO(SCL-23246): remove after migration from the Package Search API
+  val kotlinxDocumentStoreMvStore = ("com.github.lamba92" % "kotlinx-document-store-mvstore" % "0.0.4").excludeAll(
+    ExclusionRule(organization = "com.h2database"),
+    ExclusionRule(organization = "org.jetbrains.kotlin"),
+    ExclusionRule(organization = "org.jetbrains.kotlinx"),
+  )
+
+  // TODO(SCL-23246): remove after migration from the Package Search API
+  val packageSearchDependencies: Seq[ModuleID] = Seq(
+    packageSearchClientJvm,
+    kotlinxDocumentStoreMvStore,
   )
 
   val coursierApi = "io.get-coursier" % "interface" % "1.0.19" excludeAll ExclusionRule(organization = "org.slf4j")
