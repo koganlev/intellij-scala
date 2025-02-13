@@ -2,10 +2,12 @@ package org.jetbrains.plugins.scala.build
 
 import com.intellij.build.events.MessageEvent.Kind
 import com.intellij.build.events._
+import com.intellij.build.events.impl.AbstractBuildEvent
 import com.intellij.build.{FilePosition, SyncViewManager}
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.externalSystem.model.task.event.{Failure => ExternalSystemFailure, FailureResult => ExternalSystemFailureResult, SkippedResult => ExternalSystemSkippedResult, SuccessResult => ExternalSystemSuccessResult, _}
 import com.intellij.openapi.externalSystem.model.task.{ExternalSystemTaskId, ExternalSystemTaskNotificationListener}
+import com.intellij.pom.Navigatable
 import org.jetbrains.annotations.{Nls, Nullable}
 import org.jetbrains.plugins.scala.build.BuildMessages.EventId
 import org.jetbrains.plugins.scala.build.ExternalSystemNotificationReporter._
@@ -76,14 +78,26 @@ class ExternalSystemNotificationReporter(workingDir: String,
   override def warning(message: String, position: Option[FilePosition], details: String): Unit =
     onEvent(message, Kind.WARNING, position, details)
 
+  override def warning(message: String, position: Option[FilePosition], details: String, navigatable: Option[Navigatable]): Unit =
+    onEvent(message, Kind.WARNING, position, details, navigatable = navigatable)
+
   override def error(message: String, position: Option[FilePosition]): Unit =
     onEvent(message, Kind.ERROR, position)
 
   override def info(message: String, position: Option[FilePosition]): Unit =
     onEvent(message, Kind.INFO, position)
 
-  private def onEvent(@Nls message: String, kind: Kind, position: Option[FilePosition], @Nls details: String = null): Unit = {
-    viewManager.foreach(_.onEvent(taskId, event(message, kind, position, details)))
+  private def onEvent(
+    @Nls message: String,
+    kind: Kind,
+    position: Option[FilePosition],
+    @Nls @Nullable details: String = null,
+    navigatable: Option[Navigatable] = None
+  ): Unit = {
+    viewManager.foreach { manager =>
+      val event = createBuildEvent(message, kind, position, details, navigatable)
+      manager.onEvent(taskId, event)
+    }
   }
 
   override def log(message: String): Unit =
@@ -157,8 +171,14 @@ class ExternalSystemNotificationReporter(workingDir: String,
 
   override def clear(file: Path): Unit = ()
 
-  private def event(@Nls message: String, kind: MessageEvent.Kind, position: Option[FilePosition], @Nls @Nullable details: String) =
-    BuildMessages.message(taskId, message, kind, position, eventTime = System.currentTimeMillis, details)
+  private def createBuildEvent(
+    @Nls message: String,
+    kind: MessageEvent.Kind,
+    position: Option[FilePosition],
+    @Nls @Nullable details: String,
+    navigatable: Option[Navigatable] = None
+  ): AbstractBuildEvent with MessageEvent =
+    BuildMessages.message(taskId, message, kind, position, eventTime = System.currentTimeMillis, details, navigatable)
 }
 
 object ExternalSystemNotificationReporter {

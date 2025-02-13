@@ -1,6 +1,8 @@
 package org.jetbrains.sbt
 
+import com.intellij.openapi.project.Project
 import org.jetbrains.plugins.scala.extensions.RichFile
+import org.jetbrains.sbt.project.SbtExternalSystemManager
 
 import java.io.{BufferedInputStream, File, FileInputStream}
 import java.util.Properties
@@ -8,6 +10,13 @@ import java.util.jar.JarFile
 import scala.util.Using
 
 object SbtVersionDetector {
+
+  def detectSbtVersion(project: Project): SbtVersion = {
+    val settings = SbtExternalSystemManager.executionSettingsFor(project)
+    val projectBaseDir = new File(settings.realProjectPath)
+    val launcher = settings.customLauncher.getOrElse(SbtUtil.getDefaultLauncher)
+    detectSbtVersion(projectBaseDir, launcher)
+  }
 
   /**
    * The version of sbt defined in `project/build.properties` or fallback to the sbt version corresponding to launcher

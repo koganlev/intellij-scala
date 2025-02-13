@@ -28,15 +28,6 @@ object SbtVersion {
 
   implicit val sbtVersionOrdering: Ordering[SbtVersion] = Ordering.by(_.value)
 
-  /**
-   * Minimum sbt version for which IntelliJ IDEA has official support.
-   * For any version below this there might be undefined behavior, and there is no guarantee to how IntelliJ will behave
-   *
-   * @note sbt 0.13 have been deprecated since 2017 already!
-   * @note need to use lazy to avoid `null` in case when inner object `Latest` is accessed before outer object
-   */
-  lazy val MinSupportedVersion: SbtVersion = SbtVersion.Latest.Sbt_0_13
-
   object Latest {
     val Sbt_0_13: SbtVersion = SbtVersion("0.13.18")
     val Sbt_2: SbtVersion = SbtVersion("2.0.0-M3")

@@ -20,6 +20,7 @@ import org.jetbrains.plugins.scala.compiler.data.CompileOrder
 import org.jetbrains.plugins.scala.extensions.{PathExt, RichFile}
 import org.jetbrains.plugins.scala.project.Version
 import org.jetbrains.plugins.scala.project.external.{JdkByHome, JdkByName, SdkReference}
+import org.jetbrains.plugins.scala.statistics.ScalaSbtUsagesCollector
 import org.jetbrains.plugins.scala.util.ScalaNotificationGroups
 import org.jetbrains.sbt.SbtUtil._
 import org.jetbrains.sbt.project.SbtProjectResolver._
@@ -247,10 +248,11 @@ class SbtProjectResolver extends ExternalSystemProjectResolver[SbtExecutionSetti
     if (!sbtLauncher.isFile) {
       val error = SbtBundle.message("sbt.launcher.not.found", sbtLauncher.getCanonicalPath)
       Failure(new FileNotFoundException(error))
-    } else if (sbtVersion < SbtVersion.MinSupportedVersion) {
-      val message = SbtBundle.message("sbt.version.required", SbtVersion.MinSupportedVersion)
-      Failure(new UnsupportedOperationException(message))
     } else {
+      if (sbtVersion.isSbt0) {
+        LegacySbtVersionNotifications.warnForBuildToolWindow(project, projectRoot, sbtVersion, reporter)
+      }
+
       val structureFilePath = getStructureFilePath(projectRoot)
       val StructureFileReuseMode(readStructureFile, writeStructureFile) = getStructureFileReuseMode
 

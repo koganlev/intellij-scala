@@ -1,12 +1,10 @@
 package org.jetbrains.plugins.scala.build
 
-import com.intellij.build.events.impl.{AbstractBuildEvent, FileMessageEventImpl, MessageEventImpl}
+import com.intellij.build.events.impl.{AbstractBuildEvent, FileMessageEventImpl}
 import com.intellij.build.events.{MessageEvent, MessageEventResult, Warning}
 import com.intellij.build.{FilePosition, events}
-import com.intellij.execution.process.AnsiEscapeDecoder.ColoredTextAcceptor
 import com.intellij.execution.process.{AnsiEscapeDecoder, ProcessOutputTypes}
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.Key
 import com.intellij.pom.Navigatable
 import com.intellij.task._
 import org.jetbrains.annotations.{Nls, Nullable}
@@ -86,13 +84,14 @@ case object BuildMessages {
     kind: MessageEvent.Kind,
     position: Option[FilePosition],
     eventTime: Long,
-    @Nls details: String = null,
+    @Nls @Nullable details: String = null,
+    navigatable: Option[Navigatable] = None,
   ): AbstractBuildEvent with MessageEvent = {
     val kindGroup = kind.toString
 
     position match {
       case None =>
-        new BuildEventMessage(parentId, kind, kindGroup, stripAnsiCodes(message), details, eventTime)
+        new BuildEventMessage(parentId, kind, kindGroup, stripAnsiCodes(message), details, navigatable, eventTime)
       case Some(filePosition) =>
         new FileMessageEventImpl(parentId, kind, kindGroup, stripAnsiCodes(message), message, filePosition)
     }
@@ -105,7 +104,8 @@ class BuildEventMessage(
   @Nls group: String,
   @Nls message: String,
   @Nls @Nullable details: String,
-  eventTime: Long
+  navigatable: Option[Navigatable],
+  eventTime: Long,
 ) extends AbstractBuildEvent(
   new Object,
   parentId,
@@ -123,7 +123,7 @@ class BuildEventMessage(
       override def getDetails: String = details
     }
 
-  override def getNavigatable(project: Project): Navigatable = null // TODO sensible default navigation?
+  override def getNavigatable(project: Project): Navigatable = navigatable.orNull
 }
 
 case class TaskRunnerResult(
