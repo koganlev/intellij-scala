@@ -4,22 +4,23 @@ package local
 import org.jetbrains.jps.incremental.CompileContext
 import org.jetbrains.jps.incremental.messages.{BuildMessage, CompilerMessage}
 
-import java.io._
+import java.io.{BufferedInputStream, BufferedOutputStream, ObjectInputStream, ObjectOutputStream}
+import java.nio.file.{Files, Path}
 import scala.collection.mutable
 import scala.util.Using
 
 class PackageObjectsData extends Serializable {
 
-  private val baseSourceToPackageObjects = mutable.HashMap[File, Set[File]]()
-  private val packageObjectToBaseSources = mutable.HashMap[File, Set[File]]()
+  private val baseSourceToPackageObjects = mutable.HashMap.empty[Path, Set[Path]]
+  private val packageObjectToBaseSources = mutable.HashMap.empty[Path, Set[Path]]
 
-  def add(baseSource: File, packageObject: File): Unit = synchronized {
+  def add(baseSource: Path, packageObject: Path): Unit = synchronized {
     baseSourceToPackageObjects.update(baseSource, baseSourceToPackageObjects.getOrElse(baseSource, Set.empty) + packageObject)
     packageObjectToBaseSources.update(packageObject, packageObjectToBaseSources.getOrElse(packageObject, Set.empty) + baseSource)
   }
 
-  def invalidatedPackageObjects(sources: Seq[File]): Set[File] = synchronized {
-    sources.toSet.flatMap((f: File) => baseSourceToPackageObjects.getOrElse(f, Set.empty)) -- sources
+  def invalidatedPackageObjects(sources: Seq[Path]): Set[Path] = synchronized {
+    sources.toSet[Path].flatMap(f => baseSourceToPackageObjects.getOrElse(f, Set.empty)) -- sources
   }
 
   def clear(): Unit = synchronized {
@@ -30,7 +31,7 @@ class PackageObjectsData extends Serializable {
   def save(context: CompileContext): Unit = {
     val file = PackageObjectsData.storageFile(context)
     PackageObjectsData.synchronized {
-      Using.resource(new ObjectOutputStream(new BufferedOutputStream(new FileOutputStream(file)))) { stream =>
+      Using.resource(new ObjectOutputStream(new BufferedOutputStream(Files.newOutputStream(file)))) { stream =>
         stream.writeObject(this)
         stream.flush()
       }
@@ -42,11 +43,11 @@ object PackageObjectsData {
 
   private val fileName = "packageObjects.dat"
 
-  private val instances = mutable.HashMap[File, PackageObjectsData]()
+  private val instances = mutable.HashMap.empty[Path, PackageObjectsData]
 
-  private def storageFile(context: CompileContext): File = {
+  private def storageFile(context: CompileContext): Path = {
     val storageRoot = context.getProjectDescriptor.dataManager.getDataPaths.getDataStorageDir
-    storageRoot.resolve(fileName).toFile // TODO: SCL-23310
+    storageRoot.resolve(fileName)
   }
 
   def getFor(context: CompileContext): PackageObjectsData = {
@@ -54,23 +55,23 @@ object PackageObjectsData {
       context.processMessage(new CompilerMessage("scala", BuildMessage.Kind.WARNING, message))
     }
 
-    def tryToReadData(file: File): PackageObjectsData =
+    def tryToReadData(file: Path): PackageObjectsData =
       synchronized {
-        Using(new ObjectInputStream(new BufferedInputStream(new FileInputStream(file)))) { stream =>
+        Using(new ObjectInputStream(new BufferedInputStream(Files.newInputStream(file)))) { stream =>
           stream.readObject().asInstanceOf[PackageObjectsData]
         }.recover {
           case e: Exception =>
             warning(s"Could not read data about package objects dependencies: \n${e.getMessage}")
-            file.delete()
+            Files.deleteIfExists(file)
             new PackageObjectsData()
         }.get
       }
 
-    def getOrLoadInstance(file: File): PackageObjectsData =
+    def getOrLoadInstance(file: Path): PackageObjectsData =
       instances.getOrElseUpdate(file, tryToReadData(file))
 
     Option(storageFile(context))
-      .filter(_.exists)
+      .filter(Files.exists(_))
       .fold(new PackageObjectsData())(getOrLoadInstance)
   }
 }

@@ -3,9 +3,9 @@ package org.jetbrains.jps.incremental.scala.model;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.JpsElement;
 
-import java.io.File;
+import java.nio.file.Path;
 
 public interface LibrarySettings extends JpsElement {
-  File[] getCompilerClasspath();
-  @Nullable File getCompilerBridgeJar();
+  Path[] getCompilerClasspath();
+  @Nullable Path getCompilerBridgeJar();
 }

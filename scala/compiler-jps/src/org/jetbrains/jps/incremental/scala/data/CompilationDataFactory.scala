@@ -7,7 +7,8 @@ import org.jetbrains.jps.model.java.JpsJavaExtensionService
 import org.jetbrains.jps.{ModuleChunk, ProjectPaths}
 import org.jetbrains.plugins.scala.compiler.data.{CompilationData, ZincData}
 
-import java.io.{File, IOException}
+import java.io.IOException
+import java.nio.file.{Files, Path}
 import java.util.Collections
 import scala.collection.immutable.ArraySeq
 import scala.collection.mutable
@@ -15,8 +16,8 @@ import scala.jdk.CollectionConverters._
 
 trait CompilationDataFactory {
 
-  def from(sources: Seq[File],
-           allSources: Seq[File],
+  def from(sources: Seq[Path],
+           allSources: Seq[Path],
            context: CompileContext,
            chunk: ModuleChunk): Either[String, CompilationData]
 }
@@ -30,8 +31,8 @@ object CompilationDataFactory
   // The factory needs to be refactored in the future.
   private[scala] final val NoCompilationData = "No compilation data. Skip target."
 
-  override def from(sources: Seq[File],
-                    allSources: Seq[File],
+  override def from(sources: Seq[Path],
+                    allSources: Seq[Path],
                     context: CompileContext,
                     chunk: ModuleChunk): Either[String, CompilationData] = {
     val target = chunk.representativeTarget
@@ -41,7 +42,8 @@ object CompilationDataFactory
       case Some(message) => return Left(message)
       case None =>
     }
-    val output = target.getOutputDir.getCanonicalFile
+    // target.getOutputDir is not null here, it has already been checked in `outputsNotSpecified`
+    val output = target.getOutputDir.toPath.toAbsolutePath.normalize()
     checkOrCreate(output)
 
     val classpath = ProjectPaths.getCompilationClasspathFiles(chunk, chunk.containsTests, false, true).asScala
@@ -55,7 +57,7 @@ object CompilationDataFactory
       val cacheFile = outputToCacheMap.getOrElse(output, return Left(NoCompilationData))
 
       val classpathSet = classpath.toSet
-      val relevantOutputToCacheMap = (outputToCacheMap - output).filter(p => classpathSet.contains(p._1))
+      val relevantOutputToCacheMap = (outputToCacheMap - output).filter(p => classpathSet.contains(p._1.toFile))
 
       val preferredEncoding: Option[String] =
         Option(context.getProjectDescriptor.getEncodingConfiguration.getPreferredModuleChunkEncoding(chunk))
@@ -99,23 +101,23 @@ object CompilationDataFactory
 
       val outputGroups = createOutputGroups(chunk)
 
-      val canonicalSources = sources.map(_.getCanonicalFile)
+      val canonicalSources = sources.map(_.toAbsolutePath.normalize())
 
       val isCompile =
         !JavaBuilderUtil.isCompileJavaIncrementally(context) &&
           !JavaBuilderUtil.isForcedRecompilationAllJavaModules(context)
 
       CompilationData(
-        sources = canonicalSources,
+        sources = canonicalSources.map(_.toFile),
         classpath = classpath.toSeq,
-        output = output,
+        output = output.toFile,
         scalaOptions = filterOutPipeliningOptions(ensureEncodingIsExplicitlySet(scalaOptions)),
         javaOptions = ensureEncodingIsExplicitlySet(javaOptions),
         order = order,
-        cacheFile = cacheFile,
-        outputToCacheMap = relevantOutputToCacheMap,
-        outputGroups = outputGroups,
-        zincData = ZincData(allSources, compilationStamp, isCompile)
+        cacheFile = cacheFile.toFile,
+        outputToCacheMap = relevantOutputToCacheMap.map { case (p1, p2) => (p1.toFile, p2.toFile) },
+        outputGroups = outputGroups.map { case (p1, p2) => (p1.toFile, p2.toFile) },
+        zincData = ZincData(allSources.map(_.toFile), compilationStamp, isCompile)
       )
     }
   }
@@ -123,15 +125,14 @@ object CompilationDataFactory
   private def sourcePathOptionsFor(context: CompileContext, chunk: ModuleChunk): Seq[String] = {
     val index = context.getProjectDescriptor.getBuildRootIndex
     val target = chunk.representativeTarget()
-    val paths = index.getTempTargetRoots(target, context).asScala.map(_.getRootFile).mkString(File.pathSeparator)
+    val paths = index.getTempTargetRoots(target, context).asScala.map(_.getRootFile).mkString(java.io.File.pathSeparator)
     if (paths.isEmpty) Seq.empty else Seq("-sourcepath", paths)
   }
 
-  private def checkOrCreate(output: File): Unit = {
-    if (!output.exists()) {
-      try {
-        if (!output.mkdirs()) throw new IOException("Cannot create output directory: " + output.toString)
-      } catch {
+  private def checkOrCreate(output: Path): Unit = {
+    if (!Files.exists(output)) {
+      try Files.createDirectories(output)
+      catch {
         case t: Throwable => throw new IOException("Cannot create output directory: " + output.toString, t)
       }
     }
@@ -146,9 +147,9 @@ object CompilationDataFactory
     }
   }
 
-  private def createOutputToCacheMap(context: CompileContext): Either[String, Map[File, File]] = {
+  private def createOutputToCacheMap(context: CompileContext): Either[String, Map[Path, Path]] = {
     val targetToOutput = targetsIn(context).collect {
-      case target if target.getOutputDir != null => (target, target.getOutputDir)
+      case target if target.getOutputDir != null => (target, target.getOutputDir.toPath)
     }
 
     outputClashesIn(targetToOutput).toLeft {
@@ -156,24 +157,20 @@ object CompilationDataFactory
 
       for ((target, output) <- targetToOutput.toMap)
         yield (
-          output.getCanonicalFile,
-          new File(
-            paths.getTargetDataRootDir(target).toFile.getCanonicalFile,
-            s"cache-${target.getPresentableName}.zip")
+          output.toAbsolutePath.normalize(),
+          paths.getTargetDataRootDir(target).resolve(s"cache-${target.getPresentableName}.zip")
         )
     }
   }
 
-  private def createOutputGroups(chunk: ModuleChunk): Seq[(File, File)] =
+  private def createOutputGroups(chunk: ModuleChunk): Seq[(Path, Path)] =
     for {
       target <- chunk.getTargets.asScala.toSeq
-      outputDir <- Option(target.getOutputDir).toSeq
+      outputDir <- Option(target.getOutputDir).map(_.toPath).toSeq
       module = target.getModule
-      output = outputDir.getCanonicalFile
-      sourceRoot <- module.getSourceRoots.asScala
-      if sourceRoot.getRootType.isForTests == target.isTests
-      sourceRootFile = sourceRoot.getFile.getCanonicalFile
-      if sourceRootFile.exists
+      output = outputDir.toAbsolutePath.normalize()
+      sourceRoot <- module.getSourceRoots.asScala if sourceRoot.getRootType.isForTests == target.isTests
+      sourceRootFile = sourceRoot.getPath.toAbsolutePath.normalize() if Files.exists(sourceRootFile)
     } yield (sourceRootFile, output)
   
   private def targetsIn(context: CompileContext): Seq[ModuleBuildTarget] = {
@@ -196,7 +193,7 @@ object CompilationDataFactory
   private def chunk(target: ModuleBuildTarget): ModuleChunk =
     new ModuleChunk(Collections.singleton(target))
 
-  private def outputClashesIn(targetToOutput: Seq[(ModuleBuildTarget, File)]): Option[String] = {
+  private def outputClashesIn(targetToOutput: Seq[(ModuleBuildTarget, Path)]): Option[String] = {
     val outputToTargetsMap = targetToOutput.groupBy(_._2).view.mapValues(_.map(_._1))
 
     val errors = outputToTargetsMap.collect {

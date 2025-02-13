@@ -10,7 +10,7 @@ import org.jetbrains.jps.incremental.scala.data.CompilationDataFactory
 import org.jetbrains.jps.incremental.{java => _, scala => _, _}
 import org.jetbrains.plugins.scala.compiler.data.{CompileOrder, IncrementalityType}
 
-import java.io.File
+import java.nio.file.{Files, Path}
 import java.{util => ju}
 import scala.collection.mutable
 import scala.jdk.CollectionConverters._
@@ -56,9 +56,9 @@ class IdeaIncrementalBuilder(category: BuilderCategory) extends ModuleLevelBuild
       packageObjectsData.clear()
     }
     else {
-      val additionalFiles = packageObjectsData.invalidatedPackageObjects(sources).filter(_.exists)
+      val additionalFiles = packageObjectsData.invalidatedPackageObjects(sources).filter(Files.exists(_))
       if (additionalFiles.nonEmpty) {
-        (sources ++ additionalFiles).foreach(f => FSOperations.markDirty(context, CompilationRound.NEXT, f))
+        (sources ++ additionalFiles).foreach(f => FSOperations.markDirty(context, CompilationRound.NEXT, f.toFile))
         return JpsExitCode.ADDITIONAL_PASS_REQUIRED
       }
     }
@@ -67,14 +67,14 @@ class IdeaIncrementalBuilder(category: BuilderCategory) extends ModuleLevelBuild
 
     val modules = chunk.getModules.asScala.toSet
 
-    val successfullyCompiled = mutable.Set.empty[File]
+    val successfullyCompiled = mutable.Set.empty[Path]
 
     val compilerName = "scalac"
 
     val client = new local.IdeClientIdea(compilerName, context, chunk, outputConsumer,
       callback, successfullyCompiled, packageObjectsData)
 
-    val scalaSources = sources.filter(_.getName.endsWith(".scala")).asJava
+    val scalaSources = sources.filter(_.getFileName.toString.endsWith(".scala"))
 
     ScalaBuilder.compile(context, chunk, sources, Seq.empty, modules, client) match {
       case Left(CompilationDataFactory.NoCompilationData) =>
@@ -85,8 +85,8 @@ class IdeaIncrementalBuilder(category: BuilderCategory) extends ModuleLevelBuild
         JpsExitCode.ABORT
       case _ if client.hasReportedErrors || client.isCanceled => JpsExitCode.ABORT
       case Right(code) =>
-        JavaBuilderUtil.registerFilesToCompile(context, scalaSources)
-        JavaBuilderUtil.registerSuccessfullyCompiled(context, successfullyCompiled.asJava)
+        JavaBuilderUtil.registerFilesToCompile(context, scalaSources.map(_.toFile).asJava)
+        JavaBuilderUtil.registerSuccessfullyCompiled(context, successfullyCompiled.map(_.toFile).asJava)
         client.progress(JpsBundle.message("compilation.completed"), Some(1.0F))
         ScalaBuilder.exitCode(code)
     }
@@ -118,9 +118,9 @@ class IdeaIncrementalBuilder(category: BuilderCategory) extends ModuleLevelBuild
 
   private def collectSources(context: CompileContext,
                              chunk: ModuleChunk,
-                             dirtyFilesHolder: DirtyFilesHolder[JavaSourceRootDescriptor, ModuleBuildTarget]): Seq[File] = {
+                             dirtyFilesHolder: DirtyFilesHolder[JavaSourceRootDescriptor, ModuleBuildTarget]): Seq[Path] = {
 
-    val builder = Seq.newBuilder[File]
+    val builder = Seq.newBuilder[Path]
 
     val project = context.getProjectDescriptor
 
@@ -130,27 +130,27 @@ class IdeaIncrementalBuilder(category: BuilderCategory) extends ModuleLevelBuild
       case _ => List(".scala")
     }
 
-    def checkAndCollectFile(file: File): Boolean = {
-      val fileName = file.getName
+    def checkAndCollectFile(file: Path): Boolean = {
+      val fileName = file.getFileName.toString
       if (extensionsToCollect.exists(fileName.endsWith))
         builder += file
 
       true
     }
 
-    dirtyFilesHolder.processDirtyFiles((_: ModuleBuildTarget, file: File, _: JavaSourceRootDescriptor) => checkAndCollectFile(file))
+    dirtyFilesHolder.processDirtyFiles((_, file, _) => checkAndCollectFile(file.toPath))
 
     for {
       target <- chunk.getTargets.asScala
       tempRoot <- project.getBuildRootIndex.getTempTargetRoots(target, context).asScala
     } {
-      FileUtil.processFilesRecursively(tempRoot.getRootFile, (file: File) => checkAndCollectFile(file))
+      FileUtil.processFilesRecursively(tempRoot.getRootFile, file => checkAndCollectFile(file.toPath))
     }
 
 
     //if no scala files to compile, return empty seq
     val result = builder.result()
-    if (!result.exists(_.getName.endsWith(".scala"))) Seq.empty
+    if (!result.exists(_.getFileName.toString.endsWith(".scala"))) Seq.empty
     else result
   }
 }

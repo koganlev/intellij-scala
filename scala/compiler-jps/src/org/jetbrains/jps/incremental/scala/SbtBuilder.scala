@@ -5,8 +5,6 @@ import org.jetbrains.jps.ModuleChunk
 import org.jetbrains.jps.builders.java._
 import org.jetbrains.jps.builders.{BuildRootDescriptor, BuildTarget}
 import org.jetbrains.jps.incremental.ModuleLevelBuilder.{ExitCode => JpsExitCode}
-
-import java.io.File
 import org.jetbrains.jps.incremental._
 import org.jetbrains.jps.incremental.messages.ProgressMessage
 import org.jetbrains.jps.incremental.scala.InitialScalaBuilder.isScalaProject
@@ -16,6 +14,7 @@ import org.jetbrains.jps.incremental.scala.data.CompilationDataFactory
 import org.jetbrains.jps.incremental.scala.local.IdeClientSbt
 import org.jetbrains.plugins.scala.compiler.data.IncrementalityType
 
+import _root_.java.nio.file.Path
 import _root_.java.{util => jutil}
 import _root_.scala.collection.immutable.ArraySeq
 import _root_.scala.jdk.CollectionConverters._
@@ -98,14 +97,15 @@ object SbtBuilder {
     }
 
     val excludeIndex = project.getModuleExcludeIndex
-    val outputRoot: File = chunk.representativeTarget().getOutputDir
+    val outputRoot = chunk.representativeTarget().getOutputDir
+    if (outputRoot eq null) return
 
     resourceRoots.foreach { (root: ResourceRootDescriptor) =>
       val filter = root.createFileFilter()
 
       FileUtil.processFilesRecursively(root.getRootFile, file => {
         if (file.isFile && filter.accept(file) && !excludeIndex.isExcluded(file)) {
-          ResourceUpdater.updateResource(context, root, file, outputRoot)
+          ResourceUpdater.updateResource(context, root, file.toPath, outputRoot.toPath)
         }
         true
       })
@@ -113,26 +113,26 @@ object SbtBuilder {
   }
 
   //in current chunk only
-  private def collectDirtyFiles(dirtyFilesHolder: DirtyFilesHolder): Seq[File] = {
-    val builder = Seq.newBuilder[File]
+  private def collectDirtyFiles(dirtyFilesHolder: DirtyFilesHolder): Seq[Path] = {
+    val builder = Seq.newBuilder[Path]
     dirtyFilesHolder.processDirtyFiles((_, file, _) => {
-      builder += file
+      builder += file.toPath
       true
     })
     builder.result()
   }
 
-  private def compilableFiles(context: CompileContext, target: ModuleBuildTarget): Seq[File] = {
-    val builder = ArraySeq.newBuilder[File]
+  private def compilableFiles(context: CompileContext, target: ModuleBuildTarget): Seq[Path] = {
+    val builder = ArraySeq.newBuilder[Path]
 
     val rootIndex = context.getProjectDescriptor.getBuildRootIndex
     val excludeIndex = context.getProjectDescriptor.getModuleExcludeIndex
 
-    val sourcePathSources = rootIndex.getTempTargetRoots(target, context).asScala.foldLeft(Set.empty[File]) {
+    val sourcePathSources = rootIndex.getTempTargetRoots(target, context).asScala.foldLeft(Set.empty[Path]) {
       case (acc, path) =>
-        val builder = Set.newBuilder[File]
+        val builder = Set.newBuilder[Path]
         FileUtil.processFilesRecursively(path.getRootFile, file => {
-          builder += file
+          builder += file.toPath
           true
         })
         acc union builder.result()
@@ -140,10 +140,10 @@ object SbtBuilder {
 
     for (root <- rootIndex.getTargetRoots(target, context).asScala) {
       FileUtil.processFilesRecursively(root.getRootFile, file => {
-        if (!excludeIndex.isExcluded(file) && !sourcePathSources.contains(file)) {
+        if (!excludeIndex.isExcluded(file) && !sourcePathSources.contains(file.toPath)) {
           val fileName = file.getName
           if (fileName.endsWith(".scala") || fileName.endsWith(".java")) {
-            builder += file
+            builder += file.toPath
           }
         }
         true
@@ -153,7 +153,7 @@ object SbtBuilder {
   }
 
   private def collectCompilableFiles(context: CompileContext,
-                                     chunk: ModuleChunk): Map[File, BuildTarget[_ <: BuildRootDescriptor]] = {
+                                     chunk: ModuleChunk): Map[Path, BuildTarget[_ <: BuildRootDescriptor]] = {
     val fileToTarget =
       for {
         target <- chunk.getTargets.asScala

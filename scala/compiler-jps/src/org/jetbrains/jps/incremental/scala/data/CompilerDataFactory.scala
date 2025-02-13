@@ -17,7 +17,7 @@ import org.jetbrains.plugins.scala.compiler.data.{CompilerData, CompilerJars, Co
 import org.jetbrains.plugins.scala.util.JarUtil
 import org.jetbrains.plugins.scala.util.JarUtil.JarFileWithName
 
-import java.io.File
+import java.nio.file.{Files, Path, Paths}
 import java.util
 import scala.jdk.CollectionConverters._
 
@@ -46,7 +46,7 @@ object CompilerDataFactory
       home <- javaHome(descriptor.getModel, module, ScalaBuilder.isCompileServerEnabled(context))
     } yield {
       val incrementality = SettingsManager.getProjectSettings(descriptor.getProject).getIncrementalityType
-      data.CompilerData(jars, home, incrementality)
+      data.CompilerData(jars, home.map(_.toFile), incrementality)
     }
   }
 
@@ -66,7 +66,7 @@ object CompilerDataFactory
 
   private def javaHome(model: JpsModel,
                        module: JpsModule,
-                       isCompileServerEnabled: Boolean): Either[String, Option[File]] = {
+                       isCompileServerEnabled: Boolean): Either[String, Option[Path]] = {
     val jdkOpt = Option(module.getSdk(JpsJavaSdkType.INSTANCE))
     jdkOpt
       .toRight("No JDK in module " + module.getName)
@@ -88,8 +88,8 @@ object CompilerDataFactory
         if (jvmSdk.map(_.getProperties).contains(moduleJdk)) {
           Right(None)
         } else {
-          val directory = new File(moduleJdk.getHomePath)
-          Either.cond(directory.exists, Some(directory), "JDK home directory does not exists: " + directory)
+          val directory = Paths.get(moduleJdk.getHomePath)
+          Either.cond(Files.exists(directory), Some(directory), "JDK home directory does not exists: " + directory)
         }
       }
   }
@@ -138,7 +138,7 @@ object CompilerDataFactory
 
   private def bootClasspathOptions(hasOldScala: Boolean): Seq[String] =
     if (hasOldScala) {
-      Seq("-nobootcp", "-javabootclasspath", File.pathSeparator)
+      Seq("-nobootcp", "-javabootclasspath", java.io.File.pathSeparator)
     } else {
       Seq.empty
     }
@@ -173,7 +173,7 @@ object CompilerDataFactory
     val xPluginPrefix = "-Xplugin:"
     compilerOption.startsWith(xPluginPrefix) &&
       compilerOption.contains("semanticdb-scalac") &&
-      new File(compilerOption.substring(xPluginPrefix.length)).exists()
+      Files.exists(Paths.get(compilerOption.substring(xPluginPrefix.length)))
   }
 
   def javaOptionsFor(context: CompileContext, chunk: ModuleChunk): Seq[String] = {
@@ -211,10 +211,10 @@ object CompilerDataFactory
 
   private def compilerJarsInSdk(sdk: JpsLibrary): Either[CompilerJarsResolveError, CompilerJars] = {
     val (compilerClasspathJars, compilerBridgeJar)  = compilerData(sdk)
-    CompilerJarsFactory.fromFiles(compilerClasspathJars, compilerBridgeJar)
+    CompilerJarsFactory.fromFiles(compilerClasspathJars.map(_.toFile), compilerBridgeJar.map(_.toFile))
   }
 
-  private def compilerData(sdk: JpsLibrary): (Seq[File], Option[File]) =
+  private def compilerData(sdk: JpsLibrary): (Seq[Path], Option[Path]) =
     sdk.getProperties match {
       case settings: LibrarySettings =>
         val classpath = settings.getCompilerClasspath.toSeq
@@ -229,14 +229,14 @@ object CompilerDataFactory
 
     def inScalaCompiler = s"in Scala compiler classpath in Scala SDK ${scalaSdk.getName}"
     def filesNames(files: Iterable[JarFileWithName]) = files.map(_.name).mkString(", ")
-    def filePaths(absentJars: Iterable[File]) = absentJars.map(_.getPath).mkString(", ")
+    def filePaths(absentJars: Iterable[Path]) = absentJars.map(_.toAbsolutePath.normalize().toString).mkString(", ")
 
     import JarUtil.JarExtension
 
     error match {
       case NotFound(kind)               => s"No '$kind*$JarExtension' $inScalaCompiler"
       case DuplicatesFound(kind, files) => s"Multiple '$kind*$JarExtension' files (${filesNames(files)}) $inScalaCompiler"
-      case FilesDoNotExist(absentJars)  => s"Scala compiler JARs not found (module '${module.getName}'): ${filePaths(absentJars)}"
+      case FilesDoNotExist(absentJars)  => s"Scala compiler JARs not found (module '${module.getName}'): ${filePaths(absentJars.map(_.toPath))}"
     }
   }
 

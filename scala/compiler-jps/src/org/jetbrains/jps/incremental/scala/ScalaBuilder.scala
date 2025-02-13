@@ -12,7 +12,6 @@ import org.jetbrains.jps.model.module.JpsModule
 import org.jetbrains.plugins.scala.compiler.data.{CompilationData, SbtData}
 import org.jetbrains.plugins.scala.server.CompileServerProperties
 
-import java.io._
 import java.net.InetAddress
 import java.nio.file.Path
 import scala.concurrent.duration.DurationInt
@@ -32,8 +31,8 @@ object ScalaBuilder {
   def compile(
     context: CompileContext,
     chunk: ModuleChunk,
-    sources: Seq[File],
-    allSources: Seq[File],
+    sources: Seq[Path],
+    allSources: Seq[Path],
     modules: Set[JpsModule],
     client: Client
   ): Either[String, ExitCode] = {
@@ -147,10 +146,10 @@ object ScalaBuilder {
     }
 
   private lazy val sbtData = {
-    val pluginJpsRoot = new File(PathManager.getJarPathForClass(getClass)).getParentFile
+    val pluginJpsRoot = PathManager.getJarForClass(getClass).getParent
     val javaClassVersion = System.getProperty("java.class.version")
     val systemRootDir = Utils.getSystemRoot.toPath
-    SbtData.from(pluginJpsRoot, javaClassVersion, systemRootDir)
+    SbtData.from(pluginJpsRoot.toFile, javaClassVersion, systemRootDir)
   }
 
   private def scalaLibraryWarning(modules: Set[JpsModule], compilationData: CompilationData, client: Client): Unit = {

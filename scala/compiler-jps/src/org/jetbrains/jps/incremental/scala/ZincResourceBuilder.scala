@@ -7,12 +7,11 @@ import org.jetbrains.jps.builders.{BuildOutputConsumer, DirtyFilesHolder}
 import org.jetbrains.jps.incremental.messages.{BuildMessage, CompilerMessage, ProgressMessage}
 import org.jetbrains.jps.incremental.scala.ZincResourceBuilder.{isEnabled, shouldSkip}
 import org.jetbrains.jps.incremental.scala.sources.{SbtModuleType, SharedSourcesModuleType}
-import org.jetbrains.jps.incremental.{CompileContext, FSOperations, ProjectBuildException, ResourcesTarget, TargetBuilder}
+import org.jetbrains.jps.incremental.{CompileContext, ProjectBuildException, ResourcesTarget, TargetBuilder}
 import org.jetbrains.jps.model.module.JpsModule
 import org.jetbrains.plugins.scala.compiler.data.IncrementalityType
 
-import java.io.File
-import java.nio.file.Paths
+import java.nio.file.{Files, Path, Paths, StandardCopyOption}
 import scala.collection.mutable
 import scala.jdk.CollectionConverters.CollectionHasAsScala
 
@@ -40,7 +39,7 @@ private final class ZincResourceBuilder
       holder.processDirtyFiles((t, f, srcRoot) => {
         if (isSkipped(t, srcRoot, skippedRoots)) true
         else {
-          copyResource(context, srcRoot, f, outputConsumer)((_, _) => true)
+          copyResource(context, srcRoot, f.toPath, outputConsumer)((_, _) => true)
           !context.getCancelStatus.isCanceled
         }
       })
@@ -54,10 +53,10 @@ private final class ZincResourceBuilder
 
       val resourceFiles = targetRoots.asScala.toSeq.flatMap { root =>
         val filter = root.createFileFilter()
-        val files = Seq.newBuilder[(ResourcesTarget, File, ResourceRootDescriptor)]
+        val files = Seq.newBuilder[(ResourcesTarget, Path, ResourceRootDescriptor)]
         FileUtil.processFilesRecursively(root.getRootFile, file => {
           if (file.isFile && filter.accept(file) && !excludeIndex.isExcluded(file)) {
-            files += ((target, file, root))
+            files += ((target, file.toPath, root))
           }
           true
         })
@@ -66,11 +65,7 @@ private final class ZincResourceBuilder
 
       resourceFiles.foreach { case (t, f, srcRoot) =>
         if (!isSkipped(t, srcRoot, skippedRoots)) {
-          copyResource(context, srcRoot, f, outputConsumer) { (file, targetFile) =>
-            val resourceTimestamp = file.lastModified()
-            val targetTimestamp = targetFile.lastModified()
-            resourceTimestamp > targetTimestamp
-          }
+          copyResource(context, srcRoot, f, outputConsumer)(shouldCopy)
           context.checkCanceled()
         }
       }
@@ -104,16 +99,16 @@ private final class ZincResourceBuilder
   private def copyResource(
     context: CompileContext,
     rd: ResourceRootDescriptor,
-    file: File,
+    file: Path,
     outputConsumer: BuildOutputConsumer
-  )(predicate: (File, File) => Boolean): Unit = {
+  )(predicate: (Path, Path) => Boolean): Unit = {
     val outputRoot = rd.getTarget.getOutputDir
     if (outputRoot eq null) return
 
-    val sourceRootPath = FileUtilRt.toCanonicalPath(rd.getRootFile.getAbsolutePath, File.separatorChar, true)
-    var relativePath = FileUtilRt.getRelativePath(sourceRootPath, FileUtilRt.toCanonicalPath(file.getPath, File.separatorChar, true), '/')
+    val sourceRootPath = FileUtilRt.toCanonicalPath(rd.getRootFile.getAbsolutePath, java.io.File.separatorChar, true)
+    var relativePath = FileUtilRt.getRelativePath(sourceRootPath, FileUtilRt.toCanonicalPath(file.toAbsolutePath.normalize().toString, java.io.File.separatorChar, true), '/')
     if ("." == relativePath) {
-      relativePath = file.getName
+      relativePath = file.getFileName.toString
     }
     val prefix = rd.getPackagePrefix
 
@@ -127,10 +122,14 @@ private final class ZincResourceBuilder
     context.processMessage(
       new ProgressMessage(JpsBundle.message("progress.message.copying.resources.0", rd.getTarget.getModule.getName)))
     try {
-      val targetFile = Paths.get(targetPath.toString()).toFile
+      val targetFile = Paths.get(targetPath.toString())
       if (predicate(file, targetFile)) {
-        FSOperations.copy(file, targetFile)
-        outputConsumer.registerOutputFile(targetFile, java.util.Collections.singletonList(file.getPath))
+        val targetDirectory = targetFile.getParent
+        if (!Files.exists(targetDirectory)) {
+          Files.createDirectories(targetDirectory)
+        }
+        Files.copy(file, targetFile, StandardCopyOption.REPLACE_EXISTING)
+        outputConsumer.registerOutputFile(targetFile.toFile, java.util.Collections.singletonList(file.toAbsolutePath.normalize().toString))
       }
     } catch {
       case e: Exception =>
@@ -138,6 +137,9 @@ private final class ZincResourceBuilder
           new CompilerMessage(builderName, BuildMessage.Kind.ERROR, CompilerMessage.getTextFromThrowable(e)))
     }
   }
+
+  private def shouldCopy(source: Path, destination: Path): Boolean =
+    !Files.exists(destination) || Files.getLastModifiedTime(source).compareTo(Files.getLastModifiedTime(destination)) > 0
 }
 
 private object ZincResourceBuilder {

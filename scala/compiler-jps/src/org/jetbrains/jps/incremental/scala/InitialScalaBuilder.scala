@@ -13,7 +13,7 @@ import org.jetbrains.jps.model.java.JpsJavaExtensionService
 import org.jetbrains.jps.model.module.JpsModule
 import org.jetbrains.plugins.scala.compiler.data.IncrementalityType
 
-import _root_.java.io._
+import _root_.java.io.IOException
 import _root_.java.nio.charset.StandardCharsets
 import _root_.java.nio.file.{Files, Path}
 import _root_.java.{util => ju}

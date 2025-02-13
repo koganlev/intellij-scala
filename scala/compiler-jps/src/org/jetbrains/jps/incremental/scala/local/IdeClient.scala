@@ -13,7 +13,6 @@ import org.jetbrains.jps.model.module.JpsModule
 import org.jetbrains.plugins.scala.compiler.{CompilationUnitId, CompilerEvent}
 import org.jetbrains.plugins.scala.util.CompilationId
 
-import java.io.File
 import java.util
 import java.util.UUID
 import scala.collection.immutable
@@ -77,7 +76,7 @@ abstract class IdeClient(compilerName: String,
   override def compilationUnit(path: String): Unit =
     context.processMessage(new Base64BuilderMessage(CompilerEvent.CompilationUnit(compilationId, compilationUnitId, path)))
 
-  override def compilationEnd(sources: Set[File]): Unit =
+  override def compilationEnd(sources: Set[java.io.File]): Unit =
     context.processMessage(new Base64BuilderMessage(CompilerEvent.CompilationFinished(compilationId, compilationUnitId, sources)))
 
   override def processingEnd(): Unit = ()
@@ -105,7 +104,7 @@ abstract class IdeClient(compilerName: String,
   override def internalTrace(text: String): Unit =
     ScalaBuilder.Log.trace(text)
 
-  override def deleted(module: File): Unit = {
+  override def deleted(module: java.io.File): Unit = {
     val paths = util.Collections.singletonList(FileUtil.toCanonicalPath(module.getPath))
     context.processMessage(new FileDeletedEvent(paths))
   }

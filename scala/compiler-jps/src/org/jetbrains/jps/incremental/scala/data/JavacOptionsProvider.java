@@ -14,9 +14,10 @@ import org.jetbrains.jps.model.module.JpsModule;
 import org.jetbrains.jps.model.serialization.JpsModelSerializationDataService;
 import org.jetbrains.jps.model.serialization.PathMacroUtil;
 
-import java.io.File;
+import java.nio.file.Path;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.function.BiConsumer;
 
@@ -72,11 +73,11 @@ final class JavacOptionsProvider {
         if (customArgs != null && !customArgs.isEmpty()) {
             BiConsumer<List<String>, String> appender = List::add;
             final JpsModule module = chunk.representativeTarget().getModule();
-            final File baseDirectory = JpsModelSerializationDataService.getBaseDirectory(module);
+            final Path baseDirectory = Optional.ofNullable(JpsModelSerializationDataService.getBaseDirectory(module)).map(java.io.File::toPath).orElse(null);
             if (baseDirectory != null) {
                 //this is a temporary workaround to allow passing per-module compiler options for Eclipse compiler in form
                 // -properties $MODULE_DIR$/.settings/org.eclipse.jdt.core.prefs
-                final String moduleDirPath = FileUtil.toCanonicalPath(baseDirectory.getAbsolutePath());
+                final String moduleDirPath = FileUtil.toCanonicalPath(baseDirectory.toAbsolutePath().normalize().toString());
                 appender = (strings, option) -> strings.add(StringUtil.replace(option, PathMacroUtil.DEPRECATED_MODULE_DIR, moduleDirPath));
             }
 

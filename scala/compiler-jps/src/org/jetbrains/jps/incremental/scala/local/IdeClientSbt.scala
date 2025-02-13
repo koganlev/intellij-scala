@@ -9,7 +9,7 @@ import org.jetbrains.jps.incremental.ModuleLevelBuilder.OutputConsumer
 import org.jetbrains.jps.incremental.fs.CompilationRound
 import org.jetbrains.jps.incremental.{CompileContext, FSOperations}
 
-import java.io.File
+import java.nio.file.{Path, Paths}
 import java.util
 import scala.jdk.CollectionConverters._
 import scala.util.control.Exception._
@@ -18,21 +18,24 @@ class IdeClientSbt(compilerName: String,
                    context: CompileContext,
                    chunk: ModuleChunk,
                    consumer: OutputConsumer,
-                   sourceToTarget: File => Option[BuildTarget[_ <: BuildRootDescriptor]])
+                   sourceToTarget: Path => Option[BuildTarget[_ <: BuildRootDescriptor]])
         extends IdeClient(compilerName, context, chunk) {
 
-  override def generated(source: File, outputFile: File, name: String): Unit = {
+  override def generated(source: java.io.File, outputFile: java.io.File, name: String): Unit = {
     invalidateBoundForms(source)
-    val target = sourceToTarget(source).getOrElse {
+    val target = sourceToTarget(source.toPath).getOrElse {
       throw new RuntimeException("Unknown source file: " + source)
     }
-    val compiledClass = new LazyCompiledClass(outputFile, source, name)
+    val compiledClass = new LazyCompiledClass(outputFile.toPath, source.toPath, name)
     consumer.registerCompiledClass(target, compiledClass)
   }
 
   override def sourceStarted(source: String): Unit = {
-    FSOperations.markDirty(context, CompilationRound.NEXT, new File(source))
+    FSOperations.markDirty(context, CompilationRound.NEXT, Paths.get(source).toFile)
   }
+
+  // TODO needs to be rewritten according to the latest changes in the platform. This code is currently not executed.
+  import java.io.File
 
   // TODO Expect JPS compiler in UI-designer to take generated class events into account
   private val FormsToCompileKey = catching(classOf[ClassNotFoundException], classOf[NoSuchFieldException]).opt {
@@ -44,7 +47,7 @@ class IdeClientSbt(compilerName: String,
   private def invalidateBoundForms(source: File): Unit = {
     FormsToCompileKey.foreach { key =>
       val boundForms: Option[Iterable[File]] = {
-        val target = sourceToTarget(source).getOrElse(chunk.representativeTarget())
+        val target = sourceToTarget(source.toPath).getOrElse(chunk.representativeTarget())
         //noinspection ApiStatus
         val sourceToForm = context.getProjectDescriptor.dataManager.getSourceToFormMap(target)
         val sourcePath = FileUtil.toCanonicalPath(source.getPath)
