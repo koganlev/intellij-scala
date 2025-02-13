@@ -5,11 +5,11 @@ import com.intellij.openapi.project.Project
 import org.jetbrains.bsp.BspUtil
 import org.jetbrains.bsp.project.BspExternalSystemUtil
 
-import java.io.File
+import java.nio.file.Path
 
 object ScalaCliUtils {
 
-  def isScalaCliInstalled(workspace: File): Boolean =
+  def isScalaCliInstalled(workspace: Path): Boolean =
     BspUtil.checkIfToolIsInstalled(workspace, getScalaCliCommand)
 
   /**
