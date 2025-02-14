@@ -1,7 +1,7 @@
 package org.jetbrains.sbt.project.module
 
 import com.intellij.openapi.externalSystem.model.{Key, ProjectKeys}
-import com.intellij.openapi.externalSystem.model.project.ModuleData
+import com.intellij.openapi.externalSystem.model.project.{ModuleData, ModuleNameDeduplicationStrategy}
 import com.intellij.serialization.PropertyMapping
 import org.jetbrains.sbt.project.SbtProjectSystem
 
@@ -39,9 +39,21 @@ final case class SbtNestedModuleData @PropertyMapping(Array(
   externalName,
   moduleFileDirectoryPath,
   externalConfigPath
-) { }
+)
 
 object SbtNestedModuleData {
+  def apply(
+    id: String,
+    externalName: String,
+    moduleFileDirectoryPath: String,
+    externalConfigPath: String,
+    moduleTypeId: String
+  ): SbtNestedModuleData = {
+    val sbtNestedModuleData = new SbtNestedModuleData(id, externalName, moduleFileDirectoryPath, externalConfigPath, moduleTypeId)
+    sbtNestedModuleData.setModuleNameDeduplicationStrategy(ModuleNameDeduplicationStrategy.NUMBER_SUFFIX)
+    sbtNestedModuleData
+  }
+
   val Key: Key[SbtNestedModuleData] =
     new Key(classOf[SbtNestedModuleData].getName, ProjectKeys.MODULE.getProcessingWeight + 1)
 }

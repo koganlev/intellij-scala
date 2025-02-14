@@ -35,9 +35,11 @@ class SbtNestedModuleDataService extends AbstractSbtModuleDataService[SbtNestedM
     data: SbtNestedModuleData,
     parentModuleActualName: String
   ): Option[String] = {
-    val parentModuleOriginalName = findParentModuleOriginalName(parentModule)
-    parentModuleOriginalName
-      .map(generateNewInternalModuleName(data.getInternalName, data.getModuleName, _, parentModuleActualName))
+    val parentModuleOriginalNameOpt = findParentModuleOriginalName(parentModule)
+    parentModuleOriginalNameOpt.map { parentModuleOriginalName =>
+      val moduleNameWithGroup = data.getInternalName.stripPrefix(s"$parentModuleOriginalName.")
+      s"$parentModuleActualName.$moduleNameWithGroup"
+    }
   }
 
   //note: before introducing SbtNestedModuleData setting modules in com.intellij.openapi.externalSystem.service.internal.ExternalSystemResolveProjectTask.doExecute was enough, but because
@@ -60,15 +62,5 @@ class SbtNestedModuleDataService extends AbstractSbtModuleDataService[SbtNestedM
   private def findParentModuleOriginalName(module: Module): Option[String] = {
     val moduleDataNode = SbtUtil.getSbtModuleDataNode(module)
     moduleDataNode.map(_.getData.getModuleName)
-  }
-
-  private def generateNewInternalModuleName(
-    internalModuleName: String,
-    moduleName: String,
-    parentOriginalModuleName: String,
-    parentActualModuleName: String
-  ): String = {
-    val groupNameInsideBuild = internalModuleName.stripPrefix(s"$parentOriginalModuleName.").stripSuffix(moduleName)
-    s"$parentActualModuleName.$groupNameInsideBuild$moduleName"
   }
 }

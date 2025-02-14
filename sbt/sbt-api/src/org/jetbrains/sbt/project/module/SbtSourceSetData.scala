@@ -1,7 +1,7 @@
 package org.jetbrains.sbt.project.module
 
 import com.intellij.openapi.externalSystem.model.{Key, ProjectKeys}
-import com.intellij.openapi.externalSystem.model.project.ModuleData
+import com.intellij.openapi.externalSystem.model.project.{ModuleData, ModuleNameDeduplicationStrategy}
 import com.intellij.serialization.PropertyMapping
 import org.jetbrains.sbt.project.SbtProjectSystem
 
@@ -37,9 +37,21 @@ final case class SbtSourceSetData @PropertyMapping(Array(
   externalName,
   moduleFileDirectoryPath,
   externalConfigPath
-) { }
+)
 
 object SbtSourceSetData {
+  def apply(
+    id: String,
+    externalName: String,
+    moduleFileDirectoryPath: String,
+    externalConfigPath: String,
+    moduleTypeId: String
+  ): SbtSourceSetData = {
+    val sbtSourceSetData = new SbtSourceSetData(id, externalName, moduleFileDirectoryPath, externalConfigPath, moduleTypeId)
+    sbtSourceSetData.setModuleNameDeduplicationStrategy(ModuleNameDeduplicationStrategy.NUMBER_SUFFIX)
+    sbtSourceSetData
+  }
+
   val Key: Key[SbtSourceSetData] =
     new Key(classOf[SbtSourceSetData].getName, ProjectKeys.MODULE.getProcessingWeight + 2)
 }
