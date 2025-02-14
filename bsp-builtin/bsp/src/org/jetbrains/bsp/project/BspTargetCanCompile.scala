@@ -16,7 +16,7 @@ final class BspTargetCanCompile
   extends PersistentStateComponent[BspTargetCanCompile] {
 
   @BeanProperty
-  var btIdToCanCompile: java.util.Map[String, java.lang.Boolean] = Collections.emptyMap()
+  var compilableTargets: java.util.List[String] = Collections.emptyList()
 
   override def getState: BspTargetCanCompile = this
 

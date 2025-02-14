@@ -57,7 +57,7 @@ class BspProjectResolver extends ExternalSystemProjectResolver[BspExecutionSetti
     val result = if (isPreviewMode) {
       val modules = ProjectModules(Nil, Nil)
       reporter.finish(BuildMessages.empty.status(BuildMessages.OK))
-      projectNode(workspace, modules, rootExclusions(workspace), "dummy-display-name", Map.empty)
+      projectNode(workspace, modules, rootExclusions(workspace), "dummy-display-name", List.empty)
     } else {
       runImport(workspace, executionSettings)
     }
@@ -99,8 +99,8 @@ class BspProjectResolver extends ExternalSystemProjectResolver[BspExecutionSetti
 
           val targets = targetsResponse.getTargets.asScala.toList
 
-          val serverTargetsToCanCompileCapability: Map[String, java.lang.Boolean] = targets.map { target =>
-            target.getId.getUri -> target.getCapabilities.getCanCompile }.toMap
+          val compilableTargets: List[String] = targets.filter(target =>
+            target.getCapabilities.getCanCompile).map(bt => bt.getId.getUri)
           val td = targetData(targets, structureEventId)
 
           td.thenApply[DataNode[ProjectData]] { data =>
@@ -114,7 +114,7 @@ class BspProjectResolver extends ExternalSystemProjectResolver[BspExecutionSetti
             val descriptions = calculateModuleDescriptions(
               targets, scalacOptions.toSeq, javacOptions.toSeq, sources.toSeq, resources.toSeq, outputPaths.toSeq, depSources.toSeq
             )
-            projectNode(workspace, descriptions, rootExclusions(workspace), serverInfo.displayName, serverTargetsToCanCompileCapability)
+            projectNode(workspace, descriptions, rootExclusions(workspace), serverInfo.displayName, compilableTargets)
           }
           .reportFinished(
             reporter,

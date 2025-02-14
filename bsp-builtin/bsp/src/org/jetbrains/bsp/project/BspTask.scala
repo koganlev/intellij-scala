@@ -184,10 +184,8 @@ class BspTask[T](project: Project,
 
   private def buildRequests(targets: Iterable[BspTarget], targetsToClean: Iterable[BspTarget])
                            (implicit server: BspServer, capabilities: BuildServerCapabilities, reporter: BuildReporter) = {
-    val btIdCanCompile = BspTargetCanCompile.getInstance(project).getBtIdToCanCompile()
-    val targetsWithCompileCap: Iterable[BspTarget] = targets.filter {bt =>
-      val id = bt.target.toString
-      btIdCanCompile.containsKey(id) && btIdCanCompile.get(id) }
+    val compilableTargets = BspTargetCanCompile.getInstance(project).getCompilableTargets()
+    val targetsWithCompileCap: Iterable[BspTarget] = targets.filter(id => compilableTargets.contains(id.target.toString))
     if (targetsToClean.isEmpty) compileRequest(targetsWithCompileCap)
     else {
       cleanRequest(targetsToClean)

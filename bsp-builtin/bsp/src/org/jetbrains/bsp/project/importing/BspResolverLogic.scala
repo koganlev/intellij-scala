@@ -668,7 +668,7 @@ private[importing] object BspResolverLogic {
     projectModules: ProjectModules,
     excludedPaths: List[File],
     displayName: String,
-    canCompile: Map[String, java.lang.Boolean]
+    canCompile: List[String]
   ): DataNode[ProjectData] = {
 
     val projectRootPath = workspace.getCanonicalPathOptimized
@@ -677,8 +677,6 @@ private[importing] object BspResolverLogic {
     val projectData = new ProjectData(BSP.ProjectSystemId, projectRoot.getName, projectRootPath, projectRootPath)
     val projectNode = new DataNode[ProjectData](ProjectKeys.PROJECT, projectData, null)
 
-    // somewhere here add to datanode[projectdata] my new node - create data and datanode with this data
-    // breakpoint in projectImport to see
 
     // synthetic root module when no natural module is at root
     val rootModule =

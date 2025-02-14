@@ -56,8 +56,8 @@ object BspProjectData {
     BspProjectData(sdk.orNull, vcsRootsCandidates, displayName)
 }
 
-case class BspTargetCanCompileData @PropertyMapping(Array("btIdToCanCompile"))(
-  @NotNull btIdToCanCompile: util.Map[String, java.lang.Boolean]
+case class BspTargetCanCompileData @PropertyMapping(Array("compilableTargets"))(
+  @NotNull compilableTargets: util.List[String]
 ) extends BspEntityData
 
 object BspTargetCanCompileData {

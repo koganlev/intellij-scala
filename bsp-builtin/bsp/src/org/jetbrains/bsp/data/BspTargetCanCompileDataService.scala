@@ -19,7 +19,7 @@ class BspTargetCanCompileDataService extends ScalaAbstractProjectDataService[Bsp
   ): Unit = {
     // there will be always one node to import
     toImport.forEach { node =>
-      BspTargetCanCompile.getInstance(project).setBtIdToCanCompile(node.getData.btIdToCanCompile)
+      BspTargetCanCompile.getInstance(project).setCompilableTargets(node.getData.compilableTargets)
     }
   }
 }
