@@ -265,6 +265,31 @@ final class SbtProjectStructureImportingTest_ProdTestSourcesSeparatedEnabled ext
       )
     })
 
+  def testNumberSuffixDeduplicationStrategy():Unit = runTest(
+    new project("root") {
+      val root: module = new module("root")
+      val rootMain: module = new module("root.main")
+      val rootTest: module = new module("root.test")
+
+      val foo: module = new module("root.foo_")
+      val fooMain: module = new module("root.foo_.main")
+      val fooTest: module = new module("root.foo_.test")
+
+      val fooDuplication: module = new module("root.foo_~1")
+      val fooDuplicationMain: module = new module("root.foo_~1.main")
+      val fooDuplicationTest: module = new module("root.foo_~1.test")
+
+      val rootBuildModule: module = new module("root.root-build") { moduleFileDirectoryPath := "numberSuffixDeduplicationStrategy" }
+
+      modules := Seq(
+        root, rootMain, rootTest,
+        foo, fooMain, fooTest,
+        fooDuplication, fooDuplicationMain, fooDuplicationTest,
+        rootBuildModule,
+      )
+    }
+  )
+
   def testUnmanagedDependency(): Unit = runTest(
     new project("unmanagedDependency") {
       val scalaLibraries: Seq[library] = ProjectStructureTestUtils.expectedScalaLibraryWithScalaSdkForSbt(useEnv = true)("2.13.6")
@@ -509,7 +534,7 @@ final class SbtProjectStructureImportingTest_ProdTestSourcesSeparatedEnabled ext
         sbtBuildURI := buildURI.resolve("c2/")
         moduleDependencies := Seq(rootC2Main)
       }
-      val rootC3: module = new module("root~1") {
+      val rootC3: module = new module("suffix2.root") {
         sbtProjectId := "root"
         sbtBuildURI := buildURI.resolve("prefix1/prefix2/c3/suffix1/suffix2/")
         moduleDependencies ++= Seq(
@@ -521,17 +546,17 @@ final class SbtProjectStructureImportingTest_ProdTestSourcesSeparatedEnabled ext
           }
         )
       }
-      lazy val rootC3Main: module = new module("root~1.main") {
+      lazy val rootC3Main: module = new module("suffix2.root.main") {
         sbtProjectId := "root"
         sbtBuildURI := buildURI.resolve("prefix1/prefix2/c3/suffix1/suffix2/")
         moduleDependencies := Seq()
       }
-      lazy val rootC3Test: module = new module("root~1.test") {
+      lazy val rootC3Test: module = new module("suffix2.root.test") {
         sbtProjectId := "root"
         sbtBuildURI := buildURI.resolve("prefix1/prefix2/c3/suffix1/suffix2/")
         moduleDependencies := Seq(rootC3Main)
       }
-      val rootC4: module = new module("root~2") {
+      val rootC4: module = new module("suffix1.suffix2.root") {
         sbtProjectId := "root"
         sbtBuildURI := buildURI.resolve("prefix1/prefix2/c4/suffix1/suffix2/")
         moduleDependencies ++= Seq(
@@ -543,12 +568,12 @@ final class SbtProjectStructureImportingTest_ProdTestSourcesSeparatedEnabled ext
           }
         )
       }
-      lazy val rootC4Main: module = new module("root~2.main") {
+      lazy val rootC4Main: module = new module("suffix1.suffix2.root.main") {
         sbtProjectId := "root"
         sbtBuildURI := buildURI.resolve("prefix1/prefix2/c4/suffix1/suffix2/")
         moduleDependencies := Seq()
       }
-      lazy val rootC4Test: module = new module("root~2.test") {
+      lazy val rootC4Test: module = new module("suffix1.suffix2.root.test") {
         sbtProjectId := "root"
         sbtBuildURI := buildURI.resolve("prefix1/prefix2/c4/suffix1/suffix2/")
         moduleDependencies := Seq(rootC4Main)
@@ -615,21 +640,21 @@ final class SbtProjectStructureImportingTest_ProdTestSourcesSeparatedEnabled ext
 
       val modulesFromC3: Seq[module] =
         Seq(rootC3, rootC3Main, rootC3Test) ++
-          createModuleWithSourceSet("project1InC3", Array("root~1")) ++
-          createModuleWithSourceSet("project2InC3", Array("root~1")) ++
-          createModuleWithSourceSet("project3InC3WithSameName", Array("root~1", "same name in c3")) ++
-          createModuleWithSourceSet("project4InC3WithSameName", Array("root~1", "same name in c3")) ++
-          createModuleWithSourceSet("project5InC3WithSameGlobalName", Array("root~1", "same global name")) ++
-          createModuleWithSourceSet("project6InC3WithSameGlobalName", Array("root~1", "same global name"))
+          createModuleWithSourceSet("project1InC3", Array("suffix2.root")) ++
+          createModuleWithSourceSet("project2InC3", Array("suffix2.root")) ++
+          createModuleWithSourceSet("project3InC3WithSameName", Array("suffix2.root", "same name in c3")) ++
+          createModuleWithSourceSet("project4InC3WithSameName", Array("suffix2.root", "same name in c3")) ++
+          createModuleWithSourceSet("project5InC3WithSameGlobalName", Array("suffix2.root", "same global name")) ++
+          createModuleWithSourceSet("project6InC3WithSameGlobalName", Array("suffix2.root", "same global name"))
 
       val modulesFromC4: Seq[module] =
         Seq(rootC4, rootC4Main, rootC4Test) ++
-          createModuleWithSourceSet("project1InC4", Array("root~2")) ++
-          createModuleWithSourceSet("project2InC4", Array("root~2")) ++
-          createModuleWithSourceSet("project3InC4WithSameName", Array("root~2", "same name in c4")) ++
-          createModuleWithSourceSet("project4InC4WithSameName", Array("root~2", "same name in c4")) ++
-          createModuleWithSourceSet("project5InC4WithSameGlobalName", Array("root~2", "same global name")) ++
-          createModuleWithSourceSet("project6InC4WithSameGlobalName", Array("root~2", "same global name"))
+          createModuleWithSourceSet("project1InC4", Array("suffix1.suffix2.root")) ++
+          createModuleWithSourceSet("project2InC4", Array("suffix1.suffix2.root")) ++
+          createModuleWithSourceSet("project3InC4WithSameName", Array("suffix1.suffix2.root", "same name in c4")) ++
+          createModuleWithSourceSet("project4InC4WithSameName", Array("suffix1.suffix2.root", "same name in c4")) ++
+          createModuleWithSourceSet("project5InC4WithSameGlobalName", Array("suffix1.suffix2.root", "same global name")) ++
+          createModuleWithSourceSet("project6InC4WithSameGlobalName", Array("suffix1.suffix2.root", "same global name"))
 
 
       modules := Seq(root, rootMain, rootTest) ++:
@@ -1711,24 +1736,23 @@ final class SbtProjectStructureImportingTest_ProdTestSourcesSeparatedEnabled ext
     new project("sameIdsAndNamesWithDifferentCase") {
       modules :=
         createModuleWithSourceSet("sameIdsAndNamesWithDifferentCase") ++
-          createModuleWithSourceSet("U_MY_MODULE_ID~2", Array("sameIdsAndNamesWithDifferentCase", "same module name")) ++
-          createModuleWithSourceSet("U_My_Module_Id~1", Array("sameIdsAndNamesWithDifferentCase", "same module name")) ++
+          createModuleWithSourceSet("U_MY_MODULE_ID", Array("sameIdsAndNamesWithDifferentCase", "same module name")) ++
+          createModuleWithSourceSet("U_My_Module_Id", Array("sameIdsAndNamesWithDifferentCase", "same module name")) ++
           createModuleWithSourceSet("U_my_module_id", Array("sameIdsAndNamesWithDifferentCase", "same module name")) ++
-          createModuleWithSourceSet("sameIdsAndNamesWithDifferentCase.X_MY_MODULE_ID~2") ++
+          createModuleWithSourceSet("sameIdsAndNamesWithDifferentCase.X_MY_MODULE_ID") ++
           createModuleWithSourceSet("sameIdsAndNamesWithDifferentCase.X_my_module_id") ++
-          createModuleWithSourceSet("sameIdsAndNamesWithDifferentCase.X_My_Module_Id~1") ++
-          createModuleWithSourceSet("sameIdsAndNamesWithDifferentCase.Y_My_Module_Name~1") ++
+          createModuleWithSourceSet("sameIdsAndNamesWithDifferentCase.X_My_Module_Id") ++
+          createModuleWithSourceSet("sameIdsAndNamesWithDifferentCase.Y_My_Module_Name") ++
           createModuleWithSourceSet("sameIdsAndNamesWithDifferentCase.Y_my_module_name") ++
-          createModuleWithSourceSet("sameIdsAndNamesWithDifferentCase.Y_MY_MODULE_Name~2") ++
-          createModuleWithSourceSet("sameIdsAndNamesWithDifferentCase.Z_MY_MODULE_Name~2") ++
-          createModuleWithSourceSet("sameIdsAndNamesWithDifferentCase.Z_My_Module_Name~1") ++
+          createModuleWithSourceSet("sameIdsAndNamesWithDifferentCase.Y_MY_MODULE_Name") ++
+          createModuleWithSourceSet("sameIdsAndNamesWithDifferentCase.Z_MY_MODULE_Name") ++
+          createModuleWithSourceSet("sameIdsAndNamesWithDifferentCase.Z_My_Module_Name") ++
           createModuleWithSourceSet("sameIdsAndNamesWithDifferentCase.Z_my_module_name")
     }
   )
 
-  //corresponds to logic described in org.jetbrains.sbt.project.SbtProjectResolver.generateUniqueModuleInternalNameForRootProject
   def testMultiBuildProjectWithSpecialCharactersInRootProjectNames(): Unit = runTest(
-    new project("ro//o.t.") {
+    new project("ro//o/t\\") {
       val buildURI: URI = getTestProjectDir.getCanonicalFile.toURI
 
       val rootC1: module = new module("Build__1_N_ame") {
@@ -1783,11 +1807,11 @@ final class SbtProjectStructureImportingTest_ProdTestSourcesSeparatedEnabled ext
 
       val modulesRoot: Seq[module] =
         Seq(root, rootMain, rootTest) ++
-          createModuleWithSourceSet("project1", Array("ro__o_t_"))
+          createModuleWithSourceSet("foo", Array("ro__o_t_"))
 
       val modulesC1: Seq[module] =
         Seq(rootC1, rootC1Main, rootC1Test) ++
-          createModuleWithSourceSet("project1", Array("Build__1_N_ame"))
+          createModuleWithSourceSet("foo", Array("Build__1_N_ame"))
 
       modules := modulesRoot ++ modulesC1
     }
@@ -1932,7 +1956,8 @@ final class SbtProjectStructureImportingTest_ProdTestSourcesSeparatedEnabled ext
 
   // SBT guarantees us that project ids inside builds are unique. In IDEA in the internal module name all "/" are replaced with "_" and it could happen that in one build
   // the name of one project would be e.g. ro/t and the other one would be ro_t and for SBT project ids uniqueness would be maintained but not for IDEA.
-  // In such case we should handle it and append number suffix to one of the module name
+  // In the case of such deduplication, IDEA will add a ~<number> suffix to each sbt source set module (main/test) or sbt nested module (the parent module for main/test).
+  // It's done by explicitly setting the ModuleNameDeduplicationStrategy.NUMBER_SUFFIX in these modules.
   def testMultiBuildProjectWithTheSameProjectIdFromIDEAPerspective(): Unit = runTest(
     new project("multiBuildProjectWithTheSameProjectIdFromIDEAPerspective") {
       lazy val scalaLibraries: Seq[library] = ProjectStructureTestUtils.expectedScalaLibraryWithScalaSdkForSbt(useEnv = true)("2.13.6")
