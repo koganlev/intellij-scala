@@ -50,11 +50,8 @@ case class MostSpecificUtil(place: PsiElement, length: Int) {
     nextMostSpecificGeneric(rest.map(toInnerSRR(_))).map(_.repr)
   }
 
-  def notMoreSpecificThan(result: ScalaResolveResult): ScalaResolveResult => Boolean = {
-    val inner = toInnerSRR(result)
-
-    cand => !isMoreSpecific(inner, toInnerSRR(cand), checkImplicits = false)
-  }
+  def isMoreSpecific(r1: ScalaResolveResult, r2: ScalaResolveResult): Boolean =
+    isMoreSpecific(toInnerSRR(r1), toInnerSRR(r2), checkImplicits = false)
 
   private case class InnerScalaResolveResult[T](
     element:                 PsiNamedElement,
@@ -130,44 +127,44 @@ case class MostSpecificUtil(place: PsiElement, length: Int) {
         }
 
         val conformance = (calcParams(t1, undefine = false), calcParams(t2, undefine = true)) match {
-            case (Left(p1), Left(p2)) =>
-              var (params1, params2) = (p1, p2)
-              if ((t1.isInstanceOf[ScTypePolymorphicType] && t2.isInstanceOf[ScTypePolymorphicType] ||
-                      (!(m1.isInstanceOf[ScFunction] || m1.isInstanceOf[ScFun] || m1.isInstanceOf[ScPrimaryConstructor]) ||
-                              !(m2.isInstanceOf[ScFunction] || m2.isInstanceOf[ScFun] || m2.isInstanceOf[ScPrimaryConstructor]))) &&
-                      (lastRepeated(params1) ^ lastRepeated(params2))) return lastRepeated(params2) //todo: this is hack!!! see SCL-3846, SCL-4048
-              if (lastRepeated(params1) && !lastRepeated(params2)) params1 = params1.map {
-                case p: Parameter if p.isRepeated =>
-                  implicit val scope: ElementScope = r1.element.elementScope
+          case (Left(p1), Left(p2)) =>
+            var (params1, params2) = (p1, p2)
+            if ((t1.isInstanceOf[ScTypePolymorphicType] && t2.isInstanceOf[ScTypePolymorphicType] ||
+              (!(m1.isInstanceOf[ScFunction] || m1.isInstanceOf[ScFun] || m1.isInstanceOf[ScPrimaryConstructor]) ||
+                !(m2.isInstanceOf[ScFunction] || m2.isInstanceOf[ScFun] || m2.isInstanceOf[ScPrimaryConstructor]))) &&
+              (lastRepeated(params1) ^ lastRepeated(params2))) return lastRepeated(params2) //todo: this is hack!!! see SCL-3846, SCL-4048
+            if (lastRepeated(params1) && !lastRepeated(params2)) params1 = params1.map {
+              case p: Parameter if p.isRepeated =>
+                implicit val scope: ElementScope = r1.element.elementScope
 
-                  val newParamType = p.paramType match {
-                    case ScExistentialType(q, _) => ScExistentialType(q.tryWrapIntoSeqType)
-                    case paramType               => paramType.tryWrapIntoSeqType
-                  }
+                val newParamType = p.paramType match {
+                  case ScExistentialType(q, _) => ScExistentialType(q.tryWrapIntoSeqType)
+                  case paramType               => paramType.tryWrapIntoSeqType
+                }
 
-                  Parameter(
-                    p.name,
-                    p.deprecatedName,
-                    newParamType,
-                    p.expectedType,
-                    p.isDefault,
-                    isByName = p.isByName
-                  )
-                case p => p
-              }
-              val i: Int = if (params1.nonEmpty) 0.max(length - params1.length) else 0
-              val default: Expression =
-                Expression(if (params1.nonEmpty) params1.last.paramType else Nothing, place)
-              val exprs =
-                params1.map(p => Expression(p.paramType, place)) ++ Seq.fill(i)(default)
-              Compatibility.checkConformance(params2, exprs, checkImplicits)
-            case (Right(type1), Right(type2)) =>
-              type1.conforms(type2, ConstraintSystem.empty) //todo: with implcits?
-            //todo this is possible, when one variant is empty with implicit parameters, and second without parameters.
-            //in this case it's logical that method without parameters must win...
-            case (Left(_), Right(_)) if !r1.implicitCase => return false
-            case _ => return true
-          }
+                Parameter(
+                  p.name,
+                  p.deprecatedName,
+                  newParamType,
+                  p.expectedType,
+                  p.isDefault,
+                  isByName = p.isByName
+                )
+              case p => p
+            }
+            val i: Int = if (params1.nonEmpty) 0.max(length - params1.length) else 0
+            val default: Expression =
+              Expression(if (params1.nonEmpty) params1.last.paramType else Nothing, place)
+            val exprs =
+              params1.map(p => Expression(p.paramType, place)) ++ Seq.fill(i)(default)
+            Compatibility.checkConformance(params2, exprs, checkImplicits)
+          case (Right(type1), Right(type2)) =>
+            type1.conforms(type2, ConstraintSystem.empty) //todo: with implcits?
+          //todo this is possible, when one variant is empty with implicit parameters, and second without parameters.
+          //in this case it's logical that method without parameters must win...
+          case (Left(_), Right(_)) if !r1.implicitCase => return false
+          case _ => return true
+        }
 
         conformance match {
           case undefined@ConstraintSystem(uSubst) =>
@@ -209,36 +206,37 @@ case class MostSpecificUtil(place: PsiElement, length: Int) {
     }
   }
 
-  private def getClazz(element: PsiNamedElement): Option[PsiClass] =
-    element.nameContext
-      .asOptionOf[PsiMember]
-      .flatMap(_.containingClass.toOption)
+  private def getContainingClass(element: PsiNamedElement): Option[PsiClass] =
+    for {
+      member <- element.nameContext.asOptionOf[PsiMember]
+      cls    <- member.containingClass.toOption
+    } yield cls
 
-  private def getClazz(res: InnerScalaResolveResult[_]): Option[PsiClass] = getClazz(res.element)
+  private def extractContainingClass(res: InnerScalaResolveResult[_]): Option[PsiClass] =
+    getContainingClass(res.element)
 
   /**
-   * c1 is a subclass of c2, or
-   * c1 is a companion object of a class derived from c2, or
-   * c2 is a companion object of a class from which c1 is derived.
-    *
-    * @return true is c1 is derived from c2, false if c1 or c2 is None
+   * 1) `c1` is a subclass of `c2`, or
+   * 2) `c1` is a companion object of a class derived from `c2`, or
+   * 3) `c2` is a companion object of a class from which `c1` is derived.
    */
-  def isDerived(c1: Option[PsiClass], c2: Option[PsiClass]): Boolean = {
-    (c1, c2) match {
-      case (Some(clazz1), Some(clazz2)) =>
-        if (clazz1 == clazz2) return false
-        if (ScalaPsiUtil.isInheritorDeep(clazz1, clazz2)) return true
-        (clazz1, clazz2) match {
-          case (clazz1: ScObject, _) => isDerived(ScalaPsiUtil.getCompanionModule(clazz1), Some(clazz2))
-          case (_, clazz2: ScObject) => isDerived(Some(clazz1), ScalaPsiUtil.getCompanionModule(clazz2))
-          case _ => false
-        }
-      case _ => false
-    }
+  private def isDerived(cls: PsiClass, base: PsiClass): Boolean = {
+    if (cls == base)                                  false
+    else if (ScalaPsiUtil.isInheritorDeep(cls, base)) true
+    else
+      (cls, base) match {
+        case (obj: ScObject, _) =>
+          val companionClass = ScalaPsiUtil.getCompanionModule(obj)
+          companionClass.exists(isDerived(_, base))
+        case (_, baseObj: ScObject) =>
+          val baseObjectCompanionClass = ScalaPsiUtil.getCompanionModule(baseObj)
+          baseObjectCompanionClass.exists(isDerived(cls, _))
+        case _ => false
+      }
   }
 
   def isInMoreSpecificClass(r1: ScalaResolveResult, r2: ScalaResolveResult): Boolean =
-    (getClazz(r1.element), getClazz(r2.element)) match {
+    (getContainingClass(r1.element), getContainingClass(r2.element)) match {
       case (Some(clazz1), Some(clazz2)) =>
         clazz1.qualifiedName != clazz2.qualifiedName &&
           ScalaPsiUtil.isInheritorDeep(clazz1, clazz2) &&
@@ -248,9 +246,19 @@ case class MostSpecificUtil(place: PsiElement, length: Int) {
 
   private def relativeWeight[T](r1: InnerScalaResolveResult[T], r2: InnerScalaResolveResult[T],
                                 checkImplicits: Boolean): Int = {
-    val s1 = if (isAsSpecificAs(r1, r2, checkImplicits)) 1 else 0
-    val s2 = if (isDerived(getClazz(r1), getClazz(r2))) 1 else 0
-    s1 + s2
+    val asSpecific = if (isAsSpecificAs(r1, r2, checkImplicits)) 1 else 0
+
+    val derived =
+      (
+        for {
+          cls1 <- extractContainingClass(r1)
+          cls2 <- extractContainingClass(r2)
+        } yield
+          if (isDerived(cls1, cls2)) 1
+          else                       0
+        ).getOrElse(0)
+
+    asSpecific + derived
   }
 
   private def isMoreSpecific[T](
@@ -323,20 +331,24 @@ case class MostSpecificUtil(place: PsiElement, length: Int) {
     else result
   }
 
-  private def nextMostSpecificGeneric[T](rest: Iterable[InnerScalaResolveResult[T]]): Option[InnerScalaResolveResult[T]] = {
-    if (rest.isEmpty) return None
-    if (rest.size == 1) return Some(rest.head)
+  private def nextMostSpecificGeneric[T](rest: Iterable[InnerScalaResolveResult[T]]): Option[InnerScalaResolveResult[T]] =
+    if (rest.isEmpty)        None
+    else if (rest.size == 1) Option(rest.head)
+    else  {
+      val iter     = rest.iterator
+      var foundMax = iter.next()
 
-    val iter = rest.iterator
-    var foundMax = iter.next()
+      while (iter.hasNext) {
+        val res = iter.next()
 
-    while (iter.hasNext) {
-      val res = iter.next()
-      if (isDerived(getClazz(res), getClazz(foundMax)))
-        foundMax = res
+        for {
+          cls1 <- extractContainingClass(res)
+          cls2 <- extractContainingClass(foundMax)
+        } if (isDerived(cls1, cls2)) foundMax = res
+      }
+
+      Option(foundMax)
     }
-    Some(foundMax)
-  }
 
   //todo: implement existential dual
   def getType(e: PsiNamedElement, implicitCase: Boolean): ScType = {
@@ -370,7 +382,5 @@ case class MostSpecificUtil(place: PsiElement, length: Int) {
       conversion <- srr.implicitConversion
       member     <- conversion.element.nameContext.asOptionOf[ScMember]
       psiClass   <- Option(member.containingClass)
-    } yield {
-      psiClass
-    }
+    } yield psiClass
 }

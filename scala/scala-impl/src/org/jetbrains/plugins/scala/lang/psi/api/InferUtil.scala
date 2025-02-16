@@ -74,7 +74,7 @@ object InferUtil {
     canThrowSCE:                Boolean,
     fullInfo:                   Boolean,
     throwOnAmbiguous:           Boolean = true,
-    searchImplicitsRecursively: Int     = 0,
+    implicitRecursionDepth:     Int     = 0,
   ): (ScType, Option[Seq[ScalaResolveResult]], ConstraintSystem) = {
     implicit val elementScope: ElementScope = place.elementScope
 
@@ -149,7 +149,7 @@ object InferUtil {
                   place,
                   canThrowSCE,
                   throwOnAmbiguous,
-                  searchImplicitsRecursively,
+                  implicitRecursionDepth,
                   abstractSubstitutor
                 )
 
@@ -195,7 +195,7 @@ object InferUtil {
             place,
             canThrowSCE,
             throwOnAmbiguous,
-            searchImplicitsRecursively,
+            implicitRecursionDepth,
           )
 
         implicitParameters = Option(resolveResults)
@@ -214,7 +214,7 @@ object InferUtil {
     place:                      PsiElement,
     canThrowSCE:                Boolean,
     throwOnAmbiguous:           Boolean,
-    searchImplicitsRecursively: Int           = 0,
+    implicitRecursionDepth:     Int           = 0,
     abstractSubstitutor:        ScSubstitutor = ScSubstitutor.empty
   ): (Seq[Parameter], Seq[Compatibility.Expression], Seq[ScalaResolveResult]) = {
 
@@ -236,10 +236,10 @@ object InferUtil {
           paramType,
           coreElement,
           isImplicitConversion       = false,
-          searchImplicitsRecursively = searchImplicitsRecursively,
+          recursionDepth             = implicitRecursionDepth,
           extensionData              = None,
           fullInfo                   = false,
-          previousRecursionState     = Option(DivergenceChecker.currentStack)
+          previousDivergenceStack    = Option(DivergenceChecker.currentStack)
         )
 
       val collector = new ImplicitCollector(implicitState)
@@ -822,19 +822,29 @@ object InferUtil {
   ): Option[Seq[Seq[ScType]]] = {
     val builder = Seq.newBuilder[Seq[ScType]]
     val owner   = extensionOwner.orElse(function.extensionMethodOwner)
-    val clauses = owner.fold(function.paramClauses.clauses)(_.allClauses)
+
+    //Two cases:
+    //1. implicit def foo(x: Foo)(using Bar): Baz = ???
+    //   simply drop implicit/using clauses, result: Foo => Baz
+    //2. extension (using Bar)(x: Foo)(using Baz) { def foo(x: Int)(using Qux): String = ??? }
+    //   drop implicit/using clauses from the extension itself, leave target method untouched
+    //   result: Foo => Int => using Qux => String
+    val clauses = owner match {
+      case Some(ext) =>
+        ext.effectiveParameterClauses.filterNot(_.isImplicit) ++
+          function.effectiveParameterClauses
+      case None => function.effectiveParameterClauses.filterNot(_.isImplicit)
+    }
 
     //for performance
     var idx = clauses.length - 1
     while (idx >= 0) {
-      val cl = clauses(idx)
-      if (!cl.isImplicit) {
-        val parameters = cl.parameters
-        val paramTypes = parameters.flatMap(_.`type`().toOption)
+      val cl         = clauses(idx)
+      val parameters = cl.parameters
+      val paramTypes = parameters.flatMap(_.`type`().toOption)
 
-        if (paramTypes.size != parameters.size) return None
-        else builder += paramTypes
-      }
+      if (paramTypes.size != parameters.size) return None
+      else                                    builder += paramTypes
       idx -= 1
     }
 

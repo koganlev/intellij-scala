@@ -73,7 +73,6 @@ class ReferenceComparisonTest_Scala3_LTS extends ReferenceComparisonTestBase(org
   def test_annot_bootstrap(): Unit = doTest("annot-bootstrap", true)
   def test_annot_constant(): Unit = doTest("annot-constant", true)
   def test_annot_inner(): Unit = doTest("annot-inner", true)
-  def test_Annotations(): Unit = doTest("Annotations", true)
   def test_annotations(): Unit = doTest("annotations", true)
   def test_annotations_in_java(): Unit = doTest("annotations-in-java", true)
   def test_annotations1(): Unit = doTest("annotations1", true)
@@ -779,7 +778,7 @@ class ReferenceComparisonTest_Scala3_LTS extends ReferenceComparisonTestBase(org
   def test_i6290(): Unit = doTest("i6290", true)
   def test_i6312(): Unit = doTest("i6312", true)
   def test_i6312b(): Unit = doTest("i6312b", true)
-  def test_i6373(): Unit = doTest("i6373", false)
+  def test_i6373(): Unit = doTest("i6373", true)
   def test_i6375(): Unit = doTest("i6375", true)
   def test_i6384(): Unit = doTest("i6384", true) // #unionType
   def test_i6385(): Unit = doTest("i6385", true)
@@ -1301,7 +1300,7 @@ class ReferenceComparisonTest_Scala3_LTS extends ReferenceComparisonTestBase(org
   def test_i13282(): Unit = doTest("i13282", true)
   def test_i13331(): Unit = doTest("i13331", true) // #matchType
   def test_i13332(): Unit = doTest("i13332", true)
-  def test_i13334(): Unit = doTest("i13334", false) // #transparentInline
+  def test_i13334(): Unit = doTest("i13334", true) // #transparentInline
   def test_i13346(): Unit = doTest("i13346", false) // #export
   def test_i13349(): Unit = doTest("i13349", true)
   def test_i13349min(): Unit = doTest("i13349min", true)
@@ -1656,7 +1655,7 @@ class ReferenceComparisonTest_Scala3_LTS extends ReferenceComparisonTestBase(org
   def test_i19749(): Unit = doTest("i19749", false)
   def test_i19789(): Unit = doTest("i19789", true) // #intersectionType
   def test_i19808(): Unit = doTest("i19808", true)
-  def test_i19862(): Unit = doTest("i19862", false)
+  def test_i19862(): Unit = doTest("i19862", true)
   def test_i19929(): Unit = doTest("i19929", true)
   def test_i19962(): Unit = doTest("i19962", true)
   def test_i19999(): Unit = doTest("i19999", true) // #unionType
@@ -1986,7 +1985,7 @@ class ReferenceComparisonTest_Scala3_LTS extends ReferenceComparisonTestBase(org
   def test_refinedSubtyping(): Unit = doTest("refinedSubtyping", false)
   def test_relax_implicit_divergence(): Unit = doTest("relax_implicit_divergence", true)
   def test_renaming_imports(): Unit = doTest("renaming-imports", true)
-  def test_Repeated(): Unit = doTest("Repeated", false) // #opaque, #extension
+  def test_Repeated(): Unit = doTest("Repeated", true) // #opaque, #extension
   def test_repeatedArgs213(): Unit = doTest("repeatedArgs213", true) // #intersectionType
   def test_Result(): Unit = doTest("Result", true) // #enum
   def test_resultGuidesInference(): Unit = doTest("resultGuidesInference", true)
@@ -2837,7 +2836,7 @@ class ReferenceComparisonTest_Scala3_LTS extends ReferenceComparisonTestBase(org
   def test_t112606A(): Unit = doTest("t112606A", true)
   def test_tagging(): Unit = doTest("tagging", false) // #opaque
   def test_tailcall(): Unit = doTest("tailcall", true)
-  def test_tailrec_super(): Unit = doTest("tailrec-super", false)
+  def test_tailrec_super(): Unit = doTest("tailrec-super", true)
   def test_tangledCompanion(): Unit = doTest("tangledCompanion", true)
   def test_targetName(): Unit = doTest("targetName", true)
   def test_targetName_infer_result(): Unit = doTest("targetName-infer-result", true) // #enum

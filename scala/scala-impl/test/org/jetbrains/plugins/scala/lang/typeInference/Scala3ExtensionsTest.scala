@@ -96,6 +96,32 @@ class Scala3ExtensionsTest extends ScalaLightCodeInsightFixtureTestCase {
       |""".stripMargin
   )
 
+  def testPriorityOfVisibleExtensionOverVisibleConversionNewStyle(): Unit = checkTextHasNoErrors(
+    """
+      |object A {
+      |  extension (x: Int) { def foo: Int = 123 }
+      |  class IntOps(val x: Int) { def foo: Int = 123 }
+      |  given c: Conversion[Int, IntOps] = ???
+      |  123.foo
+      |}
+      |""".stripMargin
+  )
+
+  def testPriorityOfExtensionOverConversionFromImplicitScope(): Unit = checkTextHasNoErrors(
+    """
+      |trait A
+      |object A {
+      |  extension (a: A) { def foo: Int = 123 }
+      |  class AOps { def foo: Int = 123 }
+      |  given c: Conversion[A, AOps] = ???
+      |}
+      |object Test {
+      |  val a: A = ???
+      |  a.foo
+      |}
+      |""".stripMargin
+  )
+
   def testExtensionFromGivenInLexicalScope(): Unit = checkTextHasNoErrors(
     """
       |object A {
@@ -183,7 +209,7 @@ class Scala3ExtensionsTest extends ScalaLightCodeInsightFixtureTestCase {
        |""".stripMargin
   )
 
-  def testAmbiguousExtensionAndConversion2(): Unit = checkTextHasNoErrors(
+  def testAmbiguousExtensionAndConversion2(): Unit = checkHasErrorAroundCaret(
     s"""
        |object A {
        |  trait F
@@ -623,6 +649,54 @@ class Scala3ExtensionsTest extends ScalaLightCodeInsightFixtureTestCase {
       |
       |    def infer: Seq[String & Double] = List.empty[String & Int].test[Double]
       |  }
+      |}
+      |""".stripMargin
+  )
+
+  def testAmbigous(): Unit = checkHasErrorAroundCaret(
+    s"""
+      |
+      |trait Ordering[A]
+      |object A {
+      |  trait C
+      |
+      |  given Ordering[Int] with {
+      |    extension (s: C) {
+      |      def foo: Int = ???
+      |    }
+      |  }
+      |
+      |  class COps { def foo: Int = 123}
+      |  given conv: Conversion[C, COps] = ???
+      |
+      |  val c: C = ???
+      |  c.f${CARET}oo
+      |}
+      |""".stripMargin
+  )
+
+  def testConstructExtensionNeg(): Unit = checkHasErrorAroundCaret(
+    s"""
+       |object A {
+       |  extension(x: Int)(using Int) { def foo: Int = 123 }
+       |  123.fo${CARET}o
+       |}
+       |""".stripMargin
+  )
+
+  def testExtensionWithImplicitConversion(): Unit = checkTextHasNoErrors(
+    """
+      |object Wrapper {
+      |  class MyClass
+      |
+      |  implicit def stringToMyClass(s: String): MyClass = new MyClass
+      |
+      |  extension (target: MyClass) {
+      |    def extensionScala3Style(): String = target.toString
+      |  }
+      |
+      |  val e: String = "42"
+      |  e.extensionScala3Style() // BAD: IntelliJ: ERROR, Compiler: OK
       |}
       |""".stripMargin
   )

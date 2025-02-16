@@ -6,6 +6,7 @@ import org.jetbrains.plugins.scala.extensions.ObjectExt
 import org.jetbrains.plugins.scala.lang.psi.ElementScope
 import org.jetbrains.plugins.scala.lang.psi.api.expr.ScExpression
 import org.jetbrains.plugins.scala.lang.psi.api.statements.ScFunction
+import org.jetbrains.plugins.scala.lang.psi.api.toplevel.typedef.ScGivenAliasDefinition
 import org.jetbrains.plugins.scala.lang.psi.types.ScType
 import org.jetbrains.plugins.scala.lang.psi.types.api.{Any, FunctionType, Nothing, TypeParameter}
 import org.jetbrains.plugins.scala.lang.psi.types.recursiveUpdate.ScSubstitutor
@@ -117,7 +118,13 @@ object ImplicitConversionResolveResult {
       conversion     <- ImplicitConversionData(candidate.element, substitutor)
       application    <- conversion.isApplicable(`type`, place)
       if !application.implicitParameters.exists(_.isNotFoundImplicitParameter)
-    } yield ImplicitConversionResolveResult(candidate, application.resultType, substitutor, candidate.unresolvedTypeParameters.getOrElse(Seq.empty))
+    } yield
+      ImplicitConversionResolveResult(
+        candidate,
+        application.resultType,
+        substitutor,
+        candidate.unresolvedTypeParameters.getOrElse(Seq.empty)
+      )
   }
 
 
@@ -153,21 +160,6 @@ object ImplicitConversionResolveResult {
       ).collect()
     }
 
-    /**
-     * Currently (29 May 2023) scala 3 silently prefers extensions to implicit conversions in case of
-     * ambiguity. According to the spec this is wrong, issue was raised by me
-     * [[https://github.com/lampepfl/dotty/issues/12904]] in 2021, but nobody seems to care.
-     * "Since old style implicit conversions will go away this is a temporary problem." - Martin,
-     * yet here in 2023 there are files in the standard library (e.g. IArray) that mix
-     * implicit defs and extensions. So this method is here to preserve compatibility with scalac ¯\_(ツ)_/¯ .
-     */
-    def preferExtensionsToOldStyleImplicitConversions(srrs: Seq[ScalaResolveResult]): Seq[ScalaResolveResult] = {
-      val (extensions, rest) = srrs.partition(_.isExtensionCall)
-
-      if (rest.size == 1 && rest.head.element.is[ScFunction]) extensions
-      else                                                    Seq.empty
-    }
-
     //This logic is important to have to navigate to problematic method, in case of failed resolve.
     //That's why we need to have noApplicability parameter
     val found = checkImplicits() match {
@@ -179,9 +171,9 @@ object ImplicitConversionResolveResult {
     found match {
       case _ if forCompletion => found
       case Seq(_)             => found
-      case multiple           => preferExtensionsToOldStyleImplicitConversions(multiple)
+      case multiple           =>
         if (multiple.forall(_.isExtensionCall)) multiple
-        else                                preferExtensionsToOldStyleImplicitConversions(multiple)
+        else                                    Seq.empty
     }
   }
 

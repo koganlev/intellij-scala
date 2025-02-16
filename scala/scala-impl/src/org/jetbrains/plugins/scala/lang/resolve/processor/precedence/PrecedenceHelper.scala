@@ -27,7 +27,7 @@ trait PrecedenceHelper {
       else left.nameInScope == right.nameInScope
   }
 
-  protected val holder: TopPrecedenceHolder
+  protected val precedenceHolder: TopPrecedenceHolder
 
   protected def nameUniquenessStrategy: NameUniquenessStrategy
 
@@ -50,7 +50,7 @@ trait PrecedenceHelper {
 
   protected def isCheckForEqualPrecedence = true
 
-  protected def clearLevelQualifiedSet(result: ScalaResolveResult): Unit = {
+  protected def clearLevelQualifiedSet(): Unit = {
     levelUniqueNamesSet.clear()
   }
 
@@ -65,7 +65,7 @@ trait PrecedenceHelper {
     if (results.isEmpty)
       return true
 
-    val result: ScalaResolveResult = results.head
+    val result = results.head
 
     lazy val levelSet = getLevelSet(result)
 
@@ -78,7 +78,7 @@ trait PrecedenceHelper {
     }
 
     val currentPrecedence = precedence(result)
-    val topPrecedence = holder(result)
+    val topPrecedence     = precedenceHolder(result)
 
     if (currentPrecedence < topPrecedence)
       false
@@ -88,28 +88,26 @@ trait PrecedenceHelper {
       if (isCheckForEqualPrecedence &&
         (levelUniqueNamesSet.contains(result) || uniqueNamesSet.contains(result))) {
         false
-      }
-      else if (uniqueNamesSet.contains(result))
+      } else if (uniqueNamesSet.contains(result)) {
         false
-      else {
+      } else {
         addResults()
         true
       }
-    }
-    else if (uniqueNamesSet.contains(result)) {
+    } else if (uniqueNamesSet.contains(result)) {
       false
     } else {
-      holder(result) = currentPrecedence
-      val levelSetIterator = levelSet.iterator()
+      precedenceHolder(result) = currentPrecedence
+      val levelSetIterator     = levelSet.iterator()
 
       while (levelSetIterator.hasNext) {
         val next = levelSetIterator.next()
-        if (holder.filterNot(next, result)(precedence)) {
+        if (precedenceHolder.filterNot(next, result)(precedence)) {
           levelSetIterator.remove()
         }
       }
 
-      clearLevelQualifiedSet(result)
+      clearLevelQualifiedSet()
       addResults()
       true
     }

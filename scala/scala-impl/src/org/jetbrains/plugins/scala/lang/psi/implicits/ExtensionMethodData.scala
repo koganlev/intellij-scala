@@ -51,26 +51,29 @@ class ExtensionMethodData(val function: ScFunction,
           implicit val elementScope: ElementScope = function.elementScope
 
           val functionType = FunctionType(Any, Seq(fromType.tryExtractDesignatorSingleton))
+
           val implicitState = ImplicitState(
-            place = place,
-            tp = functionType,
-            expandedTp = functionType,
-            coreElement = None,
-            isImplicitConversion = true,
-            searchImplicitsRecursively = 0,
-            extensionData = None,
-            fullInfo = true,
-            previousDivergenceStack = Some(DivergenceChecker.currentStack)
+            place                      = place,
+            tp                         = functionType,
+            expandedTp                 = functionType,
+            coreElement                = None,
+            isImplicitConversion       = true,
+            recursionDepth = 0,
+            extensionData              = None,
+            fullInfo                   = true,
+            previousDivergenceStack    = Option(DivergenceChecker.currentStack)
           )
+
           val resolveResult = new ScalaResolveResult(function, ScSubstitutor.empty)
-          val collector = new ImplicitCollector(implicitState)
-          val compatible = collector.checkFunctionByType(resolveResult, withLocalTypeInference = true, checkFast = false)
+          val collector     = new ImplicitCollector(implicitState)
+          val compatible    = collector.checkFunctionByType(resolveResult, withLocalTypeInference = true, checkFast = false)
 
           for {
-            srr <- compatible
+            srr        <- compatible
             resultType <- ExtensionConversionHelper.specialExtractParameterType(srr)
           } yield ExtensionMethodApplication(resultType, srr.implicitParameters)
-        } else Some(ExtensionMethodApplication(returnType))
+
+        } else Option(ExtensionMethodApplication(returnType))
     }
   }
 }

@@ -29,6 +29,16 @@ case class ImplicitSearchScope(representative: PsiElement) {
       new ImplicitParametersProcessor(representative, withoutPrecedence = false).candidatesByPlace
     }
 
+  def cachedVisibleImplicitsByLevel: collection.Seq[collection.Set[ScalaResolveResult]] =
+    cachedWithRecursionGuard(
+      "cachedVisibleImplicitsByLevel",
+      representative,
+      collection.Seq.empty[collection.Set[ScalaResolveResult]],
+      BlockModificationTracker(representative)
+    ) {
+      new ImplicitParametersProcessor(representative, withoutPrecedence = false).candidatesByLevel
+    }
+
   def cachedImplicitsByType(scType: ScType): Set[ScalaResolveResult] =
     cachedWithRecursionGuard(
       "cachedImplicitsByType",

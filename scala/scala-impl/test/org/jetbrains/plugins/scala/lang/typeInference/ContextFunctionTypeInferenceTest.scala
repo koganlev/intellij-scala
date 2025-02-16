@@ -112,6 +112,17 @@ class ContextFunctionTypeInferenceTest extends TypeInferenceTestBase {
       problemsExpected = true
   )
 
+  def testNesting(): Unit = testImplicits(
+    s"""
+       |object Foo {
+       |  def map[E](f: E ?=> Int): (E ?=> Int) = ???
+       |  implicit def i: Int = ???
+       |  def f: Int ?=> Int = ???
+       |  val a: Int = map({implicitly[Int]})
+       |}
+       |""".stripMargin
+  )
+
   def testMultipleTypeVaribles(): Unit = doTest(
     s"""
        |object A {

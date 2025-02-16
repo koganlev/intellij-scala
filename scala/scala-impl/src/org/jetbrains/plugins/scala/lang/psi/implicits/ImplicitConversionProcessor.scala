@@ -9,9 +9,10 @@ import org.jetbrains.plugins.scala.lang.psi.types.result.Typeable
 import org.jetbrains.plugins.scala.lang.resolve.ScalaResolveResult
 import org.jetbrains.plugins.scala.lang.resolve.ScalaResolveState.ResolveStateExt
 
-final class ImplicitConversionProcessor(override protected val getPlace: PsiElement,
-                                        override protected val withoutPrecedence: Boolean)
-  extends ImplicitProcessor(getPlace, withoutPrecedence) {
+final class ImplicitConversionProcessor(
+  override protected val getPlace: PsiElement,
+  override protected val withoutPrecedence: Boolean
+) extends ImplicitProcessor(getPlace, withoutPrecedence) {
 
   private val functionType = getPlace.elementScope.function1Type(level = 0)
 

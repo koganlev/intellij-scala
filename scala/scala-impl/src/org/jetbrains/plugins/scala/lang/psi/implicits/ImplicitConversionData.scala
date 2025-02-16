@@ -62,11 +62,23 @@ abstract class ImplicitConversionData {
     implicit val elementScope: ElementScope = function.elementScope
 
     val functionType = FunctionType(Any, Seq(fromType.tryExtractDesignatorSingleton))
-    val implicitState = ImplicitState(place, functionType, functionType, None, isImplicitConversion = true,
-      searchImplicitsRecursively = 0, None, fullInfo = true, Some(DivergenceChecker.currentStack))
+
+    val implicitState =
+      ImplicitState(
+        place,
+        functionType,
+        functionType,
+        None,
+        isImplicitConversion = true,
+        recursionDepth       = 0,
+        None,
+        fullInfo = true,
+        Option(DivergenceChecker.currentStack)
+      )
+
     val resolveResult = new ScalaResolveResult(function, ScSubstitutor.empty)
-    val collector = new ImplicitCollector(implicitState)
-    val compatible = collector.checkFunctionByType(resolveResult, withLocalTypeInference = true, checkFast = false)
+    val collector     = new ImplicitCollector(implicitState)
+    val compatible    = collector.checkFunctionByType(resolveResult, withLocalTypeInference = true, checkFast = false)
 
     for {
       srr            <- compatible

@@ -4,7 +4,6 @@ import com.intellij.openapi.progress.ProgressManager
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.{PsiClass, PsiElement, PsiFile, PsiNamedElement, ResolveState}
-import it.unimi.dsi.fastutil.objects.Object2ObjectOpenCustomHashMap
 import org.jetbrains.annotations.Nullable
 import org.jetbrains.plugins.scala.extensions._
 import org.jetbrains.plugins.scala.lang.psi.ScalaPsiUtil._
@@ -29,7 +28,6 @@ import org.jetbrains.plugins.scala.lang.resolve.processor.precedence._
 import org.jetbrains.plugins.scala.lang.resolve.{ResolveUtils, ScalaResolveResult, ScalaResolveState, StdKinds}
 import org.jetbrains.plugins.scala.project.{ProjectContext, ProjectPsiElementExt}
 
-import java.{util => ju}
 import scala.annotation.tailrec
 import scala.collection.mutable
 
@@ -41,24 +39,13 @@ abstract class ImplicitProcessor(
 
   private object ImplicitStrategy extends NameUniquenessStrategy
 
+  //@TODO: since scala 3 uses nestedness for implicit precedence, perhaps this is no longer needed?
   override protected def nameUniquenessStrategy: NameUniquenessStrategy = ImplicitStrategy
 
-  override protected val holder: TopPrecedenceHolder = new MappedTopPrecedenceHolder(nameUniquenessStrategy)
+  override protected val precedenceHolder: TopPrecedenceHolder = new MappedTopPrecedenceHolder(nameUniquenessStrategy)
 
-  private[this] val levelMap: ju.Map[ScalaResolveResult, ju.Set[ScalaResolveResult]] =
-    new Object2ObjectOpenCustomHashMap[ScalaResolveResult, ju.Set[ScalaResolveResult]](nameUniquenessStrategy)
-
-  override protected def clearLevelQualifiedSet(result: ScalaResolveResult): Unit = {
+  override protected def clearLevelQualifiedSet(): Unit = {
     //optimisation, do nothing
-  }
-
-  override protected def getLevelSet(result: ScalaResolveResult): ju.Set[ScalaResolveResult] = {
-    var levelSet = levelMap.get(result)
-    if (levelSet == null) {
-      levelSet = new ju.HashSet[ScalaResolveResult]()
-      levelMap.put(result, levelSet)
-    }
-    levelSet
   }
 
   override protected def addResults(results: Iterable[ScalaResolveResult]): Boolean = {
@@ -69,29 +56,28 @@ abstract class ImplicitProcessor(
   }
 
   override def changedLevel: Boolean = {
-    if (levelMap.isEmpty) return true
-    val iterator = levelMap.values().iterator()
-    while (iterator.hasNext) {
-      val setIterator = iterator.next().iterator()
-      while (setIterator.hasNext) {
-        candidatesSet = candidatesSet + setIterator.next
+    if (!levelSet.isEmpty) {
+      val iterator = levelSet.iterator()
+
+      while (iterator.hasNext) {
+        candidatesSet = candidatesSet + iterator.next()
       }
+
+      uniqueNamesSet.addAll(levelUniqueNamesSet)
+      levelSet.clear()
+      levelUniqueNamesSet.clear()
     }
-    uniqueNamesSet.addAll(levelUniqueNamesSet)
-    levelMap.clear()
-    levelUniqueNamesSet.clear()
     true
   }
 
   override def candidatesS: Set[ScalaResolveResult] = {
-    val res = candidatesSet
-    val iterator = levelMap.values().iterator()
+    var res      = candidatesSet
+    val iterator = levelSet.iterator()
+
     while (iterator.hasNext) {
-      val setIterator = iterator.next().iterator()
-      while (setIterator.hasNext) {
-        candidatesSet = candidatesSet + setIterator.next
-      }
+      res = res + iterator.next()
     }
+
     res
   }
 
@@ -99,7 +85,7 @@ abstract class ImplicitProcessor(
 
   override def isImplicitProcessor: Boolean = true
 
-  final def candidatesByPlace: Set[ScalaResolveResult] = {
+  protected def treeWalkUp(): Unit = {
     val isScala3 = getPlace.isInScala3File
 
     @tailrec
@@ -130,6 +116,10 @@ abstract class ImplicitProcessor(
       }
 
     treeWalkUp(getPlace, null)
+  }
+
+  final def candidatesByPlace: Set[ScalaResolveResult] = {
+    treeWalkUp()
     candidatesS
   }
 
@@ -141,7 +131,6 @@ abstract class ImplicitProcessor(
 
     val includePackagePrefix =
       !isScala3OrEquivalent || getPlace.isSource3MigrationEnabled
-
 
     val objects =
       ImplicitProcessor
@@ -160,13 +149,13 @@ abstract class ImplicitProcessor(
 }
 
 object ImplicitProcessor {
-
-  def isAccessible(namedElement: PsiNamedElement, place: PsiElement): Boolean =
+  def isAccessible(namedElement: PsiNamedElement, place: PsiElement): Boolean = {
     (namedElement match {
       case f: ScFunction              => ResolveUtils.isAccessible(f, place)
       case inNameContext(m: ScMember) => ResolveUtils.isAccessible(m, place)
       case _                          => true
     }) && !lowerInFileWithoutType(namedElement, place)
+  }
 
   private def lowerInFileWithoutType(element: PsiElement, place: PsiElement) = {
     val commonContext = PsiTreeUtil.findCommonContext(element, place)

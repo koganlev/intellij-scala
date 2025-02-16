@@ -75,7 +75,7 @@ class CompletionProcessor(override val kinds: Set[ResolveTargets.Value],
 
   override def nameUniquenessStrategy: NameUniquenessStrategy = CompletionStrategy
 
-  override protected val holder: TopPrecedenceHolder = new MappedTopPrecedenceHolder(nameUniquenessStrategy)
+  override protected val precedenceHolder: TopPrecedenceHolder = new MappedTopPrecedenceHolder(nameUniquenessStrategy)
 
   private val signatures = mutable.HashSet[TermSignature]()
 

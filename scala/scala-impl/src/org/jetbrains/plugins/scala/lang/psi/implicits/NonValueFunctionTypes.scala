@@ -3,8 +3,8 @@ package org.jetbrains.plugins.scala.lang.psi.implicits
 import org.jetbrains.plugins.scala.caches.measure
 import org.jetbrains.plugins.scala.lang.psi.ScalaPsiUtil
 import org.jetbrains.plugins.scala.lang.psi.api.InferUtil.functionTypeNoImplicits
+import org.jetbrains.plugins.scala.lang.psi.api.statements.params.{ScParameter, ScParameterClause}
 import org.jetbrains.plugins.scala.lang.psi.api.statements.{ScExtension, ScFunction}
-import org.jetbrains.plugins.scala.lang.psi.api.statements.params.ScParameter
 import org.jetbrains.plugins.scala.lang.psi.implicits.NonValueFunctionTypes._
 import org.jetbrains.plugins.scala.lang.psi.types.ScType
 import org.jetbrains.plugins.scala.lang.psi.types.api.designator.{ScDesignatorType, ScProjectionType}
@@ -20,12 +20,12 @@ private case class NonValueFunctionTypes(
 ) {
 
   @volatile
-  private var _undefinedData: Option[UndefinedTypeData] = _
+  private var _undefinedData: Option[UndefinedReturnTypeData] = _
   @volatile
   private var _methodTypeData: Option[MethodTypeData] = _
 
   //lazy vals may lead to deadlock, see SCL-17722
-  private def lazyUndefinedData: Option[UndefinedTypeData] = {
+  private def lazyUndefinedData: Option[UndefinedReturnTypeData] = {
     if (_undefinedData == null) {
       _undefinedData = computeUndefinedType(fun, substitutor, exportedInExtension, typeFromMacro)
     }
@@ -34,7 +34,9 @@ private case class NonValueFunctionTypes(
 
   private def lazyMethodTypeData: Option[MethodTypeData] = {
     if (_methodTypeData == null) {
-      _methodTypeData = lazyUndefinedData.flatMap(computeMethodType(fun, substitutor, exportedInExtension, _))
+      _methodTypeData = lazyUndefinedData.flatMap(
+        computeMethodType(fun, substitutor, exportedInExtension, _)
+      )
     }
     _methodTypeData
   }
@@ -50,7 +52,7 @@ private case class NonValueFunctionTypes(
 
 private object NonValueFunctionTypes {
 
-  private case class UndefinedTypeData(undefinedType: ScType, hadDependent: Boolean)
+  private case class UndefinedReturnTypeData(undefinedType: ScType, hadDependent: Boolean)
 
   private case class MethodTypeData(methodType: ScType, hasImplicitClause: Boolean)
 
@@ -58,11 +60,15 @@ private object NonValueFunctionTypes {
     fun:                 ScFunction,
     substitutor:         ScSubstitutor,
     exportedInExtension: Option[ScExtension],
-    undefinedTypeData:   UndefinedTypeData
+    undefinedTypeData:   UndefinedReturnTypeData
   ): Option[MethodTypeData] = measure("NonValueFunctionTypes.computeMethodType") {
     val typeParameters = fun.typeParametersWithExtension(exportedInExtension)
-    //@TODO: multiple using clauses
-    val clauses        = fun.parameterClausesWithExtension(exportedInExtension)
+    //@TODO: multiple/leading using clauses
+    val clauses =
+      exportedInExtension
+        .orElse(fun.extensionMethodOwner)
+        .fold(fun.effectiveParameterClauses)(_.effectiveParameterClauses)
+
     val implicitClause = clauses.find(_.isImplicit)
 
     if (typeParameters.isEmpty && implicitClause.isEmpty) {
@@ -76,13 +82,13 @@ private object NonValueFunctionTypes {
           ScMethodType(undefinedReturnType, clause.getSmartParameters, isImplicit = true)(fun.elementScope)
       }
 
-      val polymorphicTypeParameters = typeParameters.map(TypeParameter(_))
-
       val scType =
-        if (polymorphicTypeParameters.isEmpty) methodOrReturnType
-        else ScTypePolymorphicType(methodOrReturnType, polymorphicTypeParameters)
+        if (typeParameters.isEmpty)
+          methodOrReturnType
+        else
+          ScTypePolymorphicType(methodOrReturnType, typeParameters.map(TypeParameter(_)))
 
-      Some(MethodTypeData(substitutor(scType), implicitClause.nonEmpty))
+      Option(MethodTypeData(substitutor(scType), implicitClause.nonEmpty))
     }
   }
 
@@ -91,7 +97,7 @@ private object NonValueFunctionTypes {
     substitutor:         ScSubstitutor,
     exportedInExtension: Option[ScExtension],
     typeFromMacro:       Option[ScType]
-  ): Option[UndefinedTypeData] = measure("NonValueFunctionTypes.computeUndefinedType") {
+  ): Option[UndefinedReturnTypeData] = measure("NonValueFunctionTypes.computeUndefinedType") {
     val ft = functionTypeNoImplicits(fun, exportedInExtension)
 
     ft match {
@@ -102,14 +108,13 @@ private object NonValueFunctionTypes {
         val withoutDependents  = approximateDependent(substedFunTp, fun.parameters.toSet)
         val undefinedType      = withoutDependents.getOrElse(substedFunTp)
 
-        Option(UndefinedTypeData(undefinedType, withoutDependents.nonEmpty))
+        Option(UndefinedReturnTypeData(undefinedType, withoutDependents.nonEmpty))
       case _ =>
         None
     }
   }
 
-  /**
-   * Dependency on an implicit argument is like a dependency on type parameter, thus
+  /** Dependency on an implicit argument is like a dependency on type parameter, thus
    * before checking implicit return type conformance we have to substitute parameter-dependent
    * types with `UndefinedType`, otherwise compatibility check is bound to fail.
    * We also have to verify (after we successfully found some implicit to be compatible)

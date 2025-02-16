@@ -5,8 +5,11 @@ import org.jetbrains.plugins.scala.lang.resolve.ScalaResolveState.ResolveStateEx
 import org.jetbrains.plugins.scala.lang.resolve.processor.ResolveProcessor
 import org.jetbrains.plugins.scala.lang.resolve.{ScalaResolveResult, StdKinds}
 
-final class ExtensionProcessor(place: PsiElement, name: String, forCompletion: Boolean)
-    extends ResolveProcessor(StdKinds.methodsOnly, place, name) {
+final class ExtensionProcessor(
+  place:         PsiElement,
+  name:          String,
+  forCompletion: Boolean
+) extends ResolveProcessor(StdKinds.methodsOnly, place, name) {
 
   override protected def execute(
     namedElement: PsiNamedElement
@@ -27,7 +30,8 @@ final class ExtensionProcessor(place: PsiElement, name: String, forCompletion: B
           implicitScopeObject      = state.implicitScopeObject,
           unresolvedTypeParameters = state.unresolvedTypeParams,
           isExtensionCall          = true,
-          exportedIn               = state.exportedIn
+          exportedIn               = state.exportedIn,
+          isExtensionFromGiven     = true
         )
       )
     }

@@ -5,13 +5,6 @@ import it.unimi.dsi.fastutil.objects.Object2IntOpenCustomHashMap
 import org.jetbrains.plugins.scala.lang.resolve.ScalaResolveResult
 
 sealed trait TopPrecedenceHolder {
-
-  /**
-    * Returns highest precedence of all resolve results.
-    * 1 - import a._
-    * 2 - import a.x
-    * 3 - definition or declaration
-    */
   def apply(result: ScalaResolveResult): Int
 
   def update(result: ScalaResolveResult, i: Int): Unit

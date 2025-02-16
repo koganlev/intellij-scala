@@ -203,4 +203,43 @@ class Scala3ImplicitParametersTest extends ImplicitParametersTestBase {
     )
   }
 
+  def testNestingSimple(): Unit =
+    checkNoImplicitParameterProblems(
+      s"""
+        |object A {
+        |  def foo(using ev: Int) = {
+        |    def bar(using ev2: Int) = {
+        |      ${START}summon[Int]$END
+        |    }
+        |  }
+        |}
+        |""".stripMargin
+    )
+
+  def testSCL23504(): Unit = checkNoImplicitParameterProblems(
+    s"""
+       |trait Encode[A]:
+       |    def encode(a: A): String
+       |
+       |trait Channel[A]:
+       |  def write[A](obj: A)(using enc: Encode[A]): Unit
+       |
+       |object FinalChannel extends Channel:
+       |  override def write[A](obj: A)(using enc: Encode[A]): Unit =
+       |    println(enc.encode(obj))
+       |
+       |class StringEncoder extends Encode[String]:
+       |  override def encode(s: String) = s
+       |
+       |given StringEncoder
+       |
+       |@main
+       |def main: Unit =
+       |  given newStringEncoder: Encode[String] =
+       |    (s: String) => s + "!"
+       |
+       |  ${START}FinalChannel.write("hello")$END
+       |
+       |""".stripMargin
+  )
 }

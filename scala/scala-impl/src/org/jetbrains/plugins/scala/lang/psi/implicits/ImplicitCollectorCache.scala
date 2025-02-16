@@ -52,10 +52,12 @@ class ImplicitCollectorCache(project: Project) {
     }
   }
 
-  private[implicits] def getNonValueTypes(fun: ScFunction,
-                                          substitutor: ScSubstitutor,
-                                          exportedInExtension: Option[ScExtension],
-                                          typeFromMacro: Option[ScType]): NonValueFunctionTypes = {
+  private[implicits] def getNonValueTypes(
+    fun:                 ScFunction,
+    substitutor:         ScSubstitutor,
+    exportedInExtension: Option[ScExtension],
+    typeFromMacro:       Option[ScType]
+  ): NonValueFunctionTypes = {
 
     val key = NonValueTypesKey(fun, substitutor, exportedInExtension, typeFromMacro)
 
@@ -89,7 +91,11 @@ class ImplicitCollectorCache(project: Project) {
     exportedInExtension: Option[ScExtension],
     typeFromMacro:       Option[ScType]
   ) {
-    override def hashCode(): Int = fun.hashCode() #+ identityHashCode(substitutor) #+ exportedInExtension #+ typeFromMacro
+    override def hashCode(): Int =
+      fun.hashCode() #+
+        identityHashCode(substitutor) #+
+        exportedInExtension #+
+        typeFromMacro
 
     override def equals(obj: Any): Boolean = obj match {
       case NonValueTypesKey(otherFun, otherSubst, otherExportedInExtension, otherType) =>

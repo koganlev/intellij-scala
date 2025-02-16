@@ -57,13 +57,13 @@ class ResolveProcessor(override val kinds: Set[ResolveTargets.Value],
 
   override protected def nameUniquenessStrategy: NameUniquenessStrategy = ResolveStrategy
 
-  override protected val holder: SimpleTopPrecedenceHolder = new SimpleTopPrecedenceHolder
+  override protected val precedenceHolder: SimpleTopPrecedenceHolder = new SimpleTopPrecedenceHolder
 
   /**
     * This method useful for resetting precednce if we dropped
     * all found candidates to seek implicit conversion candidates.
     */
-  def resetPrecedence(): Unit = holder.reset()
+  def resetPrecedence(): Unit = precedenceHolder.reset()
 
   import precedenceTypes._
 
@@ -75,23 +75,25 @@ class ResolveProcessor(override val kinds: Set[ResolveTargets.Value],
     checkPrecedence(precedenceTypes.defaultImportMaxPrecedence)
 
   private def checkPrecedence(i: Int) =
-    holder.currentPrecedence <= i
+    precedenceHolder.currentPrecedence <= i
 
   override def changedLevel: Boolean = {
     def update: Boolean = {
-      val iterator = levelSet.iterator()
-      while (iterator.hasNext) {
-        candidatesSet = candidatesSet + iterator.next()
+      val levelSetIterator = levelSet.iterator()
+
+      while (levelSetIterator.hasNext) {
+        candidatesSet = candidatesSet + levelSetIterator.next()
       }
+
       uniqueNamesSet.addAll(levelUniqueNamesSet)
       levelSet.clear()
       levelUniqueNamesSet.clear()
       false
     }
 
-    if (levelSet.isEmpty)                               true
-    else if (holder.currentPrecedence == OTHER_MEMBERS) update
-    else                                                !update
+    if (levelSet.isEmpty)                                         true
+    else if (precedenceHolder.currentPrecedence == OTHER_MEMBERS) update
+    else                                                          !update
   }
 
   override protected def execute(namedElement: PsiNamedElement)

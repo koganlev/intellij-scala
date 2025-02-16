@@ -64,7 +64,7 @@ final case class LightContextFunctionParameter(project: Project, syntheticName: 
   /**
    * If we encounter type parameter in an invariant position
    * we must eagerly substitute it, so that next non-matching usage
-   * will corretly fail to resolve.
+   * will correctly fail to resolve.
    */
   private val invariantTypeParameters: mutable.Map[ScType, ScType] = {
     val tps = new mutable.HashMap[ScType, ScType]
@@ -100,15 +100,16 @@ final case class LightContextFunctionParameter(project: Project, syntheticName: 
       if (constraints.isEmpty) `type`().map(_.inferValueType)
       else                     Right(constraints.reduceLeft(_ glb _))
 
-    result.map(_.recursiveVarianceUpdate() {
-      case (tpt: TypeParameterType, variance) =>
-        val result =
-          if (variance.isCovariant)          tpt.lowerType
-          else if (variance.isContravariant) tpt.upperType
-          else                               tpt
-
-        ReplaceWith(result)
-      case _ => ProcessSubtypes
-    })
+    result
+//    result.map(_.recursiveVarianceUpdate() {
+//      case (tpt: TypeParameterType, variance) =>
+//        val result =
+//          if (variance.isCovariant)          tpt.lowerType
+//          else if (variance.isContravariant) tpt.upperType
+//          else                               tpt
+//
+//        ReplaceWith(result)
+//      case _ => ProcessSubtypes
+//    })
   }
 }
