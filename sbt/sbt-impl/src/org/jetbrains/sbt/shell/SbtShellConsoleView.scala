@@ -14,6 +14,7 @@ import com.intellij.openapi.editor.{Editor, EditorFactory}
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.psi.search.GlobalSearchScope
+import org.jetbrains.plugins.scala.extensions.{inReadAction, inWriteAction}
 import org.jetbrains.sbt.shell.action._
 
 import java.beans.{PropertyChangeEvent, PropertyChangeListener}
@@ -82,7 +83,12 @@ object SbtShellConsoleView {
   private val lastConsoleViews: mutable.Map[Project, SbtShellConsoleView] = mutable.HashMap.empty
 
   def apply(project: Project, debugConnection: Option[RemoteConnection]): SbtShellConsoleView = {
-    val cv = new SbtShellConsoleView(project, debugConnection)
+    // Use write action as a workaround for SCL-23073,
+    // but I would expect AbstractConsoleRunnerWithHistory.initAndRun to use the read action
+    // (the exception is about "read action" but "write action" is also needed for `ToolbarUpdater.updateActions`)
+    val cv = inWriteAction {
+      new SbtShellConsoleView(project, debugConnection)
+    }
     cv.getConsoleEditor.setOneLineMode(true)
 
     // stack trace file links
