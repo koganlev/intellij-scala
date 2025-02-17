@@ -737,7 +737,7 @@ class SbtProjectResolver extends ExternalSystemProjectResolver[SbtExecutionSetti
     val projectId = ModuleNode.combinedId(project.id, Option(project.buildURI))
     //NOTE: module name which is passed in ModuleNode constructor will be saved as external module name, module name and
     //additionally as internal name but with all the "/" characters changed to "_"
-    val moduleFilesDirectory = createModuleFilesDirectory(projectRoot, project.base.getPath)
+    val moduleFilesDirectory = createModuleFilesDirectory(projectRoot, project.base)
 
     val result = createModuleNode(
       StdModuleTypes.JAVA.getId,
@@ -778,14 +778,14 @@ class SbtProjectResolver extends ExternalSystemProjectResolver[SbtExecutionSetti
     moduleNameWithGroup
   }
 
-  private def createModuleFilesDirectory(projectRoot: File, moduleBase: String): String = {
-    val relativeToRoot = FileUtil.getRelativePath(projectRoot.path, moduleBase, '/')
+  private def createModuleFilesDirectory(projectRoot: File, moduleBase: File): String = {
+    val relativeToRoot = FileUtil.getRelativePath(projectRoot, moduleBase)
     val relativePath =
       if (relativeToRoot == null || relativeToRoot.equals(".")) ""
       else relativeToRoot
 
     val projectRootDirectory = Seq(projectRoot.getName).filter(_.nonEmpty)
-    val pathComponents = projectRootDirectory ++ Seq(relativePath)
+    val pathComponents = projectRootDirectory :+ relativePath
 
     val defaultModuleFilesDir = getDefaultModuleFilesDirectory(projectRoot)
     Path.of(defaultModuleFilesDir, pathComponents: _*).toCanonicalPath.toString
@@ -803,7 +803,7 @@ class SbtProjectResolver extends ExternalSystemProjectResolver[SbtExecutionSetti
     // TODO use both ID and Name when related flaws in the External System will be fixed
     // TODO explicit canonical path is needed until IDEA-126011 is fixed
     val projectId = ModuleNode.combinedId(project.id, Option(project.buildURI))
-    val moduleFilesDirectory = createModuleFilesDirectory(projectRoot, project.base.getPath)
+    val moduleFilesDirectory = createModuleFilesDirectory(projectRoot, project.base)
     val parentModule = createModuleNode(
       StdModuleTypes.JAVA.getId,
       projectId,
