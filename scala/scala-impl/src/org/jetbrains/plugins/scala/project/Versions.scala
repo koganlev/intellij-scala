@@ -76,7 +76,10 @@ object Versions {
   }
 
   case object SBT extends Kind(
-    Sbt1Entity :: Sbt013Entity :: Nil
+    if (isInternalMode)
+      Sbt1Entity :: Sbt013Entity :: Nil
+    else
+      Sbt1Entity :: Nil
   ) {
     val LatestSbtVersion: String = SbtVersion.Latest.Sbt_1.minor
 
