@@ -34,12 +34,12 @@ abstract class DisplayModuleNameTestBase(separateProdAndTestSources: Boolean = f
     createProjectSubFile("root1/project/build.properties", "sbt.version=1.9.7")
     createProjectSubFile("root1/build.sbt",
       """ThisBuild / scalaVersion := "2.13.12"
-        |lazy val root = project.in(file("."))
+        |lazy val root1 = project.in(file("."))
         |lazy val module3 = project.in(file("module3"))
         |""".stripMargin)
     createProjectConfig(
       """ThisBuild / scalaVersion := "2.13.12"
-        |val root1 = ProjectRef(file("root1"), "root")
+        |val root1 = ProjectRef(file("root1"), "root1")
         |lazy val root = project.in(file("."))
         |   .dependsOn(root1)
         |lazy val module1 = project.in(file("module1"))

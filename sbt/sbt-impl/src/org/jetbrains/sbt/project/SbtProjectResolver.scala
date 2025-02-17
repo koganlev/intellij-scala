@@ -487,37 +487,6 @@ class SbtProjectResolver extends ExternalSystemProjectResolver[SbtExecutionSetti
       .orElse(default)
   }
 
-  /**
-   * The class is designed to generate unique module internal names.
-   *
-   * We use lowercase version of module internal name to determine uniqueness.
-   * This is done because later this name will be used to calculate module file path.
-   * And this path will be used to distinguish unique modules later during the import.
-   * On some OS (like Mac OS) file paths are case insensitive.
-   * When creating a new module in it can skip some module and return an existing one because their path are equal ignoring case
-   *
-   * Here we always use lower-case version on all OS-ses for easier reproducibility and testing
-   * (though technically it's not mandatory to do it on all OS)
-   *
-   * @see [[com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModifiableModuleModelBridgeImpl.newModule]]
-   * @see [[com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModifiableModuleModelBridgeImpl.getModuleByFilePath]]
-   */
-  private class ModuleUniqueInternalNameGenerator {
-    private val reservedNames = new java.util.concurrent.ConcurrentHashMap[String, Int]
-
-    def getUniqueInternalNameAndUpdateRegistry(name: String): String =
-      getUniqueInternalNameAndUpdateRegistryOpt(name).getOrElse(name)
-
-    private def getUniqueInternalNameAndUpdateRegistryOpt(name: String): Option[String] = {
-      val nameLowerCased = name.toLowerCase //using lowercase, see scaladoc
-      val numberOfCreatedModulesWithSameName = reservedNames.compute(nameLowerCased, (_, v) => v + 1) - 1
-      if (numberOfCreatedModulesWithSameName == 0) //the name is not reserved yet, current name is the first one
-        None
-      else
-        Some(SbtUtil.appendSuffixToModuleName(name, numberOfCreatedModulesWithSameName))
-    }
-  }
-
   private def mapToModuleNodeToDependencies(projectToSourceSet: Map[ProjectData, ModuleSourceSet]): Map[ModuleDataNodeType, Seq[ProjectDependencyData]] =
     projectToSourceSet.flatMap {
       case (projectData, PrentModuleSourceSet(parent)) =>
@@ -578,13 +547,10 @@ class SbtProjectResolver extends ExternalSystemProjectResolver[SbtExecutionSetti
       if (separateProdTestSources) createModuleWithAllRequiredData _
       else createModuleWithAllRequiredDataLegacy _
 
-    //note: it is not needed to pass ModuleUniqueInternalNameGenerator to generate module for the root project,
-    //because "rootProjectModuleNameUnique" uniqueness has been ensured in #generateUniqueModuleInternalNameForRootProject
     val rootModuleSourceSet = createModule(
       rootProject,
       projectRoot,
       rootProjectModuleNameUnique,
-      None,
       None,
       librariesData,
       false, //shouldCreateNestedModule
@@ -593,10 +559,6 @@ class SbtProjectResolver extends ExternalSystemProjectResolver[SbtExecutionSetti
 
     val parentModule = rootModuleSourceSet.parent
     val projectNameToProject = projects.groupBy(_.name)
-    //note: from the SBT perspective using ModuleUniqueInternalNameGenerator for non-root projects would not be necessary at all (projects id must be unique inside single build),
-    //but in IDEA in internal module names all "/" are replaced with "_" and it could happen that in one build the name of one project would be e.g. ro/t
-    //and the other one would be ro_t and for SBT uniqueness would be maintained but not for IDEA.
-    val moduleInternalNameRegistry = new ModuleUniqueInternalNameGenerator
     val projectToModuleForNonRootProjects = projects.map { project =>
       val (moduleName, moduleGroup) = generateModuleAndGroupName(project, parentModule.getInternalName, projectNameToProject)
       val moduleSourceSet = createModule(
@@ -604,7 +566,6 @@ class SbtProjectResolver extends ExternalSystemProjectResolver[SbtExecutionSetti
         projectRoot,
         moduleName,
         Some(moduleGroup),
-        Some(moduleInternalNameRegistry),
         librariesData,
         true, //shouldCreateNestedModule
         useSeparateCompilerOutputPaths
@@ -637,11 +598,6 @@ class SbtProjectResolver extends ExternalSystemProjectResolver[SbtExecutionSetti
     val buildToProjects: Map[URI, Seq[ProjectData]] =
       projects.groupBy(_.buildURI)
 
-    //Ensure the group names are the same. There might be collisions if the build use same root project name.
-    //This can easily happen if those builds use `val root = project.in(file("."))
-    //We reuse ModuleUniqueInternalNameGenerator because the reasoning should be the same for group names as for the module names
-    val uniqueNameGenerator = new ModuleUniqueInternalNameGenerator
-
     //NOTE: sort by URI for a better reproducibility/testability of resulting project structure
     //The matters for unique group names generation
     //(if the order is not specified, group names of projects with colliding names can have random index suffixes)
@@ -649,13 +605,8 @@ class SbtProjectResolver extends ExternalSystemProjectResolver[SbtExecutionSetti
       .toSeq.sortBy(_._1)
       .map { case (buildUri, projects) =>
         val rootProject = findRootProjectInBuild(projects)
-
-        //NOTE: at this point a unique module name is generated for the root project.
-        //So that generating a unique name for the root project is not necessary in
-        //org.jetbrains.sbt.project.SbtProjectResolver.createModulesWithGroupProjectsFromSameBuild
-        val rootProjectUniqueModuleName = generateUniqueModuleInternalNameForRootProject(rootProject.name, uniqueNameGenerator)
         val projectsWithoutRootProject = projects.filterNot(_ == rootProject)
-        BuildProjectsGroup(buildUri, rootProject, projectsWithoutRootProject, rootProjectUniqueModuleName)
+        BuildProjectsGroup(buildUri, rootProject, projectsWithoutRootProject, rootProject.name)
       }
   }
 
@@ -772,22 +723,11 @@ class SbtProjectResolver extends ExternalSystemProjectResolver[SbtExecutionSetti
     }
   }
 
-  private def generateUniqueModuleInternalNameForRootProject(moduleName: String, moduleInternalNameRegistry: ModuleUniqueInternalNameGenerator): String = {
-    //NOTE: the idea of replacing all "/" and "\" with "_" was taken from com.intellij.openapi.externalSystem.model.project.ModuleData public constructor.
-    //It is also done here because that way we are sure the generated internal module name is unique and will not be changed in ModuleData constructor.
-    //Replacing all "." with "_" is done to prevent grouping projects from different builds into the same node e.g.
-    //let's assume that in build.sbt there are references to two others ProjectRef and in one of these projects the root name is "proj.dummy" and the other
-    //is "proj". Such a situation would cause "proj.dummy" to be displayed under "proj" in Project Structure | Modules.
-    val moduleInternalName = moduleName.replaceAll("""([/\\\.])""", "_")
-    moduleInternalNameRegistry.getUniqueInternalNameAndUpdateRegistry(moduleInternalName)
-  }
-
   private def createModuleWithAllRequiredDataLegacy(
     project: sbtStructure.ProjectData,
     projectRoot: File,
     moduleName: String,
     moduleGroup: Option[String],
-    moduleInternalNameRegistry: Option[ModuleUniqueInternalNameGenerator],
     librariesData: Seq[LibraryData],
     shouldCreateNestedModule: Boolean,
     useSeparateCompilerOutputPaths: Boolean
@@ -797,7 +737,7 @@ class SbtProjectResolver extends ExternalSystemProjectResolver[SbtExecutionSetti
     val projectId = ModuleNode.combinedId(project.id, Option(project.buildURI))
     //NOTE: module name which is passed in ModuleNode constructor will be saved as external module name, module name and
     //additionally as internal name but with all the "/" characters changed to "_"
-    val moduleFilesDirectory = createModuleFilesDirectory(projectRoot, project.base.getPath)
+    val moduleFilesDirectory = createModuleFilesDirectory(projectRoot, project.base)
 
     val result = createModuleNode(
       StdModuleTypes.JAVA.getId,
@@ -809,7 +749,7 @@ class SbtProjectResolver extends ExternalSystemProjectResolver[SbtExecutionSetti
     )
     result.setInheritProjectCompileOutputPath(false)
 
-    val (parentModuleUniqueName, _) = adjustParentModuleNames(result, moduleName, moduleGroup, moduleInternalNameRegistry)
+    prefixModuleNameWithGroup(result, moduleGroup)
 
     val projectDependencies = project.dependencies
     addAllRequiredDataToModuleNode(
@@ -819,7 +759,7 @@ class SbtProjectResolver extends ExternalSystemProjectResolver[SbtExecutionSetti
       project,
       result,
       LegacyModuleType,
-      parentModuleUniqueName,
+      moduleName,
       separateModulesForProdTest = false
     )
     setCompileOutputPathsForLegacyModule(result, project.configurations, useSeparateCompilerOutputPaths)
@@ -828,49 +768,24 @@ class SbtProjectResolver extends ExternalSystemProjectResolver[SbtExecutionSetti
   }
 
   /**
-   * @return a tuple where the first element is a unique parent module name and the second one is the unique name from the first element preceded by the groups
+   * @return a module name prefixed with a group name.
    */
-  private def adjustParentModuleNames(
-    module: ModuleDataNodeType,
-    moduleName: String,
-    moduleGroup: Option[String],
-    moduleInternalNameRegistry: Option[ModuleUniqueInternalNameGenerator]
-  ): (String, String) = {
-    val parentModuleUniqueName = getUniqueParentModuleName(module, moduleName, moduleInternalNameRegistry)
-    val parentModuleNameWithGroup = prependModuleNameWithGroupName(parentModuleUniqueName, moduleGroup) //this
-    setParentModuleNames(module, parentModuleUniqueName, parentModuleNameWithGroup)
-    (parentModuleUniqueName, parentModuleNameWithGroup)
-  }
-
-  private def getUniqueParentModuleName(
-    parentModule: ModuleDataNodeType,
-    moduleName: String,
-    moduleInternalNameRegistry: Option[ModuleUniqueInternalNameGenerator]
-  ): String =
-    moduleInternalNameRegistry
-      .map(_.getUniqueInternalNameAndUpdateRegistry(parentModule.getInternalName))
-      .getOrElse(moduleName)
-
-  private def setParentModuleNames(
-    module: ModuleDataNodeType,
-    moduleName: String,
-    moduleNameWithGroup: String
-  ): Unit = {
-    //Using `setInternalName` because there is no way to pass the internal name different than external name and module name via constructor
+  private def prefixModuleNameWithGroup(module: ModuleDataNodeType, moduleGroup: Option[String]): String = {
+    val currentModuleName = module.getInternalName
+    val moduleNameWithGroup = prependModuleNameWithGroupName(currentModuleName, moduleGroup)
+    //Using `setInternalName` because there is no way to pass the internal name different from the external name and module name in constructor
     module.setInternalName(moduleNameWithGroup)
-    //It is required to also update the module name, because this information will be used to know what is the group name
-    //for specific module, which is necessary to create shared sources modules (org.jetbrains.sbt.project.ExternalSourceRootResolution.createSourceModuleNodesAndDependencies).
-    module.setModuleName(moduleName)
+    moduleNameWithGroup
   }
 
-  private def createModuleFilesDirectory(projectRoot: File, moduleBase: String): String = {
-    val relativeToRoot = FileUtil.getRelativePath(projectRoot.path, moduleBase, '/')
+  private def createModuleFilesDirectory(projectRoot: File, moduleBase: File): String = {
+    val relativeToRoot = FileUtil.getRelativePath(projectRoot, moduleBase)
     val relativePath =
       if (relativeToRoot == null || relativeToRoot.equals(".")) ""
       else relativeToRoot
 
     val projectRootDirectory = Seq(projectRoot.getName).filter(_.nonEmpty)
-    val pathComponents = projectRootDirectory ++ Seq(relativePath)
+    val pathComponents = projectRootDirectory :+ relativePath
 
     val defaultModuleFilesDir = getDefaultModuleFilesDirectory(projectRoot)
     Path.of(defaultModuleFilesDir, pathComponents: _*).toCanonicalPath.toString
@@ -881,7 +796,6 @@ class SbtProjectResolver extends ExternalSystemProjectResolver[SbtExecutionSetti
     projectRoot: File,
     moduleName: String,
     moduleGroup: Option[String],
-    moduleInternalNameRegistry: Option[ModuleUniqueInternalNameGenerator],
     librariesData: Seq[LibraryData],
     shouldCreateNestedModule: Boolean,
     useSeparateCompilerOutputPaths: Boolean
@@ -889,11 +803,7 @@ class SbtProjectResolver extends ExternalSystemProjectResolver[SbtExecutionSetti
     // TODO use both ID and Name when related flaws in the External System will be fixed
     // TODO explicit canonical path is needed until IDEA-126011 is fixed
     val projectId = ModuleNode.combinedId(project.id, Option(project.buildURI))
-    //NOTE: module name which is passed in ModuleNode constructor will be saved as external module name, module name and
-    //additionally as internal name but with all the "/" characters changed to "_"
-
-    val moduleFilesDirectory = createModuleFilesDirectory(projectRoot, project.base.getPath)
-
+    val moduleFilesDirectory = createModuleFilesDirectory(projectRoot, project.base)
     val parentModule = createModuleNode(
       StdModuleTypes.JAVA.getId,
       projectId,
@@ -902,7 +812,7 @@ class SbtProjectResolver extends ExternalSystemProjectResolver[SbtExecutionSetti
       project.base.canonicalPath,
       shouldCreateNestedModule
     )
-    val (parentModuleUniqueName, parentModuleNameWithGroup) = adjustParentModuleNames(parentModule, moduleName, moduleGroup, moduleInternalNameRegistry)
+    val parentModuleNameWithGroup = prefixModuleNameWithGroup(parentModule, moduleGroup)
     addAllRequiredDataToParentModuleNode(project, parentModule)
 
     val (prodModule, testModule) = createSbtSourceSetModules(
@@ -912,7 +822,7 @@ class SbtProjectResolver extends ExternalSystemProjectResolver[SbtExecutionSetti
     )
 
     def createDisplayName(module: ModuleDataNodeType): String =
-      s"$parentModuleUniqueName.${module.getExternalName}"
+      s"$moduleName.${module.getExternalName}"
 
     val dependencies = project.dependencies
 

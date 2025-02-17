@@ -14,8 +14,8 @@ final class DisplayModuleNamesTest extends SbtProjectStructureImportingLike {
     val expectedDisplayModuleNames = Map(
       "root" -> "root",
       "root.dummy" -> "dummy",
-      "root~1" -> "root~1",
-      "root~1.dummy" -> "dummy",
+      "c1.root" -> "root",
+      "c1.root.dummy" -> "dummy",
     )
     checkDisplayModuleNames(myProject, expectedDisplayModuleNames)
   }

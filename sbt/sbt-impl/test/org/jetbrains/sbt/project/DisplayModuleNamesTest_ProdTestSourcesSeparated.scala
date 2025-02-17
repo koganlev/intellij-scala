@@ -18,12 +18,12 @@ final class DisplayModuleNamesTest_ProdTestSourcesSeparated extends SbtProjectSt
       "root.dummy" -> "dummy",
       "root.dummy.main" -> "dummy.main",
       "root.dummy.test" -> "dummy.test",
-      "root~1" -> "root~1",
-      "root~1.main" -> "root~1.main",
-      "root~1.test" -> "root~1.test",
-      "root~1.dummy" -> "dummy",
-      "root~1.dummy.test" -> "dummy.test",
-      "root~1.dummy.main" -> "dummy.main",
+      "c1.root" -> "root",
+      "c1.root.main" -> "root.main",
+      "c1.root.test" -> "root.test",
+      "c1.root.dummy" -> "dummy",
+      "c1.root.dummy.test" -> "dummy.test",
+      "c1.root.dummy.main" -> "dummy.main",
     )
     checkDisplayModuleNames(myProject, expectedDisplayModuleNames)
   }
