@@ -108,7 +108,7 @@ final class ScalaMavenImporter extends MavenApplicableConfigurator(PluginGroupId
   }
 
   private def addImplicitScalaLibraryIfNeeded(mavenProject: MavenProject, project: Project, storage: MutableEntityStorage): Option[LibraryEntity] = {
-    val implicitScalaLibraryInfo = mavenProject.getCachedValue(MavenImplicitScalaLibraryInfo)
+    val implicitScalaLibraryInfo = Option(mavenProject.getCachedValue(MavenImplicitScalaLibraryInfo))
     implicitScalaLibraryInfo.map { info =>
       val vfUrlManager = WorkspaceModel.getInstance(project).getVirtualFileUrlManager
       val jarUrl = vfUrlManager.getOrCreateFromUrl(s"jar://${info.path}!/")
@@ -135,24 +135,25 @@ final class ScalaMavenImporter extends MavenApplicableConfigurator(PluginGroupId
     mavenProject: MavenProject
   ): Unit = {
     val compilerClasspathFull = mavenProject.getCachedValue(MavenFullCompilerClasspathKey)
+    if (compilerClasspathFull != null) {
+      val compilerBridgeBinaryJar = ScalaSdkUtils.compilerBridgeJarName(compilerVersion).flatMap { bridgeJarName =>
+        compilerClasspathFull.find(_.getFileName.toString == bridgeJarName)
+      }
 
-    val compilerBridgeBinaryJar = ScalaSdkUtils.compilerBridgeJarName(compilerVersion).flatMap { bridgeJarName =>
-      compilerClasspathFull.find(_.getFileName.toString == bridgeJarName)
+      val classpath = compilerClasspathFull.diff(compilerBridgeBinaryJar.toSeq)
+
+      ScalaSdkUtils.configureScalaSdk(
+        module,
+        compilerVersion,
+        classpath,
+        scaladocExtraClasspath = Nil,
+        compilerBridgeBinaryJar,
+        sdkPrefix = "Maven",
+        storage,
+        project,
+        scalaSdkSourceId = SerializationConstants.MAVEN_EXTERNAL_SOURCE_ID
+      )
     }
-
-    val classpath = compilerClasspathFull.diff(compilerBridgeBinaryJar.toSeq)
-
-    ScalaSdkUtils.configureScalaSdk(
-      module,
-      compilerVersion,
-      classpath,
-      scaladocExtraClasspath = Nil,
-      compilerBridgeBinaryJar,
-      sdkPrefix = "Maven",
-      storage,
-      project,
-      scalaSdkSourceId = SerializationConstants.MAVEN_EXTERNAL_SOURCE_ID
-    )
   }
 
   // called before `beforeModelApplied`
@@ -201,7 +202,7 @@ final class ScalaMavenImporter extends MavenApplicableConfigurator(PluginGroupId
         resolveTransitively(configuration.compilerArtifact).map(a => Path.of(a.getPath)) ++ compilerBridgeJar
 
       mavenProject.putCachedValue(MavenFullCompilerClasspathKey, compilerClasspathWithTransitives)
-      mavenProject.putCachedValue(MavenImplicitScalaLibraryInfo, implicitScalaLibraryInfo)
+      implicitScalaLibraryInfo.foreach(mavenProject.putCachedValue(MavenImplicitScalaLibraryInfo, _))
 
       configuration.plugins.foreach(resolveJar)
     }
@@ -269,7 +270,7 @@ private object ScalaMavenImporter {
   private val MavenFullCompilerClasspathKey = Key.create[Seq[Path]]("MavenFullCompilerClasspathKey")
 
   private case class ImplicitScalaLibraryInfo(libraryName: String, path: Path)
-  private val MavenImplicitScalaLibraryInfo = Key.create[Option[ImplicitScalaLibraryInfo]]("MavenImplicitScalaLibraryInfo")
+  private val MavenImplicitScalaLibraryInfo = Key.create[ImplicitScalaLibraryInfo]("MavenImplicitScalaLibraryInfo")
 
   private final val OrgScalaLang = "org.scala-lang"
 
