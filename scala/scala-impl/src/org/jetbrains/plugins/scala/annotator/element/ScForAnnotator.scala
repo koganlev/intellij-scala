@@ -4,13 +4,13 @@ import com.intellij.codeInspection.ProblemHighlightType
 import com.intellij.lang.annotation.{AnnotationSession, HighlightSeverity}
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
-import org.jetbrains.plugins.scala.ScalaBundle
 import org.jetbrains.plugins.scala.annotator.annotationHolder.{DelegateAnnotationHolder, ErrorIndication}
 import org.jetbrains.plugins.scala.annotator.element.ScForBindingAnnotator.RemoveCaseFromPatternedEnumeratorFix
 import org.jetbrains.plugins.scala.annotator.{ScalaAnnotationBuilder, ScalaAnnotationHolder}
 import org.jetbrains.plugins.scala.codeInspection.caseClassParamInspection.RemoveValFromGeneratorIntentionAction
 import org.jetbrains.plugins.scala.extensions._
-import org.jetbrains.plugins.scala.lang.psi.api.expr.{ScEnumerator, ScFor, ScGenerator, ScMethodCall, ScReferenceExpression}
+import org.jetbrains.plugins.scala.lang.psi.api.expr.{ScEnumerator, ScFor, ScForBinding, ScGenerator, ScGuard, ScMethodCall, ScReferenceExpression}
+import org.jetbrains.plugins.scala.{LatestScalaVersions, ScalaBundle}
 
 import scala.annotation.nowarn
 import scala.math.Ordering.Implicits._
@@ -19,6 +19,8 @@ object ScForAnnotator extends ElementAnnotator[ScFor] {
 
   override def annotate(scFor: ScFor, typeAware: Boolean)
                        (implicit holder: ScalaAnnotationHolder): Unit = {
+    checkInitialGuardsAndBindings(scFor)
+
     val generators = scFor.enumerators.toSeq.flatMap(_.generators)
     generators.foreach { generator =>
       checkGenerator(generator, typeAware)
@@ -42,6 +44,29 @@ object ScForAnnotator extends ElementAnnotator[ScFor] {
           )
         }
       }
+    }
+  }
+
+  private def checkInitialGuardsAndBindings(scFor: ScFor)(implicit holder: ScalaAnnotationHolder): Unit = {
+    lazy val allowInitialForBindings = scFor.scalaMinorVersion.forall(_ >= LatestScalaVersions.Scala_3_6.withMinor(2))
+    scFor.enumerators.foreach { enumerators =>
+      enumerators.enumerators
+        .takeWhile(!_.is[ScGenerator])
+        .foreach {
+          case binding: ScForBinding if !allowInitialForBindings =>
+            holder.createErrorAnnotation(
+              binding,
+              ScalaBundle.message("for.bindings.can.only.be.used.after.the.first.generator"),
+              ProblemHighlightType.GENERIC_ERROR,
+            )
+          case guard: ScGuard =>
+            holder.createErrorAnnotation(
+              guard,
+              ScalaBundle.message("for.guards.can.only.be.used.after.the.first.generator"),
+              ProblemHighlightType.GENERIC_ERROR,
+            )
+          case _ =>
+        }
     }
   }
 

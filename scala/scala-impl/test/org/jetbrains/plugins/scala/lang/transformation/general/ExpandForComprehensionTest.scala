@@ -340,4 +340,91 @@ class ExpandForComprehensionTest_Scala3 extends ExpandForComprehensionTestBase {
         |  )
         |""".stripMargin,
   )
+
+  def test_desugar_initial_for_bindings_braces(): Unit = check3(
+    before =
+      """
+        |val foo = for {
+        |  x = 1
+        |  y <- Some(x)
+        |} yield y
+        |""".stripMargin,
+    after =
+      """val foo = {
+        |  val x =
+        |    1
+        |
+        |  Some(x)
+        |    .map(y =>
+        |      y
+        |    )
+        |}
+        |""".stripMargin
+  )
+
+  def test_desugar_initial_for_bindings_indentation(): Unit = check3(
+    before =
+      """
+        |val foo =
+        |  for
+        |    x =
+        |      // a
+        |      // b
+        |      1
+        |      2
+        |    y <- Some(x)
+        |  yield y
+        |""".stripMargin,
+    after =
+      """val foo = {
+        |  val x =
+        |    // a
+        |    // b
+        |    1
+        |    2
+        |
+        |  Some(x)
+        |    .map(y =>
+        |      y
+        |    )
+        |}
+        |""".stripMargin
+
+  )
+
+  def test_multiple_for_bindings(): Unit = check3(
+    before =
+      """
+        |for {
+        |  a = 1
+        |  b = a
+        |  c <- Some(b)
+        |  d = c
+        |  e = d
+        |} yield y
+        |""".stripMargin,
+    after =
+      """{
+        |  val a =
+        |    1
+        |
+        |  val b =
+        |    a
+        |
+        |  Some(b)
+        |    .map { c =>
+        |      val d =
+        |        c;
+        |      (c, d)
+        |    }
+        |    .map { case (c, d) => val e =
+        |      d;
+        |      (c, d, e)
+        |    }
+        |    .map { case (c, d, e) =>
+        |      y
+        |    }
+        |}
+        |""".stripMargin
+  )
 }

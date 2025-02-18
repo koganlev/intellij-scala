@@ -18,7 +18,7 @@ object Enumerators extends ParsingRule {
     // eat all semicolons (which is not correct), show error in ScForAnnotator
     CommonUtils.eatAllSemicolons()
 
-    if (!Generator()) {
+    if (!Enumerator()) {
       enumsMarker.drop()
       return false
     }

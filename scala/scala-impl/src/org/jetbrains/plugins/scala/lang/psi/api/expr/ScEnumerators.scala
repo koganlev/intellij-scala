@@ -7,6 +7,8 @@ trait ScEnumerators extends ScalaPsiElement {
 
   def forBindings: Seq[ScForBinding]
 
+  def enumerators: Seq[ScEnumerator]
+
   def generators: Seq[ScGenerator]
 
   def guards: Seq[ScGuard]
