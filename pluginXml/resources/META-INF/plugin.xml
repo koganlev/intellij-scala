@@ -63,7 +63,6 @@
         <module name="scalaCommunity.compiler-integration" />
 
         <!-- integrations -->
-        <module name="scalaCommunity.intellij-bsp" />
         <module name="scalaCommunity.maven" />
     </content>
 
