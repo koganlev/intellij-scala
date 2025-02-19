@@ -1,5 +1,7 @@
 package org.jetbrains.jps.incremental.scala.local.worksheet
 
+import com.intellij.openapi.util.SystemInfoRt
+import com.intellij.openapi.util.io.FileUtil
 import org.jetbrains.jps.incremental.scala.local.worksheet.repl_interface.ILoopWrapper
 import org.jetbrains.jps.incremental.scala.local.worksheet.util.IOUtils
 import org.jetbrains.jps.incremental.scala.{Client, CompileServerBundle, MessageKind, compilerVersion}
@@ -11,6 +13,7 @@ import sbt.util.{Level, Logger}
 import java.io.PrintStream
 import java.lang.reflect.InvocationTargetException
 import java.net.{URLClassLoader, URLDecoder}
+import java.nio.charset.StandardCharsets
 import java.nio.file.{Files, Path, Paths}
 
 class ILoopWrapperFactoryHandler {
@@ -115,14 +118,22 @@ object ILoopWrapperFactoryHandler {
 
   private def findContainingJar(clazz: Class[_]): Option[Path] = {
     val resource = clazz.getResource(s"/${clazz.getName.replace('.', '/')}.class")
-
     if (resource == null) return None
 
-    val url = URLDecoder.decode(resource.toString.stripPrefix("jar:file:"), "UTF-8")
-    val idx = url.indexOf(".jar!")
+    val url = URLDecoder.decode(resource.toString.stripPrefix("jar:file:"), StandardCharsets.UTF_8.name())
+    val jarPathSuffix = ".jar!"
+    val idx = url.indexOf(jarPathSuffix)
+
     if (idx == -1) return None
 
-    Some(Paths.get(url.substring(0, idx + 4))).filter(Files.exists(_))
+    val jarPath = url.substring(0, idx + jarPathSuffix.length - 1)
+
+    val rawPath =
+      if (SystemInfoRt.isWindows && jarPath.startsWith("/")) jarPath.stripPrefix("/")
+      else jarPath
+
+    val systemDependentPath = FileUtil.toSystemDependentName(rawPath)
+    Some(Paths.get(systemDependentPath)).filter(Files.exists(_))
   }
 
   private def createClassLoader(compilerJars: CompilerJars): URLClassLoader = {
