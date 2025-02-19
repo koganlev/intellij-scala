@@ -1,7 +1,7 @@
 import CompilerPlugin.*
 import dotty.tools.dotc.ast.tpd
 import dotty.tools.dotc.core.Contexts.{Context, ctx}
-import dotty.tools.dotc.core.Types.{SingletonType, Type, TypeRef}
+import dotty.tools.dotc.core.Types.{ErrorType, SingletonType, Type, TypeRef}
 import dotty.tools.dotc.plugins.{PluginPhase, StandardPlugin}
 import dotty.tools.dotc.printing.PlainPrinter
 import dotty.tools.dotc.printing.Texts.Text
@@ -42,9 +42,12 @@ private object CompilerPlugin:
       if (!tree.call.isEmpty) {
         // Use -Ytest-pickler to print canonical types (see PlainPrinter.homogenizedView)
         val printer = new TypePrinter(ctx.fresh.setSetting(ctx.settings.YtestPickler, true))
-        // Rather than tree.tpe to avoid possible ErrorType("Type mismatch"), e.g. val x: Foo = bar()
+        // Handle possible ErrorType("Type mismatch"), e.g. val x: Foo = bar()
         // tpe is binary-incompatible with 3.2, but compiles
-        val tpe = tree.expansion.tpe
+        val tpe = tree.tpe match {
+          case _: ErrorType => tree.expansion.tpe
+          case t => t
+        }
         val s = printer.toText(tpe).mkString(Int.MaxValue, false)
           .replace("<root>.this.", "_root_.")
           .replace("<empty>.this.", "_root_.")
