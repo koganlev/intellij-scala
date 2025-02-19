@@ -40,7 +40,7 @@ class WorksheetServer {
     ReplContext(
       args.sbtData,
       compilerJars,
-      compilationData.classpath.map(_.toPath),
+      compilationData.classpath,
       compilationData.scalaOptions
     )
   }
@@ -48,7 +48,7 @@ class WorksheetServer {
   private def plainContext(args: Arguments, compilerJars: CompilerJars): WorksheetRunnerContext =
     WorksheetRunnerContext(
       compilerJars,
-      args.compilationData.classpath.map(_.toPath)
+      args.compilationData.classpath
     )
 }
 

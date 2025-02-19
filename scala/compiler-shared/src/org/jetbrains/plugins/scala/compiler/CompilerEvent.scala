@@ -1,13 +1,13 @@
 package org.jetbrains.plugins.scala.compiler
 
 import org.jetbrains.jps.incremental.scala.Client
+import org.jetbrains.jps.incremental.scala.remote.SerializablePath
 import org.jetbrains.plugins.scala.compiler.CompilerEventType.CompilerEventType
 import org.jetbrains.plugins.scala.util.CompilationId
 
-import java.io.File
 import java.util.UUID
 
-sealed trait CompilerEvent {
+sealed trait CompilerEvent extends Product with Serializable {
 
   def eventType: CompilerEventType
 
@@ -62,7 +62,7 @@ object CompilerEvent {
   // can be sent multiple times for different modules by jps compiler
   case class CompilationFinished(compilationId: CompilationId,
                                  compilationUnitId: Option[CompilationUnitId],
-                                 sources: Set[File])
+                                 sources: Set[SerializablePath])
     extends CompilerEvent {
 
     override def eventType: CompilerEventType = CompilerEventType.CompilationFinished

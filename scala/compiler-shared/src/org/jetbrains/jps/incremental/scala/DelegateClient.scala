@@ -3,7 +3,7 @@ package org.jetbrains.jps.incremental.scala
 import org.jetbrains.annotations.Nls
 import org.jetbrains.jps.incremental.scala.remote.CompileServerMetrics
 
-import java.io.File
+import java.nio.file.Path
 
 class DelegateClient(client: Client)
   extends Client {
@@ -26,10 +26,10 @@ class DelegateClient(client: Client)
   override def internalTrace(text: String): Unit =
     client.internalTrace(text)
 
-  override def generated(source: File, module: File, name: String): Unit =
+  override def generated(source: Path, module: Path, name: String): Unit =
     client.generated(source, module, name)
 
-  override def deleted(module: File): Unit =
+  override def deleted(module: Path): Unit =
     client.deleted(module)
 
   override def isCanceled: Boolean =
@@ -47,7 +47,7 @@ class DelegateClient(client: Client)
   override def compilationUnit(path: String): Unit =
     client.compilationUnit(path)
 
-  override def compilationEnd(sources: Set[File]): Unit =
+  override def compilationEnd(sources: Set[Path]): Unit =
     client.compilationEnd(sources)
 
   override def processingEnd(): Unit =

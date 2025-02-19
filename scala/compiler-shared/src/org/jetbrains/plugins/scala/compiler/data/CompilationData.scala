@@ -1,14 +1,14 @@
 package org.jetbrains.plugins.scala.compiler.data
 
-import java.io.File
+import java.nio.file.Path
 
-case class CompilationData(sources: Seq[File],
-                           classpath: Seq[File],
-                           output: File,
+case class CompilationData(sources: Seq[Path],
+                           classpath: Seq[Path],
+                           output: Path,
                            scalaOptions: Seq[String],
                            javaOptions: Seq[String],
                            order: CompileOrder,
-                           cacheFile: File,
-                           outputToCacheMap: Map[File, File],
-                           outputGroups: Seq[(File, File)],
+                           cacheFile: Path,
+                           outputToCacheMap: Map[Path, Path],
+                           outputGroups: Seq[(Path, Path)],
                            zincData: ZincData)

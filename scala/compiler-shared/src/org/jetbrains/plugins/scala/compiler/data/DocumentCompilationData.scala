@@ -17,13 +17,13 @@ object DocumentCompilationData {
   def serialize(data: DocumentCompilationData): Seq[String] = {
     val DocumentCompilationData(sourcePath, sourceContent, output, classpath, scalacOptions) = data
 
-    import serialization.SerializationUtils._
+    import serialization.SerializationUtils.{pathToString, pathsToString, sequenceToString}
 
     Seq(
-      pathToPathString(sourcePath),
+      pathToString(sourcePath),
       sourceContent,
-      pathToPathString(output),
-      pathsToPathStrings(classpath),
+      pathToString(output),
+      pathsToString(classpath),
       sequenceToString(scalacOptions)
     )
   }

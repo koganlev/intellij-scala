@@ -28,7 +28,7 @@ class SbtCompiler(javaTools: JavaTools, scalac: ScalaCompiler, fileToStore: Path
       case CompileOrder.ScalaThenJava => SbtCompileOrder.ScalaThenJava
     }
 
-    val analysisStore = fileToStore(compilationData.cacheFile.toPath)
+    val analysisStore = fileToStore(compilationData.cacheFile)
     val zincMetadata = CompilationMetadata.load(analysisStore)
     import zincMetadata._
 
@@ -52,7 +52,7 @@ class SbtCompiler(javaTools: JavaTools, scalac: ScalaCompiler, fileToStore: Path
     val setup = incrementalCompiler.setup(
       IntellijEntryLookup(compilationData, fileToStore),
       skip = false,
-      compilationData.cacheFile.toPath,
+      compilationData.cacheFile,
       CompilerCache.fresh,
       incOptions,
       reporter,
@@ -65,9 +65,9 @@ class SbtCompiler(javaTools: JavaTools, scalac: ScalaCompiler, fileToStore: Path
     )
 
     val inputs = incrementalCompiler.inputs(
-      compilationData.classpath.toArray.map(file => PlainVirtualFileConverter.converter.toVirtualFile(file.toPath)),
-      compilationData.zincData.allSources.toArray.map(file => PlainVirtualFileConverter.converter.toVirtualFile(file.toPath)),
-      compilationData.output.toPath,
+      compilationData.classpath.toArray.map(PlainVirtualFileConverter.converter.toVirtualFile),
+      compilationData.zincData.allSources.toArray.map(PlainVirtualFileConverter.converter.toVirtualFile),
+      compilationData.output,
       None,
       compilationData.scalaOptions.toArray,
       compilationData.javaOptions.toArray,
@@ -89,13 +89,13 @@ class SbtCompiler(javaTools: JavaTools, scalac: ScalaCompiler, fileToStore: Path
       if (result.hasModified) {
         analysisStore.set(AnalysisContents.create(result.analysis(), result.setup()))
 
-        intellijClassfileManager.deletedDuringCompilation().foreach(_.foreach(p => client.deleted(p.toFile)))
+        intellijClassfileManager.deletedDuringCompilation().foreach(_.foreach(client.deleted))
 
         val binaryToSource = BinaryToSource(result.analysis, compilationData)
 
         def processGeneratedFile(classFile: Path): Unit = {
           for (source <- binaryToSource.classfileToSources(classFile))
-            client.generated(source.toFile, classFile.toFile, binaryToSource.className(classFile))
+            client.generated(source, classFile, binaryToSource.className(classFile))
         }
 
         intellijClassfileManager.generatedDuringCompilation().flatten.foreach(processGeneratedFile)
@@ -108,9 +108,9 @@ class SbtCompiler(javaTools: JavaTools, scalac: ScalaCompiler, fileToStore: Path
         // The error should be already handled via the `reporter`
         // However we need to invalidate source from last compilation
         val sourcesForInvalidation: Iterable[Path] =
-          if (intellijClassfileManager.deletedDuringCompilation().isEmpty) compilationData.sources.map(_.toPath)
+          if (intellijClassfileManager.deletedDuringCompilation().isEmpty) compilationData.sources
           else BinaryToSource(previousAnalysis, compilationData)
-            .classfilesToSources(intellijClassfileManager.deletedDuringCompilation().last) ++ compilationData.sources.map(_.toPath)
+            .classfilesToSources(intellijClassfileManager.deletedDuringCompilation().last) ++ compilationData.sources
 
         sourcesForInvalidation.foreach(source => client.sourceStarted(source.toAbsolutePath.normalize().toString))
       case e: Throwable =>
@@ -118,7 +118,7 @@ class SbtCompiler(javaTools: JavaTools, scalac: ScalaCompiler, fileToStore: Path
         previousSetup.foreach(previous => analysisStore.set( AnalysisContents.create(Analysis.empty, previous)))
 
         // Keep files dirty
-        compilationData.zincData.allSources.foreach(source => client.sourceStarted(source.getAbsolutePath))
+        compilationData.zincData.allSources.foreach(source => client.sourceStarted(source.toAbsolutePath.normalize().toString))
 
         val msg = CompileServerBundle.message("compilation.failed.when.compiling", compilationData.output, e.getMessage, e.getStackTrace.mkString("\n  "))
         client.error(msg, None)

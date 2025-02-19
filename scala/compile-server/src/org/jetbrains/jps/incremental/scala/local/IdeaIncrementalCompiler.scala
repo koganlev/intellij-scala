@@ -21,23 +21,23 @@ class IdeaIncrementalCompiler(scalac: AnalyzingCompiler)
     val reporter = getReporter(client)
     val logger = getLogger(client)
     val converter = sbt.internal.inc.PlainVirtualFileConverter.converter
-    val clientCallback = new ClientCallback(client, compilationData.output.toPath, converter)
+    val clientCallback = new ClientCallback(client, compilationData.output, converter)
 
     val outputDirsCount = compilationData.outputGroups.map(_._2).distinct.size
     val out =
       if (outputDirsCount <= 1) {
-        CompileOutput(compilationData.output.toPath)
+        CompileOutput(compilationData.output)
       } else {
         val groups = compilationData.outputGroups.map {
-          case (source, target) => (source.toPath, target.toPath)
+          case (source, target) => (source, target)
         }
         CompileOutput(groups: _*)
       }
 
     try {
       scalac.compile(
-        compilationData.sources.toArray.map(file => converter.toVirtualFile(file.toPath)),
-        compilationData.classpath.map(file => converter.toVirtualFile(file.toPath)).toArray,
+        compilationData.sources.toArray.map(converter.toVirtualFile),
+        compilationData.classpath.map(converter.toVirtualFile).toArray,
         converter,
         emptyChanges,
         compilationData.scalaOptions.toArray,
@@ -109,13 +109,13 @@ private class ClientCallback(client: Client, output: Path, converter: FileConver
                                       classFile: Path,
                                       binaryClassName: String,
                                       srcClassName: String): Unit =
-    client.generated(converter.toPath(source).toFile, classFile.toFile, binaryClassName)
+    client.generated(converter.toPath(source), classFile, binaryClassName)
 
   override def generatedLocalClass(source: VirtualFileRef, classFile: Path): Unit =
     if (classFile.startsWith(output)) {
       val relative = output.relativize(classFile)
       val binaryClassName = relative.iterator().asScala.mkString(".").dropRight(".class".length)
-      client.generated(converter.toPath(source).toFile, classFile.toFile, binaryClassName)
+      client.generated(converter.toPath(source), classFile, binaryClassName)
     }
 
   override def enabled(): Boolean = false

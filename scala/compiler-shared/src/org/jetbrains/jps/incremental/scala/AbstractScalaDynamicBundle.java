@@ -7,10 +7,10 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-import java.io.File;
 import java.lang.reflect.Method;
 import java.net.URL;
 import java.net.URLClassLoader;
+import java.nio.file.Paths;
 import java.util.ResourceBundle;
 
 @ApiStatus.Internal
@@ -35,7 +35,7 @@ public abstract class AbstractScalaDynamicBundle extends AbstractBundle {
         try {
             final String bundlePath = System.getProperty(LANGUAGE_BUNDLE, null);
             if (bundlePath != null) {
-                loader = new URLClassLoader(new URL[] {new File(bundlePath).toURI().toURL()}, null);
+                loader = new URLClassLoader(new URL[] {Paths.get(bundlePath).toUri().toURL()}, null);
             }
         }
         catch (Throwable e) {

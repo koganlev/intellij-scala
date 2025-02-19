@@ -41,11 +41,11 @@ class WorksheetInProcessRunnerFactory {
       def toUrlSpec(p: String): URL = Paths.get(p).toUri.toURL
 
       val classLoader: URLClassLoader = {
-        val worksheetUrls = (Seq(args.pathToRunnersJar, args.worksheetTempFile) ++ args.outputDirs).map(_.toURI.toURL)
+        val worksheetUrls = (Seq(args.pathToRunnersJar, args.worksheetTempFile) ++ args.outputDirs).map(_.toUri.toURL)
         val classpathUrls = context.classpath.map(_.toUri.toURL)
         val compilerUrls  = {
           val jars = context.compilerJars.allJars
-          jars.map(_.getCanonicalPath).map(toUrlSpec)
+          jars.map(_.toAbsolutePath.normalize().toString).map(toUrlSpec)
         }
 
         val parent = getClassLoader(compilerUrls, classpathUrls.diff(worksheetUrls))

@@ -5,6 +5,7 @@ import com.intellij.build.events.EventResult
 import com.intellij.openapi.project.Project
 import org.jetbrains.annotations.Nls
 import org.jetbrains.jps.incremental.scala.Client.PosInfo
+import org.jetbrains.jps.incremental.scala.remote.SerializablePath
 import org.jetbrains.jps.incremental.scala.{Client, MessageKind}
 import org.jetbrains.plugins.scala.build.BuildMessages.stripAnsiCodes
 import org.jetbrains.plugins.scala.compiler.{CompilerEvent, CompilerEventListener}
@@ -29,21 +30,21 @@ class CompilerEventReporter(project: Project,
       // com.intellij.build.FilePosition contains 0-based line and column information, PosInfo expects 1-based indices.
       val problemStart = PosInfo(pos.getStartLine + 1, pos.getStartColumn + 1)
       val problemEnd = PosInfo(pos.getEndLine + 1, pos.getEndColumn + 1)
-      val msg = Client.ClientMsg(kind, stripAnsiCodes(text), Some(pos.getFile), Some(problemStart), Some(problemStart), Some(problemEnd), Nil)
+      val msg = Client.ClientMsg(kind, stripAnsiCodes(text), Some(SerializablePath(pos.getFile.toPath)), Some(problemStart), Some(problemStart), Some(problemEnd), Nil)
       val event = CompilerEvent.MessageEmitted(compilationId, None, None, msg)
       files.add(pos.getFile)
       publisher.eventReceived(event)
     }
 
   private def finishFiles(): Unit = {
-    val event = CompilerEvent.CompilationFinished(compilationId, None, files.toSet)
+    val event = CompilerEvent.CompilationFinished(compilationId, None, files.map(f => SerializablePath(f.toPath)).toSet)
     publisher.eventReceived(event)
   }
 
   /** Clear any messages associated with file. */
   override def clear(file: File): Unit = {
     files.add(file)
-    val event = CompilerEvent.CompilationFinished(compilationId, None, Set(file))
+    val event = CompilerEvent.CompilationFinished(compilationId, None, Set(SerializablePath(file.toPath)))
     publisher.eventReceived(event)
   }
 

@@ -30,16 +30,16 @@ class IdeClientIdea(compilerName: String,
   private var compilationResults: Seq[CompilationResult] = List.empty
 
   //logic is taken from org.jetbrains.jps.incremental.java.OutputFilesSink.save
-  override def generated(source: java.io.File, outputFile: java.io.File, name: String): Unit = {
+  override def generated(source: Path, outputFile: Path, name: String): Unit = {
     val compilationResult = CompilationResult(
-      source = source.toPath,
-      outputFile = outputFile.toPath,
+      source = source,
+      outputFile = outputFile,
       name = name
     )
     compilationResults = compilationResult +: compilationResults
   }
 
-  override def compilationEnd(sources: Predef.Set[java.io.File]): Unit = {
+  override def compilationEnd(sources: Set[Path]): Unit = {
     compilationResults.foreach(handleCompilationResult)
     persistPackageObjectData()
     super.compilationEnd(sources)

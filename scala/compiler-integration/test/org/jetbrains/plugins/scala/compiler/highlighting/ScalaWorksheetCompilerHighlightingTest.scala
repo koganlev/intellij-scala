@@ -33,7 +33,7 @@ abstract class ScalaWorksheetCompilerHighlightingTestBase extends ScalaCompilerH
     getProject.getMessageBus.connect().subscribe(CompilerEventListener.topic, new CompilerEventListener {
       override def eventReceived(event: CompilerEvent): Unit = event match {
         case CompilerEvent.CompilationFinished(_, _, sources) =>
-          val platformIndependentSources = sources.map(_.getCanonicalPath).map(FileUtil.toSystemIndependentName)
+          val platformIndependentSources = sources.map(_.toPath.toString).map(FileUtil.toSystemIndependentName)
           val source = virtualFile.getCanonicalPath
           if (platformIndependentSources.contains(source)) {
             promise.success(())

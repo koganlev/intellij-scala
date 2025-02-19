@@ -2,7 +2,7 @@ package org.jetbrains.plugins.scala.compiler.data
 
 import org.jetbrains.jps.incremental.scala.containsScala3
 
-import java.io.File
+import java.nio.file.Path
 
 /**
  * @param libraryJars             scala-library.jar, for scala3 projects also contains scala3-library_3.jar
@@ -14,15 +14,15 @@ import java.io.File
  *      https://github.com/sbt/zinc/pull/960
  */
 case class CompilerJars(
-  libraryJars: Seq[File],
-  compilerJars: Seq[File],
-  compilerJar: File,
-  customCompilerBridgeJar: Option[File]
+  libraryJars: Seq[Path],
+  compilerJars: Seq[Path],
+  compilerJar: Path,
+  customCompilerBridgeJar: Option[Path]
 ) {
 
   lazy val hasScala3: Boolean =
     containsScala3(allJars)
 
-  def allJars: Seq[File] =
+  def allJars: Seq[Path] =
     libraryJars ++ compilerJars
 }

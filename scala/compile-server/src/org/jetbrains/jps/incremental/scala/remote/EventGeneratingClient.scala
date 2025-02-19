@@ -4,6 +4,7 @@ package remote
 import org.jetbrains.annotations.Nls
 import sbt.internal.inc.CompileFailed
 
+import java.nio.file.Path
 import java.util.concurrent.TimeUnit
 
 /**
@@ -46,11 +47,11 @@ class EventGeneratingClient(writeEvent: Event => Unit, canceled: => Boolean) ext
   override def internalTrace(text: String): Unit =
     publishEvent(InternalTraceEvent(text))
 
-  override def generated(source: java.io.File, module: java.io.File, name: String): Unit =
-    publishEvent(GeneratedEvent(source, module, name))
+  override def generated(source: Path, module: Path, name: String): Unit =
+    publishEvent(GeneratedEvent(SerializablePath(source), SerializablePath(module), name))
 
-  override def deleted(module: java.io.File): Unit =
-    publishEvent(DeletedEvent(module))
+  override def deleted(module: Path): Unit =
+    publishEvent(DeletedEvent(SerializablePath(module)))
 
   override def compilationStart(): Unit =
     publishEvent(CompilationStartEvent())
@@ -61,8 +62,8 @@ class EventGeneratingClient(writeEvent: Event => Unit, canceled: => Boolean) ext
   override def compilationUnit(path: String): Unit =
     publishEvent(CompilationUnitEvent(path))
 
-  override def compilationEnd(sources: Set[java.io.File]): Unit =
-    publishEvent(CompilationEndEvent(sources))
+  override def compilationEnd(sources: Set[Path]): Unit =
+    publishEvent(CompilationEndEvent(sources.map(SerializablePath(_))))
 
   override def processingEnd(): Unit =
     publishEvent(ProcessingEndEvent())

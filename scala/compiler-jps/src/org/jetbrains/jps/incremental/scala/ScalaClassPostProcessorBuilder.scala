@@ -36,7 +36,7 @@ private final class ScalaClassPostProcessorBuilder extends ModuleLevelBuilder(Bu
     DataFactoryService.instance(context)
       .getCompilationDataFactory
       .from(Seq.empty, Seq.empty, context, chunk)
-      .map(_.cacheFile.toPath) match {
+      .map(_.cacheFile) match {
       case Left(CompilationDataFactory.NoCompilationData) =>
         ModuleLevelBuilder.ExitCode.NOTHING_DONE
       case Left(error) =>

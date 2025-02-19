@@ -12,6 +12,7 @@ import com.intellij.openapi.progress.{ProgressIndicator, ProgressManager, Task}
 import com.intellij.openapi.project.{DumbService, Project}
 import org.jetbrains.annotations.Nls
 import org.jetbrains.jps.incremental.scala.Client.PosInfo
+import org.jetbrains.jps.incremental.scala.remote.SerializablePath
 import org.jetbrains.jps.incremental.scala.{Client, DelegateClient, MessageKind}
 import org.jetbrains.plugins.scala.compiler.{CompileServerLauncher, JDK}
 import org.jetbrains.plugins.scala.extensions.{LoggerExt, PathExt}
@@ -519,7 +520,7 @@ object WorksheetCompiler {
 
       val originalFileName = originalFile.getFileName.toString
       msg.copy(
-        source = msg.source.map(_ => originalFile.toFile),
+        source = msg.source.map(_ => SerializablePath(originalFile)),
         text = msg.text
           .replace(s"object ${WorksheetWrapper.className}.", "object ") // object WorksheetWrapper.X -> object X
           .replace(s"object ${WorksheetWrapper.className}", originalFileName) // object WorksheetWrapper -> worksheet name
@@ -532,9 +533,9 @@ object WorksheetCompiler {
       )
     }
 
-    override def compilationEnd(sources: Set[java.io.File]): Unit = {
+    override def compilationEnd(sources: Set[Path]): Unit = {
       Log.assertTrue(sources.size <= 1, "expecting at most 1 source file during worksheet compilation")
-      val sourcesFixed = sources.map(_ => originalFile.toFile)
+      val sourcesFixed = sources.map(_ => originalFile)
       super.compilationEnd(sourcesFixed)
     }
   }

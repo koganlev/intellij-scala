@@ -16,11 +16,11 @@ class IdeClientSbt(compilerName: String,
                    sourceToTarget: Path => Option[BuildTarget[_ <: BuildRootDescriptor]])
         extends IdeClient(compilerName, context, chunk) {
 
-  override def generated(source: java.io.File, outputFile: java.io.File, name: String): Unit = {
-    val target = sourceToTarget(source.toPath).getOrElse {
+  override def generated(source: Path, outputFile: Path, name: String): Unit = {
+    val target = sourceToTarget(source).getOrElse {
       throw new RuntimeException("Unknown source file: " + source)
     }
-    val compiledClass = new LazyCompiledClass(outputFile.toPath, source.toPath, name)
+    val compiledClass = new LazyCompiledClass(outputFile, source, name)
     consumer.registerCompiledClass(target, compiledClass)
   }
 

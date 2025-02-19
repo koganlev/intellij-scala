@@ -3,7 +3,7 @@ package org.jetbrains.jps.incremental.scala.remote
 import org.apache.commons.lang3.StringUtils
 import org.jetbrains.jps.incremental.scala._
 
-import java.io._
+import java.io.{BufferedInputStream, BufferedOutputStream, DataInputStream, DataOutputStream}
 import java.net.{InetAddress, InetSocketAddress, Socket}
 import java.nio.charset.StandardCharsets
 import java.util.Base64

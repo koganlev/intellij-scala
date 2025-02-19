@@ -108,16 +108,16 @@ object CompilationDataFactory
           !JavaBuilderUtil.isForcedRecompilationAllJavaModules(context)
 
       CompilationData(
-        sources = canonicalSources.map(_.toFile),
-        classpath = classpath.toSeq,
-        output = output.toFile,
+        sources = canonicalSources,
+        classpath = classpath.map(_.toPath).toSeq,
+        output = output,
         scalaOptions = filterOutPipeliningOptions(ensureEncodingIsExplicitlySet(scalaOptions)),
         javaOptions = ensureEncodingIsExplicitlySet(javaOptions),
         order = order,
-        cacheFile = cacheFile.toFile,
-        outputToCacheMap = relevantOutputToCacheMap.map { case (p1, p2) => (p1.toFile, p2.toFile) },
-        outputGroups = outputGroups.map { case (p1, p2) => (p1.toFile, p2.toFile) },
-        zincData = ZincData(allSources.map(_.toFile), compilationStamp, isCompile)
+        cacheFile = cacheFile,
+        outputToCacheMap = relevantOutputToCacheMap,
+        outputGroups = outputGroups,
+        zincData = ZincData(allSources, compilationStamp, isCompile)
       )
     }
   }

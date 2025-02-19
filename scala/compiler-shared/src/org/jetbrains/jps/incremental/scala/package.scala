@@ -1,10 +1,9 @@
 package org.jetbrains.jps.incremental
 
-import _root_.java.io._
-import _root_.java.net.URL
+import _root_.java.io.{BufferedInputStream, IOException, InputStream}
+import _root_.java.net.{URL, URLClassLoader}
+import _root_.java.nio.file.Path
 import _root_.java.util.Properties
-import _root_.java.net.URLClassLoader
-
 import _root_.scala.util.Using
 
 package object scala {
@@ -13,15 +12,15 @@ package object scala {
     def unapply(a: A): Some[B] = Some(apply(a))
   }
 
-  def containsScala3(files: Iterable[File]): Boolean =
-    files.exists(_.getName.startsWith("scala3"))
+  def containsScala3(files: Iterable[Path]): Boolean =
+    files.exists(_.getFileName.toString.startsWith("scala3"))
 
   // TODO implement a better version comparison
-  def compilerVersionIn(compiler: File, versions: String*): Boolean =
+  def compilerVersionIn(compiler: Path, versions: String*): Boolean =
     compilerVersion(compiler).exists { version => versions.exists(version.startsWith) }
 
-  def compilerVersion(compiler: File): Option[String] =
-    compilerVersion(Set(compiler.toURI.toURL))
+  def compilerVersion(compiler: Path): Option[String] =
+    compilerVersion(Set(compiler.toUri.toURL))
 
   def compilerVersion(urls: Set[URL]): Option[String] =
     compilerVersion(new URLClassLoader(urls.toArray, null))
@@ -34,9 +33,9 @@ package object scala {
       .flatMap(it => Using.resource(new BufferedInputStream(it))(readProperty(_, name)))
   }
 
-  def readProperty(file: File, resource: String, name: String): Option[String] = {
+  def readProperty(file: Path, resource: String, name: String): Option[String] = {
     try {
-      val url = new URL("jar:%s!/%s".format(file.toURI.toString, resource))
+      val url = new URL("jar:%s!/%s".format(file.toUri.toString, resource))
       Option(url.openStream).flatMap(it => Using.resource(new BufferedInputStream(it))(readProperty(_, name)))
     } catch {
       case _: IOException => None

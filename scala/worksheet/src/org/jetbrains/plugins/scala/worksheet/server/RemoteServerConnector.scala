@@ -52,10 +52,10 @@ final class RemoteServerConnector(
           case Args.PlainModeArgs(sourceFile, outputDir, className) =>
             Some(WorksheetArgs.RunPlain(
               className,
-              ScalaPluginJars.runnersJar.toFile,
-              sourceFile.toFile,
+              ScalaPluginJars.runnersJar,
+              sourceFile,
               sourceFile.getFileName.toString,
-              (outputDir +: outputDirs).map(_.toFile),
+              outputDir +: outputDirs
             ))
           case Args.ReplModeArgs(path, dropCachedReplInstance, codeChunk) =>
             Some(WorksheetArgs.RunRepl(
@@ -63,7 +63,7 @@ final class RemoteServerConnector(
               codeChunk,
               dropCachedReplInstance,
               continueOnChunkError = WorksheetUtils.continueWorksheetEvaluationOnExpressionFailure,
-              outputDirs.map(_.toFile)
+              outputDirs
             ))
           case Args.CompileOnly(_, _) =>
             None // just compile (data is taken from CompilationData)

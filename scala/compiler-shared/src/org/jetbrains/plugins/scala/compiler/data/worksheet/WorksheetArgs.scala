@@ -1,6 +1,6 @@
 package org.jetbrains.plugins.scala.compiler.data.worksheet
 
-import java.io.File
+import java.nio.file.Path
 
 sealed trait WorksheetArgs
 
@@ -15,10 +15,10 @@ object WorksheetArgs {
    */
   final case class RunPlain(
     worksheetClassName: String,
-    pathToRunnersJar: File,
-    worksheetTempFile: File,
+    pathToRunnersJar: Path,
+    worksheetTempFile: Path,
     originalFileName: String,
-    outputDirs: Seq[File],
+    outputDirs: Seq[Path],
   ) extends WorksheetArgs
 
   /**
@@ -30,6 +30,6 @@ object WorksheetArgs {
     codeChunk: String,
     dropCachedReplInstance: Boolean,
     continueOnChunkError: Boolean,
-    outputDirs: Seq[File]
+    outputDirs: Seq[Path]
   ) extends WorksheetArgs
 }

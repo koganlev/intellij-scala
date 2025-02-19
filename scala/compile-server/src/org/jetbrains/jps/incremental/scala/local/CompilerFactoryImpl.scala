@@ -46,7 +46,7 @@ class CompilerFactoryImpl(sbtData: SbtData) extends CompilerFactory {
         val javac = {
           val scala = compilerData.compilerJars.map(getOrCreateScalaInstance).getOrElse(dummyScalaInstance._1)
           val classpathOptions = ClasspathOptionsUtil.javac(false)
-          JavaTools.directOrFork(scala, classpathOptions, compilerData.javaHome.map(_.toPath))
+          JavaTools.directOrFork(scala, classpathOptions, compilerData.javaHome)
         }
 
         val scalac = scalacOption.getOrElse {
@@ -71,16 +71,16 @@ class CompilerFactoryImpl(sbtData: SbtData) extends CompilerFactory {
     compilerJars.map { compilerJars =>
       val scalaInstance = getOrCreateScalaInstance(compilerJars)
       val customCompilerBridge = compilerJars.customCompilerBridgeJar match {
-        case Some(file) if !file.isFile =>
+        case Some(file) if !Files.isRegularFile(file) =>
           client.error(CompileServerBundle.message("invalid.compiler.bridge.jar", file))
           None //fallback to bundled bridge
         case other => other
       }
 
-      val compiledInterfaceJar = customCompilerBridge.map(_.toPath).getOrElse(getOrCompileInterfaceJar(
-        home = sbtData.interfacesHome.toPath,
+      val compiledInterfaceJar = customCompilerBridge.getOrElse(getOrCompileInterfaceJar(
+        home = sbtData.interfacesHome,
         compilerBridges = sbtData.compilerBridges,
-        interfaceJars = Seq(sbtData.sbtInterfaceJar, sbtData.compilerInterfaceJar).map(_.toPath),
+        interfaceJars = Seq(sbtData.sbtInterfaceJar, sbtData.compilerInterfaceJar),
         scalaInstance = scalaInstance,
         javaClassVersion = sbtData.javaClassVersion,
         client = Option(client)
@@ -134,9 +134,9 @@ object CompilerFactoryImpl {
       classLoadersMap.getOrElse(paths, createClassLoader(paths))
     }
 
-    val classLoader = getOrCreateClassLoader(jars.allJars.map(_.toPath))
-    val loaderCompilerOnly = getOrCreateClassLoader((jars.libraryJars ++ jars.compilerJars).map(_.toPath))
-    val loaderLibraryOnly = getOrCreateClassLoader(jars.libraryJars.map(_.toPath))
+    val classLoader = getOrCreateClassLoader(jars.allJars)
+    val loaderCompilerOnly = getOrCreateClassLoader((jars.libraryJars ++ jars.compilerJars))
+    val loaderLibraryOnly = getOrCreateClassLoader(jars.libraryJars)
 
     val version = compilerVersion(classLoader)
 
@@ -145,9 +145,9 @@ object CompilerFactoryImpl {
       loader = classLoader,
       loaderCompilerOnly,
       loaderLibraryOnly = loaderLibraryOnly,
-      libraryJars = jars.libraryJars.toArray,
-      compilerJars = jars.compilerJars.toArray,
-      allJars = jars.allJars.toArray,
+      libraryJars = jars.libraryJars.map(_.toFile).toArray,
+      compilerJars = jars.compilerJars.map(_.toFile).toArray,
+      allJars = jars.allJars.map(_.toFile).toArray,
       explicitActual = version
     )
   }
@@ -160,22 +160,21 @@ object CompilerFactoryImpl {
                                        client: Option[Client]): Path = {
     val scalaVersion = Version(scalaInstance.actualVersion)
     if (is3_0(scalaVersion))
-      compilerBridges.scala3._3_0.toPath
+      compilerBridges.scala3._3_0
     else if (is3_1(scalaVersion))
-      compilerBridges.scala3._3_1.toPath
+      compilerBridges.scala3._3_1
     else if (is3_2(scalaVersion))
-      compilerBridges.scala3._3_2.toPath
+      compilerBridges.scala3._3_2
     else if (is3_3(scalaVersion)) {
-      if (scalaVersion.major(3) <= Version("3.3.1")) compilerBridges.scala3._3_3_1.toPath
-      else compilerBridges.scala3._3_3.toPath
+      if (scalaVersion.major(3) <= Version("3.3.1")) compilerBridges.scala3._3_3_1
+      else compilerBridges.scala3._3_3
     } else if (isLatest3(scalaVersion))
-      compilerBridges.scala3._3_4.toPath
+      compilerBridges.scala3._3_4
     else {
-      val sourceJar: Path = {
+      val sourceJar: Path =
         if (isBefore_2_11(scalaVersion)) compilerBridges.scala._2_10
         else if (isBefore_2_13(scalaVersion)) compilerBridges.scala._2_11
         else compilerBridges.scala._2_13
-      }.toPath
 
       val bridgeFileName = s"compiler-bridge-${scalaVersion.presentation}-$javaClassVersion.jar"
       val targetJar = home.resolve(bridgeFileName)

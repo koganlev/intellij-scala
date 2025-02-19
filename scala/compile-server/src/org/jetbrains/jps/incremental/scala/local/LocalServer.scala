@@ -105,7 +105,7 @@ final class LocalServer extends Server {
     if (!collectingSourcesClient.isCanceled) {
       client.compilationStart()
       compiler.compileDocument(compilationData, collectingSourcesClient)
-      client.compilationEnd(collectingSourcesClient.sources + compilationData.sourcePath.toFile)
+      client.compilationEnd(collectingSourcesClient.sources + compilationData.sourcePath)
     }
   }
 
@@ -131,9 +131,9 @@ final class LocalServer extends Server {
 object LocalServer {
   private trait CollectingSourcesClient extends Client {
 
-    var sources = Set.empty[java.io.File]
+    var sources = Set.empty[Path]
 
-    abstract override def generated(source: java.io.File, module: java.io.File, name: String): Unit = {
+    abstract override def generated(source: Path, module: Path, name: String): Unit = {
       super.generated(source, module, name)
       sources += source
     }

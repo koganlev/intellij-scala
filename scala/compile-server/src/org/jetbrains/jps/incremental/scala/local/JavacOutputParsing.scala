@@ -37,7 +37,7 @@ trait JavacOutputParsing extends Logger {
           line = header.get.line,
           column = 1 + prefix.length
         )
-        client.message(header.get.kind, text, header.map(_.file.toFile), Some(pointer))
+        client.message(header.get.kind, text, header.map(_.file), Some(pointer))
         header = None
         lines = Vector.empty
       case NotePattern(message) =>

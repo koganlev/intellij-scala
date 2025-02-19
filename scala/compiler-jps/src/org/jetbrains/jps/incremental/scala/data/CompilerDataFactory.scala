@@ -46,7 +46,7 @@ object CompilerDataFactory
       home <- javaHome(descriptor.getModel, module, ScalaBuilder.isCompileServerEnabled(context))
     } yield {
       val incrementality = SettingsManager.getProjectSettings(descriptor.getProject).getIncrementalityType
-      data.CompilerData(jars, home.map(_.toFile), incrementality)
+      data.CompilerData(jars, home, incrementality)
     }
   }
 
@@ -56,7 +56,7 @@ object CompilerDataFactory
       .left.map(toErrorMessage(_, scalaSdk, module))
 
   private def validateAllFilesExist(jars: CompilerJars): Either[CompilerJarsResolveError.FilesDoNotExist, CompilerJars] = {
-    val absentJars = jars.allJars.filterNot(_.exists)
+    val absentJars = jars.allJars.filterNot(Files.exists(_))
     Either.cond(
       absentJars.isEmpty,
       jars,
@@ -211,7 +211,7 @@ object CompilerDataFactory
 
   private def compilerJarsInSdk(sdk: JpsLibrary): Either[CompilerJarsResolveError, CompilerJars] = {
     val (compilerClasspathJars, compilerBridgeJar)  = compilerData(sdk)
-    CompilerJarsFactory.fromFiles(compilerClasspathJars.map(_.toFile), compilerBridgeJar.map(_.toFile))
+    CompilerJarsFactory.fromFiles(compilerClasspathJars, compilerBridgeJar)
   }
 
   private def compilerData(sdk: JpsLibrary): (Seq[Path], Option[Path]) =
@@ -236,7 +236,7 @@ object CompilerDataFactory
     error match {
       case NotFound(kind)               => s"No '$kind*$JarExtension' $inScalaCompiler"
       case DuplicatesFound(kind, files) => s"Multiple '$kind*$JarExtension' files (${filesNames(files)}) $inScalaCompiler"
-      case FilesDoNotExist(absentJars)  => s"Scala compiler JARs not found (module '${module.getName}'): ${filePaths(absentJars.map(_.toPath))}"
+      case FilesDoNotExist(absentJars)  => s"Scala compiler JARs not found (module '${module.getName}'): ${filePaths(absentJars)}"
     }
   }
 

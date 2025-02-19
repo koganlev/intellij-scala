@@ -18,7 +18,7 @@ case class BinaryToSource(compileAnalysis: CompileAnalysis, compilationData: Com
   def classfilesToSources(classfiles: Array[Path]): Set[Path] =
     classfiles.flatMap(classfileToSources).toSet
 
-  private val ouputPath = compilationData.output.toPath
+  private val ouputPath = compilationData.output
   
   private val extensionLength = ".class".length
 

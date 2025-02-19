@@ -2,10 +2,10 @@ package org.jetbrains.jps.incremental.scala
 
 import org.jetbrains.annotations.Nls
 import org.jetbrains.jps.incremental.scala.Client.{ClientMsg, PosInfo}
-import org.jetbrains.jps.incremental.scala.remote.CompileServerMetrics
+import org.jetbrains.jps.incremental.scala.remote.{CompileServerMetrics, SerializablePath}
 import org.jetbrains.plugins.scala.compiler.diagnostics.Action
 
-import java.io.File
+import java.nio.file.Path
 
 /**
  * TODO: add documentation with method contracts, currently there are too many methods with vague meaning
@@ -16,29 +16,29 @@ trait Client {
 
   final def message(kind: MessageKind,
                     @Nls text: String,
-                    source: Option[File] = None,
+                    source: Option[Path] = None,
                     pointer: Option[PosInfo] = None,
                     problemStart: Option[PosInfo] = None,
                     problemEnd: Option[PosInfo] = None,
                     diagnostics: List[Action] = Nil): Unit =
-    message(ClientMsg(kind, text, source, pointer, problemStart, problemEnd, diagnostics))
+    message(ClientMsg(kind, text, source.map(SerializablePath(_)), pointer, problemStart, problemEnd, diagnostics))
 
   final def error(@Nls text: String,
-                  source: Option[File] = None,
+                  source: Option[Path] = None,
                   pointer: Option[PosInfo] = None,
                   problemStart: Option[PosInfo] = None,
                   problemEnd: Option[PosInfo] = None): Unit =
     message(MessageKind.Error, text, source, pointer, problemStart, problemEnd)
 
   final def warning(@Nls text: String,
-                    source: Option[File] = None,
+                    source: Option[Path] = None,
                     pointer: Option[PosInfo] = None,
                     problemStart: Option[PosInfo] = None,
                     problemEnd: Option[PosInfo] = None): Unit =
     message(MessageKind.Warning, text, source, pointer, problemStart, problemEnd)
 
   final def info(@Nls text: String,
-                 source: Option[File] = None,
+                 source: Option[Path] = None,
                  pointer: Option[PosInfo] = None,
                  problemStart: Option[PosInfo] = None,
                  problemEnd: Option[PosInfo] = None): Unit =
@@ -61,9 +61,9 @@ trait Client {
   /** Log trace message to the JPS log (build.log) */
   def internalTrace(text: String): Unit
 
-  def generated(source: File, module: File, name: String): Unit
+  def generated(source: Path, module: Path, name: String): Unit
 
-  def deleted(module: File): Unit
+  def deleted(module: Path): Unit
 
   def isCanceled: Boolean
 
@@ -75,7 +75,7 @@ trait Client {
 
   def compilationUnit(path: String): Unit
 
-  def compilationEnd(sources: Set[File]): Unit
+  def compilationEnd(sources: Set[Path]): Unit
 
   def processingEnd(): Unit
 
@@ -89,7 +89,7 @@ object Client {
 
   final case class ClientMsg(kind: MessageKind,
                              @Nls text: String,
-                             source: Option[File],
+                             source: Option[SerializablePath],
                              pointer: Option[PosInfo],
                              problemStart: Option[PosInfo],
                              problemEnd: Option[PosInfo],

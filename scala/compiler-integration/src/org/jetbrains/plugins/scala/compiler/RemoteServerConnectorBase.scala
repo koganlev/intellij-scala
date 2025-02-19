@@ -24,7 +24,7 @@ abstract class RemoteServerConnectorBase(
 
   protected val sbtData: SbtData = {
     val javaClassVersion = System.getProperty("java.class.version")
-    SbtData.from(ScalaPluginJars.jpsRoot.toFile, javaClassVersion, Utils.getSystemRoot.toPath) match {
+    SbtData.from(ScalaPluginJars.jpsRoot, javaClassVersion, Utils.getSystemRoot.toPath) match {
       case Left(msg)   => throw new IllegalArgumentException(msg)
       case Right(data) => data
     }
@@ -69,20 +69,20 @@ abstract class RemoteServerConnectorBase(
   protected final def arguments: Arguments = Arguments(
     sbtData = sbtData,
     compilerData = CompilerData(
-      compilerJars = CompilerJarsFactory.fromFiles(compilerClasspath.map(_.toFile), module.customScalaCompilerBridgeJar.map(_.toFile)).toOption,
-      javaHome = Some(findJdk.toFile),
+      compilerJars = CompilerJarsFactory.fromFiles(compilerClasspath, module.customScalaCompilerBridgeJar).toOption,
+      javaHome = Some(findJdk),
       incrementalType = IncrementalityType.IDEA
     ),
     compilationData = CompilationData(
-      sources = filesToCompile.toSeq.flatten.map(_.toFile),
-      classpath = runtimeClasspath.map(_.toFile),
-      output = outputDir.toFile,
+      sources = filesToCompile.toSeq.flatten,
+      classpath = runtimeClasspath,
+      output = outputDir,
       scalaOptions = scalaParameters,
       javaOptions = javaParameters,
       order = CompileOrder.valueOf(compilerSettings.compileOrder.name),
-      cacheFile = Path.of("").toFile,
+      cacheFile = Path.of(""),
       outputToCacheMap = Map.empty,
-      outputGroups = sourceRoot.map(_ -> outputDir).map { case (p, q) => (p.toFile, q.toFile) }.toSeq,
+      outputGroups = sourceRoot.map(_ -> outputDir).toSeq,
       zincData = ZincData(
         allSources = Seq.empty,
         compilationStartDate = 0,

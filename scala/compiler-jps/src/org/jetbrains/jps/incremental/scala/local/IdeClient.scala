@@ -8,11 +8,12 @@ import org.jetbrains.jps.incremental.CompileContext
 import org.jetbrains.jps.incremental.messages.{BuildMessage, CompilerMessage, FileDeletedEvent, ProgressMessage}
 import org.jetbrains.jps.incremental.scala.Client.PosInfo
 import org.jetbrains.jps.incremental.scala.model.JpsSbtExtensionService
-import org.jetbrains.jps.incremental.scala.remote.CompileServerMetrics
+import org.jetbrains.jps.incremental.scala.remote.{CompileServerMetrics, SerializablePath}
 import org.jetbrains.jps.model.module.JpsModule
 import org.jetbrains.plugins.scala.compiler.{CompilationUnitId, CompilerEvent}
 import org.jetbrains.plugins.scala.util.CompilationId
 
+import java.nio.file.Path
 import java.util
 import java.util.UUID
 import scala.collection.immutable
@@ -34,7 +35,7 @@ abstract class IdeClient(compilerName: String,
 
     val name = if (source.isEmpty) compilerName else ""
 
-    val sourcePath = source.map(file => file.getPath)
+    val sourcePath = source.map(_.toPath.toString)
     val (line, column) = pointer match {
       case Some(PosInfo(line, column)) => (Some(line.toLong), Some(column.toLong))
       case None => (None, None)
@@ -76,8 +77,8 @@ abstract class IdeClient(compilerName: String,
   override def compilationUnit(path: String): Unit =
     context.processMessage(new Base64BuilderMessage(CompilerEvent.CompilationUnit(compilationId, compilationUnitId, path)))
 
-  override def compilationEnd(sources: Set[java.io.File]): Unit =
-    context.processMessage(new Base64BuilderMessage(CompilerEvent.CompilationFinished(compilationId, compilationUnitId, sources)))
+  override def compilationEnd(sources: Set[Path]): Unit =
+    context.processMessage(new Base64BuilderMessage(CompilerEvent.CompilationFinished(compilationId, compilationUnitId, sources.map(SerializablePath(_)))))
 
   override def processingEnd(): Unit = ()
 
@@ -104,8 +105,8 @@ abstract class IdeClient(compilerName: String,
   override def internalTrace(text: String): Unit =
     ScalaBuilder.Log.trace(text)
 
-  override def deleted(module: java.io.File): Unit = {
-    val paths = util.Collections.singletonList(FileUtil.toCanonicalPath(module.getPath))
+  override def deleted(module: Path): Unit = {
+    val paths = util.Collections.singletonList(FileUtil.toCanonicalPath(module.toAbsolutePath.normalize().toString))
     context.processMessage(new FileDeletedEvent(paths))
   }
 

@@ -144,8 +144,8 @@ class ILoopWrapperFactory {
     }
 
     val replClasspathChunks = Seq(
-      replContext.compilerJars.allJars.map(_.toPath),
-      args.outputDirs.map(_.toPath),
+      replContext.compilerJars.allJars,
+      args.outputDirs,
       replContext.classpath
     )
     val replClasspath = replClasspathChunks.flatten

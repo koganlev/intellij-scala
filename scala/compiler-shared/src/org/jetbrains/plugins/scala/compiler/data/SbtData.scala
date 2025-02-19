@@ -1,70 +1,66 @@
 package org.jetbrains.plugins.scala.compiler.data
 
-import com.intellij.openapi.util.io.FileUtil
-import org.jetbrains.jps.incremental.scala.Extractor
-
-import java.io._
-import java.nio.file.Path
+import java.nio.file.{Files, Path, Paths}
 import java.security.MessageDigest
 import java.util.jar.JarFile
 import scala.io.Source
 import scala.util.{Failure, Success, Using}
 
-case class SbtData(sbtInterfaceJar: File,
-                   compilerInterfaceJar: File,
+case class SbtData(sbtInterfaceJar: Path,
+                   compilerInterfaceJar: Path,
                    compilerBridges: SbtData.CompilerBridges,
-                   interfacesHome: File,
+                   interfacesHome: Path,
                    javaClassVersion: String) {
-  private[data] def pluginJpsDirectory: Path = sbtInterfaceJar.getParentFile.toPath
+  private[data] def pluginJpsDirectory: Path = sbtInterfaceJar.getParent
 }
 
 object SbtData {
 
   def serialize(data: SbtData): Seq[String] = {
-    import serialization.SerializationUtils.fileToPath
+    import serialization.SerializationUtils.pathToString
     val SbtData(_, _, _, interfacesHome, javaClassVersion) = data
 
     Seq(
-      fileToPath(data.pluginJpsDirectory.toFile),
-      fileToPath(interfacesHome),
+      pathToString(data.pluginJpsDirectory),
+      pathToString(interfacesHome),
       javaClassVersion
     )
   }
 
-  import Extractors.PathToFile
+  import Extractors.StringToPath
 
   def deserialize(strings: Seq[String]): Either[String, (SbtData, Seq[String])] = strings match {
-    case PathToFile(pluginJpsDirectory) +:
-      PathToFile(interfacesHome) +:
+    case StringToPath(pluginJpsDirectory) +:
+      StringToPath(interfacesHome) +:
       javaClassVersion +:
       tail =>
 
       val Jars(sbtInterfaceJar, compilerInterfaceJar, compilerBridges) =
-        Jars.fromPluginJpsDirectory(pluginJpsDirectory.toPath)
+        Jars.fromPluginJpsDirectory(pluginJpsDirectory)
       Right(SbtData(sbtInterfaceJar, compilerInterfaceJar, compilerBridges, interfacesHome, javaClassVersion) -> tail)
 
     case args => Left(s"The arguments don't match the expected shape of CompilerData: ${args.mkString("[", ",", "]")}")
   }
 
-  case class Jars(sbtInterfaceJar: File, compilerInterfaceJar: File, compilerBridges: SbtData.CompilerBridges)
+  case class Jars(sbtInterfaceJar: Path, compilerInterfaceJar: Path, compilerBridges: SbtData.CompilerBridges)
 
   object Jars {
     def fromPluginJpsDirectory(pluginJpsDir: Path): Jars = Jars(
-      sbtInterfaceJar = pluginJpsDir.resolve("sbt-interface.jar").toFile,
-      compilerInterfaceJar = pluginJpsDir.resolve("compiler-interface.jar").toFile,
+      sbtInterfaceJar = pluginJpsDir.resolve("sbt-interface.jar"),
+      compilerInterfaceJar = pluginJpsDir.resolve("compiler-interface.jar"),
       compilerBridges = CompilerBridges(
         scala = ScalaSourceJars(
-          _2_10 = pluginJpsDir.resolve("compiler-bridge-sources_2.10.jar").toFile,
-          _2_11 = pluginJpsDir.resolve("compiler-bridge-sources_2.11.jar").toFile,
-          _2_13 = pluginJpsDir.resolve("compiler-bridge-sources_2.13.jar").toFile
+          _2_10 = pluginJpsDir.resolve("compiler-bridge-sources_2.10.jar"),
+          _2_11 = pluginJpsDir.resolve("compiler-bridge-sources_2.11.jar"),
+          _2_13 = pluginJpsDir.resolve("compiler-bridge-sources_2.13.jar"),
         ),
         scala3 = Scala3Jars(
-          _3_0 = pluginJpsDir.resolve("scala3-sbt-bridge_3.0.jar").toFile,
-          _3_1 = pluginJpsDir.resolve("scala3-sbt-bridge_3.1.jar").toFile,
-          _3_2 = pluginJpsDir.resolve("scala3-sbt-bridge_3.2.jar").toFile,
-          _3_3_1 = pluginJpsDir.resolve("scala3-sbt-bridge_3.3.1.jar").toFile,
-          _3_3 = pluginJpsDir.resolve("scala3-sbt-bridge_3.3.jar").toFile,
-          _3_4 = pluginJpsDir.resolve("scala3-sbt-bridge_3.4.jar").toFile
+          _3_0 = pluginJpsDir.resolve("scala3-sbt-bridge_3.0.jar"),
+          _3_1 = pluginJpsDir.resolve("scala3-sbt-bridge_3.1.jar"),
+          _3_2 = pluginJpsDir.resolve("scala3-sbt-bridge_3.2.jar"),
+          _3_3_1 = pluginJpsDir.resolve("scala3-sbt-bridge_3.3.1.jar"),
+          _3_3 = pluginJpsDir.resolve("scala3-sbt-bridge_3.3.jar"),
+          _3_4 = pluginJpsDir.resolve("scala3-sbt-bridge_3.4.jar")
         )
       )
     )
@@ -76,54 +72,54 @@ object SbtData {
    * Contains sources of the scala compiler bridges.
    * We must compile sources to use bridges.
    */
-  case class ScalaSourceJars(_2_10: File, _2_11: File, _2_13: File)
+  case class ScalaSourceJars(_2_10: Path, _2_11: Path, _2_13: Path)
 
   /**
    * Contains already compiled dotty/scala3 compiler bridges.
    */
-  case class Scala3Jars(_3_0: File, _3_1: File, _3_2: File, _3_3_1: File, _3_3: File, _3_4: File)
+  case class Scala3Jars(_3_0: Path, _3_1: Path, _3_2: Path, _3_3_1: Path, _3_3: Path, _3_4: Path)
 
   val compilerInterfacesKey = "scala.compiler.interfaces.dir"
 
-  private def compilerInterfacesDir(systemRootDir: Path): File = {
+  private def compilerInterfacesDir(systemRootDir: Path): Path = {
     def defaultDir =
-      systemRootDir.resolve("scala-compiler-interfaces").toFile
+      systemRootDir.resolve("scala-compiler-interfaces")
 
     val customPath = Option(System.getProperty(compilerInterfacesKey))
-    customPath.map(new File(_)).getOrElse(defaultDir)
+    customPath.map(Paths.get(_)).getOrElse(defaultDir)
   }
 
-  def from(pluginJpsRoot: File, javaClassVersion: String, systemRootDir: Path): Either[String, SbtData] =
+  def from(pluginJpsRoot: Path, javaClassVersion: String, systemRootDir: Path): Either[String, SbtData] =
     for {
-      sbtHome <- Either.cond(pluginJpsRoot.exists, pluginJpsRoot, "Scala plugin jps directory does not exist: " + pluginJpsRoot)
-      Jars(sbtInterfaceJar, compilerInterfaceJar, compilerBridges) = Jars.fromPluginJpsDirectory(sbtHome.toPath)
+      sbtHome <- Either.cond(Files.exists(pluginJpsRoot), pluginJpsRoot, "Scala plugin jps directory does not exist: " + pluginJpsRoot)
+      Jars(sbtInterfaceJar, compilerInterfaceJar, compilerBridges) = Jars.fromPluginJpsDirectory(sbtHome)
       sbtVersion <- readSbtVersionFrom(sbtInterfaceJar)
     } yield {
       val checksum = encodeHex(md5(compilerBridges.scala._2_10))
-      val interfacesHome = new File(compilerInterfacesDir(systemRootDir), sbtVersion + "-idea-" + checksum)
+      val interfacesHome = compilerInterfacesDir(systemRootDir).resolve(sbtVersion + "-idea-" + checksum)
       SbtData(sbtInterfaceJar, compilerInterfaceJar, compilerBridges, interfacesHome, javaClassVersion)
     }
 
-  private def readSbtVersionFrom(sbtInterfaceJar: File): Either[String, String] =
-    Using(new JarFile(sbtInterfaceJar)) {
+  private def readSbtVersionFrom(sbtInterfaceJar: Path): Either[String, String] =
+    Using(new JarFile(sbtInterfaceJar.toFile)) {
       _.getManifest.getMainAttributes.getValue("Implementation-Version")
     } match {
       case Success(version) => Right(version)
       case Failure(t) => Left(s"Unable to read sbt version from JVM classpath:\n$t")
     }
 
-  private def md5(file: File): Array[Byte] = {
+  private def md5(file: Path): Array[Byte] = {
     val md = MessageDigest.getInstance("MD5")
-    val isSource = file.getName.endsWith(".java") || file.getName.endsWith(".scala")
+    val fileName = file.getFileName.toString
+    val isSource = fileName.endsWith(".java") || fileName.endsWith(".scala")
     if (isSource) {
-      Using.resource(Source.fromFile(file, "UTF-8")) { source =>
+      Using.resource(Source.fromInputStream(Files.newInputStream(file), "UTF-8")) { source =>
         val text = source.mkString.replace("\r", "")
         md.digest(text.getBytes("UTF8"))
       }
     } else {
-      Using.resource(new FileInputStream(file)) { input =>
-        md.digest(FileUtil.loadBytes(input))
-      }
+      val bytes = Files.readAllBytes(file)
+      md.digest(bytes)
     }
   }
 

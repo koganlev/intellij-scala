@@ -16,10 +16,10 @@ case class IntellijExternalLookup(compilationData: CompilationData, client: Clie
   extends ExternalLookup {
 
   private val all: Set[VirtualFileRef] = compilationData.zincData.allSources
-    .map(file => PlainVirtualFileConverter.converter.toVirtualFile(file.toPath))
+    .map(PlainVirtualFileConverter.converter.toVirtualFile)
     .toSet
   private val changedSources: Set[VirtualFileRef] = compilationData.sources
-    .map(file => PlainVirtualFileConverter.converter.toVirtualFile(file.toPath))
+    .map(PlainVirtualFileConverter.converter.toVirtualFile)
     .toSet
 
   override def lookupAnalyzedClass(binaryClassName: String, file: Option[VirtualFileRef]): Option[AnalyzedClass] =

@@ -9,7 +9,7 @@ class ClientEventProcessor(client: Client) {
   def process(event: Event): Unit = {
     event match {
       case MessageEvent(kind, text, source, pointer, problemStart, problemEnd, diagnostics) =>
-        client.message(kind, text, source, pointer, problemStart, problemEnd, diagnostics)
+        client.message(kind, text, source.map(_.toPath), pointer, problemStart, problemEnd, diagnostics)
 
       case ProgressEvent(text, done) =>
         client.progress(text, done)
@@ -26,10 +26,10 @@ class ClientEventProcessor(client: Client) {
       case TraceEvent(exceptionClassName, message, stackTrace) =>
         client.trace(new ServerException(exceptionClassName, message, stackTrace))
 
-      case GeneratedEvent(source, module, name) =>
+      case GeneratedEvent(SerializablePath(source), SerializablePath(module), name) =>
         client.generated(source, module, name)
 
-      case DeletedEvent(module) =>
+      case DeletedEvent(SerializablePath(module)) =>
         client.deleted(module)
 
       case CompilationStartEvent() =>
@@ -42,7 +42,7 @@ class ClientEventProcessor(client: Client) {
         client.compilationUnit(path)
 
       case CompilationEndEvent(sources) =>
-        client.compilationEnd(sources)
+        client.compilationEnd(sources.map(_.toPath))
 
       case ProcessingEndEvent() =>
         client.processingEnd()

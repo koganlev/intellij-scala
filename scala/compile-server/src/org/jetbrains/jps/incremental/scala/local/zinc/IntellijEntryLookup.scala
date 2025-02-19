@@ -15,8 +15,8 @@ case class IntellijEntryLookup(compilationData: CompilationData, fileToStore: Pa
   extends PerClasspathEntryLookup {
 
   private def loadAnalysis(forCpEntry: VirtualFile): Option[Analysis] = {
-    val file = PlainVirtualFileConverter.converter.toPath(forCpEntry).toFile
-    val cache = compilationData.outputToCacheMap.get(file).map(_.toPath)
+    val file = PlainVirtualFileConverter.converter.toPath(forCpEntry)
+    val cache = compilationData.outputToCacheMap.get(file)
     val anaysisStore = cache.map(fileToStore)
 
     def readFromStore(store: AnalysisStore) = {

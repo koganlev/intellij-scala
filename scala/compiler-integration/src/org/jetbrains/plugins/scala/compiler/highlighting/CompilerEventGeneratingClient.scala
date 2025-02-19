@@ -4,9 +4,12 @@ import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.project.Project
 import org.jetbrains.annotations.Nls
+import org.jetbrains.jps.incremental.scala.remote.SerializablePath
 import org.jetbrains.jps.incremental.scala.{Client, DummyClient, MessageKind}
 import org.jetbrains.plugins.scala.compiler.{CompilerEvent, CompilerEventListener, CompilerIntegrationBundle}
 import org.jetbrains.plugins.scala.util.{CanonicalPath, CompilationId}
+
+import java.nio.file.Path
 
 private class CompilerEventGeneratingClient(
   project: Project,
@@ -49,11 +52,11 @@ private class CompilerEventGeneratingClient(
   override def compilationStart(): Unit =
     sendEvent(CompilerEvent.CompilationStarted(compilationId, None))
 
-  override def compilationEnd(sources: Set[java.io.File]): Unit = {
+  override def compilationEnd(sources: Set[Path]): Unit = {
     if (refreshVfs) {
-      VfsUtil.refreshOutputPaths(project, sources.map(_.toPath))
+      VfsUtil.refreshOutputPaths(project, sources)
     }
-    sendEvent(CompilerEvent.CompilationFinished(compilationId, None, sources))
+    sendEvent(CompilerEvent.CompilationFinished(compilationId, None, sources.map(SerializablePath(_))))
   }
 
   override def isCanceled: Boolean = indicator.isCanceled

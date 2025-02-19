@@ -4,7 +4,7 @@ import org.jetbrains.jps.incremental.scala.{compilerVersionIn, containsScala3}
 import org.jetbrains.plugins.scala.util.JarUtil
 import org.jetbrains.plugins.scala.util.JarUtil.JarFileWithName
 
-import java.io.File
+import java.nio.file.Path
 
 object CompilerJarsFactory {
 
@@ -13,12 +13,12 @@ object CompilerJarsFactory {
   object CompilerJarsResolveError {
     case class NotFound(kind: String) extends CompilerJarsResolveError
     case class DuplicatesFound(kind: String, duplicates: Seq[JarFileWithName]) extends CompilerJarsResolveError
-    case class FilesDoNotExist(files: Seq[File]) extends CompilerJarsResolveError
+    case class FilesDoNotExist(files: Seq[Path]) extends CompilerJarsResolveError
   }
 
   def fromFiles(
-    compilerClasspathJars: Seq[File],
-    compilerBridgeJar: Option[File],
+    compilerClasspathJars: Seq[Path],
+    compilerBridgeJar: Option[Path],
   ): Either[CompilerJarsResolveError, CompilerJars] = {
     val withName = JarUtil.collectJars(compilerClasspathJars)
     fromJarFiles(withName, compilerBridgeJar)
@@ -26,7 +26,7 @@ object CompilerJarsFactory {
 
   private def fromJarFiles(
     compilerClasspathJars: Seq[JarFileWithName],
-    compilerBridgeJar: Option[File]
+    compilerBridgeJar: Option[Path]
   ): Either[CompilerJarsResolveError, CompilerJars] = {
     val ioFiles = compilerClasspathJars.map(_.file)
     val isScala3 = containsScala3(ioFiles)
@@ -52,7 +52,7 @@ object CompilerJarsFactory {
       libraryJars = libraryJars.map(_.file),
       compilerJars = compilerJars.map(_.file),
       compilerJar = compilerJar.file,
-      compilerBridgeJar,
+      compilerBridgeJar
     )
   }
 

@@ -9,7 +9,7 @@ case class Arguments(sbtData: SbtData,
                      // TODO: separate different kinds of requests: Compile / Run worksheet / Run Repl worksheet / (potentially run tests)
                      worksheetArgs: Option[WorksheetArgs]) {
 
-  import SerializationUtils._
+  import SerializationUtils.{pathToString, pathsToString, sequenceToString}
 
   /** @see `org.jetbrains.jps.incremental.scala.data.ArgumentsParser.parse` */
   def asStrings: Seq[String] = {
@@ -19,20 +19,20 @@ case class Arguments(sbtData: SbtData,
     SbtData.serialize(sbtData) ++
       CompilerData.serialize(compilerData) ++
       Seq(
-        filesToPaths(compilationData.sources),
-        filesToPaths(compilationData.classpath),
-        fileToPath(compilationData.output),
+        pathsToString(compilationData.sources),
+        pathsToString(compilationData.classpath),
+        pathToString(compilationData.output),
         sequenceToString(compilationData.scalaOptions),
         sequenceToString(compilationData.javaOptions),
         compilationData.order.toString,
-        fileToPath(compilationData.cacheFile),
-        filesToPaths(outputs),
-        filesToPaths(caches),
-        filesToPaths(sourceRoots),
-        filesToPaths(outputDirs),
+        pathToString(compilationData.cacheFile),
+        pathsToString(outputs),
+        pathsToString(caches),
+        pathsToString(sourceRoots),
+        pathsToString(outputDirs),
         sequenceToString(worksheetArgs.map(WorksheetArgsSerializer.serialize).getOrElse(Nil)),
         //sbtIncOptions
-        filesToPaths(compilationData.zincData.allSources),
+        pathsToString(compilationData.zincData.allSources),
         compilationData.zincData.compilationStartDate.toString,
         compilationData.zincData.isCompile.toString
       )

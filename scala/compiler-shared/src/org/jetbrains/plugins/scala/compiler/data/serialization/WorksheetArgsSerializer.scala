@@ -25,23 +25,23 @@ object WorksheetArgsSerializer extends ArgListSerializer[WorksheetArgs] {
 
 object WorksheetArgsPlainSerializer extends ArgListSerializer[WorksheetArgs.RunPlain] {
 
-  import SerializationUtils._
+  import SerializationUtils.{notNull, pathToString, pathsToString, stringToPath, stringToPathValidated}
 
   override def serialize(value: WorksheetArgs.RunPlain): ArgList = Seq(
     value.worksheetClassName,
-    fileToPath(value.pathToRunnersJar),
-    fileToPath(value.worksheetTempFile),
+    pathToString(value.pathToRunnersJar),
+    pathToString(value.worksheetTempFile),
     value.originalFileName,
-    filesToPaths(value.outputDirs)
+    pathsToString(value.outputDirs)
   )
 
   override def deserialize(args: ArgList): Either[DeserializationError, WorksheetArgs.RunPlain] =
     (for {
       worksheetClassName <- Right(args.head)
-      pathToRunners      <- pathToFileValidated(args(1), "pathToRunners")
-      worksheetTempFile  <- pathToFileValidated(args(2), "worksheetTempFile")
+      pathToRunners      <- stringToPathValidated(args(1), "pathToRunners")
+      worksheetTempFile  <- stringToPathValidated(args(2), "worksheetTempFile")
       originalFileName   <- notNull(args(3), "originalFileName")
-      outputDirs         = args.drop(4).flatMap(pathToFile(_, "outputDirs"))
+      outputDirs         = args.drop(4).flatMap(stringToPath(_, "outputDirs"))
     } yield WorksheetArgs.RunPlain(
       worksheetClassName,
       pathToRunners,
@@ -53,14 +53,14 @@ object WorksheetArgsPlainSerializer extends ArgListSerializer[WorksheetArgs.RunP
 
 object WorksheetArgsReplSerializer extends ArgListSerializer[WorksheetArgs.RunRepl] {
 
-  import SerializationUtils._
+  import SerializationUtils.{boolean, notNull, pathsToString}
 
   override def serialize(value: WorksheetArgs.RunRepl): ArgList = Seq(
     value.sessionId,
     value.codeChunk,
     value.dropCachedReplInstance.toString,
     value.continueOnChunkError.toString,
-    SerializationUtils.filesToPaths(value.outputDirs)
+    pathsToString(value.outputDirs)
   )
 
   override def deserialize(args: ArgList): Either[DeserializationError, WorksheetArgs.RunRepl] =
@@ -69,7 +69,7 @@ object WorksheetArgsReplSerializer extends ArgListSerializer[WorksheetArgs.RunRe
       codeChunk            <- notNull(args(1), "codeChunk")
       dropReplInstance     <- boolean(args(2), "dropCachedReplInstance")
       continueOnChunkError <- boolean(args(3), "continueOnChunkError")
-      outputDirs           = args.drop(4).flatMap(SerializationUtils.pathToFile(_, "outputDirs"))
+      outputDirs           = args.drop(4).flatMap(SerializationUtils.stringToPath(_, "outputDirs"))
     } yield WorksheetArgs.RunRepl(
       sessionId,
       codeChunk,

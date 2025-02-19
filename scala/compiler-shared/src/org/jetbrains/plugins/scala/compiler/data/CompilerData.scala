@@ -1,21 +1,21 @@
 package org.jetbrains.plugins.scala.compiler.data
 
 import org.jetbrains.jps.incremental.scala.Extractor
-import org.jetbrains.plugins.scala.compiler.data.Extractors.{PathToFile, PathsToFiles}
+import org.jetbrains.plugins.scala.compiler.data.Extractors.{StringToPath, StringToPaths}
 
-import java.io.File
+import java.nio.file.Path
 
 case class CompilerData(compilerJars: Option[CompilerJars],
-                        javaHome: Option[File],
+                        javaHome: Option[Path],
                         incrementalType: IncrementalityType)
 
 object CompilerData {
-  import serialization.SerializationUtils._
+  import serialization.SerializationUtils.{optionToString, pathToString, pathsToString}
 
   def serialize(data: CompilerData): Seq[String] = {
-    val compilerJarPaths = data.compilerJars.map(jars => filesToPaths(jars.allJars))
-    val customCompilerBridgeJarPath = data.compilerJars.flatMap(_.customCompilerBridgeJar.map(fileToPath))
-    val javaHomePath = data.javaHome.map(fileToPath)
+    val compilerJarPaths = data.compilerJars.map(jars => pathsToString(jars.allJars))
+    val customCompilerBridgeJarPath = data.compilerJars.flatMap(_.customCompilerBridgeJar.map(pathToString))
+    val javaHomePath = data.javaHome.map(pathToString)
 
     Seq(
       optionToString(compilerJarPaths),
@@ -32,15 +32,15 @@ object CompilerData {
       incrementalTypeName +:
       tail =>
       val compilerJars = compilerJarPaths.map {
-        case PathsToFiles(files) =>
-          val compilerBridgeJar = customCompilerBridgeJarPath.map(PathToFile)
+        case StringToPaths(files) =>
+          val compilerBridgeJar = customCompilerBridgeJarPath.map(StringToPath)
           CompilerJarsFactory.fromFiles(files, compilerBridgeJar) match {
             case Left(resolveError) => return Left(s"Couldn't extract compiler jars from: ${files.mkString(";")}\n$resolveError")
             case Right(jars) => jars
           }
       }
       val javaHome = javaHomePath.map {
-        case PathToFile(file) => file
+        case StringToPath(file) => file
       }
       val incrementalType = IncrementalityType.valueOf(incrementalTypeName)
       Right(CompilerData(compilerJars, javaHome, incrementalType) -> tail)

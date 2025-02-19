@@ -10,8 +10,8 @@ final case class ComputeStampsArguments(
 ) {
   def asStrings: Seq[String] = {
     Seq(
-      SerializationUtils.pathsToPathStrings(outputFiles),
-      SerializationUtils.pathToPathString(analysisFile)
+      SerializationUtils.pathsToString(outputFiles),
+      SerializationUtils.pathToString(analysisFile)
     )
   }
 }

@@ -2,7 +2,7 @@ package org.jetbrains.jps.incremental.scala.data
 
 import org.jetbrains.jps.incremental.scala.Extractor
 import org.jetbrains.jps.incremental.scala.data.ArgumentsParser.ArgumentsParserError
-import org.jetbrains.plugins.scala.compiler.data.Extractors.{PathToFile, PathsToFiles, StringToSequence}
+import org.jetbrains.plugins.scala.compiler.data.Extractors.{StringToPath, StringToPaths, StringToSequence}
 import org.jetbrains.plugins.scala.compiler.data._
 import org.jetbrains.plugins.scala.compiler.data.serialization.WorksheetArgsSerializer
 import org.jetbrains.plugins.scala.compiler.data.worksheet.WorksheetArgs
@@ -24,19 +24,19 @@ object ArgumentsParser
       CompilerData.deserialize(tail1).flatMap { case (compilerData, tail2) =>
         tail2 match {
           case Seq(
-            PathsToFiles(sources),
-            PathsToFiles(classpath),
-            PathToFile(output),
+            StringToPaths(sources),
+            StringToPaths(classpath),
+            StringToPath(output),
             StringToSequence(scalaOptions),
             StringToSequence(javaOptions),
             order,
-            PathToFile(cacheFile),
-            PathsToFiles(outputs),
-            PathsToFiles(caches),
-            PathsToFiles(sourceRoots),
-            PathsToFiles(outputDirs),
+            StringToPath(cacheFile),
+            StringToPaths(outputs),
+            StringToPaths(caches),
+            StringToPaths(sourceRoots),
+            StringToPaths(outputDirs),
             StringToSequence(worksheetArgsRaw),
-            PathsToFiles(allSources),
+            StringToPaths(allSources),
             startDate,
             StringToBoolean(isCompile)
           ) =>

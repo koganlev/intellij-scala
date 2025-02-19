@@ -157,7 +157,7 @@ abstract class AbstractCompiler extends Compiler {
       val problemEnd = createEnd(pos)
 
       //noinspection ReferencePassedToNls
-      client.message(kind, msg, source.map(_.toFile), pointer, problemStart, problemEnd, actions)
+      client.message(kind, msg, source, pointer, problemStart, problemEnd, actions)
     }
   }
 

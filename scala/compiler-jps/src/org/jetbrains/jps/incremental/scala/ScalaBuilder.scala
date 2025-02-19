@@ -149,14 +149,14 @@ object ScalaBuilder {
     val pluginJpsRoot = PathManager.getJarForClass(getClass).getParent
     val javaClassVersion = System.getProperty("java.class.version")
     val systemRootDir = Utils.getSystemRoot.toPath
-    SbtData.from(pluginJpsRoot.toFile, javaClassVersion, systemRootDir)
+    SbtData.from(pluginJpsRoot, javaClassVersion, systemRootDir)
   }
 
   private def scalaLibraryWarning(modules: Set[JpsModule], compilationData: CompilationData, client: Client): Unit = {
     val hasScalaSdk = modules.exists(SettingsManager.getScalaSdk(_).isDefined)
-    val hasScalaLibrary = compilationData.classpath.exists(_.getName.startsWith("scala-library"))
+    val hasScalaLibrary = compilationData.classpath.exists(_.getFileName.toString.startsWith("scala-library"))
 
-    val hasScalaSources = compilationData.sources.exists(_.getName.endsWith(".scala"))
+    val hasScalaSources = compilationData.sources.exists(_.getFileName.toString.endsWith(".scala"))
 
     if (hasScalaSdk && !hasScalaLibrary && hasScalaSources) {
       val names = modules.map(_.getName).mkString(", ")

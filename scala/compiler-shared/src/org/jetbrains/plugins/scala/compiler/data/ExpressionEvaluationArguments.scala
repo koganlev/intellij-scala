@@ -1,7 +1,6 @@
 package org.jetbrains.plugins.scala.compiler.data
 
 import org.jetbrains.jps.incremental.scala.Extractor
-import org.jetbrains.plugins.scala.compiler.data.serialization.SerializationUtils._
 
 import java.nio.file.Path
 
@@ -15,12 +14,14 @@ case class ExpressionEvaluationArguments(
   localVariableNames: Set[String],
   packageName: String
 ) {
+  import org.jetbrains.plugins.scala.compiler.data.serialization.SerializationUtils.{pathToString, pathsToString, sequenceToString}
+
   def asStrings: Seq[String] =
     Seq(
-      pathToPathString(outDir),
-      pathsToPathStrings(classpath),
+      pathToString(outDir),
+      pathsToString(classpath),
       sequenceToString(scalacOptions),
-      pathToPathString(source),
+      pathToString(source),
       line.toString,
       expression,
       sequenceToString(localVariableNames),

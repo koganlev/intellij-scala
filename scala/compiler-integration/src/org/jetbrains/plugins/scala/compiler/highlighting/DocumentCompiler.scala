@@ -9,7 +9,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VirtualFile
-import org.jetbrains.jps.incremental.scala.remote.{CommandIds, SourceScope}
+import org.jetbrains.jps.incremental.scala.remote.{CommandIds, SerializablePath, SourceScope}
 import org.jetbrains.jps.incremental.scala.{Client, DelegateClient}
 import org.jetbrains.plugins.scala.compiler.data.{CompilerData, CompilerJarsFactory, DocumentCompilationArguments, DocumentCompilationData, IncrementalityType}
 import org.jetbrains.plugins.scala.compiler.{RemoteServerConnectorBase, RemoteServerRunner}
@@ -127,13 +127,13 @@ private final class DocumentCompiler(project: Project) {
            * see [[org.jetbrains.plugins.scala.compiler.highlighting.ExternalHighlightersService.toHighlightInfo]]
            * (we assume that `from` and `to` are also empty for such files)
            */
-          val fixedSource = Some(originalSourceFile.toFile) //msg.source.map(_ => originalSourceFile)
+          val fixedSource = Some(SerializablePath(originalSourceFile)) //msg.source.map(_ => originalSourceFile)
           val fixedMsg = msg.copy(source = fixedSource)
           client.message(fixedMsg)
         }
 
-        override def compilationEnd(sources: Set[java.io.File]): Unit = {
-          val fixedSources = Set(originalSourceFile.toFile)
+        override def compilationEnd(sources: Set[Path]): Unit = {
+          val fixedSources = Set(originalSourceFile)
           client.compilationEnd(fixedSources)
         }
       }
@@ -150,8 +150,8 @@ private final class DocumentCompiler(project: Project) {
       val arguments = DocumentCompilationArguments(
         sbtData = sbtData,
         compilerData = CompilerData(
-          compilerJars = CompilerJarsFactory.fromFiles(compilerClasspath.map(_.toFile), module.customScalaCompilerBridgeJar.map(_.toFile)).toOption,
-          javaHome = Some(findJdk.toFile),
+          compilerJars = CompilerJarsFactory.fromFiles(compilerClasspath, module.customScalaCompilerBridgeJar).toOption,
+          javaHome = Some(findJdk),
           incrementalType = IncrementalityType.IDEA
         ),
         compilationData = DocumentCompilationData(
