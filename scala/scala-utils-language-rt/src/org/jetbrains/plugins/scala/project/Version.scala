@@ -4,13 +4,14 @@ import org.jetbrains.annotations.NonNls
 
 import scala.Ordering.Implicits._
 
-// TODO Make universal (move to a proper package) (it seems that this class is now used in lots of places ourside the "proect" package).
+// TODO Make universal (move to a proper package)
+//  (it seems that this class is now used in lots of places outside the "project" package).
 case class Version(@NonNls presentation: String) extends Ordered[Version] {
 
   import Version._
 
-  private val strings = presentation.split('-').toSeq
-  private val groups = strings.map(Group(_))
+  private val dashParts = presentation.split('-').toSeq
+  private val groups = dashParts.zipWithIndex.map { case (part, idx) => Group(part, idx == 0) }
 
   private val essentialGroups: Seq[Group] =
     groups.reverse.dropWhile(_.isNotEssential).reverse
@@ -32,14 +33,14 @@ case class Version(@NonNls presentation: String) extends Ordered[Version] {
 
   /**
    * The major version of this version, in terms of the first n numbers of the dotted-numbers format.
-   * E.g. Version("1.2.3-M3").major(2) == Version("1.2")
+   * E.g., `Version("1.2.3-M3").major(2) == Version("1.2")`
    */
   def major(n: Int): Version = Version(groups.head.numbers.take(n).mkString("."))
 
   def inRange(atLeast: Version, lessThan: Version): Boolean =
     this >= atLeast && this < lessThan
 
-  override def toString: String = groups.mkString("-")
+  override def toString: String = dashParts.mkString("-")
 }
 
 object Version {
@@ -47,13 +48,13 @@ object Version {
   val Default = "Unknown"
 
   def abbreviate(presentation: String): String = {
-    val groups = Version(presentation).strings
+    val groups = Version(presentation).dashParts
     groups.take(if (groups.last == "NIGHTLY") 3 else 2)
       .mkString("-")
   }
 
   private case class Group(numbers: Seq[Long], status: VersionStatus) extends Ordered[Group] {
-    val essentialNumbers: Seq[Long] =
+    private val essentialNumbers: Seq[Long] =
       numbers.reverse.dropWhile(_ == 0L).reverse
 
     override def compare(other: Group): Int =
@@ -73,11 +74,12 @@ object Version {
 
   private object Group {
 
-    def apply(presentation: String): Group = {
+    def apply(presentation: String, isFirstGroup: Boolean): Group = {
       val prefix =
         if (presentation.startsWith("M")) VersionStatus.MILESTONE
         else if (presentation.startsWith("RC")) VersionStatus.RC
-        else VersionStatus.DEFAULT
+        else if (isFirstGroup) VersionStatus.DEFAULT
+        else VersionStatus.OTHER
       Group(findAllNumbersInVersion(presentation), prefix)
     }
   }
