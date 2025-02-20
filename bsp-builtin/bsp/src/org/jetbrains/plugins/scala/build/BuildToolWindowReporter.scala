@@ -12,7 +12,6 @@ import org.jetbrains.annotations.Nls
 import org.jetbrains.bsp.BspBundle
 import org.jetbrains.plugins.scala.build.BuildMessages.EventId
 
-import java.io.File
 import javax.swing.JComponent
 import scala.concurrent.Promise
 
@@ -91,7 +90,7 @@ class BuildToolWindowReporter(project: Project,
     viewManager.onEvent(buildId, event)
   }
 
-  override def clear(file: File): Unit = ()
+  override def clear(file: java.io.File): Unit = ()
 
   override def warning(message: String, position: Option[FilePosition]): Unit =
     viewManager.onEvent(buildId, event(message, Kind.WARNING, position))

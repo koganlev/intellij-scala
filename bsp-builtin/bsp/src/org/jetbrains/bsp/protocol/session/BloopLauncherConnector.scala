@@ -10,11 +10,12 @@ import org.jetbrains.bsp.{BspBundle, BspError}
 import org.jetbrains.plugins.scala.DependencyManager
 import org.jetbrains.plugins.scala.DependencyManagerBase.RichStr
 import org.jetbrains.plugins.scala.build.BuildReporter
+import org.jetbrains.plugins.scala.extensions.PathExt
 
-import java.io.File
+import java.nio.file.Path
 import scala.jdk.CollectionConverters._
 
-class BloopLauncherConnector(base: File, compilerOutput: File, capabilities: BspCapabilities, jdk: Sdk) extends BspServerConnector {
+class BloopLauncherConnector(base: Path, compilerOutput: Path, capabilities: BspCapabilities, jdk: Sdk) extends BspServerConnector {
 
   val bloopVersion: String = BuildInfo.bloopVersion
   val bspVersion = "2.0.0"
@@ -25,12 +26,12 @@ class BloopLauncherConnector(base: File, compilerOutput: File, capabilities: Bsp
       ("ch.epfl.scala" % "bloop-launcher_2.12" % bloopVersion).transitive()
     )
     val launcherClasspath = DependencyManager.resolve(dependencies: _*)
-      .map(_.file.toFile.getCanonicalPath)
+      .map(_.file.toCanonicalPath.toString)
       .asJava
 
     val javaParameters: JavaParameters = new JavaParameters
     javaParameters.setJdk(jdk)
-    javaParameters.setWorkingDirectory(base)
+    javaParameters.setWorkingDirectory(base.toFile)
     javaParameters.getClassPath.addAll(launcherClasspath)
     javaParameters.setMainClass("bloop.launcher.Launcher")
 
@@ -49,15 +50,15 @@ class BloopLauncherConnector(base: File, compilerOutput: File, capabilities: Bsp
 
   private def prepareBspSession(details: BspConnectionDetails): Builder = {
 
-    val processBuilder = new java.lang.ProcessBuilder(details.getArgv).directory(base)
+    val processBuilder = new java.lang.ProcessBuilder(details.getArgv).directory(base.toFile)
     val process = processBuilder.start()
 
     val cleanup = () => {
       process.destroy()
     }
 
-    val rootUri = base.getCanonicalFile.toURI
-    val compilerOutputUri = compilerOutput.getCanonicalFile.toURI
+    val rootUri = base.toCanonicalPath.toUri
+    val compilerOutputUri = compilerOutput.toCanonicalPath.toUri
     val initializeBuildParams = BspServerConnector.createInitializeBuildParams(rootUri, compilerOutputUri, capabilities)
 
     BspSession.builder(process.pid(), process.getInputStream, process.getErrorStream, process.getOutputStream, initializeBuildParams, cleanup)

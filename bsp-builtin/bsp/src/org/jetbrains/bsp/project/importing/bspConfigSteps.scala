@@ -27,7 +27,6 @@ import org.jetbrains.sbt.SbtUtil._
 import org.jetbrains.sbt.project.SbtProjectImportProvider
 
 import java.awt.{GridBagConstraints, GridBagLayout}
-import java.io.File
 import java.nio.file.Path
 import javax.swing.{DefaultListModel, JComponent, JLabel, JPanel, ListSelectionModel}
 import scala.annotation.nowarn
@@ -86,7 +85,7 @@ object bspConfigSteps {
     row +1
   }
 
-  def configSetupChoices(workspace: File): List[ConfigSetup] = {
+  def configSetupChoices(workspace: Path): List[ConfigSetup] = {
     val workspaceConfigs = workspaceSetupChoices(workspace)
     if (workspaceConfigs.nonEmpty) workspaceConfigs
     else List(NoSetup)
@@ -95,7 +94,7 @@ object bspConfigSteps {
   def configureBuilder(
     jdk: Sdk,
     builder: BspProjectImportBuilder,
-    workspace: File,
+    workspace: Path,
     configSetup: ConfigSetup
   ): BspConfigSetup = {
     val BuilderConfigurationParameters(
@@ -121,13 +120,13 @@ object bspConfigSteps {
 
   def getBuilderConfigurationParameters(
     jdk: Sdk,
-    workspace: File,
+    workspace: Path,
     configSetup: ConfigSetup
   ): BuilderConfigurationParameters = {
     val workspaceBspConfigs = BspConnectionConfig.workspaceBspConfigs(workspace)
 
     val tuple = if (workspaceBspConfigs.size == 1)
-      (NoConfigSetup, Some(NoPreImport), Some(BspConfigFile(workspaceBspConfigs.head._1.toPath)), None)
+      (NoConfigSetup, Some(NoPreImport), Some(BspConfigFile(workspaceBspConfigs.head._1)), None)
     else configSetup match {
       case bspConfigSteps.NoSetup =>
         (NoConfigSetup, Some(AutoPreImport), Some(AutoConfig), None)
@@ -142,19 +141,19 @@ object bspConfigSteps {
       case bspConfigSteps.ScalaCliSetup =>
         (NoConfigSetup, Some(ScalaCliBspPreImport), Some(AutoConfig), None)
       case bspConfigSteps.FastpassSetup =>
-        val bspWorkspace = FastpassConfigSetup.computeBspWorkspace(workspace)
-        val configSetup: BspConfigSetup = FastpassConfigSetup.create(workspace).fold(throw _, identity)
+        val bspWorkspace = FastpassConfigSetup.computeBspWorkspace(workspace.toFile)
+        val configSetup: BspConfigSetup = FastpassConfigSetup.create(workspace.toFile).fold(throw _, identity)
         (configSetup, Some(NoPreImport), None, Some(bspWorkspace))
     }
     BuilderConfigurationParameters.tupled.apply(tuple)
   }
 
-  def workspaceSetupChoices(workspace: File): List[ConfigSetup] = {
+  def workspaceSetupChoices(workspace: Path): List[ConfigSetup] = {
 
-    val vfile = LocalFileSystem.getInstance().findFileByIoFile(workspace)
+    val vfile = LocalFileSystem.getInstance().findFileByIoFile(workspace.toFile)
 
     val sbtChoice = if (SbtProjectImportProvider.canImport(vfile)) {
-      val sbtVersion = Version(detectSbtVersion(workspace, getDefaultLauncher))
+      val sbtVersion = Version(detectSbtVersion(workspace.toFile, getDefaultLauncher))
       if (sbtVersion.major(2) >= Version("1.4")) {
         // sbt >= 1.4 : user choose: bloop or sbt
         List(SbtSetup, BloopSbtSetup)
@@ -163,7 +162,7 @@ object bspConfigSteps {
       }
     } else Nil
 
-    val bspInstallConfigs = BspProjectInstallProvider.getConfigs(vfile.toNioPath.toFile)
+    val bspInstallConfigs = BspProjectInstallProvider.getConfigs(vfile.toNioPath)
 
     val bloopChoice =
       if (BspUtil.bloopConfigDir(workspace).isDefined) List(BloopSetup)
@@ -179,7 +178,7 @@ object bspConfigSteps {
   }
 }
 
-class BspSetupConfigStep(wizardContext: WizardContext, builder: BspProjectImportBuilder, setupTaskWorkspace: File)
+class BspSetupConfigStep(wizardContext: WizardContext, builder: BspProjectImportBuilder, setupTaskWorkspace: Path)
   extends ModuleWizardStep {
 
   private var runSetupTask: BspConfigSetup = NoConfigSetup
@@ -347,7 +346,7 @@ class BspChooseConfigStep(context: WizardContext, builder: BspProjectImportBuild
   chooseBspConfig.setSelectionMode(ListSelectionModel.SINGLE_SELECTION)
   chooseBspConfig.setModel(chooseBspSetupModel)
 
-  private def bspConfigs = BspConnectionConfig.allBspConfigs(context.getProjectDirectory.toFile)
+  private def bspConfigs = BspConnectionConfig.allBspConfigs(context.getProjectDirectory)
 
   {
     val chooseSetupTitle = new TitledSeparator(BspBundle.message("bsp.config.steps.choose.config.title"))
@@ -382,7 +381,7 @@ class BspChooseConfigStep(context: WizardContext, builder: BspProjectImportBuild
 
     if (configIndex >= 0) {
       val (file,_) = bspConfigs(configIndex)
-      val config = BspConfigFile(file.toPath)
+      val config = BspConfigFile(file)
       builder.setServerConfig(config)
     }
   }
@@ -391,7 +390,7 @@ class BspChooseConfigStep(context: WizardContext, builder: BspProjectImportBuild
     updateStep()
     if (builder.serverConfig == AutoConfig && chooseBspConfig.getItemsCount == 1) {
       val (file,_) = bspConfigs.head
-      val config = BspConfigFile(file.toPath)
+      val config = BspConfigFile(file)
       builder.setServerConfig(config)
     }
   }

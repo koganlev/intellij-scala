@@ -13,7 +13,6 @@ import org.jetbrains.bsp.{BSP, BspBundle}
 import org.jetbrains.plugins.scala.project.external.SdkReference
 import org.jetbrains.sbt.project.data.MyURI
 
-import java.io.File
 import java.util
 
 abstract class BspEntityData extends AbstractExternalEntityData(BSP.ProjectSystemId) with Product {
@@ -46,13 +45,13 @@ case class BspProjectData @PropertyMapping(Array(
   "serverDisplayName"
 )) private (
   @Nullable jdk: SdkReference,
-  @NotNull vcsRootsCandidates: util.List[File],
+  @NotNull vcsRootsCandidates: util.List[java.io.File],
   @NotNull serverDisplayName: String,
 ) extends BspEntityData
 
 object BspProjectData {
   val Key: Key[BspProjectData] = datakey(classOf[BspProjectData], weight = ProjectKeys.PROJECT.getProcessingWeight +  1)
-  def apply(sdk: Option[SdkReference], vcsRootsCandidates: util.List[File], displayName: String): BspProjectData =
+  def apply(sdk: Option[SdkReference], vcsRootsCandidates: util.List[java.io.File], displayName: String): BspProjectData =
     BspProjectData(sdk.orNull, vcsRootsCandidates, displayName)
 }
 
@@ -72,8 +71,8 @@ case class JdkData @PropertyMapping(Array("javaHome", "javaVersion"))(
 case class ScalaSdkData @PropertyMapping(Array("scalaOrganization", "scalaVersion", "scalacClasspath", "scaladocExtraClasspath", "scalacOptions"))(
   @NotNull scalaOrganization: String,
   @Nullable scalaVersion: String,
-  @NotNull scalacClasspath: util.List[File],
-  @NotNull scaladocExtraClasspath: util.List[File],
+  @NotNull scalacClasspath: util.List[java.io.File],
+  @NotNull scaladocExtraClasspath: util.List[java.io.File],
   @NotNull scalacOptions: util.List[String]
 ) extends BspEntityData
 

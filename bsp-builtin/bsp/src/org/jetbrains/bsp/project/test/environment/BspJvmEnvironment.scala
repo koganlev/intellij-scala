@@ -19,8 +19,8 @@ import org.jetbrains.plugins.scala.build.{BuildMessages, BuildToolWindowReporter
 import org.jetbrains.plugins.scala.extensions.invokeAndWait
 
 import java.net.URI
-import java.nio.file.Paths
-import java.util.concurrent.{Callable, CompletableFuture}
+import java.nio.file.{Path, Paths}
+import java.util.concurrent.CompletableFuture
 import scala.concurrent.Promise
 import scala.jdk.CollectionConverters._
 import scala.util.{Failure, Success, Try}
@@ -221,7 +221,7 @@ object BspJvmEnvironment {
     @Nls reporterTitle: String,
     task: BspSessionTask[A]
   ): Try[A] = {
-    val communication = BspCommunication.forWorkspace(workspace.toFile, project)
+    val communication = BspCommunication.forWorkspace(Path.of(workspace), project)
     val bspTaskId = BuildMessages.randomEventId
     val cancelAction = new CancelBuildAction(Promise[Unit]())
     implicit val reporter: BuildToolWindowReporter =

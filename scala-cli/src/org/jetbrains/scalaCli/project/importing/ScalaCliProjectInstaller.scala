@@ -4,22 +4,23 @@ import org.jetbrains.bsp.BspUtil
 import org.jetbrains.bsp.project.BspProjectInstallProvider
 import org.jetbrains.bsp.project.importing.bspConfigSteps
 import org.jetbrains.bsp.project.importing.bspConfigSteps.ScalaCliSetup
+import org.jetbrains.plugins.scala.extensions.PathExt
 import org.jetbrains.scalaCli.ScalaCliUtils
 import org.jetbrains.scalaCli.ScalaCliUtils.getScalaCliCommand
 import org.jetbrains.scalaCli.project.ScalaCliProjectUtils.ProjectDefinitionFileName
 
-import java.io.File
-import scala.util.{Try, Success, Failure}
+import java.nio.file.Path
+import scala.util.{Failure, Success, Try}
 
 class ScalaCliProjectInstaller extends BspProjectInstallProvider {
 
-  override def canImport(workspace: File): Boolean =
+  override def canImport(workspace: Path): Boolean =
     Option(workspace).filter(_.isDirectory).exists(isScalaCli)
 
   override def serverName: String = "Scala CLI"
 
-  override def installCommand(workspace: File): Try[Seq[String]] = {
-    val isScalaCliInstalled = ScalaCliUtils.isScalaCliInstalled(workspace.toPath)
+  override def installCommand(workspace: Path): Try[Seq[String]] = {
+    val isScalaCliInstalled = ScalaCliUtils.isScalaCliInstalled(workspace)
     if (isScalaCliInstalled) {
       Success(Seq(getScalaCliCommand, "setup-ide", "."))
     } else {
@@ -29,6 +30,6 @@ class ScalaCliProjectInstaller extends BspProjectInstallProvider {
 
   override def getConfigSetup: bspConfigSteps.ConfigSetup = ScalaCliSetup
 
-  private def isScalaCli(directory: File): Boolean =
+  private def isScalaCli(directory: Path): Boolean =
     BspUtil.findFileByName(directory, ProjectDefinitionFileName).isDefined
 }

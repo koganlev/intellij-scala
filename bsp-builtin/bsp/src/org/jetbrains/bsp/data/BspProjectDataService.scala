@@ -14,7 +14,7 @@ import com.intellij.pom.java.LanguageLevel
 import org.jetbrains.plugins.scala.project.ProjectContext
 import org.jetbrains.plugins.scala.project.external.{ScalaAbstractProjectDataService, SdkReference, SdkUtils}
 
-import java.io.File
+import java.nio.file.Path
 import java.util
 import scala.collection.mutable
 import scala.jdk.CollectionConverters._
@@ -29,11 +29,11 @@ class BspProjectDataService extends ScalaAbstractProjectDataService[BspProjectDa
   ): Unit = {
     toImport.forEach { node =>
       configureJdk(Option(node.getData.jdk))(project)
-      configureVcs(node.getData.vcsRootsCandidates.asScala, project)
+      configureVcs(node.getData.vcsRootsCandidates.asScala.map(_.toPath), project)
     }
   }
 
-  private def configureVcs(vcsRootsCandidates: collection.Seq[File], project: Project): Unit = {
+  private def configureVcs(vcsRootsCandidates: collection.Seq[Path], project: Project): Unit = {
     val vcsManager = ProjectLevelVcsManager.getInstance(project)
     val currentVcsRoots = vcsManager.getAllVcsRoots
     val currentMappings = vcsManager.getDirectoryMappings
@@ -43,7 +43,7 @@ class BspProjectDataService extends ScalaAbstractProjectDataService[BspProjectDa
       val detected = mutable.Set[VcsRoot]()
       vcsRootsCandidates
         .iterator
-        .map(LocalFileSystem.getInstance.findFileByIoFile)
+        .map(LocalFileSystem.getInstance.findFileByNioFile)
         .filter(_ != null)
         .foreach { virtualFile =>
           val isUnderDetectedVcsRoot = VfsUtilCore.isUnder(virtualFile, detected.map(_.getPath).asJava)

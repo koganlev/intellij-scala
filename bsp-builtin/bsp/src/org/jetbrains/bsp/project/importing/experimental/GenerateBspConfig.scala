@@ -15,7 +15,7 @@ import org.jetbrains.bsp.{BspBundle, BspJdkUtil}
 import org.jetbrains.plugins.scala.build.IndicatorReporter
 import org.jetbrains.plugins.scala.project.external.SdkUtils
 
-import java.io.File
+import java.nio.file.Path
 import java.util
 import javax.swing.JComponent
 
@@ -30,7 +30,7 @@ import javax.swing.JComponent
  */
 @ApiStatus.Internal
 @ApiStatus.Experimental
-final class GenerateBspConfig(project: Project, workspace: File) {
+final class GenerateBspConfig(project: Project, workspace: Path) {
 
   def runSynchronously(): Unit = {
     val configSetups: Seq[ConfigSetup] = workspaceSetupChoices(workspace)

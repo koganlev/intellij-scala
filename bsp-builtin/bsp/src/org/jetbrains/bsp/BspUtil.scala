@@ -15,13 +15,13 @@ import org.jetbrains.bsp.project.BspExternalSystemUtil
 import org.jetbrains.bsp.settings.BspSettings
 import org.jetbrains.plugins.scala.build.BuildMessages.EventId
 import org.jetbrains.plugins.scala.build.BuildReporter
+import org.jetbrains.plugins.scala.extensions.PathExt
 
-import scala.io.Source
-import scala.jdk.CollectionConverters.SeqHasAsJava
-import java.io.File
 import java.net.URI
 import java.nio.file.{Path, Paths}
 import java.util.concurrent.CompletableFuture
+import scala.io.Source
+import scala.jdk.CollectionConverters.SeqHasAsJava
 import scala.util.{Failure, Success, Try}
 
 object BspUtil {
@@ -39,17 +39,17 @@ object BspUtil {
       }
       .toSet
 
-  def isBloopConfigFile(file: File): Boolean = {
-    file.isFile &&
-      file.getParentFile.getName == BloopConfigDirName &&
-      file.getName.endsWith(".json")
+  def isBloopConfigFile(file: Path): Boolean = {
+    file.isRegularFile &&
+      file.getParent.getFileName.toString == BloopConfigDirName &&
+      file.getFileName.toString.endsWith(".json")
   }
 
-  def bloopConfigDir(workspace: File): Option[File] = {
-    val bloopDir = new File(workspace, BloopConfigDirName)
+  def bloopConfigDir(workspace: Path): Option[Path] = {
+    val bloopDir = workspace.resolve(BloopConfigDirName)
 
     if (bloopDir.isDirectory)
-      Some(bloopDir.getCanonicalFile)
+      Some(bloopDir.toCanonicalPath)
     else None
   }
 
@@ -66,14 +66,14 @@ object BspUtil {
       .getSettings(project, BSP.ProjectSystemId)
       .asInstanceOf[BspSettings]
 
-  def compilerOutputDirFromConfig(base: File): Option[File] = {
+  def compilerOutputDirFromConfig(base: Path): Option[Path] = {
     val vfm = VirtualFileManager.getInstance()
     for {
-      projectDir <- Option(vfm.findFileByUrl(base.toPath.toUri.toString)) // path.toUri is rendered with :// separator which findFileByUrl needs
+      projectDir <- Option(vfm.findFileByUrl(base.toUri.toString)) // path.toUri is rendered with :// separator which findFileByUrl needs
       project <- Option(ProjectUtil.guessProjectForFile(projectDir))
       cpe = CompilerProjectExtension.getInstance(project)
       output <- Option(cpe.getCompilerOutput)
-    } yield new File(output.getCanonicalPath)
+    } yield Path.of(output.getCanonicalPath)
   }
 
   implicit class ResponseErrorExceptionOps(err: ResponseErrorException) {
@@ -87,7 +87,7 @@ object BspUtil {
   }
 
   implicit class URIOps(uri: URI) {
-    def toFile: File = Paths.get(uri).toFile
+    def toFile: java.io.File = Paths.get(uri).toFile
   }
 
   implicit class CompletableFutureOps[T](cf: CompletableFuture[T]) {
@@ -123,10 +123,9 @@ object BspUtil {
     }
   }
 
-  def findFileByName(dir: File, name: String): Option[File] =
-    Option(dir.listFiles())
-      .getOrElse(Array.empty)
-      .find(x => x.getName == name && !x.isDirectory)
+  def findFileByName(dir: Path, name: String): Option[Path] =
+    dir.children()
+      .find(x => x.getFileName.toString == name && !x.isDirectory)
 
   def isBspScalaCliProject(project: Project): Boolean = {
     val projectData = BspExternalSystemUtil.getBspProjectData(project)
@@ -135,10 +134,9 @@ object BspUtil {
   /**
    * Checks whether a specified directory contains at least one file with a name from a given sequence of file names.
    */
-  def directoryContainsFile(directory: File, fileNames: String*): Boolean =
-    Option(directory.listFiles())
-      .getOrElse(Array.empty)
-      .exists(x => !x.isDirectory && fileNames.contains(x.getName))
+  def directoryContainsFile(directory: Path, fileNames: String*): Boolean =
+    directory.children()
+      .exists(x => !x.isDirectory && fileNames.contains(x.getFileName.toString))
 
   /**
    *

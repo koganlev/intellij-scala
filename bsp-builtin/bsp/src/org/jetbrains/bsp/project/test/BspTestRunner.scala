@@ -23,6 +23,7 @@ import org.jetbrains.plugins.scala.build.{BuildMessages, BuildReporter, BuildToo
 
 import java.io.{File, OutputStream}
 import java.net.URI
+import java.nio.file.Path
 import java.util.UUID
 import java.util.concurrent.CompletableFuture
 import scala.collection.mutable
@@ -157,7 +158,7 @@ class BspTestRunner(
     val procHandler = new MProcHandler
     val console = SMTestRunnerConnectionUtil.createAndAttachConsole("BSP", procHandler, new SMTRunnerConsoleProperties(
       project, rc, "BSP", ex))
-    val bspCommunication = BspCommunication.forWorkspace(new File(project.getBasePath), project)
+    val bspCommunication = BspCommunication.forWorkspace(Path.of(project.getBasePath), project)
 
     val cancelToken = Promise[Unit]()
     val cancelAction = new CancelBuildAction(cancelToken)

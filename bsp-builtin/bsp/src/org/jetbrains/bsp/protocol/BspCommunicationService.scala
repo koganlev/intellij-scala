@@ -7,9 +7,9 @@ import com.intellij.openapi.project.{Project, ProjectManager, ProjectManagerList
 import com.intellij.openapi.util.Disposer
 import com.intellij.util.concurrency.AppExecutorUtil
 import org.jetbrains.bsp.settings.BspProjectSettings.BspServerConfig
+import org.jetbrains.plugins.scala.extensions.PathExt
 import org.jetbrains.plugins.scala.util.ScalaShutDownTracker
 
-import java.io.File
 import java.net.URI
 import java.nio.file._
 import java.util.concurrent.TimeUnit
@@ -48,9 +48,9 @@ class BspCommunicationService extends Disposable {
     updateWidget()
   }
 
-  private[protocol] def communicate(base: File, config: BspServerConfig): BspCommunication =
+  private[protocol] def communicate(base: Path, config: BspServerConfig): BspCommunication =
     comms.getOrElseUpdate(
-      (base.getCanonicalFile.toURI, config),
+      (base.toCanonicalPath.toUri, config),
       {
         val comm = new BspCommunication(base, config)
         Disposer.register(this, comm)

@@ -6,7 +6,6 @@ import org.jetbrains.annotations.{NotNull, Nullable}
 import org.jetbrains.bsp.data.BspEntityData.datakey
 import org.jetbrains.sbt.project.data.MyURI
 
-import java.io.File
 import java.util
 
 /**
@@ -47,7 +46,7 @@ case class SbtModuleDataBsp @PropertyMapping(Array(
 ))(
   id: MyURI,
   buildModuleId: MyURI,
-  @Nullable baseDirectory: File,
+  @Nullable baseDirectory: java.io.File,
 ) extends BspEntityData {
   //Default constructor is needed in order intellij can deserialize data in old format with some fields missing
   def this() = this(null, null, null)

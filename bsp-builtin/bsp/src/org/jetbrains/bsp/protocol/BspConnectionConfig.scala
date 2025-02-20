@@ -6,10 +6,10 @@ import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.text.StringUtil.defaultIfEmpty
 import com.intellij.util.SystemProperties
 import org.jetbrains.bsp.{BspBundle, BspErrorMessage}
+import org.jetbrains.plugins.scala.extensions.PathExt
 
-import java.io.File
-import scala.io.Source
-import scala.util.{Failure, Try}
+import java.nio.file.{Files, Path}
+import scala.util.{Failure, Try, Using}
 
 object BspConnectionConfig {
 
@@ -17,23 +17,22 @@ object BspConnectionConfig {
   
   private val BspSystemConfigDirName = "bsp"
 
-  def workspaceConfigurationFiles(workspace: File): List[File] = {
-    val bspDir = new File(workspace, BspWorkspaceConfigDirName)
+  def workspaceConfigurationFiles(workspace: Path): List[Path] = {
+    val bspDir = workspace.resolve(BspWorkspaceConfigDirName)
     if(bspDir.isDirectory) {
-      val files = bspDir.listFiles(file => file.getName.endsWith(".json"))
-      if (files != null) files.toList else Nil
+      bspDir.children().filter(_.getFileName.toString.endsWith(".json")).toList
     }
     else List.empty
   }
 
   /** Find all BSP connection configs for a workspace. */
-  def workspaceBspConfigs(workspace: File): List[(File, BspConnectionDetails)] = {
+  def workspaceBspConfigs(workspace: Path): List[(Path, BspConnectionDetails)] = {
     val files = workspaceConfigurationFiles(workspace)
     tryReadingConnectionFiles(files).flatMap(_.toOption).toList
   }
 
   /** Find all BSP connection configs either in a workspace, or installed on a system. */
-  def allBspConfigs(workspace: File): List[(File, BspConnectionDetails)] = {
+  def allBspConfigs(workspace: Path): List[(Path, BspConnectionDetails)] = {
 
     val workspaceConfigs = workspaceConfigurationFiles(workspace)
     val systemConfigs = systemDependentConnectionFiles
@@ -42,17 +41,17 @@ object BspConnectionConfig {
     potentialConfigs.flatMap(_.toOption).toList
   }
 
-  def isBspConfigFile(file: File): Boolean = {
-    file.isFile &&
-      file.getParentFile.getName == BspWorkspaceConfigDirName && 
-      file.getName.endsWith(".json")
+  def isBspConfigFile(file: Path): Boolean = {
+    file.isRegularFile &&
+      file.getParent.getFileName.toString == BspWorkspaceConfigDirName &&
+      file.getFileName.toString.endsWith(".json")
   }
 
   /**
    * Find connection files installed on user's system.
    * https://build-server-protocol.github.io/docs/server-discovery.html#default-locations-for-bsp-connection-files
    */
-  private def systemDependentConnectionFiles: List[File] = {
+  private def systemDependentConnectionFiles: List[Path] = {
     val basePaths =
       if (SystemInfo.isWindows) windowsBspFiles()
       else if (SystemInfo.isMac) macBspFiles()
@@ -62,17 +61,17 @@ object BspConnectionConfig {
     listFiles(bspDirs(basePaths))
   }
 
-  private def tryReadingConnectionFiles(files: Seq[File]): Seq[Try[(File, BspConnectionDetails)]] = {
-    implicit val gson: Gson = new Gson()
-    files.map { f => readConnectionFile(f).map((f, _)) }
+  private def tryReadingConnectionFiles(files: Seq[Path]): Seq[Try[(Path, BspConnectionDetails)]] = {
+    val gson: Gson = new Gson()
+    files.map { f => readConnectionFile(f)(using gson).map((f, _)) }
   }
 
-  def readConnectionFile(file: File)(implicit gson: Gson): Try[BspConnectionDetails] = {
-    if (file.canRead) {
-      val reader = Source.fromFile(file).bufferedReader()
-      Try(gson.fromJson(reader, classOf[BspConnectionDetails]))
+  def readConnectionFile(file: Path)(implicit gson: Gson): Try[BspConnectionDetails] = {
+    if (Files.isReadable(file)) {
+      Using(Files.newBufferedReader(file)) { reader =>
+        gson.fromJson(reader, classOf[BspConnectionDetails])
+      }
     } else Failure(BspErrorMessage(BspBundle.message("bsp.protocol.file.not.readable", file)))
-
   }
 
   private def windowsBspFiles() = {
@@ -96,11 +95,10 @@ object BspConnectionConfig {
     List(userData, systemData)
   }
 
-  private def bspDirs(basePaths: List[String]): List[File] = basePaths.map(new File(_, BspSystemConfigDirName))
+  private def bspDirs(basePaths: List[String]): List[Path] = basePaths.map(bp => Path.of(bp).resolve(BspSystemConfigDirName))
 
-  private def listFiles(dirs: List[File]): List[File] = dirs.flatMap { dir =>
-    if (dir.isDirectory) dir.listFiles()
-    else Array.empty[File]
+  private def listFiles(dirs: List[Path]): List[Path] = dirs.flatMap { dir =>
+    if (dir.isDirectory) dir.children()
+    else Seq.empty[Path]
   }
-  
 }

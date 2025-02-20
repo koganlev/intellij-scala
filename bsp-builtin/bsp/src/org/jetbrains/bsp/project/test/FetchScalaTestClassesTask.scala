@@ -52,7 +52,7 @@ class FetchScalaTestClassesTask(project: Project,
       }
 
     val jobs = targetsByWorkspace.map { case (workspace, params) =>
-      BspCommunication.forWorkspace(workspace.toFile, project)
+      BspCommunication.forWorkspace(workspace, project)
         .run(
           requestTestClasses(params)(_,_),
           _ => {},

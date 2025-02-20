@@ -23,8 +23,9 @@ import org.jetbrains.bsp.protocol.session.jobs.BspSessionJob
 import org.jetbrains.bsp.settings.BspProjectSettings.BspServerConfig
 import org.jetbrains.bsp.settings.{BspExecutionSettings, BspProjectSettings, BspSettings}
 import org.jetbrains.plugins.scala.build.BuildReporter
+import org.jetbrains.plugins.scala.extensions.PathExt
 
-import java.io.File
+import java.nio.file.Path
 import java.util.concurrent.atomic.AtomicReference
 import scala.annotation.nowarn
 import scala.concurrent.Future
@@ -32,17 +33,17 @@ import scala.concurrent.duration._
 import scala.jdk.CollectionConverters._
 import scala.util.Try
 
-class BspCommunication private[protocol](base: File, config: BspServerConfig) extends Disposable {
+class BspCommunication private[protocol](base: Path, config: BspServerConfig) extends Disposable {
 
   private val log = Logger.getInstance(classOf[BspCommunication])
 
   private val session: AtomicReference[Option[BspSession]] = new AtomicReference[Option[BspSession]](None)
 
   lazy val exitCommands: List[List[String]] = {
-    val workspace = new File(base.getAbsolutePath)
+    val workspace = base.toCanonicalPath
     val files = BspConnectionConfig.workspaceBspConfigs(workspace)
     val argvExitCommands = files.flatMap { file =>
-      val bspConnectionDetails = BspExternalSystemManager.parseAsMap(file._1)
+      val bspConnectionDetails = BspExternalSystemManager.parseAsMap(file._1.toFile)
       bspConnectionDetails.get(argvExit).flatMap{comand =>
         Try {comand.asInstanceOf[java.util.List[String]]}.toOption.map(_.asScala.toList)
       }
@@ -137,12 +138,12 @@ class BspCommunication private[protocol](base: File, config: BspServerConfig) ex
 
   private def findProject =
     for {
-      vfsPath <- Option(VfsUtil.findFileByIoFile(base, false))
+      vfsPath <- Option(VfsUtil.findFile(base, false))
       project <- Option(ProjectUtil.guessProjectForFile(vfsPath))
     } yield project
 
   private def bspSettings(project: Project): Option[BspProjectSettings] =
-    Option(BspSettings.getInstance(project).getLinkedProjectSettings(base.getPath))
+    Option(BspSettings.getInstance(project).getLinkedProjectSettings(base.toCanonicalPath.toString))
 
   private val projectCallback: NotificationCallback = {
     case BspNotifications.DidChangeBuildTarget(didChange) =>
@@ -207,22 +208,22 @@ object BspCommunication {
 
   val argvExit = "argvExit"
 
-  def forWorkspace(baseDir: File, config: BspServerConfig): BspCommunication = {
+  def forWorkspace(baseDir: Path, config: BspServerConfig): BspCommunication = {
     if (!baseDir.isDirectory)
       throw new IllegalArgumentException(s"Base path for BspCommunication is not a directory: $baseDir")
     else
       BspCommunicationService.getInstance.communicate(baseDir, config)
   }
 
-  def forWorkspace(baseDir: File, project: Project): BspCommunication = {
-    val bspSettings = BspUtil.bspSettings(project).getLinkedProjectSettings(baseDir.getCanonicalPath)
+  def forWorkspace(baseDir: Path, project: Project): BspCommunication = {
+    val bspSettings = BspUtil.bspSettings(project).getLinkedProjectSettings(baseDir.toCanonicalPath.toString)
     val config = bspSettings.serverConfig
     forWorkspace(baseDir, config)
   }
 
 
   private def prepareSession(
-    base: File,
+    base: Path,
     config: BspServerConfig,
     project: => Option[Project]
   )(implicit reporter: BuildReporter): Either[BspError, Builder] = {
@@ -231,7 +232,7 @@ object BspCommunication {
     val supportedLanguages = List("scala","java")
     val capabilities = BspCapabilities(supportedLanguages)
     val compilerOutputDir = BspUtil.compilerOutputDirFromConfig(base)
-      .getOrElse(new File(base, "out"))
+      .getOrElse(base.resolve("out"))
     val bloopEnabled = BspUtil.bloopConfigDir(base).isDefined
 
     def configureBloopLauncherIfJdkExists() =
@@ -260,7 +261,7 @@ object BspCommunication {
           Left(BspErrorMessage(s"Bloop is not configured for BSP workspace in $base"))
 
       case BspProjectSettings.BspConfigFile(path) =>
-        BspConnectionConfig.readConnectionFile(path.toFile)(new Gson)
+        BspConnectionConfig.readConnectionFile(path)(new Gson)
           .map { details =>
             val method = ProcessBsp(details)
             new GenericConnector(base, compilerOutputDir, capabilities, List(method))

@@ -117,7 +117,7 @@ class BspResolverLogicProperties extends Checkers {
 
         val projectRootPath = root.toString
         val projectModules = ProjectModules(moduleDescriptions, Seq.empty)
-        val node = projectNode(root.toFile, projectModules, BspProjectResolver.rootExclusions(root.toFile), "displayName", List.empty)
+        val node = projectNode(root.toFile, projectModules, BspProjectResolver.rootExclusions(root).map(_.toFile), "displayName", List.empty)
 
         // TODO more thorough properties
         node.getChildren.size >= moduleDescriptions.size

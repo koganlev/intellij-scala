@@ -19,6 +19,7 @@ import org.jetbrains.plugins.scala.build._
 import org.jetbrains.plugins.scala.util.{CompilationId, ExternalSystemVfsUtil}
 
 import java.net.URI
+import java.nio.file.Path
 import java.util.concurrent.CompletableFuture
 import scala.collection.{immutable, mutable}
 import scala.concurrent.{Future, Promise}
@@ -100,7 +101,7 @@ class BspTask[T](project: Project,
 
     val buildJobs = targetByWorkspace.map { case (workspace, targets) =>
       val targetsToClean = targetToCleanByWorkspace.getOrElse(workspace, List.empty)
-      val communication: BspCommunication = BspCommunication.forWorkspace(workspace.toFile, project)
+      val communication: BspCommunication = BspCommunication.forWorkspace(Path.of(workspace), project)
       communication.run(
         { case (server, serverInfo) => buildRequests(targets, targetsToClean)(server, serverInfo.capabilities, reporter) },
         BuildMessages.empty,

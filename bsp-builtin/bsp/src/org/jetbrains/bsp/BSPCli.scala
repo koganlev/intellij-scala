@@ -15,8 +15,9 @@ import org.jetbrains.bsp.protocol.{BspCommunication, BspCommunicationService}
 import org.jetbrains.bsp.settings.BspProjectSettings.{AutoConfig, AutoPreImport}
 import org.jetbrains.bsp.settings.{BspExecutionSettings, BspSystemSettings}
 import org.jetbrains.plugins.scala.build.{BuildReporter, ConsoleReporter}
+import org.jetbrains.plugins.scala.extensions.PathExt
 
-import java.io.File
+import java.nio.file.Path
 import java.util
 import java.util.concurrent.CompletableFuture
 import java.util.{Collections, UUID}
@@ -95,9 +96,8 @@ object BSPCli extends App {
   }
 
   var running = true
-  val bspExecSettings = new BspExecutionSettings(
-    new File(opts.projectPath), true, true, AutoPreImport, AutoConfig)
-  val bspComm = BspCommunication.forWorkspace(new File(opts.projectPath), AutoConfig)
+  val bspExecSettings = new BspExecutionSettings(Path.of(opts.projectPath), true, true, AutoPreImport, AutoConfig)
+  val bspComm = BspCommunication.forWorkspace(Path.of(opts.projectPath), AutoConfig)
   val resolver = new BspProjectResolver()
   val targets = {
     println("Resolving build targets...")
@@ -129,7 +129,7 @@ object BSPCli extends App {
     }
 
     def assertFile(map: OptMap, key: String): String = map.get(key)
-      .map(f => if (new File(f).exists()) f else throw new IllegalArgumentException(s"File `$f` does not exist"))
+      .map(f => if (Path.of(f).exists) f else throw new IllegalArgumentException(s"File `$f` does not exist"))
       .orElse(throw new IllegalArgumentException(s"Argument $key was not provided"))
       .get
 

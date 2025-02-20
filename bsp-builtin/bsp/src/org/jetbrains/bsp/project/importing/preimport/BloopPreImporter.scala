@@ -12,7 +12,7 @@ import org.jetbrains.sbt.project.SbtExternalSystemManager
 import org.jetbrains.sbt.project.structure.SbtStructureDump
 import org.jetbrains.sbt.{Sbt, SbtUtil}
 
-import java.io.File
+import java.nio.file.Path
 import scala.util.Try
 
 class BloopPreImporter(dumper: SbtStructureDump, runDump: SbtStructureDump => Try[BuildMessages])
@@ -22,11 +22,11 @@ class BloopPreImporter(dumper: SbtStructureDump, runDump: SbtStructureDump => Tr
   def run(): Try[BuildMessages] = runDump(dumper)
 }
 object BloopPreImporter {
-  def apply(baseDir: File, jdk: Sdk)(implicit reporter: BuildReporter): BloopPreImporter = {
+  def apply(baseDir: Path, jdk: Sdk)(implicit reporter: BuildReporter): BloopPreImporter = {
     invokeAndWait(ProjectJdkTable.getInstance.preconfigure())
     val jdkType = JavaSdk.getInstance()
-    val jdkExe = new File(jdkType.getVMExecutablePath(jdk))
-    val jdkHome = Option(jdk.getHomePath).map(new File(_))
+    val jdkExe = Path.of(jdkType.getVMExecutablePath(jdk))
+    val jdkHome = Option(jdk.getHomePath).map(Path.of(_))
     val sbtLauncher = SbtUtil.getDefaultLauncher
 
     val injectedPlugins = s"""addSbtPlugin("ch.epfl.scala" % "sbt-bloop" % "${BuildInfo.bloopVersion}")"""
@@ -35,7 +35,7 @@ object BloopPreImporter {
     FileUtil.writeToFile(pluginFile, injectedPlugins)
 
     val injectedSettings = """bloopExportJarClassifiers in Global := Some(Set("sources"))"""
-    val settingsFile = FileUtil.createTempFile(baseDir, "idea-bloop", Sbt.Extension, true)
+    val settingsFile = FileUtil.createTempFile(baseDir.toFile, "idea-bloop", Sbt.Extension, true)
     FileUtil.writeToFile(settingsFile, injectedSettings)
 
     val sbtLauncherArgs = List(
@@ -43,19 +43,19 @@ object BloopPreImporter {
     )
     val sbtCommands = "bloopInstall"
 
-    val projectSbtVersion = Version(detectSbtVersion(baseDir, getDefaultLauncher))
+    val projectSbtVersion = Version(detectSbtVersion(baseDir.toFile, getDefaultLauncher))
     val sbtVersion = upgradedSbtVersion(projectSbtVersion)
     val upgradeParam =
       if (sbtVersion > projectSbtVersion)
         List(sbtVersionParam(sbtVersion))
       else List.empty
 
-    val vmArgs = SbtExternalSystemManager.getVmOptions(Seq.empty, jdkHome) ++ upgradeParam
+    val vmArgs = SbtExternalSystemManager.getVmOptions(Seq.empty, jdkHome.map(_.toFile)) ++ upgradeParam
 
     try {
       val dumper = new SbtStructureDump()
       val runDump = (dumper: SbtStructureDump) => dumper.runSbt(
-        baseDir, jdkExe, vmArgs,
+        baseDir.toFile, jdkExe.toFile, vmArgs,
         Map.empty, sbtLauncher, Seq.empty, sbtLauncherArgs, sbtCommands,
         BspBundle.message("bsp.resolver.creating.bloop.configuration.from.sbt"), passParentEnvironment = true
       )(indicator = null)

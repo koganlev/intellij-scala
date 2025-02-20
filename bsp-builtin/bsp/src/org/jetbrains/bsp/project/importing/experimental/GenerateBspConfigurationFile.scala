@@ -28,6 +28,6 @@ class GenerateBspConfigurationFile extends AnAction(
       return
 
     val workspace = projectDir.toNioPath
-    new GenerateBspConfig(project, workspace.toFile).runSynchronously()
+    new GenerateBspConfig(project, workspace).runSynchronously()
   }
 }

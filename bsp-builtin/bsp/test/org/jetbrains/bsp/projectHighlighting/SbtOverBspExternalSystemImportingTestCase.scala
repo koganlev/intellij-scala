@@ -58,7 +58,7 @@ trait SbtOverBspExternalSystemImportingTestCase extends ScalaExternalSystemImpor
     //it's done in `setupSdk` but in this test we need JDK earlier
     setupProjectJdk()
     val jdk = getJdkConfiguredForTestCase
-    val sbtBspConfigSetup = SbtConfigSetup(projectPath, jdk)
+    val sbtBspConfigSetup = SbtConfigSetup(projectPath.toPath, jdk)
     val reporter = new ConsoleReporter(name = "") {
       override def progressTask(eventId: BuildMessages.EventId, total: Long, progress: Long, unit: String, message: String, time: Long): Unit = {
         //do nothing, in tests it's enough to see the console output which is already printed by SbtStructureDump

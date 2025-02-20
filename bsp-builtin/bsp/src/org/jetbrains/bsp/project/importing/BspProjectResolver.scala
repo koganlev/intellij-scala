@@ -23,8 +23,9 @@ import org.jetbrains.bsp.settings.{BspExecutionSettings, BspProjectSettings}
 import org.jetbrains.bsp.{BspBundle, BspErrorMessage, BspJdkUtil, BspNoJdkConfiguredError, BspTaskCancelled, BspUtil}
 import org.jetbrains.plugins.scala.build.BuildMessages.EventId
 import org.jetbrains.plugins.scala.build.{BuildMessages, BuildReporter, ExternalSystemNotificationReporter}
+import org.jetbrains.plugins.scala.extensions.PathExt
 
-import java.io.File
+import java.nio.file.Path
 import java.util.Collections
 import java.util.concurrent.CompletableFuture
 import scala.annotation.{nowarn, tailrec}
@@ -45,10 +46,10 @@ class BspProjectResolver extends ExternalSystemProjectResolver[BspExecutionSetti
                                   listener: ExternalSystemTaskNotificationListener): DataNode[ProjectData] = {
 
     implicit val reporter: BuildReporter = new ExternalSystemNotificationReporter(workspaceCreationPath, id, listener)
-    val workspaceCreationFile = new File(workspaceCreationPath)
+    val workspaceCreationFile = Path.of(workspaceCreationPath)
     val workspace =
       if (workspaceCreationFile.isDirectory || !workspaceCreationFile.exists) workspaceCreationFile
-      else workspaceCreationFile.getParentFile
+      else workspaceCreationFile.getParent
 
     importState = Active
 
@@ -57,7 +58,7 @@ class BspProjectResolver extends ExternalSystemProjectResolver[BspExecutionSetti
     val result = if (isPreviewMode) {
       val modules = ProjectModules(Nil, Nil)
       reporter.finish(BuildMessages.empty.status(BuildMessages.OK))
-      projectNode(workspace, modules, rootExclusions(workspace), "dummy-display-name", List.empty)
+      projectNode(workspace.toFile, modules, rootExclusions(workspace).map(_.toFile), "dummy-display-name", List.empty)
     } else {
       runImport(workspace, executionSettings)
     }
@@ -71,7 +72,7 @@ class BspProjectResolver extends ExternalSystemProjectResolver[BspExecutionSetti
     result
   }
 
-  private def requests(workspace: File)
+  private def requests(workspace: Path)
                       (implicit server: BspServer, serverInfo: BuildServerInfo, reporter: BuildReporter)
   : CompletableFuture[DataNode[ProjectData]] = {
 
@@ -114,7 +115,7 @@ class BspProjectResolver extends ExternalSystemProjectResolver[BspExecutionSetti
             val descriptions = calculateModuleDescriptions(
               targets, scalacOptions.toSeq, javacOptions.toSeq, sources.toSeq, resources.toSeq, outputPaths.toSeq, depSources.toSeq
             )
-            projectNode(workspace, descriptions, rootExclusions(workspace), serverInfo.displayName, compilableTargets)
+            projectNode(workspace.toFile, descriptions, rootExclusions(workspace).map(_.toFile), serverInfo.displayName, compilableTargets)
           }
           .reportFinished(
             reporter,
@@ -127,7 +128,7 @@ class BspProjectResolver extends ExternalSystemProjectResolver[BspExecutionSetti
     projectNodeFuture
   }
 
-  private def runImport(workspace: File, executionSettings: BspExecutionSettings)
+  private def runImport(workspace: Path, executionSettings: BspExecutionSettings)
                        (implicit reporter: BuildReporter) = {
     def notifications(implicit reporter: BuildReporter): NotificationAggregator[BuildMessages] =
     (messages, notification) => notification match {
@@ -187,7 +188,7 @@ class BspProjectResolver extends ExternalSystemProjectResolver[BspExecutionSetti
   // TODO support other bloop-enabled build tools as well
   private def preImport(
     executionSettings: BspExecutionSettings,
-    workspace: File
+    workspace: Path
   )(implicit reporter: BuildReporter): Try[BuildMessages] = {
     if (executionSettings.runPreImportTask) {
       val preImportTask = executionSettings.preImportTask
@@ -200,11 +201,11 @@ class BspProjectResolver extends ExternalSystemProjectResolver[BspExecutionSetti
   private val EmptyBuildMessagesSuccess: Success[BuildMessages] = Success(BuildMessages.empty.status(BuildMessages.OK))
 
   private def installBSP(
-    workspace: File,
+    workspace: Path,
     preImportTask: BspProjectSettings.PreImportConfig,
     bspServerConfig: BspProjectSettings.BspServerConfig
   )(implicit reporter: BuildReporter): Try[BuildMessages] = {
-    def isSbtProject(workspace: File) = new File(workspace, "build.sbt").exists()
+    def isSbtProject(workspace: Path) = workspace.resolve("build.sbt").exists
 
     val bspProjectInstallers = BspProjectInstallProvider.getImplementations
 
@@ -289,7 +290,7 @@ class BspProjectResolver extends ExternalSystemProjectResolver[BspExecutionSetti
     }
   }
 
-  private def runBloopInstall(baseDir: File)(implicit reporter: BuildReporter) =
+  private def runBloopInstall(baseDir: Path)(implicit reporter: BuildReporter) =
     BspJdkUtil.findOrCreateBestJdkForProject(None) match {
       case Some(sdk) =>
         val preImporter = BloopPreImporter(baseDir, sdk)
@@ -425,8 +426,8 @@ object BspProjectResolver {
       Option(capabilities.getOutputPathsProvider).exists(_.booleanValue())
   }
   
-  private[importing] def rootExclusions(workspace: File): List[File] = List(
-    new File(workspace, BspUtil.BloopConfigDirName),
-    new File(workspace, BspConnectionConfig.BspWorkspaceConfigDirName),
+  private[importing] def rootExclusions(workspace: Path): List[Path] = List(
+    workspace.resolve(BspUtil.BloopConfigDirName),
+    workspace.resolve(BspConnectionConfig.BspWorkspaceConfigDirName)
   ) ++ BspUtil.compilerOutputDirFromConfig(workspace).toList
 }

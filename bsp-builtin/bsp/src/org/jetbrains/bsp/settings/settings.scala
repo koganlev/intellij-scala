@@ -14,8 +14,8 @@ import com.intellij.util.xmlb.Converter
 import com.intellij.util.xmlb.annotations.{OptionTag, XCollection}
 import org.jetbrains.bsp._
 import org.jetbrains.bsp.settings.BspProjectSettings._
+import org.jetbrains.plugins.scala.extensions.PathExt
 
-import java.io.File
 import java.nio.file.{Path, Paths}
 import java.util
 import javax.swing.JCheckBox
@@ -283,7 +283,7 @@ object BspLocalSettings {
 
 class BspLocalSettingsState extends AbstractExternalSystemLocalSettings.State
 
-class BspExecutionSettings(val basePath: File,
+class BspExecutionSettings(val basePath: Path,
                            val traceBsp: Boolean,
                            val runPreImportTask: Boolean,
                            val preImportTask: PreImportConfig,
@@ -292,11 +292,11 @@ class BspExecutionSettings(val basePath: File,
 
 object BspExecutionSettings {
 
-  def executionSettingsFor(project: Project, basePath: File): BspExecutionSettings = {
+  def executionSettingsFor(project: Project, basePath: Path): BspExecutionSettings = {
     if (project == null) executionSettingsFor(basePath)
     val bspSettings = BspSettings.getInstance(project)
     val bspTraceLog = BspSystemSettings.getInstance.getState.traceBsp
-    val linkedSettings = Option(bspSettings.getLinkedProjectSettings(basePath.getAbsolutePath))
+    val linkedSettings = Option(bspSettings.getLinkedProjectSettings(basePath.toCanonicalPath.toString))
     val runPreImportTask = linkedSettings.forall(_.runPreImportTask)
     val preImportConfig = linkedSettings.map(_.preImportConfig).getOrElse(AutoPreImport)
     val serverConfig = linkedSettings.map(_.serverConfig).getOrElse(AutoConfig)
@@ -304,7 +304,7 @@ object BspExecutionSettings {
     new BspExecutionSettings(basePath, bspTraceLog, runPreImportTask, preImportConfig, serverConfig)
   }
 
-  def executionSettingsFor(basePath: File): BspExecutionSettings = {
+  def executionSettingsFor(basePath: Path): BspExecutionSettings = {
     val systemSettings = BspSystemSettings.getInstance
     val defaultProjectSettings = new BspProjectSettings
     new BspExecutionSettings(

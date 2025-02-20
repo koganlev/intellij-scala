@@ -6,10 +6,11 @@ import org.jetbrains.bsp.protocol.session.BspServerConnector.{BspCapabilities, P
 import org.jetbrains.bsp.protocol.session.BspSession.Builder
 import org.jetbrains.bsp.{BspBundle, BspError, BspErrorMessage}
 import org.jetbrains.plugins.scala.build.BuildReporter
+import org.jetbrains.plugins.scala.extensions.PathExt
 
-import java.io.File
+import java.nio.file.Path
 
-class GenericConnector(base: File, compilerOutput: File, capabilities: BspCapabilities, methods: List[ProcessBsp]) extends BspServerConnector() {
+class GenericConnector(base: Path, compilerOutput: Path, capabilities: BspCapabilities, methods: List[ProcessBsp]) extends BspServerConnector() {
 
   override def connect(reporter: BuildReporter): Either[BspError, Builder] = {
     methods.collectFirst {
@@ -23,15 +24,15 @@ class GenericConnector(base: File, compilerOutput: File, capabilities: BspCapabi
   private def prepareBspSession(details: BspConnectionDetails): Builder = {
     val commandLine = new GeneralCommandLine(details.getArgv)
       .withParentEnvironmentType(GeneralCommandLine.ParentEnvironmentType.CONSOLE)
-    val builder = commandLine.toProcessBuilder.directory(base)
+    val builder = commandLine.toProcessBuilder.directory(base.toFile)
     val process = builder.start()
 
     val cleanup = () => {
       process.destroy()
     }
 
-    val rootUri = base.getCanonicalFile.toURI
-    val compilerOutputUri = compilerOutput.getCanonicalFile.toURI
+    val rootUri = base.toCanonicalPath.toUri
+    val compilerOutputUri = compilerOutput.toCanonicalPath.toUri
     val initializeBuildParams = BspServerConnector.createInitializeBuildParams(rootUri, compilerOutputUri, capabilities)
 
     BspSession.builder(process.pid(), process.getInputStream, process.getErrorStream, process.getOutputStream, initializeBuildParams, cleanup)

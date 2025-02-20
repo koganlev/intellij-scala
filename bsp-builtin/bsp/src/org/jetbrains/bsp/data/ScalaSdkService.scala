@@ -10,7 +10,7 @@ import org.jetbrains.bsp.BSP
 import org.jetbrains.plugins.scala.project._
 import org.jetbrains.plugins.scala.project.external.{ScalaAbstractProjectDataService, ScalaSdkUtils}
 
-import java.io.File
+import java.nio.file.Path
 import scala.jdk.CollectionConverters._
 
 class ScalaSdkService extends ScalaAbstractProjectDataService[ScalaSdkData, Library](ScalaSdkData.Key) {
@@ -34,14 +34,14 @@ class ScalaSdkService extends ScalaAbstractProjectDataService[ScalaSdkData, Libr
       configureScalaSdk(
         module,
         Option(scalaVersion),
-        scalacClasspath.asScala.toSeq
+        scalacClasspath.asScala.toSeq.map(_.toPath)
       )
     }
 
   private def configureScalaSdk(
     module: Module,
     scalaVersionOpt: Option[String],
-    compilerClasspath: Seq[File]
+    compilerClasspath: Seq[Path]
   )(implicit modelsProvider: IdeModifiableModelsProvider): Unit = for {
     scalaVersion <- scalaVersionOpt
     if ScalaLanguageLevel.findByVersion(scalaVersion).isDefined
@@ -50,7 +50,7 @@ class ScalaSdkService extends ScalaAbstractProjectDataService[ScalaSdkData, Libr
     ScalaSdkUtils.configureScalaSdk(
       module,
       scalaVersion,
-      compilerClasspath.map(_.toPath),
+      compilerClasspath,
       // TODO: currently we agreed that BSP implementation should just omit Scala3 doc jars in `ScalaBuildTarget.jars` field
       //  and we should probably create a separate request to obtain scaladoc classpath
       //  see https://github.com/build-server-protocol/build-server-protocol/issues/229

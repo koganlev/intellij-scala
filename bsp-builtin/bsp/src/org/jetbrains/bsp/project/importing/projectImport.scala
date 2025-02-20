@@ -29,7 +29,6 @@ import org.jetbrains.bsp.settings.BspProjectSettings._
 import org.jetbrains.bsp.settings._
 import org.jetbrains.sbt.project.SbtProjectImportProvider
 
-import java.io.File
 import java.nio.file.{Path, Paths}
 import java.util
 import java.util.Collections
@@ -53,7 +52,7 @@ class BspProjectImportBuilder
     serverConfig = AutoConfig
   }
 
-  private[importing] def autoConfigure(workspace: File): Unit = {
+  private[importing] def autoConfigure(workspace: Path): Unit = {
     val configSetups = bspConfigSteps.configSetupChoices(workspace)
     if (configSetups.size == 1)
       BspJdkUtil.findOrCreateBestJdkForProject(None).foreach(bspConfigSteps.configureBuilder(_, this, workspace, configSetups.head))
@@ -82,7 +81,7 @@ class BspProjectImportBuilder
 
   override def doPrepare(context: WizardContext): Unit = {}
   override def beforeCommit(dataNode: DataNode[ProjectData], project: Project): Unit = {}
-  override def getExternalProjectConfigToUse(file: File): File = file
+  override def getExternalProjectConfigToUse(file: java.io.File): java.io.File = file
   override def applyExtraSettings(context: WizardContext): Unit = {}
   override def getName: String = BSP.Name
   override def getIcon: Icon = BSP.Icon
@@ -219,10 +218,10 @@ class BspProjectImportProvider(builder: BspProjectImportBuilder)
 
   override def createSteps(context: WizardContext): Array[ModuleWizardStep] = {
     builder.reset()
-    builder.autoConfigure(context.getProjectDirectory.toFile)
+    builder.autoConfigure(context.getProjectDirectory)
     builder.setFileToImport(context.getProjectDirectory.toString)
     Array(
-      new BspSetupConfigStep(context, builder, context.getProjectDirectory.toFile),
+      new BspSetupConfigStep(context, builder, context.getProjectDirectory),
       new BspChooseConfigStep(context, builder)
     )
   }
@@ -248,7 +247,7 @@ class BspProjectOpenProcessor extends ProjectOpenProcessor {
 object BspProjectOpenProcessor {
 
   def canOpenProject(workspace: VirtualFile): Boolean = {
-    val ioWorkspace = new File(workspace.getPath)
+    val ioWorkspace = Path.of(workspace.getPath)
 
     val bspConnectionProtocolSupported = BspConnectionConfig.workspaceConfigurationFiles(ioWorkspace).nonEmpty
     val bloopProject = BspUtil.bloopConfigDir(ioWorkspace).isDefined
@@ -256,7 +255,7 @@ object BspProjectOpenProcessor {
     // temporarily disable sbt importing via bloop from welcome screen (SCL-17359)
     val sbtProject = false
 
-    val canImportWithInstaller = BspProjectInstallProvider.canImport(workspace.toNioPath.toFile)
+    val canImportWithInstaller = BspProjectInstallProvider.canImport(workspace.toNioPath)
 
     bspConnectionProtocolSupported || bloopProject || bspConnectionProtocolSupported || sbtProject || canImportWithInstaller
   }

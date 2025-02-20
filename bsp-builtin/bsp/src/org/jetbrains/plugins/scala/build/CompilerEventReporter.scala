@@ -11,7 +11,7 @@ import org.jetbrains.plugins.scala.build.BuildMessages.stripAnsiCodes
 import org.jetbrains.plugins.scala.compiler.{CompilerEvent, CompilerEventListener}
 import org.jetbrains.plugins.scala.util.CompilationId
 
-import java.io.File
+import java.nio.file.Path
 import scala.collection.mutable
 
 class CompilerEventReporter(project: Project,
@@ -21,7 +21,7 @@ class CompilerEventReporter(project: Project,
   private val publisher = project.getMessageBus
     .syncPublisher(CompilerEventListener.topic)
 
-  private val files = mutable.Set[File]()
+  private val files = mutable.Set[Path]()
 
   private var hasErrors: Boolean = false
 
@@ -32,18 +32,18 @@ class CompilerEventReporter(project: Project,
       val problemEnd = PosInfo(pos.getEndLine + 1, pos.getEndColumn + 1)
       val msg = Client.ClientMsg(kind, stripAnsiCodes(text), Some(SerializablePath(pos.getFile.toPath)), Some(problemStart), Some(problemStart), Some(problemEnd), Nil)
       val event = CompilerEvent.MessageEmitted(compilationId, None, None, msg)
-      files.add(pos.getFile)
+      files.add(pos.getFile.toPath)
       publisher.eventReceived(event)
     }
 
   private def finishFiles(): Unit = {
-    val event = CompilerEvent.CompilationFinished(compilationId, None, files.map(f => SerializablePath(f.toPath)).toSet)
+    val event = CompilerEvent.CompilationFinished(compilationId, None, files.map(SerializablePath(_)).toSet)
     publisher.eventReceived(event)
   }
 
   /** Clear any messages associated with file. */
-  override def clear(file: File): Unit = {
-    files.add(file)
+  override def clear(file: java.io.File): Unit = {
+    files.add(file.toPath)
     val event = CompilerEvent.CompilationFinished(compilationId, None, Set(SerializablePath(file.toPath)))
     publisher.eventReceived(event)
   }

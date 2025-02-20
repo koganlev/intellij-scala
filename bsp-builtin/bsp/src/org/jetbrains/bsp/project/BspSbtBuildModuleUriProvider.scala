@@ -4,7 +4,6 @@ import com.intellij.openapi.module.Module
 import org.jetbrains.plugins.scala.extensions.ObjectExt
 import org.jetbrains.sbt.project.SbtBuildModuleUriProvider
 
-import java.io.File
 import java.net.URI
 
 final class BspSbtBuildModuleUriProvider extends SbtBuildModuleUriProvider {
@@ -14,7 +13,7 @@ final class BspSbtBuildModuleUriProvider extends SbtBuildModuleUriProvider {
     sbtModuleData.map(_.buildModuleId.uri)
   }
 
-  override def getBuildModuleBaseDirectory(module: Module): Option[File] = {
+  override def getBuildModuleBaseDirectory(module: Module): Option[java.io.File] = {
     val sbtModuleData = BspExternalSystemUtil.getSbtModuleData(module)
     sbtModuleData.flatMap(_.baseDirectory.toOption)
   }
