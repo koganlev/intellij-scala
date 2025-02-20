@@ -17,36 +17,34 @@ class GivenFilter extends ElementFilter {
     if (context == null || !context.isInScala3File || context.is[PsiComment]) return false
     val leaf = PsiTreeUtil.getDeepestFirst(context)
 
-    if (leaf != null) {
-      val parent = leaf.getParent
-      val (stopHere, res) = getForAll(parent, leaf)
+    val parent = leaf.getParent
+    val (stopHere, res) = getForAll(parent, leaf)
 
-      if (stopHere) return res
-      if (checkAfterSoftModifier(parent, leaf)) return true
+    if (stopHere) return res
+    if (checkAfterSoftModifier(parent, leaf)) return true
 
-      parent match {
-        case _: ScReferenceExpression =>
-          val context = if (parent.getParent.is[ScTuple]) parent.getParent else parent
-          checkErrorInFor(context)
-        case _: ScStableCodeReference =>
-          parent.parentOfType[ScAnnotation] match {
-            case Some(annotation & PrevSiblingNotWhitespace(_: ScReferenceExpression | _: ScTuple)) =>
-              checkErrorInFor(annotation.getParent)
-            case _ => false
-          }
-        case pat: ScReferencePattern =>
-          var element = pat.getParent
-          while (element != null && !element.is[ScFor, ScCaseClause]) {
-            val isValid = element.is[ScInfixPattern, ScNamingPattern, ScTuplePattern, ScPatterns] ||
-              element.is[ScForBinding, ScGenerator, ScEnumerators]
+    parent match {
+      case _: ScReferenceExpression =>
+        val context = if (parent.getParent.is[ScTuple]) parent.getParent else parent
+        checkErrorInFor(context)
+      case _: ScStableCodeReference =>
+        parent.parentOfType[ScAnnotation] match {
+          case Some(annotation & PrevSiblingNotWhitespace(_: ScReferenceExpression | _: ScTuple)) =>
+            checkErrorInFor(annotation.getParent)
+          case _ => false
+        }
+      case pat: ScReferencePattern =>
+        var element = pat.getParent
+        while (element != null && !element.is[ScFor, ScCaseClause]) {
+          val isValid = element.is[ScInfixPattern, ScNamingPattern, ScTuplePattern, ScPatterns] ||
+            element.is[ScForBinding, ScGenerator, ScEnumerators]
 
-            if (!isValid) return false
-            element = element.getParent
-          }
-          element != null
-        case _ => false
-      }
-    } else false
+          if (!isValid) return false
+          element = element.getParent
+        }
+        element != null
+      case _ => false
+    }
   }
 
   override def isClassAcceptable(hintClass: Class[_]): Boolean = true
@@ -60,7 +58,9 @@ object GivenFilter {
     val errorBeforeGiven = context.prevLeafs.filterNot(_.is[PsiComment, PsiWhiteSpace]).nextOption()
 
     errorBeforeGiven match {
-      case Some(err: PsiErrorElement) => err.getErrorDescription == ErrMsg("expected.do.or.yield")
+      case Some(err: PsiErrorElement) =>
+        err.getErrorDescription == ErrMsg("expected.do.or.yield") ||
+          err.getErrorDescription == ErrMsg("enumerators.expected")
       case _ => false
     }
   }
