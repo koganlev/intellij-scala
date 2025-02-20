@@ -1,23 +1,16 @@
 package org.jetbrains.sbt.project.template
 
-import com.intellij.ide.util.projectWizard.{ModuleWizardStep, SettingsStep}
 import com.intellij.openapi.module.Module
-import com.intellij.openapi.options.ConfigurationException
-import com.intellij.openapi.projectRoots.{JavaSdk, JavaSdkVersion, Sdk}
 import com.intellij.openapi.util.io.FileUtil
-import org.jetbrains.annotations.{ApiStatus, NonNls, TestOnly}
+import org.jetbrains.annotations.{ApiStatus, NonNls}
 import org.jetbrains.plugins.scala.ScalaVersion
 import org.jetbrains.plugins.scala.extensions._
 import org.jetbrains.plugins.scala.project.template.{DefaultModuleContentEntryFolders, patchProjectLabels}
-import org.jetbrains.plugins.scala.project.{ScalaLanguageLevel, Version, Versions}
-import org.jetbrains.plugins.scala.util.ui.extensions.JComboBoxOps
-import org.jetbrains.sbt.project.template.wizard.SbtModuleStepLike
-import org.jetbrains.sbt.{Sbt, SbtBundle}
+import org.jetbrains.plugins.scala.project.{Version, Versions}
+import org.jetbrains.sbt.Sbt
 
-import java.awt.FlowLayout
 import java.io.File
 import javax.swing._
-import scala.math.Ordering.Implicits.infixOrderingOps
 
 /**
  * Do not extend, it will be made final in the future.<br>
@@ -32,13 +25,6 @@ class SbtModuleBuilder(
 ) extends SbtModuleBuilderBase {
 
   private val selections = _selections.copy() // Selections is mutable data structure
-
-  private lazy val defaultAvailableScalaVersions: Versions = Versions.Scala.allHardcodedVersions
-
-  private lazy val defaultAvailableSbtVersions: Versions = Versions.SBT.allHardcodedVersions
-
-  private lazy val defaultAvailableSbtVersionsForScala3: Versions = Versions.SBT.sbtVersionsForScala3(defaultAvailableSbtVersions)
-
   def this() = this(SbtModuleBuilderSelections.default)
 
   override def getNodeIcon: Icon = Sbt.Icon
@@ -59,109 +45,9 @@ class SbtModuleBuilder(
 
     SbtModuleBuilder.createProjectTemplateIn(root, name, scalaVersion, sbtVersion, packagePrefix)
   }
-
-  override def modifySettingsStep(settingsStep: SettingsStep): ModuleWizardStep =
-    new SbtModuleBuilder.Step(settingsStep, selections, this)
 }
 
 object SbtModuleBuilder {
-
-  final class Step(
-    settingsStep: SettingsStep,
-    override protected val selections: SbtModuleBuilderSelections,
-    sbtModuleBuilder: SbtModuleBuilder
-  ) extends ScalaSettingsStepBase(settingsStep, sbtModuleBuilder)
-    with SbtModuleStepLike {
-
-    // NOTE: ModuleWizardStep is recreated on validation failures, so to avoid multiple "Scala / Sbt versions download"
-    // after each validation failure, we need to take this lazy values from the sbtModuleBuilder, which is not recreated
-    override protected lazy val defaultAvailableScalaVersions: Versions = sbtModuleBuilder.defaultAvailableScalaVersions
-    override protected lazy val defaultAvailableSbtVersions: Versions = sbtModuleBuilder.defaultAvailableSbtVersions
-    override protected lazy val defaultAvailableSbtVersionsForScala3: Versions = sbtModuleBuilder.defaultAvailableSbtVersionsForScala3
-
-    locally {
-      initSelectionsAndUi(myWizardContext.getDisposable)
-
-      //
-      // Add UI elements to the Wizard Step
-      //
-      val SpaceBeforeClassifierCheckbox = 4
-
-      val sbtVersionPanel = applyTo(new JPanel(new FlowLayout(FlowLayout.LEFT, 0, 0)))(
-        _.add(sbtVersionComboBox),
-        _.add(Box.createHorizontalStrut(SpaceBeforeClassifierCheckbox)),
-        _.add(downloadSbtSourcesCheckbox),
-      )
-
-      val scalaVersionPanel = applyTo(new JPanel(new FlowLayout(FlowLayout.LEFT, 0, 0)))(
-        _.add(scalaVersionComboBox),
-        _.add(Box.createHorizontalStrut(SpaceBeforeClassifierCheckbox)),
-        _.add(downloadScalaSourcesCheckbox),
-      )
-
-      settingsStep.addSettingsField(sbtLabelText, sbtVersionPanel)
-      settingsStep.addSettingsField(scalaLabelText, scalaVersionPanel)
-      settingsStep.addSettingsField(packagePrefixLabelText, packagePrefixPanelWithTooltip)
-
-      Option(sbtVersionPanel.getParent).foreach(patchProjectLabels)
-    }
-
-    // TODO: obsolete? the same behaviour is in the SdkSettingsStep
-    override def updateDataModel(): Unit = {
-      settingsStep.getContext.setProjectJdk(myJdkComboBox.getSelectedJdk)
-    }
-
-    @throws[ConfigurationException]
-    override def validate(): Boolean = super.validate() && {
-      for {
-        sdk <- Option(myJdkComboBox.getSelectedJdk)
-        version <- selections.scalaVersion
-
-        languageLevel <- ScalaLanguageLevel.findByVersion(version)
-      } validateLanguageLevel(languageLevel, sdk)
-
-      true
-    }
-
-    @throws[ConfigurationException]
-    private def validateLanguageLevel(languageLevel: ScalaLanguageLevel, sdk: Sdk): Unit = {
-      import JavaSdkVersion.JDK_1_8
-      import ScalaLanguageLevel._
-
-      def reportMisconfiguration(libraryName: String,
-                                 libraryVersion: String) =
-        throw new ConfigurationException(
-          SbtBundle.message("scala.version.requires.library.version", languageLevel.getVersion, libraryName, libraryVersion),
-          SbtBundle.message("wrong.library.version", libraryName)
-        )
-
-      //https://docs.scala-lang.org/overviews/jdk-compatibility/overview.html
-      // TODO (minor) carefully update for other JDK versions, but maybe show a warning instead of error, cause the site states:
-      //  "Even when a version combination isn't listed as supported, most features may still work.
-      //   (But Scala 2.12+ definitely doesn't work at all on JDK 6 or 7.)"
-      //
-      val jdk = JavaSdk.getInstance().getVersion(sdk)
-      if (jdk < JDK_1_8 && languageLevel >= Scala_2_12) {
-        reportMisconfiguration("JDK", JDK_1_8.getDescription)
-      }
-    }
-
-    @TestOnly
-    def setScalaVersion(version: String): Unit = {
-      scalaVersionComboBox.setSelectedItemEnsuring(version)
-    }
-
-    @TestOnly
-    def setSbtVersion(version: String): Unit = {
-      sbtVersionComboBox.setSelectedItemEnsuring(version)
-    }
-
-    @TestOnly
-    def setPackagePrefix(prefix: String): Unit = {
-      packagePrefixTextField.setText(prefix)
-    }
-  }
-
   private def createProjectTemplateIn(
     root: File,
     @NonNls name: String,
