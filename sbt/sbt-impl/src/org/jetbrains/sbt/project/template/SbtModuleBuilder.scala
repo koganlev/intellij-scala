@@ -39,7 +39,7 @@ class SbtModuleBuilder(
 
   override protected def createProjectTemplateIn(root: File): Option[DefaultModuleContentEntryFolders] = {
     val name = getName
-    val sbtVersion = selections.sbtVersion.map(_.presentation).getOrElse(Versions.SBT.LatestSbtVersion)
+    val sbtVersion = selections.sbtVersion.map(_.minor).getOrElse(Versions.SBT.LatestSbtVersion)
     val scalaVersion = selections.scalaVersion.getOrElse(ScalaVersion.Latest.Scala_2_13.minor)
     val packagePrefix = selections.packagePrefix
 

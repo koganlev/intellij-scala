@@ -2,8 +2,9 @@ package org.jetbrains.sbt.project.template.wizard
 
 import com.intellij.ide.JavaUiBundle
 import com.intellij.ide.projectWizard.ProjectWizardJdkIntent.DetectedJdk
-import com.intellij.ide.projectWizard.{ProjectWizardJdkComboBox, ProjectWizardJdkComboBoxKt}
 import com.intellij.ide.projectWizard.generators.JdkDownloadService
+import com.intellij.ide.projectWizard.{ProjectWizardJdkComboBox, ProjectWizardJdkComboBoxKt}
+import com.intellij.ide.wizard.NewProjectWizardBaseData.getBaseData
 import com.intellij.ide.wizard.{AbstractNewProjectWizardStep, NewProjectWizardStep}
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.observable.properties.{GraphProperty, ObservableProperty, PropertyGraph}
@@ -12,7 +13,6 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.impl.jdkDownloader.JdkDownloadTask
 import com.intellij.openapi.projectRoots.{JavaSdkVersion, Sdk}
 import com.intellij.openapi.roots.ui.configuration.projectRoot.SdkDownloadTask
-import com.intellij.ide.wizard.NewProjectWizardBaseData.getBaseData
 import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.openapi.ui.validation.DialogValidationRequestor
 import com.intellij.ui.components.JBCheckBox
@@ -23,9 +23,9 @@ import org.jetbrains.annotations.Nullable
 import org.jetbrains.plugins.scala.extensions._
 import org.jetbrains.plugins.scala.project.{Version, Versions}
 import org.jetbrains.plugins.scala.util.AsynchronousVersionsDownloading
-import org.jetbrains.sbt.project.template.wizard.kotlin_interop.KotlinInteropUtils
 import org.jetbrains.sbt.SbtBundle
 import org.jetbrains.sbt.project.template.SComboBox
+import org.jetbrains.sbt.project.template.wizard.kotlin_interop.KotlinInteropUtils
 
 import java.lang
 import java.util.concurrent.atomic.AtomicBoolean

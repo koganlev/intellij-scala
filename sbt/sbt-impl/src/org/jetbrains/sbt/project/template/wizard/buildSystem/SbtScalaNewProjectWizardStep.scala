@@ -18,6 +18,7 @@ import com.intellij.ui.components.JBTextField
 import com.intellij.ui.dsl.builder._
 import com.intellij.ui.dsl.gridLayout.HorizontalAlign
 import com.intellij.ui.layout.ValidationInfoBuilder
+
 import kotlin.Unit.{INSTANCE => KUnit}
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.plugins.scala.extensions.{ObjectExt, ToNullSafe}
@@ -25,6 +26,7 @@ import org.jetbrains.plugins.scala.isUnitTestMode
 import org.jetbrains.plugins.scala.project.{Version, Versions}
 import org.jetbrains.plugins.scala.project.template.{PackagePrefixStepLike, ScalaSDKStepLike}
 import org.jetbrains.plugins.scala.util.ui.extensions.JComboBoxOps
+import org.jetbrains.sbt.SbtVersion
 import org.jetbrains.sbt.project.template.wizard.{SbtNewProjectWizardStep, ScalaNewProjectWizardMultiStep, ScalaVersionStepLike}
 import org.jetbrains.sbt.project.template.{SbtModuleBuilder, SbtModuleBuilderSelections}
 
@@ -178,7 +180,7 @@ final class SbtScalaNewProjectWizardStep(parent: ScalaNewProjectWizardMultiStep)
       selections.sbtVersion = None
       selections.updateSbtVersion(sbtVersions)
     }
-    sbtVersionComboBox.updateComboBoxModel(sbtVersions.toArray, selections.sbtVersion)
+    sbtVersionComboBox.updateComboBoxModel(sbtVersions.toArray, selections.sbtVersion.map(_.value))
   }
 
   private def initUiElementsModel(): Unit = {
@@ -187,7 +189,7 @@ final class SbtScalaNewProjectWizardStep(parent: ScalaNewProjectWizardMultiStep)
   }
 
   private def initUiElementsModelFrom(selections: SbtModuleBuilderSelections): Unit = {
-    sbtVersionComboBox.setSelectedItemSafe(selections.sbtVersion.orNull)
+    sbtVersionComboBox.setSelectedItemSafe(selections.sbtVersion.map(_.value).orNull)
     downloadSbtSourcesCheckbox.setSelected(selections.downloadSbtSources)
     packagePrefixTextField.setText(selections.packagePrefix.getOrElse(""))
   }
@@ -197,7 +199,7 @@ final class SbtScalaNewProjectWizardStep(parent: ScalaNewProjectWizardMultiStep)
    */
   private def initUiElementsListeners(): Unit = {
     sbtVersionComboBox.addActionListener { _ =>
-      selections.sbtVersion = sbtVersionComboBox.getSelectedItemTyped
+      selections.sbtVersion = sbtVersionComboBox.getSelectedItemTyped.map(SbtVersion(_))
     }
 
     scalaVersionComboBox.addActionListener { _ =>
@@ -231,7 +233,7 @@ final class SbtScalaNewProjectWizardStep(parent: ScalaNewProjectWizardMultiStep)
 
     // if we select Scala3 version but had Scala2 version selected before and some sbt version incompatible with Scala3,
     // the latest item from the list will be automatically selected
-    sbtVersionComboBox.setSelectedItemSafe(selections.sbtVersion.orNull)
+    sbtVersionComboBox.setSelectedItemSafe(selections.sbtVersion.map(_.value).orNull)
     selections.updateSbtVersion(sbtVersions.toSeq)
   }
 

@@ -30,15 +30,20 @@ object SbtVersion {
 
   object Latest {
     val Sbt_0_13: SbtVersion = SbtVersion("0.13.18")
-    val Sbt_2: SbtVersion = SbtVersion("2.0.0-M3")
 
     // NOTE: when updating the latest sbt version,
-    // also update `Versions.sbtVersion` in `project/Versions.scala` in project definition
+    // also update `Versions.sbtVersion` in `project/dependencies.scala` in project definition
+    // (but let's keep it sbt 1.x for some time)
     private val Sbt_1_10 = SbtVersion("1.10.7")
+    private val Sbt_2_0_Candidate = SbtVersion("2.0.0-M3")
+
     val Sbt_1: SbtVersion = Sbt_1_10
+    val Sbt_2: SbtVersion = Sbt_2_0_Candidate //TODO: replace with stable version once sbt 2 is released
+    val Sbt_LatestIncludingUnreleased: SbtVersion = Sbt_2_0_Candidate.ensuring(_ >= Sbt_2)
 
-    val Sbt_LatestIncludingUnreleased: SbtVersion = SbtVersion("2.0.0-M3")
-
+    /**
+     * List of latest stable SBT 1.x versions
+     */
     val AllSbt1: Seq[SbtVersion] = Seq(
       SbtVersion("1.0.4"),
       SbtVersion("1.1.6"),
@@ -51,6 +56,13 @@ object SbtVersion {
       SbtVersion("1.8.3"),
       SbtVersion("1.9.9"),
       Sbt_1_10
+    )
+
+    /**
+     * List of latest stable SBT 2.x versions
+     */
+    val AllSbt2: Seq[SbtVersion] = Seq(
+      //TODO: add once sbt 2 is released
     )
   }
 
