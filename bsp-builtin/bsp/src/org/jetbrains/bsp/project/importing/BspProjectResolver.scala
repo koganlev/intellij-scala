@@ -7,9 +7,10 @@ import com.intellij.openapi.externalSystem.model.project._
 import com.intellij.openapi.externalSystem.model.task.{ExternalSystemTaskId, ExternalSystemTaskNotificationListener}
 import com.intellij.openapi.externalSystem.model.{DataNode, ExternalSystemException}
 import com.intellij.openapi.externalSystem.service.project.ExternalSystemProjectResolver
+import com.intellij.openapi.project.{Project, ProjectManager}
 import org.jetbrains.bsp.BspUtil._
 import org.jetbrains.bsp.project.BspExternalSystemManager.ScalaCliAffectedProjectFiles
-import org.jetbrains.bsp.project.BspProjectInstallProvider
+import org.jetbrains.bsp.project.{BspProjectInstallProvider, BspTargetCanCompile}
 import org.jetbrains.bsp.project.importing.BspProjectResolver._
 import org.jetbrains.bsp.project.importing.BspResolverDescriptors._
 import org.jetbrains.bsp.project.importing.BspResolverLogic._
@@ -56,7 +57,7 @@ class BspProjectResolver extends ExternalSystemProjectResolver[BspExecutionSetti
     val result = if (isPreviewMode) {
       val modules = ProjectModules(Nil, Nil)
       reporter.finish(BuildMessages.empty.status(BuildMessages.OK))
-      projectNode(workspace, modules, rootExclusions(workspace), "dummy-display-name")
+      projectNode(workspace, modules, rootExclusions(workspace), "dummy-display-name", List.empty)
     } else {
       runImport(workspace, executionSettings)
     }
@@ -98,6 +99,8 @@ class BspProjectResolver extends ExternalSystemProjectResolver[BspExecutionSetti
 
           val targets = targetsResponse.getTargets.asScala.toList
 
+          val compilableTargets: List[String] = targets.filter(target =>
+            target.getCapabilities.getCanCompile).map(bt => bt.getId.getUri)
           val td = targetData(targets, structureEventId)
 
           td.thenApply[DataNode[ProjectData]] { data =>
@@ -111,7 +114,7 @@ class BspProjectResolver extends ExternalSystemProjectResolver[BspExecutionSetti
             val descriptions = calculateModuleDescriptions(
               targets, scalacOptions.toSeq, javacOptions.toSeq, sources.toSeq, resources.toSeq, outputPaths.toSeq, depSources.toSeq
             )
-            projectNode(workspace, descriptions, rootExclusions(workspace), serverInfo.displayName)
+            projectNode(workspace, descriptions, rootExclusions(workspace), serverInfo.displayName, compilableTargets)
           }
           .reportFinished(
             reporter,

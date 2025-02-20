@@ -56,6 +56,13 @@ object BspProjectData {
     BspProjectData(sdk.orNull, vcsRootsCandidates, displayName)
 }
 
+case class BspTargetCanCompileData @PropertyMapping(Array("compilableTargets"))(
+  @NotNull compilableTargets: util.List[String]
+) extends BspEntityData
+
+object BspTargetCanCompileData {
+  val Key: Key[BspTargetCanCompileData] = datakey(classOf[BspTargetCanCompileData])
+}
 
 case class JdkData @PropertyMapping(Array("javaHome", "javaVersion"))(
   @Nullable javaHome: MyURI,
