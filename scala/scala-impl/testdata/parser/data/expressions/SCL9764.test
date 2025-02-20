@@ -90,12 +90,12 @@ ScalaFile
         PsiWhiteSpace(' ')
         ReferenceExpression: f2
           PsiElement(identifier)('f2')
-    PsiErrorElement:'}' expected
-      <empty list>
-    PsiWhiteSpace('\n  ')
-    PsiElement(identifier)('-')
-    PsiErrorElement:Enumerators expected in the 'for' statement
-      <empty list>
+      PsiWhiteSpace('\n  ')
+      ForBinding
+        ReferencePattern: -
+          PsiElement(identifier)('-')
+        PsiErrorElement:'<-' expected in generator statement
+          <empty list>
     PsiWhiteSpace('\n')
     PsiElement(})('}')
     PsiWhiteSpace(' ')

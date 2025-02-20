@@ -16,7 +16,7 @@ object Enumerator extends ParsingRule {
   override def parse(implicit builder: ScalaPsiBuilder): Boolean = {
     val enumeratorMarker = builder.mark()
 
-    def parseAfterPattern(hasPrefix: Boolean): Boolean = {
+    def parseAfterPattern(): Boolean = {
       builder.getTokenType match {
         case ScalaTokenTypes.tASSIGN =>
           builder.advanceLexer() //Ate =
@@ -28,21 +28,16 @@ object Enumerator extends ParsingRule {
         case ScalaTokenTypes.tCHOOSE =>
           enumeratorMarker.rollbackTo()
           Generator()
-        case _                       =>
-          if (hasPrefix) {
-            builder.error(ErrMsg("choose.expected"))
-            enumeratorMarker.done(ScalaElementType.FOR_BINDING)
-            true
-          } else {
-            enumeratorMarker.rollbackTo()
-            false
-          }
+        case _ =>
+          builder.error(ErrMsg("choose.expected"))
+          enumeratorMarker.done(ScalaElementType.FOR_BINDING)
+          true
       }
     }
 
     def parseGeneratorOrBinding(hasPrefix: Boolean): Boolean =
       if (Pattern1()) {
-        parseAfterPattern(hasPrefix)
+        parseAfterPattern()
       } else if (hasPrefix) {
         builder.error(ErrMsg("wrong.pattern"))
         enumeratorMarker.done(ScalaElementType.FOR_BINDING)

@@ -8,13 +8,15 @@ ScalaFile
     PsiWhiteSpace(' ')
     PsiElement({)('{')
     PsiWhiteSpace('\n ')
-    PatternInParenthesis
-      PsiElement(()('(')
-      ReferencePattern: a
-        PsiElement(identifier)('a')
-      PsiElement())(')')
-    PsiErrorElement:'<-' expected in generator statement
-      <empty list>
+    Enumerators
+      ForBinding
+        PatternInParenthesis
+          PsiElement(()('(')
+          ReferencePattern: a
+            PsiElement(identifier)('a')
+          PsiElement())(')')
+        PsiErrorElement:'<-' expected in generator statement
+          <empty list>
     PsiWhiteSpace('\n')
     PsiElement(})('}')
     PsiWhiteSpace(' ')
