@@ -13,7 +13,6 @@ import com.intellij.ui.UIBundle
 import com.intellij.ui.dsl.builder.{ButtonKt, Panel, Row, TopGap}
 
 import kotlin.Unit.{INSTANCE => KUnit}
-import com.intellij.ui.dsl.builder.Panel
 import com.intellij.util.SystemProperties
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.plugins.scala.project.Versions
@@ -35,7 +34,7 @@ final class ScalaCliNewProjectWizardStep(parent: ScalaNewProjectWizardMultiStep)
     with ScalaVersionStepLike
     with ScalaSDKStepLike {
 
-  override protected val defaultAvailableScalaVersions: Versions = Versions.Scala.allHardcodedVersions
+  override protected val defaultAvailableScalaVersions: Seq[String] = Versions.Scala.allHardcodedVersions.map(_.presentation)
 
   override protected val librariesContainer: LibrariesContainer =
     LibrariesContainerFactory.createContainer(parent.getContext.getProject)

@@ -6,7 +6,7 @@ import com.intellij.ui.components.JBCheckBox
 import com.intellij.ui.DocumentAdapter
 import org.jetbrains.plugins.scala.extensions._
 import org.jetbrains.plugins.scala.isUnitTestMode
-import org.jetbrains.plugins.scala.project.Versions
+import org.jetbrains.plugins.scala.project.{Version, Versions}
 import org.jetbrains.plugins.scala.project.template.PackagePrefixStepLike
 import org.jetbrains.sbt.SbtBundle
 import org.jetbrains.sbt.project.template.{SComboBox, SbtModuleBuilderSelections}
@@ -18,11 +18,11 @@ private[template] trait SbtModuleStepLike extends PackagePrefixStepLike with Sca
 
   override protected def selections: SbtModuleBuilderSelections
 
-  protected val defaultAvailableSbtVersions: Versions
-  protected val defaultAvailableSbtVersionsForScala3: Versions
+  protected val defaultAvailableSbtVersions: ListSet[Version]
+  protected val defaultAvailableSbtVersionsForScala3: Seq[Version]
 
-  private val availableSbtVersions: AtomicReference[Option[Versions]] = new AtomicReference(None)
-  private val availableSbtVersionsForScala3: AtomicReference[Option[Versions]] = new AtomicReference(None)
+  private val availableSbtVersions: AtomicReference[Option[Seq[Version]]] = new AtomicReference(None)
+  private val availableSbtVersionsForScala3: AtomicReference[Option[Seq[Version]]] = new AtomicReference(None)
 
   private val isSbtVersionManuallySelected: AtomicBoolean = new AtomicBoolean(false)
 
@@ -31,10 +31,10 @@ private[template] trait SbtModuleStepLike extends PackagePrefixStepLike with Sca
   //
 
   private val isSbtLoading = new AtomicBoolean(false)
-  protected lazy val sbtVersionComboBox: SComboBox[String] = createSComboBoxWithSearchingListRenderer(ListSet(defaultAvailableSbtVersions.versions: _*), None, isSbtLoading)
+  protected lazy val sbtVersionComboBox: SComboBox[Version] = createSComboBoxWithSearchingListRenderer(defaultAvailableSbtVersions, None, isSbtLoading)
 
   private def downloadSbtVersions(disposable: Disposable): Unit = {
-    val sbtDownloadVersions: ProgressIndicator => Versions = indicator => {
+    val sbtDownloadVersions: ProgressIndicator => Seq[Version] = indicator => {
       Versions.SBT.loadVersionsWithProgress(indicator)
     }
     downloadVersionsAsynchronously(isSbtLoading, disposable, sbtDownloadVersions, Versions.SBT.toString) { v =>
@@ -62,18 +62,18 @@ private[template] trait SbtModuleStepLike extends PackagePrefixStepLike with Sca
   }
 
   private lazy val _initSelectionsAndUi: Unit = {
-    selections.updateSbtVersion(defaultAvailableSbtVersions)
+    selections.updateSbtVersion(defaultAvailableSbtVersions.toSeq)
 
     initUiElementsModel()
     initUiElementsListeners()
   }
 
-  private def updateSelectionsAndElementsModelForSbt(sbtVersions: Versions): Unit = {
+  private def updateSelectionsAndElementsModelForSbt(sbtVersions: Seq[Version]): Unit = {
     if (!isSbtVersionManuallySelected.get()) {
       selections.sbtVersion = None
       selections.updateSbtVersion(sbtVersions)
     }
-    sbtVersionComboBox.updateComboBoxModel(sbtVersions.versions.toArray, selections.sbtVersion)
+    sbtVersionComboBox.updateComboBoxModel(sbtVersions.toArray, selections.sbtVersion)
   }
 
   private def initUiElementsModel(): Unit = {
@@ -119,11 +119,11 @@ private[template] trait SbtModuleStepLike extends PackagePrefixStepLike with Sca
    * Ensure that we do not show sbt versions < 1.5 if Scala 3.X is selected
    */
   private def updateSupportedSbtVersionsForSelectedScalaVersion(scalaVersion: Option[String]): Unit = {
-    val sbtVersions = availableSbtVersions.get().getOrElse(defaultAvailableSbtVersions)
+    val sbtVersions = availableSbtVersions.get().getOrElse(defaultAvailableSbtVersions).toSeq
     val sbtVersionsForScala3 = availableSbtVersionsForScala3.get().getOrElse(defaultAvailableSbtVersionsForScala3)
     val isScala3Selected = scalaVersion.exists(isScala3Version)
     val supportedSbtVersions = if (isScala3Selected) sbtVersionsForScala3 else sbtVersions
-    sbtVersionComboBox.setItems(supportedSbtVersions.versions.toArray)
+    sbtVersionComboBox.setItems(supportedSbtVersions.toArray)
 
     // if we select Scala3 version but had Scala2 version selected before and some sbt version incompatible with Scala3,
     // the latest item from the list will be automatically selected

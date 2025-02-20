@@ -20,7 +20,7 @@ import com.intellij.ui.layout.ValidationInfoBuilder
 import kotlin.Unit.{INSTANCE => KUnit}
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.plugins.scala.extensions.ToNullSafe
-import org.jetbrains.plugins.scala.project.Versions
+import org.jetbrains.plugins.scala.project.{Version, Versions}
 import org.jetbrains.plugins.scala.project.template.ScalaSDKStepLike
 import org.jetbrains.plugins.scala.util.ui.extensions.JComboBoxOps
 import org.jetbrains.sbt.project.template.wizard.{SbtModuleStepLike, ScalaNewProjectWizardMultiStep}
@@ -28,6 +28,7 @@ import org.jetbrains.sbt.project.template.{SbtModuleBuilder, SbtModuleBuilderSel
 
 import javax.swing.JLabel
 import scala.annotation.nowarn
+import scala.collection.immutable.ListSet
 
 //noinspection ApiStatus,UnstableApiUsage
 final class SbtScalaNewProjectWizardStep(parent: ScalaNewProjectWizardMultiStep)
@@ -41,7 +42,7 @@ final class SbtScalaNewProjectWizardStep(parent: ScalaNewProjectWizardMultiStep)
   override protected val librariesContainer: LibrariesContainer =
     LibrariesContainerFactory.createContainer(parent.getContext.getProject)
 
-  override protected lazy val defaultAvailableScalaVersions: Versions = Versions.Scala.allHardcodedVersions
+  override protected lazy val defaultAvailableScalaVersions: Seq[String] = Versions.Scala.allHardcodedVersions.map(_.presentation)
 
   @inline private def propertyGraph: PropertyGraph = getPropertyGraph
 
@@ -54,15 +55,15 @@ final class SbtScalaNewProjectWizardStep(parent: ScalaNewProjectWizardMultiStep)
   @TestOnly override private[project] def setAddSampleCode(value: java.lang.Boolean): Unit = addSampleCodeProperty.set(value)
 
   @TestOnly override def setScalaVersion(version: String): Unit = scalaVersionComboBox.setSelectedItemEnsuring(version)
-  @TestOnly override private[project] def setSbtVersion(version: String): Unit = sbtVersionComboBox.setSelectedItemEnsuring(version)
+  @TestOnly override private[project] def setSbtVersion(version: String): Unit = sbtVersionComboBox.setSelectedItemEnsuring(Version(version))
   @TestOnly override private[project] def setPackagePrefix(prefix: String): Unit = packagePrefixTextField.setText(prefix)
 
   private def getModuleName: String = moduleNameProperty.get()
 
   override protected val selections: SbtModuleBuilderSelections = SbtModuleBuilderSelections.default
 
-  override protected lazy val defaultAvailableSbtVersions: Versions = Versions.SBT.allHardcodedVersions
-  override protected lazy val defaultAvailableSbtVersionsForScala3: Versions = Versions.SBT.sbtVersionsForScala3(defaultAvailableSbtVersions)
+  override protected lazy val defaultAvailableSbtVersions: ListSet[Version] = ListSet(Versions.SBT.allHardcodedVersions: _*)
+  override protected val defaultAvailableSbtVersionsForScala3: Seq[Version] = Versions.SBT.sbtVersionsForScala3(defaultAvailableSbtVersions.toSeq)
 
   locally {
     moduleNameProperty.dependsOn(parent.getNameProperty: ObservableProperty[String], (() => parent.getName): kotlin.jvm.functions.Function0[_ <: String])

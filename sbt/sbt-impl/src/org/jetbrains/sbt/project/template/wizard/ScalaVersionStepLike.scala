@@ -8,7 +8,7 @@ import kotlin.Unit.{INSTANCE => KUnit}
 import org.jetbrains.annotations.Nls
 import org.jetbrains.plugins.scala.extensions.applyTo
 import org.jetbrains.plugins.scala.isUnitTestMode
-import org.jetbrains.plugins.scala.project.Versions
+import org.jetbrains.plugins.scala.project.{Version, Versions}
 import org.jetbrains.plugins.scala.project.template.ScalaVersionDownloadingDialog
 import org.jetbrains.plugins.scala.util.AsynchronousVersionsDownloading
 import org.jetbrains.sbt.SbtBundle
@@ -21,19 +21,20 @@ trait ScalaVersionStepLike extends AsynchronousVersionsDownloading {
 
   protected def selections: ScalaModuleBuilderSelections
 
-  protected val defaultAvailableScalaVersions: Versions
+  protected val defaultAvailableScalaVersions: Seq[String]
 
   private val isScalaVersionManuallySelected: AtomicBoolean = new AtomicBoolean(false)
 
   private val isScalaLoading = new AtomicBoolean(false)
-  protected lazy val scalaVersionComboBox: SComboBox[String] = createSComboBoxWithSearchingListRenderer(ListSet(defaultAvailableScalaVersions.versions: _*), None, isScalaLoading)
+  protected lazy val scalaVersionComboBox: SComboBox[String] = createSComboBoxWithSearchingListRenderer(ListSet(defaultAvailableScalaVersions: _*), None, isScalaLoading)
 
   private def downloadScalaVersions(disposable: Disposable): Unit = {
-    val scalaDownloadVersions: ProgressIndicator => Versions = indicator => {
+    val scalaDownloadVersions: ProgressIndicator => Seq[Version] = indicator => {
       Versions.Scala.loadVersionsWithProgress(indicator)
     }
     downloadVersionsAsynchronously(isScalaLoading, disposable, scalaDownloadVersions, Versions.Scala.toString) { v =>
-      updateSelectionsAndElementsModelForScala(v)
+      val stringRepresentation = v.map(_.presentation)
+      updateSelectionsAndElementsModelForScala(stringRepresentation)
     }
   }
 
@@ -73,12 +74,12 @@ trait ScalaVersionStepLike extends AsynchronousVersionsDownloading {
   }
 
 
-  private def updateSelectionsAndElementsModelForScala(scalaVersions: Versions): Unit = {
+  private def updateSelectionsAndElementsModelForScala(scalaVersions: Seq[String]): Unit = {
     if (!isScalaVersionManuallySelected.get()) {
       selections.scalaVersion = None
       selections.updateScalaVersion(scalaVersions)
     }
-    scalaVersionComboBox.updateComboBoxModel(scalaVersions.versions.toArray, selections.scalaVersion)
+    scalaVersionComboBox.updateComboBoxModel(scalaVersions.toArray, selections.scalaVersion)
     initSelectedScalaVersion(scalaVersions)
   }
 
@@ -106,9 +107,9 @@ trait ScalaVersionStepLike extends AsynchronousVersionsDownloading {
     )
   }
 
-  private def initSelectedScalaVersion(scalaVersions: Versions): Unit = {
+  private def initSelectedScalaVersion(scalaVersions: Seq[String]): Unit = {
     selections.scalaVersion match {
-      case Some(version) if scalaVersions.versions.contains(version) =>
+      case Some(version) if scalaVersions.contains(version) =>
         scalaVersionComboBox.setSelectedItemSafe(version)
 
         if (selections.scrollScalaVersionDropdownToTheTop) {
