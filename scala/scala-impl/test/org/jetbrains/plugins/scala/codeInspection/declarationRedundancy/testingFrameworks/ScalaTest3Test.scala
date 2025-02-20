@@ -36,15 +36,14 @@ class ScalaTest3Test extends ScalaUnusedDeclarationInspectionTestBase {
        |""".stripMargin
   )
 
-    def test_ref_spec(): Unit = checkTextHasNoErrors(
-      s"""
-         |import org.scalatest.refspec.RefSpec
-         |class Foo extends RefSpec {
-         |  object `Foo Bar` {
-         |    def `should pass`(): Unit = assert(true)
-         |  }
-         |}
-         |""".stripMargin
-    )
-
+  def test_ref_spec(): Unit = checkTextHasNoErrors(
+    s"""
+       |import org.scalatest.refspec.RefSpec
+       |class Foo extends RefSpec {
+       |  object `Foo Bar` {
+       |    def `should pass`(): Unit = assert(true)
+       |  }
+       |}
+       |""".stripMargin
+  )
 }
