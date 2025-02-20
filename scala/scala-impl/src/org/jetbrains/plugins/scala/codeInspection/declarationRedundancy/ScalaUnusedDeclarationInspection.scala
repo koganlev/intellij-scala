@@ -12,6 +12,7 @@ import org.jetbrains.plugins.scala.codeInspection.declarationRedundancy.cheapRef
 import org.jetbrains.plugins.scala.extensions.{ObjectExt, PsiElementExt}
 import org.jetbrains.plugins.scala.lang.psi.ScalaPsiUtil.{inNameContext, isOnlyVisibleInLocalFile}
 import org.jetbrains.plugins.scala.lang.psi.api.ScalaFile
+import org.jetbrains.plugins.scala.lang.psi.api.base.ScNamedTupleComponent
 import org.jetbrains.plugins.scala.lang.psi.api.statements.ScFunctionDeclaration
 import org.jetbrains.plugins.scala.lang.psi.api.statements.params.ScTypeParam
 import org.jetbrains.plugins.scala.lang.psi.api.toplevel.ScNamedElement
@@ -118,6 +119,7 @@ final class ScalaUnusedDeclarationInspection extends HighlightingPassInspection 
 
     (enableInScala3 || !element.isInScala3File) && Search.Util.shouldProcessElement(element) && {
       element match {
+        case _: ScNamedTupleComponent => false
         case m: ScMember if isTopLevelDefinitionInWorksheetFile(m) => false
         case n: ScNamedElement =>
           if (isOnlyVisibleInLocalFile(n)) {
