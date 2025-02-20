@@ -113,7 +113,7 @@ final class SbtProcessManager(project: Project) extends Disposable {
 
   private val IdeaRunIdVmOption = "idea.runid"
 
-  private def createShellProcessHandler(): (ColoredProcessHandler, Option[RemoteConnection]) = {
+  private def createShellProcessHandler(): (ColoredProcessHandler, Option[RemoteConnection], SbtVersion) = {
     log.debug("createShellProcessHandler")
     val workingDirPath = getWorkingDirPath(project)
     val workingDir = new File(workingDirPath)
@@ -188,7 +188,6 @@ final class SbtProcessManager(project: Project) extends Disposable {
       commandLine.addParameter(s"early(addPluginSbtFile=\"\"\"$settingsPath\"\"\")")
     }
 
-    // SCL-22858 compiler bytecode indices are disabled in sbt shell
     val commands = "idea-shell"
 
     commandLine.addParameter(commands)
@@ -200,7 +199,7 @@ final class SbtProcessManager(project: Project) extends Disposable {
     cpty.setShouldKillProcessSoftly(true)
     patchWindowSize(cpty.getProcess)
 
-    (cpty, debugConnection)
+    (cpty, debugConnection, projectSbtVersion)
   }
 
   private def getOrCreateExtraSbtSettingsFile(
@@ -356,10 +355,10 @@ final class SbtProcessManager(project: Project) extends Disposable {
   }
 
   private def createProcessData(): ProcessData = {
-    val (handler, debugConnection) = createShellProcessHandler()
+    val (handler, debugConnection, sbtVersion) = createShellProcessHandler()
     val title = project.getName
     val runner = new SbtShellRunner(project, title, debugConnection)
-    ProcessData(handler, runner)
+    ProcessData(handler, runner, sbtVersion)
   }
 
   /** Supply a PrintWriter that writes to the current process. */
@@ -376,7 +375,7 @@ final class SbtProcessManager(project: Project) extends Disposable {
   private[shell] def acquireShellProcessHandler(): ColoredProcessHandler = processDataMutex.synchronized {
     log.trace("acquireShellProcessHandler")
     processData match {
-      case Some(data@ProcessData(handler, _)) if isAlive(data) =>
+      case Some(data@ProcessData(handler, _, _)) if isAlive(data) =>
         handler
       case _ =>
         updateProcessData().processHandler
@@ -387,7 +386,7 @@ final class SbtProcessManager(project: Project) extends Disposable {
   def acquireShellRunner(): SbtShellRunner = processDataMutex.synchronized {
     log.trace("processData")
     processData match {
-      case Some(data@ProcessData(_, runner)) if isAlive(data) =>
+      case Some(data@ProcessData(_, runner, _)) if isAlive(data) =>
         runner
       case _ =>
         updateProcessData().runner
@@ -437,7 +436,7 @@ final class SbtProcessManager(project: Project) extends Disposable {
   def destroyProcess(): Unit = processDataMutex.synchronized {
     log.debug("destroyProcess")
     processData match {
-      case Some(ProcessData(handler, _)) =>
+      case Some(ProcessData(handler, _, _)) =>
         val runnable: Runnable = () => terminateProcessGracefully(handler.getProcess)
         ProgressManager.getInstance().runProcessWithProgressSynchronously(runnable, SbtBundle.message("sbt.shell.stopping.process"), false, project)
         processData = None
@@ -460,6 +459,9 @@ final class SbtProcessManager(project: Project) extends Disposable {
     // processData.processHandler.getProcess.isAlive // TODO: I am not sure which is the best
     !processData.processHandler.isProcessTerminated
   }
+
+  def sbtVersionUsedDuringProcessStart: Option[SbtVersion] =
+    processData.map(_.sbtVersion)
 }
 
 object SbtProcessManager {
@@ -474,8 +476,14 @@ object SbtProcessManager {
     Option(project.getServiceIfCreated(classOf[SbtProcessManager]))
   }
 
-  private case class ProcessData(processHandler: ColoredProcessHandler,
-                                 runner: SbtShellRunner)
+  /**
+   * @param sbtVersion version of sbt detected when launching the sbt process
+   */
+  private case class ProcessData(
+    processHandler: ColoredProcessHandler,
+    runner: SbtShellRunner,
+    sbtVersion: SbtVersion
+  )
 
   private[shell]
   def buildVMParameters(sbtSettings: SbtExecutionSettings, workingDir: File, sbtOpts: Seq[String]): Seq[String] = {

@@ -24,7 +24,7 @@ import org.jetbrains.sbt.project.SbtProjectSystem
 import org.jetbrains.sbt.project.module.SbtModuleType
 import org.jetbrains.sbt.settings.SbtSettings
 import org.jetbrains.sbt.shell.SbtShellCommunication._
-import org.jetbrains.sbt.{SbtBundle, SbtUtil}
+import org.jetbrains.sbt.{SbtBundle, SbtUtil, SbtVersion, SbtVersionCapabilities, SbtVersionDetector}
 
 import scala.annotation.nowarn
 import scala.concurrent.Await
@@ -51,10 +51,11 @@ final class SbtProjectTaskRunnerImpl
     case _ => false
   }
 
-  override def run(project: Project,
-                   context: ProjectTaskContext,
-                   tasks: ProjectTask*): Promise[ProjectTaskRunner.Result] = {
-
+  override def run(
+    project: Project,
+    context: ProjectTaskContext,
+    tasks: ProjectTask*
+  ): Promise[ProjectTaskRunner.Result] = {
     val validTasks = tasks.collect {
       // TODO Android AARs are currently imported as modules. need a way to filter them away before building
       case task: ModuleBuildTask
@@ -63,9 +64,13 @@ final class SbtProjectTaskRunnerImpl
           task
     }
 
+    val sbtVersion: SbtVersion = SbtProcessManager.instanceIfCreated(project)
+      .flatMap(_.sbtVersionUsedDuringProcessStart)
+      .getOrElse(SbtVersionDetector.detectSbtVersion(project))
+
     // the "build" button in IDEA always runs the build for all individual modules,
     // and may work differently than just calling the products task from the main module in sbt
-    val moduleCommands = validTasks.flatMap(buildCommands)
+    val moduleCommands = validTasks.flatMap(buildCommands(_, sbtVersion))
 
     if (moduleCommands.isEmpty && validTasks.nonEmpty) {
       // sometimes external system loses information about sbt modules
@@ -112,13 +117,18 @@ final class SbtProjectTaskRunnerImpl
     promiseResult
   }
 
-  private def buildCommands(task: ModuleBuildTask): Seq[String] = {
+  private def buildCommands(task: ModuleBuildTask, sbtVersion: SbtVersion): Seq[String] = {
     // TODO sensible way to find out what scopes to run it for besides compile and test?
     // TODO make tasks should be user-configurable
     SbtUtil.getSbtModuleData(task.getModule).toSeq.flatMap { sbtModuleData =>
-      val scope = SbtUtil.makeSbtProjectId(sbtModuleData)
+      val projectScope = SbtUtil.makeSbtProjectId(sbtModuleData)
       // `products` task is a little more general than just `compile`
-      Seq(s"$scope/products", s"$scope/test:products")
+      val buildMain = s"$projectScope/products"
+      val buildTest = if (SbtVersionCapabilities.isSlashSyntaxSupported(sbtVersion))
+        s"$projectScope/Test/products"
+      else
+        s"$projectScope/test:products"
+      Seq(buildMain, buildTest)
     }
   }
 
