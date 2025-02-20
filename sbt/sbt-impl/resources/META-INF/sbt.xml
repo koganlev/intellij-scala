@@ -73,8 +73,6 @@
         <moduleType id="SHARED_SOURCES_MODULE" implementationClass="org.jetbrains.sbt.project.sources.SharedSourcesModuleType"/>
         <moduleConfigurationEditorProvider implementation="org.jetbrains.sbt.project.sources.SharedSourcesModuleEditorProvider"/>
 
-        <projectTemplatesFactory implementation="org.jetbrains.sbt.project.template.SbtProjectTemplateFactory" order="first"/>
-
         <!--suppress PluginXmlCapitalization -->
         <projectConfigurable groupId="build.tools" bundle="messages.SbtBundle"
                              key="displayname.sbt"

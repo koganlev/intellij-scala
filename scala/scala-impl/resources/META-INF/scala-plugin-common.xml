@@ -90,7 +90,6 @@
         <lang.rearranger language="Scala" implementationClass="org.jetbrains.plugins.scala.lang.rearranger.ScalaRearranger"/>
         <exceptionFilter implementation="org.jetbrains.plugins.scala.stacktrace.ScalaPackageObjectFilterFactory" order="first"/>
         <consoleFilterProvider implementation="org.jetbrains.plugins.scala.stacktrace.ScalaPackageObjectConsoleFilterProvider" order="first"/>
-        <projectTemplatesFactory implementation="org.jetbrains.plugins.scala.project.template.ScalaProjectTemplatesFactory"/>
 
         <refactoring.moveMemberHandler language="Scala" implementationClass="org.jetbrains.plugins.scala.lang.refactoring.move.members.ScalaMoveMemberHandler"/>
         <refactoring.moveHandler implementation="org.jetbrains.plugins.scala.lang.refactoring.move.anonymousToInner.ScalaMoveAnonymousToInnerDelegate" order="first" id="scalaMoveAnonymousToInnerDelegate"/>
