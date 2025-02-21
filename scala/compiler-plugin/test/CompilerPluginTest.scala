@@ -12,10 +12,6 @@ class CompilerPluginTest {
   private final val Id =
     "transparent inline def id(x: Any): Any = x"
 
-  @Test def nontransparent(): Unit = assertMessagesAre("inline def id(x: Any): Any = x",
-    "val _ = id(123)")(
-    Seq.empty: _*)
-
   // Types
 
   @Test def literalType(): Unit = assertMessagesAre(Id,
@@ -49,6 +45,18 @@ class CompilerPluginTest {
   @Test def scalaPredefAlias(): Unit = assertMessagesAre(Id,
     "val _ = id(Set(1, 2, 3))")(
     info("id(Set(1, 2, 3))", tpe("_root_.scala.collection.immutable.Set[_root_.scala.Int]")))
+
+  // Multiple
+
+  @Test def multipleTypes(): Unit = assertMessagesAre(Id,
+    "val _ = id(1); val _ = id(2)")(
+    info("id(1)", tpe("1")), info("id(2)", tpe("2")))
+
+  // Non-transparent method
+
+  @Test def nontransparent(): Unit = assertMessagesAre("inline def id(x: Any): Any = x",
+    "val _ = id(123)")(
+    Seq.empty: _*)
 
   // Error handling
 

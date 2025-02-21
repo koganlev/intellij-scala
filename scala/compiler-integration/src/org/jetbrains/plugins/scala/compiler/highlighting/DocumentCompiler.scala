@@ -181,7 +181,7 @@ private final class DocumentCompiler(project: Project) {
       if (module.scalaLanguageLevel.exists(_ >= ScalaLanguageLevel.Scala_3_3) && ScalaProjectSettings.getInstance(project).isUseCompilerTypes) {
         scalacOptions :++= Seq(
           "-Xplugin:" + ScalaPluginJars.compilerPluginJar.toAbsolutePath.toString,
-          "-Xplugin-require:compiler-plugin"
+          "-Xplugin-require:intellij-compiler-plugin"
         )
       }
       if (!CompilerOptions.containsStopAfter(scalacOptions)) {

@@ -1,7 +1,7 @@
 import CompilerPlugin.*
 import dotty.tools.dotc.ast.tpd
 import dotty.tools.dotc.core.Contexts.{Context, ctx}
-import dotty.tools.dotc.core.Types.{ErrorType, SingletonType, Type, TypeRef}
+import dotty.tools.dotc.core.Types.{SingletonType, Type, TypeRef}
 import dotty.tools.dotc.plugins.{PluginPhase, StandardPlugin}
 import dotty.tools.dotc.printing.PlainPrinter
 import dotty.tools.dotc.printing.Texts.Text
@@ -13,13 +13,13 @@ import scala.language.implicitConversions
 
 // Compatible with 3.3+ but can in principle be cross-compiled for earlier versions
 class CompilerPlugin extends StandardPlugin:
-  override val name = "compiler-plugin"
+  override val name = "intellij-compiler-plugin"
 
-  override val description = "Compiler plugin"
+  override val description = "IntelliJ compiler plugin"
 
   // ...(using Context) in 3.5, but we need to also be compatible with prior versions
   @nowarn("cat=deprecation")
-  override def init(options: List[String]): List[PluginPhase] = List(new Patches1())
+  override def init(options: List[String]): List[PluginPhase] = List(new IntelliJTyper())
 
 private object CompilerPlugin:
   // To identify the type messages (see UpdateCompilerGeneratedStateListener)
@@ -28,8 +28,8 @@ private object CompilerPlugin:
   // To delimit the subsequent position text (see MessageRendering.messageAndPos)
   private final val TypeSuffix = "</type>"
 
-  private class Patches1 extends PluginPhase:
-    override def phaseName: String = "compiler-plugin"
+  private class IntelliJTyper extends PluginPhase:
+    override def phaseName: String = "intellij-typer"
 
     // Only for "transparent inline" after the "typer" phase (but for any "inline" after the "inlining" phase)
     override def runsAfter = Set(TyperPhase.name)
@@ -44,10 +44,7 @@ private object CompilerPlugin:
         val printer = new TypePrinter(ctx.fresh.setSetting(ctx.settings.YtestPickler, true))
         // Handle possible ErrorType("Type mismatch"), e.g. val x: Foo = bar()
         // tpe is binary-incompatible with 3.2, but compiles
-        val tpe = tree.tpe match {
-          case _: ErrorType => tree.expansion.tpe
-          case t => t
-        }
+        val tpe = if (tree.tpe.isError) tree.expansion.tpe else tree.tpe
         val s = printer.toText(tpe).mkString(Int.MaxValue, false)
           .replace("<root>.this.", "_root_.")
           .replace("<empty>.this.", "_root_.")
