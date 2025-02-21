@@ -7,11 +7,11 @@ import org.jetbrains.jps.builders.{BuildRootDescriptor, BuildTarget}
 import org.jetbrains.jps.incremental.ModuleLevelBuilder.{ExitCode => JpsExitCode}
 import org.jetbrains.jps.incremental._
 import org.jetbrains.jps.incremental.messages.ProgressMessage
-import org.jetbrains.jps.incremental.scala.InitialScalaBuilder.isScalaProject
 import org.jetbrains.jps.incremental.scala.SbtBuilder._
 import org.jetbrains.jps.incremental.scala.ScalaBuilder._
 import org.jetbrains.jps.incremental.scala.data.CompilationDataFactory
 import org.jetbrains.jps.incremental.scala.local.IdeClientSbt
+import org.jetbrains.jps.incremental.scala.model.JpsScalaProjectMetadataExtensionService.projectHasScala
 import org.jetbrains.plugins.scala.compiler.data.IncrementalityType
 
 import _root_.java.nio.file.Path
@@ -71,7 +71,7 @@ class SbtBuilder extends ModuleLevelBuilder(BuilderCategory.TRANSLATOR) {
     jutil.Arrays.asList("scala", "java")
 
   private def isEnabled(context: CompileContext): Boolean =
-    projectSettings(context).getIncrementalityType == IncrementalityType.SBT && isScalaProject(context)
+    projectSettings(context).getIncrementalityType == IncrementalityType.SBT && projectHasScala(context)
 }
 
 object SbtBuilder {

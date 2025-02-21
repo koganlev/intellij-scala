@@ -6,6 +6,7 @@ import org.jetbrains.jps.builders.storage.BuildDataCorruptedException
 import org.jetbrains.jps.builders.{BuildOutputConsumer, DirtyFilesHolder}
 import org.jetbrains.jps.incremental.messages.{BuildMessage, CompilerMessage, ProgressMessage}
 import org.jetbrains.jps.incremental.scala.ZincResourceBuilder.{isEnabled, shouldSkip}
+import org.jetbrains.jps.incremental.scala.model.JpsScalaProjectMetadataExtensionService.moduleHasScala
 import org.jetbrains.jps.incremental.scala.sources.{SbtModuleType, SharedSourcesModuleType}
 import org.jetbrains.jps.incremental.{CompileContext, ProjectBuildException, ResourcesTarget, TargetBuilder}
 import org.jetbrains.jps.model.module.JpsModule
@@ -145,7 +146,7 @@ private final class ZincResourceBuilder
 private object ZincResourceBuilder {
 
   def isEnabled(context: CompileContext, module: JpsModule): Boolean = {
-    val hasScala = InitialScalaBuilder.hasScala(context, module)
+    val hasScala = moduleHasScala(context)(module)
     val incrementalityType = ScalaBuilder.projectSettings(context).getIncrementalityType
     hasScala && incrementalityType == IncrementalityType.SBT
   }

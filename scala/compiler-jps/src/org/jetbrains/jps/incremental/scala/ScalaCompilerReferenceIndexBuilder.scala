@@ -5,7 +5,7 @@ import org.jetbrains.jps.ModuleChunk
 import org.jetbrains.jps.builders.java.{JavaModuleBuildTargetType, JavaSourceRootDescriptor}
 import org.jetbrains.jps.builders.{BuildTarget, DirtyFilesHolder}
 import org.jetbrains.jps.incremental.ModuleLevelBuilder.ExitCode
-import org.jetbrains.jps.incremental.scala.InitialScalaBuilder.{hasScala, isScalaProject}
+import org.jetbrains.jps.incremental.scala.model.JpsScalaProjectMetadataExtensionService.{moduleHasScala, projectHasScala}
 import org.jetbrains.jps.incremental.{BuilderCategory, CompileContext, ModuleBuildTarget, ModuleLevelBuilder}
 import org.jetbrains.plugins.scala.compiler.references.Builder.rebuildPropertyKey
 import org.jetbrains.plugins.scala.compiler.references.Messages._
@@ -26,20 +26,20 @@ class ScalaCompilerReferenceIndexBuilder extends ModuleLevelBuilder(BuilderCateg
     List("scala", "java").asJava
 
   override def buildStarted(context: CompileContext): Unit = {
-    if (!isScalaProject(context))
+    if (!projectHasScala(context))
       return
 
     context.processMessage(CompilationStarted(shouldBeNonIncremental))
   }
 
   override def buildFinished(context: CompileContext): Unit = {
-    if (!isScalaProject(context))
+    if (!projectHasScala(context))
       return
 
     if (shouldBeNonIncremental) {
       val pd                      = context.getProjectDescriptor
       val (allClasses, timestamp) = getAllClassesInfo(context)
-      val allModules = pd.getProject.getModules.asScala.filter(hasScala(context, _))
+      val allModules = pd.getProject.getModules.asScala.filter(moduleHasScala(context))
         .flatMap { m =>
           val name = m.getName
           Seq(ModuleScope.Production, ModuleScope.Test).map(_.appendScopeSuffix(name))
@@ -74,7 +74,7 @@ class ScalaCompilerReferenceIndexBuilder extends ModuleLevelBuilder(BuilderCateg
     dirtyFilesHolder: DirtyFilesHolder[JavaSourceRootDescriptor, ModuleBuildTarget],
     outputConsumer:   ModuleLevelBuilder.OutputConsumer
   ): ExitCode = {
-    if (!isScalaProject(context))
+    if (!projectHasScala(context))
       return ExitCode.OK
 
     if (!shouldBeNonIncremental) {

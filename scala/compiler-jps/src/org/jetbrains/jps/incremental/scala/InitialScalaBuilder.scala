@@ -1,7 +1,6 @@
 package org.jetbrains.jps.incremental.scala
 
 import com.intellij.openapi.diagnostic.Logger
-import com.intellij.openapi.util.Key
 import org.jetbrains.jps.ModuleChunk
 import org.jetbrains.jps.builders.DirtyFilesHolder
 import org.jetbrains.jps.builders.java.{JavaBuilderUtil, JavaSourceRootDescriptor}
@@ -9,8 +8,8 @@ import org.jetbrains.jps.builders.storage.BuildDataCorruptedException
 import org.jetbrains.jps.incremental._
 import org.jetbrains.jps.incremental.resources.ResourcesBuilder
 import org.jetbrains.jps.incremental.scala.data.CompilerDataFactory
+import org.jetbrains.jps.incremental.scala.model.JpsScalaProjectMetadataExtensionService.projectHasScala
 import org.jetbrains.jps.model.java.JpsJavaExtensionService
-import org.jetbrains.jps.model.module.JpsModule
 import org.jetbrains.plugins.scala.compiler.data.IncrementalityType
 
 import _root_.java.io.IOException
@@ -29,8 +28,7 @@ class InitialScalaBuilder extends ModuleLevelBuilder(BuilderCategory.INITIAL) { 
   override def getPresentableName: String = JpsBundle.message("scala.compiler.metadata.builder")
 
   override def buildStarted(context: CompileContext): Unit = {
-    val scalaModules = collectAndStoreScalaModules(context)
-    if (scalaModules.nonEmpty) {
+    if (projectHasScala(context)) {
       val previousIncrementalityType = readIncrementalityType(context)
       val incrementalityType = ScalaBuilder.projectSettings(context).getIncrementalityType
 
@@ -152,32 +150,6 @@ class InitialScalaBuilder extends ModuleLevelBuilder(BuilderCategory.INITIAL) { 
 
 object InitialScalaBuilder {
   private val Log: Logger = Logger.getInstance(classOf[InitialScalaBuilder])
-
-  private val scalaModulesKey: Key[Set[JpsModule]] =
-    Key.create[Set[JpsModule]]("jps.scala.modules")
-
-  def hasScala(context: CompileContext, module: JpsModule): Boolean =
-    Option(context.getUserData(scalaModulesKey)).exists(_.contains(module))
-
-  def hasScalaModules(context: CompileContext, chunk: ModuleChunk): Boolean =
-    chunk.getModules.asScala.exists(hasScala(context, _))
-
-  def isScalaProject(context: CompileContext): Boolean =
-    Option(context.getUserData(scalaModulesKey)).exists(_.nonEmpty)
-
-
-  private def storeScalaModules(context: CompileContext, scalaModules: Set[JpsModule]): Unit = {
-    context.putUserData(scalaModulesKey, scalaModules)
-  }
-
-  private def collectAndStoreScalaModules(context: CompileContext): Set[JpsModule] = {
-    val result = context.getProjectDescriptor.getProject.getModules.asScala
-      .filter(SettingsManager.getScalaSdk(_).isDefined)
-      .toSet
-
-    storeScalaModules(context, result)
-    result
-  }
 
   /**
    * A unique compiler id (in the IntelliJ Platform), which does not match any other Java compiler implementation

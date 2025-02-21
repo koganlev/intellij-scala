@@ -7,6 +7,7 @@ import org.jetbrains.jps.ModuleChunk
 import org.jetbrains.jps.incremental.messages.ProgressMessage
 import org.jetbrains.jps.incremental.scala.Server.ServerError
 import org.jetbrains.jps.incremental.scala.local.LocalServer
+import org.jetbrains.jps.incremental.scala.model.JpsScalaProjectMetadataExtensionService.moduleHasScala
 import org.jetbrains.jps.incremental.{CompileContext, Utils}
 import org.jetbrains.jps.model.module.JpsModule
 import org.jetbrains.plugins.scala.compiler.data.{CompilationData, SbtData}
@@ -45,7 +46,7 @@ object ScalaBuilder {
       compilationData <- dataFactory.getCompilationDataFactory.from(sources, allSources, context,  chunk)
     } yield {
       Log.info(s"Compiling ${compilationData.sources.size} files; module: ${chunk.getPresentableShortName}; compiler: ${compilerData.compilerJars.map(_.compilerJar).orNull}")
-      scalaLibraryWarning(modules, compilationData, client)
+      scalaLibraryWarning(context, modules, compilationData, client)
 
       // TODO: ensure Scala Compile server is stopped in order it doesn't eventually
       //  do any compilation in parallel with local compilation
@@ -152,8 +153,8 @@ object ScalaBuilder {
     SbtData.from(pluginJpsRoot, javaClassVersion, systemRootDir)
   }
 
-  private def scalaLibraryWarning(modules: Set[JpsModule], compilationData: CompilationData, client: Client): Unit = {
-    val hasScalaSdk = modules.exists(SettingsManager.getScalaSdk(_).isDefined)
+  private def scalaLibraryWarning(context: CompileContext, modules: Set[JpsModule], compilationData: CompilationData, client: Client): Unit = {
+    val hasScalaSdk = modules.exists(moduleHasScala(context))
     val hasScalaLibrary = compilationData.classpath.exists(_.getFileName.toString.startsWith("scala-library"))
 
     val hasScalaSources = compilationData.sources.exists(_.getFileName.toString.endsWith(".scala"))

@@ -7,6 +7,7 @@ import org.jetbrains.jps.builders.java.{JavaBuilderUtil, JavaSourceRootDescripto
 import org.jetbrains.jps.incremental.fs.CompilationRound
 import org.jetbrains.jps.incremental.messages.{BuildMessage, CompilerMessage, ProgressMessage}
 import org.jetbrains.jps.incremental.scala.data.CompilationDataFactory
+import org.jetbrains.jps.incremental.scala.model.JpsScalaProjectMetadataExtensionService.chunkHasScala
 import org.jetbrains.jps.incremental.{java => _, scala => _, _}
 import org.jetbrains.plugins.scala.compiler.data.{CompileOrder, IncrementalityType}
 
@@ -45,7 +46,7 @@ class IdeaIncrementalBuilder(category: BuilderCategory) extends ModuleLevelBuild
 
     if (ScalaBuilder.hasBuildModules(chunk)) return JpsExitCode.NOTHING_DONE // *.scala files in sbt "build" modules are rightly excluded from compilation
 
-    if (!InitialScalaBuilder.hasScalaModules(context, chunk)) {
+    if (!chunkHasScala(context)(chunk)) {
       val message = "skipping Scala files without a Scala SDK in module(s) " + chunk.getPresentableShortName
       context.processMessage(new CompilerMessage("scala", BuildMessage.Kind.WARNING, message))
       return JpsExitCode.NOTHING_DONE
