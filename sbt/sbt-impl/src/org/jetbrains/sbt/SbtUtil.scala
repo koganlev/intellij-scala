@@ -16,8 +16,6 @@ import org.jetbrains.annotations.VisibleForTesting
 import org.jetbrains.plugins.scala.build.BuildReporter
 import org.jetbrains.plugins.scala.extensions.RichFile
 import org.jetbrains.plugins.scala.project.Version
-import org.jetbrains.plugins.scala.util.{ExternalSystemUtil, JarManifestUtils}
-import org.jetbrains.plugins.scala.project.{ProjectPsiFileExt, Version}
 import org.jetbrains.plugins.scala.util.ExternalSystemUtil
 import org.jetbrains.sbt.Sbt.SbtModuleChildKeyInstance
 import org.jetbrains.sbt.buildinfo.BuildInfo
@@ -29,8 +27,6 @@ import org.jetbrains.sbt.settings.SbtSettings
 
 import java.io.File
 import java.net.URI
-import java.util.Properties
-import java.util.jar.JarFile
 import java.nio.file.Path
 import scala.collection.mutable
 import scala.jdk.CollectionConverters.MapHasAsScala
@@ -308,7 +304,15 @@ object SbtUtil {
     }
   }
 
-  def getWorkingDirPath(project: Project): String = {
+  def getWorkingDirPath(project: Project): String =
+    getWorkingDirPathOpt(project)
+      .getOrElse(throw new IllegalStateException(s"no project directory found for project ${project.getName}"))
+
+  /**
+   * @note the method can return [[None]] for example in tests,
+   *       when the test project doesn't yet have modules and the dir can't be guessed
+   */
+  def getWorkingDirPathOpt(project: Project): Option[String] = {
     //Fist try to calculate root path based on `getExternalRootProjectPath`
     //When sbt project reference another sbt project via `RootProject` this will correctly find the root project path (see SCL-21143)
     //However, if user manually linked multiple SBT projects via external system tool window (sbt tool window)
@@ -329,7 +333,6 @@ object SbtUtil {
         log.warn(message)
         Option(ProjectUtil.guessProjectDir(project)).map(_.getCanonicalPath)
       }
-      .getOrElse(throw new IllegalStateException(s"no project directory found for project ${project.getName}"))
   }
 
   def getDefaultModuleFilesDirectory(projectRoot: File): String =

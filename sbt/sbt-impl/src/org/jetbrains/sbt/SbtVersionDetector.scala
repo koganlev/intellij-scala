@@ -1,11 +1,10 @@
 package org.jetbrains.sbt
 
 import com.intellij.openapi.project.Project
-import org.jetbrains.annotations.TestOnly
 import org.jetbrains.plugins.scala.extensions.PathExt
 import org.jetbrains.sbt.project.SbtExternalSystemManager
 
-import java.io.{BufferedInputStream, File}
+import java.io.BufferedInputStream
 import java.nio.file.{FileSystems, Files, Path}
 import java.util.Properties
 import scala.util.Using
@@ -22,18 +21,20 @@ object SbtVersionDetector {
   /**
    * The version of sbt defined in `project/build.properties` or fallback to the sbt version corresponding to launcher
    */
-  def detectSbtVersion(projectDir: Path, sbtLauncher: => Path): SbtVersion = {
-    val fromProject = sbtVersionInProjectPropertiesFile(projectDir)
+  def detectSbtVersion(projectRoot: Path, sbtLauncher: => Path): SbtVersion = {
+    val fromProject = sbtVersionInProjectPropertiesFile(projectRoot)
     val fromProjectOrLauncher = fromProject.orElse(sbtVersionInBootPropertiesOfSbtLauncher(sbtLauncher)).map(SbtVersion(_))
     fromProjectOrLauncher.getOrElse(SbtVersion.Latest.Sbt_1)
   }
 
-//  @TestOnly
-//  def detectSbtVersion(projectDir: File, sbtLauncher: => File): SbtVersion =
-//    detectSbtVersion(projectDir.toPath, sbtLauncher.toPath)
+  /**
+   * The version of sbt defined in `project/build.properties` in project root
+   */
+  def detectSbtVersionFromProjectProperties(projectRoot: Path): Option[SbtVersion] =
+    sbtVersionInProjectPropertiesFile(projectRoot).map(SbtVersion(_))
 
   /**
-   * Reads sbt version from the `project/build.properties` file.<br>
+   * Reads the sbt version from the `project/build.properties` file.<br>
    * File content example: {{{
    *   sbt.version = 1.10.7
    * }}}

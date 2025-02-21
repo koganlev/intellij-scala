@@ -12,9 +12,10 @@ import org.jetbrains.annotations.Nls
 import org.jetbrains.plugins.scala.build.BuildReporter
 import org.jetbrains.plugins.scala.extensions.{OptionExt, RichFile}
 import org.jetbrains.plugins.scala.startup.ProjectActivity
-import org.jetbrains.sbt.{Sbt, SbtBundle, SbtVersion, SbtVersionDetector}
+import org.jetbrains.sbt.{Sbt, SbtBundle, SbtUtil, SbtVersion, SbtVersionDetector}
 
 import java.io.File
+import java.nio.file.Path
 
 /**
  * Originally created based on [[org.jetbrains.plugins.scala.components.Scala3Disclaimer]]
@@ -31,8 +32,9 @@ private object LegacySbtVersionNotifications {
 
   // For IDEA-based projects
   final class MyProjectActivity extends ProjectActivity {
-    override def execute(project: Project): Unit =
+    override def execute(project: Project): Unit = {
       onProjectLoaded(project)
+    }
   }
 
   // For external system projects
@@ -44,8 +46,11 @@ private object LegacySbtVersionNotifications {
 
   private def onProjectLoaded(project: Project): Unit = {
     if (!isShownInCurrentSession(project)) {
-      val sbtVersion = SbtVersionDetector.detectSbtVersion(project)
-      if (sbtVersion.isSbt0) {
+      for {
+        projectRoot <- SbtUtil.getWorkingDirPathOpt(project)
+        sbtVersion <- SbtVersionDetector.detectSbtVersionFromProjectProperties(Path.of(projectRoot))
+        if sbtVersion.isSbt0
+      } {
         showLegacySbtVersionWarning(project, sbtVersion)
         setShownInCurrentSession(project)
       }
