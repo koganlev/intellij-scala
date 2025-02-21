@@ -8,11 +8,11 @@ import com.google.gson.{Gson, GsonBuilder}
 import com.intellij.pom.java.LanguageLevel
 import org.jetbrains.bsp.data.{JdkData, ScalaSdkData}
 import org.jetbrains.bsp.project.importing.BspResolverDescriptors._
+import org.jetbrains.jps.incremental.scala.remote.SerializablePath
 import org.jetbrains.sbt.project.data.MyURI
 import org.scalacheck.Arbitrary.arbitrary
 import org.scalacheck.{Arbitrary, Gen}
 
-import java.io.File
 import java.nio.file.{Path, Paths}
 import scala.jdk.CollectionConverters._
 
@@ -20,7 +20,6 @@ object Generators {
 
   implicit val gson: Gson = new GsonBuilder().setPrettyPrinting().create()
 
-  implicit val arbFile: Arbitrary[File] = Arbitrary(genPath.map(_.toFile))
   implicit val arbModuleKind: Arbitrary[ModuleKind] = Arbitrary(genModuleKind)
   implicit val arbModuleDescription: Arbitrary[ModuleDescription] = Arbitrary(genModuleDescription)
   implicit val arbVersion: Arbitrary[String] = Arbitrary(genVersion)
@@ -57,20 +56,20 @@ object Generators {
   def genSourceDirectoryUnder(root: Path): Gen[SourceEntry] = for {
     path <- genPathBelow(root)
     generated <- arbitrary[Boolean]
-  } yield SourceEntry(path.toFile, isDirectory = true, generated, None)
+  } yield SourceEntry(SerializablePath(path), isDirectory = true, generated, None)
 
   def genSourceDirectory: Gen[SourceEntry] = for {
     path <- arbitrary[Path]
     generated <- arbitrary[Boolean]
-  } yield SourceEntry(path.toFile, isDirectory = true, generated = generated, None)
+  } yield SourceEntry(SerializablePath(path), isDirectory = true, generated = generated, None)
 
-  def genSourceDirs(root: Option[Path]): Gen[List[SourceEntry]] = Gen.sized { size =>
+  def genSourceDirs(root: Option[SerializablePath]): Gen[List[SourceEntry]] = Gen.sized { size =>
     for {
       size1 <- Gen.choose(0,size)
       size2 = size - size1
       free <- Gen.listOfN(size1, genSourceDirectory)
       underRoot <- root
-        .map(p => Gen.listOfN(size2, genSourceDirectoryUnder(p)))
+        .map(p => Gen.listOfN(size2, genSourceDirectoryUnder(p.toPath)))
         .getOrElse(Gen.const[List[SourceEntry]](List.empty))
     } yield {
       free ++ underRoot
@@ -91,8 +90,8 @@ object Generators {
   def genScalaSdkData: Gen[ScalaSdkData] = for {
     scalaOrganization <- arbitrary[String]
     scalaVersion <- arbitrary[Option[String]]
-    scalacClasspath <- arbitrary[File].list
-    scaladocExtraClasspath <- arbitrary[File].list
+    scalacClasspath <- arbitrary[Path].map(_.toFile).list
+    scaladocExtraClasspath <- arbitrary[Path].map(_.toFile).list
     scalacOptions <- arbitrary[String].list
   } yield ScalaSdkData(scalaOrganization, scalaVersion.orNull, scalacClasspath, scaladocExtraClasspath, scalacOptions)
 
@@ -112,18 +111,18 @@ object Generators {
     targets <- arbitrary[List[BuildTarget]]
     targetDependencies <- arbitrary[Seq[BuildTargetIdentifier]]
     targetTestDependencies <- arbitrary[Seq[BuildTargetIdentifier]]
-    basePath <- arbitrary[Path].optional
-    output <- arbitrary[Option[File]]
-    testOutput <- arbitrary[Option[File]]
+    basePath <- arbitrary[Path].map(SerializablePath(_)).optional
+    output <- arbitrary[Option[Path]].map(_.map(SerializablePath(_)))
+    testOutput <- arbitrary[Option[Path]].map(_.map(SerializablePath(_)))
     sourceDirs <- genSourceDirs(basePath)
     testSourceDirs <- genSourceDirs(basePath)
     resourceDirs <- genSourceDirs(basePath)
     testResourceDirs <- genSourceDirs(basePath)
-    classPath <- arbitrary[Seq[File]]
-    classPathSources <- arbitrary[Seq[File]]
-    testClassPath <- arbitrary[Seq[File]]
-    testClassPathSources <- arbitrary[Seq[File]]
-    outputPaths <- arbitrary[Seq[File]]
+    classPath <- arbitrary[Seq[Path]].map(_.map(SerializablePath(_)))
+    classPathSources <- arbitrary[Seq[Path]].map(_.map(SerializablePath(_)))
+    testClassPath <- arbitrary[Seq[Path]].map(_.map(SerializablePath(_)))
+    testClassPathSources <- arbitrary[Seq[Path]].map(_.map(SerializablePath(_)))
+    outputPaths <- arbitrary[Seq[Path]].map(_.map(SerializablePath(_)))
     moduleKind <- genModuleKind
   } yield {
     val data = ModuleDescriptionData(
@@ -132,7 +131,7 @@ object Generators {
       targets = targets,
       targetDependencies = targetDependencies,
       targetTestDependencies = targetTestDependencies,
-      basePath = basePath.map(_.toFile),
+      basePath = basePath,
       output = output, testOutput = testOutput,
       sourceRoots = sourceDirs,
       testSourceRoots = testSourceDirs,

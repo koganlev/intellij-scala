@@ -3,8 +3,8 @@ package org.jetbrains.bsp.project.importing
 import ch.epfl.scala.bsp4j._
 import com.intellij.pom.java.LanguageLevel
 import org.jetbrains.bsp.data.{JdkData, SbtBuildModuleDataBsp, ScalaSdkData}
+import org.jetbrains.jps.incremental.scala.remote.SerializablePath
 
-import java.io.File
 import scala.util.Try
 
 
@@ -13,30 +13,30 @@ object BspResolverDescriptors {
   type TestClassId = String
 
   case class ModuleDescription(data: ModuleDescriptionData,
-                               moduleKindData: ModuleKind)
+                               moduleKindData: ModuleKind) extends Serializable
 
   case class ModuleDescriptionData(idUri: String,
                                    name: String,
                                    targets: Seq[BuildTarget],
                                    targetDependencies: Seq[BuildTargetIdentifier],
                                    targetTestDependencies: Seq[BuildTargetIdentifier],
-                                   basePath: Option[File],
-                                   output: Option[File],
-                                   testOutput: Option[File],
+                                   basePath: Option[SerializablePath],
+                                   output: Option[SerializablePath],
+                                   testOutput: Option[SerializablePath],
                                    sourceRoots: Seq[SourceEntry],
                                    testSourceRoots: Seq[SourceEntry],
                                    resourceRoots: Seq[SourceEntry],
                                    testResourceRoots: Seq[SourceEntry],
-                                   outputPaths: Seq[File],
-                                   classpath: Seq[File],
-                                   classpathSources: Seq[File],
-                                   testClasspath: Seq[File],
-                                   testClasspathSources: Seq[File],
-                                   languageLevel: Option[LanguageLevel])
+                                   outputPaths: Seq[SerializablePath],
+                                   classpath: Seq[SerializablePath],
+                                   classpathSources: Seq[SerializablePath],
+                                   testClasspath: Seq[SerializablePath],
+                                   testClasspathSources: Seq[SerializablePath],
+                                   languageLevel: Option[LanguageLevel]) extends Serializable
 
-  case class ProjectModules(modules: Seq[ModuleDescription], synthetic: Seq[ModuleDescription])
+  case class ProjectModules(modules: Seq[ModuleDescription], synthetic: Seq[ModuleDescription]) extends Serializable
 
-  sealed abstract class ModuleKind
+  sealed abstract class ModuleKind extends Product with Serializable
   object ModuleKind {
     case class UnspecifiedModule() extends ModuleKind
 
@@ -63,5 +63,5 @@ object BspResolverDescriptors {
     javacOptions: Try[JavacOptionsResult]
   )
 
-  case class SourceEntry(file: File, isDirectory: Boolean, generated: Boolean, packagePrefix: Option[String])
+  case class SourceEntry(file: SerializablePath, isDirectory: Boolean, generated: Boolean, packagePrefix: Option[String]) extends Serializable
 }

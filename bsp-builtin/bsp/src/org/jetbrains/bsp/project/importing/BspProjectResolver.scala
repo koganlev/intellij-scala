@@ -58,7 +58,7 @@ class BspProjectResolver extends ExternalSystemProjectResolver[BspExecutionSetti
     val result = if (isPreviewMode) {
       val modules = ProjectModules(Nil, Nil)
       reporter.finish(BuildMessages.empty.status(BuildMessages.OK))
-      projectNode(workspace.toFile, modules, rootExclusions(workspace).map(_.toFile), "dummy-display-name", List.empty)
+      projectNode(workspace, modules, rootExclusions(workspace), "dummy-display-name", List.empty)
     } else {
       runImport(workspace, executionSettings)
     }
@@ -115,7 +115,7 @@ class BspProjectResolver extends ExternalSystemProjectResolver[BspExecutionSetti
             val descriptions = calculateModuleDescriptions(
               targets, scalacOptions.toSeq, javacOptions.toSeq, sources.toSeq, resources.toSeq, outputPaths.toSeq, depSources.toSeq
             )
-            projectNode(workspace.toFile, descriptions, rootExclusions(workspace).map(_.toFile), serverInfo.displayName, compilableTargets)
+            projectNode(workspace, descriptions, rootExclusions(workspace), serverInfo.displayName, compilableTargets)
           }
           .reportFinished(
             reporter,

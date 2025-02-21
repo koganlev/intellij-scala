@@ -16,7 +16,6 @@ import org.scalacheck.Prop.{forAll, propBoolean}
 import org.scalacheck._
 import org.scalatestplus.scalacheck.Checkers
 
-import java.io.File
 import java.nio.file.Path
 import scala.jdk.CollectionConverters._
 
@@ -53,7 +52,7 @@ class BspResolverLogicProperties extends Checkers {
   @Test @Ignore
   def `test moduleDescriptionForTarget succeeds for build targets with Scala`(): Unit = check(
     forAll(genBuildTargetWithScala) { target: BuildTarget =>
-      forAll { (scalacOptions: Option[ScalacOptionsItem], javacOptions: Option[JavacOptionsItem], depSources: Seq[File], sources: Seq[SourceEntry], resources: Seq[SourceEntry], outputPaths: Seq[File], dependencyOutputs: List[File]) =>
+      forAll { (scalacOptions: Option[ScalacOptionsItem], javacOptions: Option[JavacOptionsItem], depSources: Seq[Path], sources: Seq[SourceEntry], resources: Seq[SourceEntry], outputPaths: Seq[Path], dependencyOutputs: List[Path]) =>
 
         val description = moduleDescriptionForTarget(target, scalacOptions, javacOptions, depSources, sources, resources, outputPaths, dependencyOutputs)
         val emptyForNOIDE = target.getTags.contains(BuildTargetTag.NO_IDE) ==> description.isEmpty :| "contained NO_IDE tag, but created anyway"
@@ -69,7 +68,7 @@ class BspResolverLogicProperties extends Checkers {
     forAll(genPath, Gen.listOf(genBuildTargetTag)) { (basePath: Path, tags: List[String]) =>
       forAll(Gen.listOf(genSourceDirectoryUnder(basePath)), Gen.listOf(genSourceDirectoryUnder(basePath))) {
         (sourceRoots: List[SourceEntry], resourceRoots: List[SourceEntry]) =>
-          forAll { (target: BuildTarget, moduleBase: Option[File], outputPath: Option[File], classpath: List[File], dependencySources: List[File], outputPaths: List[File], languageLevel: LanguageLevel) =>
+          forAll { (target: BuildTarget, moduleBase: Option[Path], outputPath: Option[Path], classpath: List[Path], dependencySources: List[Path], outputPaths: List[Path], languageLevel: LanguageLevel) =>
             val description = createModuleDescriptionData(target, tags, moduleBase, outputPath, sourceRoots, resourceRoots, outputPaths, classpath, dependencySources, Some(languageLevel))
 
             val p1 = (description.basePath == moduleBase) :| "base path should be set"
@@ -117,7 +116,7 @@ class BspResolverLogicProperties extends Checkers {
 
         val projectRootPath = root.toString
         val projectModules = ProjectModules(moduleDescriptions, Seq.empty)
-        val node = projectNode(root.toFile, projectModules, BspProjectResolver.rootExclusions(root).map(_.toFile), "displayName", List.empty)
+        val node = projectNode(root, projectModules, BspProjectResolver.rootExclusions(root), "displayName", List.empty)
 
         // TODO more thorough properties
         node.getChildren.size >= moduleDescriptions.size

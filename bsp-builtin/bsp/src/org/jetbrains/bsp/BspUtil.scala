@@ -86,10 +86,6 @@ object BspUtil {
     def toURI: URI = new URI(str)
   }
 
-  implicit class URIOps(uri: URI) {
-    def toFile: java.io.File = Paths.get(uri).toFile
-  }
-
   implicit class CompletableFutureOps[T](cf: CompletableFuture[T]) {
     def catchBspErrors : CompletableFuture[Try[T]] = cf.handle { (result, error) =>
       if (error != null) error match {

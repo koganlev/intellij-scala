@@ -17,15 +17,15 @@ import org.jetbrains.bsp.data._
 import org.jetbrains.bsp.project.BspSyntheticModuleType
 import org.jetbrains.bsp.project.importing.BspResolverDescriptors._
 import org.jetbrains.bsp.{BSP, BspBundle}
-import org.jetbrains.plugins.scala.extensions.{ObjectExt, StringExt}
+import org.jetbrains.jps.incremental.scala.remote.SerializablePath
+import org.jetbrains.plugins.scala.extensions.{ObjectExt, PathExt, StringExt}
 import org.jetbrains.plugins.scala.project.Version
 import org.jetbrains.plugins.scala.project.external.{JdkByHome, JdkByVersion}
 import org.jetbrains.sbt.project.data.MyURI
 import org.jetbrains.sbt.project.module.SbtModuleType
 
-import java.io.File
 import java.net.URI
-import java.nio.file.Paths
+import java.nio.file.{Path, Paths}
 import java.util.Collections
 import scala.collection.mutable
 import scala.jdk.CollectionConverters._
@@ -56,7 +56,7 @@ private[importing] object BspResolverLogic {
     val scala = ScalaSdkData(
       scalaOrganization = target.getScalaOrganization,
       scalaVersion = target.getScalaVersion,
-      scalacClasspath = target.getJars.asScala.map(_.toURI.toFile).asJava,
+      scalacClasspath = target.getJars.asScala.map(p => Path.of(p.toURI)).map(_.toFile).asJava,
       scaladocExtraClasspath = Collections.emptyList(), // FIXME pass in actual data when obtainable from BSP: https://github.com/build-server-protocol/build-server-protocol/issues/229
       scalacOptions = scalaOptionsStrings
     )
@@ -95,10 +95,10 @@ private[importing] object BspResolverLogic {
 
     val transitiveDepComputed: mutable.Map[BuildTarget, Set[BuildTarget]] = mutable.Map.empty
 
-    def transitiveDependencyOutputs(start: BuildTarget): Seq[File] = {
+    def transitiveDependencyOutputs(start: BuildTarget): Seq[Path] = {
       val transitiveDeps = transitiveDependencies(start).map(_.getId)
-      val scalaDeps = transitiveDeps.flatMap(idToScalacOptions.get).map(_.getClassDirectory.toURI.toFile).toSeq
-      val javaDeps = transitiveDeps.flatMap(idToJavacOptions.get).map(_.getClassDirectory.toURI.toFile).toSeq
+      val scalaDeps = transitiveDeps.flatMap(idToScalacOptions.get).map(d => Path.of(d.getClassDirectory.toURI)).toSeq
+      val javaDeps = transitiveDeps.flatMap(idToJavacOptions.get).map(d => Path.of(d.getClassDirectory.toURI)).toSeq
       (scalaDeps ++ javaDeps).sorted.distinct
     }
 
@@ -109,7 +109,7 @@ private[importing] object BspResolverLogic {
       })
 
     val idToDepSources = dependencySourcesItems
-      .map(item => (item.getTarget, item.getSources.asScala.iterator.map(_.toURI.toFile).toSeq))
+      .map(item => (item.getTarget, item.getSources.asScala.iterator.map(s => Path.of(s.toURI)).toSeq))
       .toMap
 
     val idToResources = resourcesItems
@@ -117,7 +117,7 @@ private[importing] object BspResolverLogic {
       .toMap
 
     val idToOutputPaths = outputPathsItems
-      .map(item => (item.getTarget, item.getOutputPaths.asScala.iterator.map(_.getUri.toURI.toFile).toSeq))
+      .map(item => (item.getTarget, item.getOutputPaths.asScala.iterator.map(p => Path.of(p.getUri.toURI)).toSeq))
       .toMap
 
     val idToSources = sourcesItems
@@ -245,10 +245,10 @@ private[importing] object BspResolverLogic {
     val sourceItems: Seq[SourceItem] = sourcesItem.getSources.asScala.iterator.distinct.toSeq
     val sourceEntries = sourceItems.map { item =>
       val packagePrefix = findPackagePrefix(sourcesItem, item.getUri)
-      val file = item.getUri.toURI.toFile
+      val path = Path.of(item.getUri.toURI)
       // bsp spec used to depend on uri ending in `/` to determine directory, use both kind and uri string to determine directory
       val isDirectory = item.getKind == SourceItemKind.DIRECTORY || item.getUri.endsWith("/")
-      SourceEntry(file, isDirectory, item.getGenerated, packagePrefix)
+      SourceEntry(SerializablePath(path), isDirectory, item.getGenerated, packagePrefix)
     }
     sourceEntries.distinct
   }
@@ -261,13 +261,13 @@ private[importing] object BspResolverLogic {
       val filePath = Paths.get(new URI(sourceUri))
       val dirPath = if (sourceUri.endsWith("/")) filePath else filePath.getParent
       val relativePath = rootPath.relativize(dirPath)
-      relativePath.toString.replace(File.separatorChar, '.')
+      relativePath.toString.replace(java.io.File.separatorChar, '.')
     }.filter(_.nonEmpty)
   }
 
   private def sourceEntry(uri: String, generated: Boolean = false): SourceEntry = {
-    val file = uri.toURI.toFile
-    SourceEntry(file, isDirectory = uri.endsWith("/"), generated, None)
+    val path = Path.of(uri.toURI)
+    SourceEntry(SerializablePath(path), isDirectory = uri.endsWith("/"), generated, None)
   }
 
   /**
@@ -294,7 +294,7 @@ private[importing] object BspResolverLogic {
   private def excludeChildDirectories(entries: Seq[SourceEntry]) = {
     val dirs = entries.filter(_.isDirectory)
     entries.filter { entry =>
-      !dirs.exists(a => FileUtil.isAncestor(a.file, entry.file, true))
+      !dirs.exists(a => FileUtil.isAncestor(a.file.toPath.toFile, entry.file.toPath.toFile, true))
     }
   }
 
@@ -302,21 +302,21 @@ private[importing] object BspResolverLogic {
     buildTarget: BuildTarget,
     scalacOptions: Option[ScalacOptionsItem],
     javacOptions: Option[JavacOptionsItem],
-    dependencySourceDirs: Seq[File],
+    dependencySourceDirs: Seq[Path],
     sourceEntries: Seq[SourceEntry],
     resourceEntries: Seq[SourceEntry],
-    outputPaths: Seq[File],
-    dependencyOutputs: Seq[File]
+    outputPaths: Seq[Path],
+    dependencyOutputs: Seq[Path]
   )(implicit gson: Gson): Option[ModuleDescription] = {
-    val moduleBaseDir: Option[File] = Option(buildTarget.getBaseDirectory).map(_.toURI.toFile)
+    val moduleBaseDir: Option[Path] = Option(buildTarget.getBaseDirectory).map(s => Path.of(s.toURI))
     val outputPath =
-      scalacOptions.map(_.getClassDirectory.toURI.toFile)
-        .orElse(javacOptions.map(_.getClassDirectory.toURI.toFile))
+      scalacOptions.map(o => Path.of(o.getClassDirectory.toURI))
+        .orElse(javacOptions.map(o => Path.of(o.getClassDirectory.toURI)))
 
     // classpath needs to be filtered for module dependency output paths since they are handled by IDEA module dep mechanism
-    val scalaClassPath = scalacOptions.map(_.getClasspath.asScala.iterator.map(_.toURI.toFile)).getOrElse(Iterator.empty)
-    val javaClassPath = javacOptions.map(_.getClasspath.asScala.iterator.map(_.toURI.toFile)).getOrElse(Iterator.empty)
-    val classPath = (scalaClassPath ++ javaClassPath).toSeq.sorted.distinct
+    val scalaClassPath = scalacOptions.map(_.getClasspath.asScala.iterator.map(s => Path.of(s.toURI))).getOrElse(Iterator.empty)
+    val javaClassPath = javacOptions.map(_.getClasspath.asScala.iterator.map(s => Path.of(s.toURI))).getOrElse(Iterator.empty)
+    val classPath = (scalaClassPath ++ javaClassPath).map(_.toCanonicalPath).toSeq.sorted.distinct
 
     val classPathWithoutDependencyOutputs = classPath.filterNot(dependencyOutputs.contains)
 
@@ -368,8 +368,8 @@ private[importing] object BspResolverLogic {
     val (sourceEntriesFiltered1, resourceEntriesFiltered1) = (moduleBaseDir, moduleKind) match {
       case (Some(baseDir), Some(_: BspResolverDescriptors.ModuleKind.SbtModule)) =>
         (
-          sourceEntries.filter(f => FileUtil.isAncestor(baseDir, f.file, false)),
-          resourceEntries.filter(f => FileUtil.isAncestor(baseDir, f.file, false))
+          sourceEntries.filter(f => FileUtil.isAncestor(baseDir.toFile, f.file.toPath.toFile, false)),
+          resourceEntries.filter(f => FileUtil.isAncestor(baseDir.toFile, f.file.toPath.toFile, false))
         )
       case _ =>
         (sourceEntries, resourceEntries)
@@ -400,13 +400,13 @@ private[importing] object BspResolverLogic {
   private[importing] def createModuleDescriptionData(
     target: BuildTarget,
     tags: Seq[String],
-    moduleBase: Option[File],
-    outputPath: Option[File],
+    moduleBase: Option[Path],
+    outputPath: Option[Path],
     sourceRoots: Seq[SourceEntry],
     resourceRoots: Seq[SourceEntry],
-    outputPaths: Seq[File],
-    classPath: Seq[File],
-    dependencySources: Seq[File],
+    outputPaths: Seq[Path],
+    classPath: Seq[Path],
+    dependencySources: Seq[Path],
     languageLevel: Option[LanguageLevel]
   ): ModuleDescriptionData = {
     import BuildTargetTag._
@@ -420,14 +420,14 @@ private[importing] object BspResolverLogic {
       targets = Seq(target),
       targetDependencies = Seq.empty,
       targetTestDependencies = Seq.empty,
-      basePath = moduleBase,
+      basePath = moduleBase.map(SerializablePath(_)),
       output = None,
       testOutput = None,
       sourceRoots = Seq.empty,
       testSourceRoots = Seq.empty,
       resourceRoots = Seq.empty,
       testResourceRoots = Seq.empty,
-      outputPaths = outputPaths,
+      outputPaths = outputPaths.map(SerializablePath(_)),
       classpath = Seq.empty,
       classpathSources = Seq.empty,
       testClasspath = Seq.empty,
@@ -440,20 +440,20 @@ private[importing] object BspResolverLogic {
     val data = if(tags.contains(TEST))
       dataBasic.copy(
         targetTestDependencies = targetDeps,
-        testOutput = outputPath,
+        testOutput = outputPath.map(SerializablePath(_)),
         testSourceRoots = sourceRoots,
         testResourceRoots = resourceRoots,
-        testClasspath = classPath,
-        testClasspathSources = dependencySources
+        testClasspath = classPath.map(SerializablePath(_)),
+        testClasspathSources = dependencySources.map(SerializablePath(_))
       )
     else
       dataBasic.copy(
         targetDependencies = targetDeps,
-        output = outputPath,
+        output = outputPath.map(SerializablePath(_)),
         sourceRoots = sourceRoots,
         resourceRoots = resourceRoots,
-        classpath = classPath,
-        classpathSources = dependencySources
+        classpath = classPath.map(SerializablePath(_)),
+        classpathSources = dependencySources.map(SerializablePath(_))
       )
 
     data
@@ -581,11 +581,11 @@ private[importing] object BspResolverLogic {
         val resources = mergeSourceEntries(dataCombined.resourceRoots, dataNext.resourceRoots)
         val testResources = mergeSourceEntries(dataCombined.testResourceRoots, dataNext.testResourceRoots)
         val testSources  = mergeSourceEntries(dataCombined.testSourceRoots, dataNext.testSourceRoots)
-        val outputPaths = mergeFiles(dataCombined.outputPaths, dataNext.outputPaths)
-        val classPath = mergeFiles(dataCombined.classpath, dataNext.classpath)
-        val classPathSources = mergeFiles(dataCombined.classpathSources, dataNext.classpathSources)
-        val testClassPath = mergeFiles(dataCombined.testClasspath, dataNext.testClasspath)
-        val testClassPathSources = mergeFiles(dataCombined.testClasspathSources, dataNext.testClasspathSources)
+        val outputPaths = mergeFiles(dataCombined.outputPaths.map(_.toPath), dataNext.outputPaths.map(_.toPath))
+        val classPath = mergeFiles(dataCombined.classpath.map(_.toPath), dataNext.classpath.map(_.toPath))
+        val classPathSources = mergeFiles(dataCombined.classpathSources.map(_.toPath), dataNext.classpathSources.map(_.toPath))
+        val testClassPath = mergeFiles(dataCombined.testClasspath.map(_.toPath), dataNext.testClasspath.map(_.toPath))
+        val testClassPathSources = mergeFiles(dataCombined.testClasspathSources.map(_.toPath), dataNext.testClasspathSources.map(_.toPath))
         val languageLevel = (dataCombined.languageLevel ++ dataNext.languageLevel).maxOption
 
         val newData = ModuleDescriptionData(
@@ -601,11 +601,11 @@ private[importing] object BspResolverLogic {
           testSourceRoots = testSources,
           resourceRoots = resources,
           testResourceRoots = testResources,
-          outputPaths = outputPaths,
-          classpath = classPath,
-          classpathSources = classPathSources,
-          testClasspath = testClassPath,
-          testClasspathSources = testClassPathSources,
+          outputPaths = outputPaths.map(SerializablePath(_)),
+          classpath = classPath.map(SerializablePath(_)),
+          classpathSources = classPathSources.map(SerializablePath(_)),
+          testClasspath = testClassPath.map(SerializablePath(_)),
+          testClasspathSources = testClassPathSources.map(SerializablePath(_)),
           languageLevel = languageLevel
         )
 
@@ -619,10 +619,10 @@ private[importing] object BspResolverLogic {
     (a++b).sortBy(_.getUri).distinct
 
   private def mergeSourceEntries(a: Seq[SourceEntry], b: Seq[SourceEntry]) =
-    (a++b).sortBy(_.file.getAbsolutePath).distinct
+    (a++b).sortBy(_.file.toPath.toCanonicalPath).distinct
 
-  private def mergeFiles(a: Seq[File], b: Seq[File]) =
-    (a++b).sortBy(_.getAbsolutePath).distinct
+  private def mergeFiles(a: Seq[Path], b: Seq[Path]) =
+    (a++b).sortBy(_.toCanonicalPath).distinct
 
   private def mergeModuleKind(a: ModuleKind, b: ModuleKind) = {
     import ModuleKind._
@@ -638,16 +638,6 @@ private[importing] object BspResolverLogic {
     }
   }
 
-  // extension method added as for better performance than getCanonicalPath method
-  implicit class FileExtensions(val f: File){
-    def getCanonicalPathOptimized: String = {
-      f.toPath.toAbsolutePath.normalize().toString
-    }
-    def getCanonicalFileOptimized: File = {
-      f.toPath.toAbsolutePath.normalize().toFile
-    }
-  }
-
   private val jarSuffix = ".jar"
   private val sourcesSuffixes = Seq("-sources", "-src")
   private val javadocSuffix = "-javadoc"
@@ -656,36 +646,36 @@ private[importing] object BspResolverLogic {
       .stripSuffix(jarSuffix)
       .stripSuffixes(sourcesSuffixes)
       .stripSuffix(javadocSuffix)
-  private def libraryPrefix(path: File): Option[String] =
-    if (path.getName.endsWith(jarSuffix))
-      Option(stripSuffixes(path.getCanonicalPathOptimized))
+  private def libraryPrefix(path: Path): Option[String] =
+    if (path.getFileName.toString.endsWith(jarSuffix))
+      Option(stripSuffixes(path.toCanonicalPath.toString))
     else None
-  private def libraryName(path: File): String =
-    stripSuffixes(path.getName)
+  private def libraryName(path: Path): String =
+    stripSuffixes(path.getFileName.toString)
 
   private[importing] def projectNode(
-    workspace: File,
+    workspace: Path,
     projectModules: ProjectModules,
-    excludedPaths: List[File],
+    excludedPaths: List[Path],
     displayName: String,
     canCompile: List[String]
   ): DataNode[ProjectData] = {
 
-    val projectRootPath = workspace.getCanonicalPathOptimized
-    val moduleFileDirectoryPath = moduleFilesDirectory(workspace).getCanonicalPathOptimized
-    val projectRoot = new File(projectRootPath)
-    val projectData = new ProjectData(BSP.ProjectSystemId, projectRoot.getName, projectRootPath, projectRootPath)
+    val projectRootPath = workspace.toCanonicalPath.toString
+    val moduleFileDirectoryPath = moduleFilesDirectory(workspace).toCanonicalPath.toString
+    val projectRoot = Path.of(projectRootPath)
+    val projectData = new ProjectData(BSP.ProjectSystemId, projectRoot.getFileName.toString, projectRootPath, projectRootPath)
     val projectNode = new DataNode[ProjectData](ProjectKeys.PROJECT, projectData, null)
 
 
     // synthetic root module when no natural module is at root
     val rootModule =
-      if (projectModules.modules.exists (_.data.basePath.exists(_ == projectRoot))) None
+      if (projectModules.modules.exists (_.data.basePath.exists(_.toPath == projectRoot))) None
       else {
-        val name = projectRoot.getName + "-root"
+        val name = projectRoot.getFileName.toString + "-root"
         val moduleData = new ModuleData(name, BSP.ProjectSystemId, BspSyntheticModuleType.Id, name, moduleFileDirectoryPath, projectRootPath)
         val moduleNode = new DataNode[ModuleData](ProjectKeys.MODULE, moduleData, projectNode)
-        val contentRootData = new ContentRootData(BSP.ProjectSystemId, projectRoot.getCanonicalPathOptimized)
+        val contentRootData = new ContentRootData(BSP.ProjectSystemId, projectRoot.toCanonicalPath.toString)
         val contentRootDataNode = new DataNode[ContentRootData](ProjectKeys.CONTENT_ROOT, contentRootData, moduleNode)
         moduleNode.addChild(contentRootDataNode)
 
@@ -699,7 +689,7 @@ private[importing] object BspResolverLogic {
           m.data.classpathSources ++
           m.data.testClasspath ++
           m.data.testClasspathSources)
-        .map(_.getCanonicalFileOptimized)
+        .map(_.toPath.toCanonicalPath)
         .groupBy(libraryPrefix)
         // ignore non-standard jar libs
         .flatMap { case (pathPrefix, jars) => pathPrefix.map(p => p -> jars) }
@@ -717,8 +707,8 @@ private[importing] object BspResolverLogic {
         }
         .flatMap { case (pathPrefix, (name, jars)) =>
           val binary = jars.find(_.toString.endsWith(pathPrefix + jarSuffix))
-          val source = jars.find(j => sourcesSuffixes.exists(j.getName.contains))
-          val doc = jars.find(_.getName.contains(javadocSuffix))
+          val source = jars.find(j => sourcesSuffixes.exists(j.getFileName.toString.contains))
+          val doc = jars.find(_.getFileName.toString.contains(javadocSuffix))
           binary.map { bin =>
             val data = new LibraryData(BSP.ProjectSystemId, name)
             data.addPath(LibraryPathType.BINARY, bin.toString)
@@ -772,7 +762,7 @@ private[importing] object BspResolverLogic {
     val bspProjectData = {
       val jdkReference = inferProjectJdk(modules)
       val vcsRootsCandidates = projectModules.modules.flatMap(_.data.basePath).distinct
-      new DataNode[BspProjectData](BspProjectData.Key, BspProjectData(jdkReference, vcsRootsCandidates.asJava, displayName), projectNode)
+      new DataNode[BspProjectData](BspProjectData.Key, BspProjectData(jdkReference, vcsRootsCandidates.map(_.toPath.toFile).asJava, displayName), projectNode)
     }
     
     val bspCanCompileData = new DataNode[BspTargetCanCompileData](BspTargetCanCompileData.Key, BspTargetCanCompileData(canCompile.asJava), projectNode)
@@ -792,15 +782,15 @@ private[importing] object BspResolverLogic {
     projectNode
   }
 
-  private def addRootExclusions(modules: Set[DataNode[ModuleData]], projectRoot: File, excludedPaths: List[File]): Unit =
+  private def addRootExclusions(modules: Set[DataNode[ModuleData]], projectRoot: Path, excludedPaths: List[Path]): Unit =
     for {
       m <- modules.toList
       c <- m.getChildren.asScala
       data <- Option(c.getData(ProjectKeys.CONTENT_ROOT)).toList
-      if new File(data.getRootPath) == projectRoot
+      if Path.of(data.getRootPath) == projectRoot
       p <- excludedPaths
     } {
-      data.storePath(ExternalSystemSourceType.EXCLUDED, p.getAbsolutePath)
+      data.storePath(ExternalSystemSourceType.EXCLUDED, p.toCanonicalPath.toString)
     }
 
   private def inferProjectJdk(modules: Set[DataNode[ModuleData]]) = {
@@ -819,7 +809,7 @@ private[importing] object BspResolverLogic {
     jdkReference
   }
 
-  private[importing] def moduleFilesDirectory(workspace: File) = new File(workspace, ".idea/modules")
+  private[importing] def moduleFilesDirectory(workspace: Path) = workspace / ".idea" / "modules"
 
   private[importing] def createModuleNode(
     projectRootPath: String,
@@ -834,7 +824,7 @@ private[importing] object BspResolverLogic {
     val moduleDescriptionData = moduleDescription.data
 
     val moduleBase: Option[ContentRootData] = moduleDescriptionData.basePath.map { path =>
-      val base = path.getCanonicalPathOptimized
+      val base = path.toPath.toCanonicalPath.toString
       new ContentRootData(BSP.ProjectSystemId, base)
     }
     val sourceRoots = moduleDescriptionData.sourceRoots.map { dir =>
@@ -868,16 +858,16 @@ private[importing] object BspResolverLogic {
     val moduleData = new ModuleData(moduleDescriptionData.idUri, BSP.ProjectSystemId, moduleType.getId, moduleName, moduleFileDirectoryPath, projectRootPath)
 
     moduleDescriptionData.output.foreach { outputPath =>
-      moduleData.setCompileOutputPath(SOURCE, outputPath.getCanonicalPathOptimized)
+      moduleData.setCompileOutputPath(SOURCE, outputPath.toPath.toCanonicalPath.toString)
     }
     moduleDescriptionData.testOutput.foreach { outputPath =>
-      moduleData.setCompileOutputPath(TEST, outputPath.getCanonicalPathOptimized)
+      moduleData.setCompileOutputPath(TEST, outputPath.toPath.toCanonicalPath.toString)
     }
 
     moduleData.setInheritProjectCompileOutputPath(false)
 
 
-    def namedLibraries(classpath: Seq[File], sources: Seq[File]) = {
+    def namedLibraries(classpath: Seq[Path], sources: Seq[Path]) = {
       val (named,other) = classpath
         .groupBy(libraryPrefix)
         .partitionMap {
@@ -889,9 +879,9 @@ private[importing] object BspResolverLogic {
     }
 
     val (namedLibs, otherLibs, otherSources) =
-      namedLibraries(moduleDescriptionData.classpath, moduleDescriptionData.classpathSources)
+      namedLibraries(moduleDescriptionData.classpath.map(_.toPath), moduleDescriptionData.classpathSources.map(_.toPath))
     val (namedTestLibs, otherTestLibs , otherTestSources) =
-      namedLibraries(moduleDescriptionData.testClasspath, moduleDescriptionData.testClasspathSources)
+      namedLibraries(moduleDescriptionData.testClasspath.map(_.toPath), moduleDescriptionData.testClasspathSources.map(_.toPath))
 
     def configureNamedLibraryDependencyData(libPrefixes: Iterable[String], scope: DependencyScope) = libPrefixes
       .flatMap(projectLibraryDependencies.get)
@@ -905,10 +895,10 @@ private[importing] object BspResolverLogic {
       configureNamedLibraryDependencyData(namedLibs, DependencyScope.COMPILE) ++
         configureNamedLibraryDependencyData(namedTestLibs, DependencyScope.TEST)
 
-    def configureLibraryDependencyData(name: String, scope: DependencyScope, libs: Iterable[File], sources: Iterable[File]) = {
+    def configureLibraryDependencyData(name: String, scope: DependencyScope, libs: Iterable[Path], sources: Iterable[Path]) = {
       val libraryData = new LibraryData(BSP.ProjectSystemId, name)
-      libs.foreach { path => libraryData.addPath(LibraryPathType.BINARY, path.getCanonicalPathOptimized) }
-      sources.foreach { path => libraryData.addPath(LibraryPathType.SOURCE, path.getCanonicalPathOptimized) }
+      libs.foreach { path => libraryData.addPath(LibraryPathType.BINARY, path.toCanonicalPath.toString) }
+      sources.foreach { path => libraryData.addPath(LibraryPathType.SOURCE, path.toCanonicalPath.toString) }
       val libraryDependencyData = new LibraryDependencyData(moduleData, libraryData, LibraryLevel.MODULE)
       libraryDependencyData.setScope(scope)
       libraryDependencyData
@@ -944,8 +934,8 @@ private[importing] object BspResolverLogic {
 
     val contentRootData: Iterable[ContentRootData] = {
       val rootPathToData: Seq[(String, ContentRootData)] = allSourceRoots.map { case (sourceType, sourceEntry) =>
-        val data = getContentRoot(sourceEntry.file, moduleBase)
-        data.storePath(sourceType, sourceEntry.file.getCanonicalPathOptimized, sourceEntry.packagePrefix.orNull)
+        val data = getContentRoot(sourceEntry.file.toPath, moduleBase)
+        data.storePath(sourceType, sourceEntry.file.toPath.toCanonicalPath.toString, sourceEntry.packagePrefix.orNull)
         data.getRootPath -> data
       }
       // effectively deduplicate by content root path. ContentRootData does not implement equals correctly
@@ -957,8 +947,8 @@ private[importing] object BspResolverLogic {
     }
 
     moduleDescription.data.outputPaths.foreach { outputPath =>
-      val data = getContentRoot(outputPath, moduleBase)
-      data.storePath(EXCLUDED, outputPath.getCanonicalPathOptimized)
+      val data = getContentRoot(outputPath.toPath, moduleBase)
+      data.storePath(EXCLUDED, outputPath.toPath.toCanonicalPath.toString)
     }
 
     val metadata = createBspMetadata(moduleDescription)
@@ -985,13 +975,13 @@ private[importing] object BspResolverLogic {
   }
 
   /** Use moduleBase content root when possible, or create a new content root if dir is not within moduleBase. */
-  private[importing] def getContentRoot(dir: File, moduleBase: Option[ContentRootData]) = {
+  private[importing] def getContentRoot(dir: Path, moduleBase: Option[ContentRootData]) = {
     val baseRoot = for {
       contentRoot <- moduleBase
-      if FileUtil.isAncestor(contentRoot.getRootPath, dir.getCanonicalPathOptimized, false)
+      if FileUtil.isAncestor(contentRoot.getRootPath, dir.toCanonicalPath.toString, false)
     } yield contentRoot
 
-    baseRoot.getOrElse(new ContentRootData(BSP.ProjectSystemId, dir.getCanonicalPathOptimized))
+    baseRoot.getOrElse(new ContentRootData(BSP.ProjectSystemId, dir.toCanonicalPath.toString))
   }
 
 
@@ -1075,7 +1065,7 @@ private[importing] object BspResolverLogic {
         buildModuleIdOpt match {
           case Some(buildModuleId) =>
             val moduleId = new MyURI(moduleDescriptionData.idUri)
-            val sbtModuleData = SbtModuleDataBsp(moduleId, buildModuleId, moduleDescriptionData.basePath.orNull)
+            val sbtModuleData = SbtModuleDataBsp(moduleId, buildModuleId, moduleDescriptionData.basePath.map(_.toPath.toFile).orNull)
             val sbtModuleDataNode = new DataNode[SbtModuleDataBsp](SbtModuleDataBsp.Key, sbtModuleData, moduleNode)
             moduleNode.addChild(sbtModuleDataNode)
           case _ =>
@@ -1099,14 +1089,4 @@ private[importing] object BspResolverLogic {
   private[importing] case class TargetId(id: String) extends DependencyId(id)
 
   private[importing] case class ModuleDep(parent: DependencyId, child: DependencyId, scope: DependencyScope, `export`: Boolean)
-
-  private[importing] case class Library(name: String, binary: File, sources: Option[File]) {
-    val data: LibraryData = {
-      val libraryData = new LibraryData(BSP.ProjectSystemId, name)
-      libraryData.addPath(LibraryPathType.BINARY, binary.getCanonicalPathOptimized)
-      sources.foreach(src => libraryData.addPath(LibraryPathType.BINARY, src.getCanonicalPathOptimized))
-      libraryData
-    }
-  }
-
 }

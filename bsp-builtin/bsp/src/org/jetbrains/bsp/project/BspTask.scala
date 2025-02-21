@@ -252,6 +252,8 @@ class BspTask[T](project: Project,
     // TODO use params.originId to show tree structure
 
     val uri = params.getTextDocument.getUri.toURI
+    val filePath = Path.of(uri)
+
     val uriDiagnostics = params.getDiagnostics.asScala.toList
     val previousDiagnostics = diagnostics.getOrElse(uri, List.empty)
 
@@ -263,7 +265,7 @@ class BspTask[T](project: Project,
     }
 
     if (uriDiagnostics.isEmpty && reset) {
-      reporter.clear(uri.toFile)
+      reporter.clear(filePath.toFile)
       buildMessages
     } else
       uriDiagnostics
@@ -272,7 +274,7 @@ class BspTask[T](project: Project,
 
           val start = diagnostic.getRange.getStart
           val end = diagnostic.getRange.getEnd
-          val position = Some(new FilePosition(uri.toFile, start.getLine, start.getCharacter, end.getLine, end.getCharacter))
+          val position = Some(new FilePosition(filePath.toFile, start.getLine, start.getCharacter, end.getLine, end.getCharacter))
           val text = s"${diagnostic.getMessage} [${start.getLine + 1}:${start.getCharacter + 1}]"
 
           import bsp4j.DiagnosticSeverity._

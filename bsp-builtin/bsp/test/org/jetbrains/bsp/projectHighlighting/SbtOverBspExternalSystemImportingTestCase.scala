@@ -5,13 +5,13 @@ import org.jetbrains.bsp.BSP
 import org.jetbrains.bsp.project.importing.setup.SbtConfigSetup
 import org.jetbrains.bsp.settings.BspProjectSettings
 import org.jetbrains.plugins.scala.build.{BuildMessages, ConsoleReporter}
-import org.jetbrains.plugins.scala.extensions.RichFile
+import org.jetbrains.plugins.scala.extensions.PathExt
 import org.jetbrains.plugins.scala.projectHighlighting.base.ProjectHighlightingTestUtils
 import org.jetbrains.sbt.Sbt
 import org.jetbrains.sbt.project.ScalaExternalSystemImportingTestBase
 import org.junit.Assert.fail
 
-import java.io.File
+import java.nio.file.Path
 import scala.util.Try
 
 /** See also [[org.jetbrains.sbt.project.SbtExternalSystemImportingTestLike]] */
@@ -36,11 +36,11 @@ trait SbtOverBspExternalSystemImportingTestCase extends ScalaExternalSystemImpor
   }
 
   protected def generateSbtBspConfigurationFileIfNeeded(): Unit = {
-    val projectPath = new File(this.getTestProjectPath)
-    val bspConfigFile = projectPath / ".bsp/sbt.json"
+    val projectPath = Path.of(this.getTestProjectPath)
+    val bspConfigFile = projectPath / ".bsp" / "sbt.json"
 
     //NOTE: we could extract a setting to reuse or not to reuse bsp config file
-    if (!bspConfigFile.exists()) {
+    if (!bspConfigFile.exists) {
       generateSbtBspConfigurationFile(projectPath)
     } else {
       println(
@@ -51,14 +51,14 @@ trait SbtOverBspExternalSystemImportingTestCase extends ScalaExternalSystemImpor
     }
   }
 
-  protected def generateSbtBspConfigurationFile(projectPath: File): Unit = {
+  protected def generateSbtBspConfigurationFile(projectPath: Path): Unit = {
     val title = "Generating sbt bsp configuration"
     println(s"$title Started")
 
     //it's done in `setupSdk` but in this test we need JDK earlier
     setupProjectJdk()
     val jdk = getJdkConfiguredForTestCase
-    val sbtBspConfigSetup = SbtConfigSetup(projectPath.toPath, jdk)
+    val sbtBspConfigSetup = SbtConfigSetup(projectPath, jdk)
     val reporter = new ConsoleReporter(name = "") {
       override def progressTask(eventId: BuildMessages.EventId, total: Long, progress: Long, unit: String, message: String, time: Long): Unit = {
         //do nothing, in tests it's enough to see the console output which is already printed by SbtStructureDump
