@@ -17,16 +17,29 @@ import java.nio.file.{Files, Path, StandardOpenOption}
 import scala.util.Using
 
 private final class WriteScalaJpsProjectMetadataCompileTask extends ScalaCompileTask {
+  import WriteScalaJpsProjectMetadataCompileTask._
+
   override protected def run(context: CompileContext): Boolean = {
-    generateJpsProjectMetadata(context.isRebuild, context.getProject)
+    writeJpsProjectMetadata(force = context.isRebuild, runInBuildManagerThread = true, context.getProject)
     true
   }
 
   override protected def presentableName: String = "Writing Scala JPS project metadata to disk"
 
-  override protected def log: Logger = WriteScalaJpsProjectMetadataCompileTask.Log
+  override protected def log: Logger = Log
+}
 
-  private def generateJpsProjectMetadata(force: Boolean, project: Project): Unit = {
+private[compiler] object WriteScalaJpsProjectMetadataCompileTask {
+  val Log: Logger = Logger.getInstance(classOf[WriteScalaJpsProjectMetadataCompileTask])
+
+  /**
+   * Writes the Scala project metadata to disk which the JPS process expects while runinng the build.
+   *
+   * @param force write the latest project metadata regardless of the previous state on disk
+   * @param runInBuildManagerThread `true` for regular builds, `false` for CBH
+   * @param project the project instance
+   */
+  def writeJpsProjectMetadata(force: Boolean, runInBuildManagerThread: Boolean, project: Project): Unit = {
     val buildManager = BuildManager.getInstance()
     val projectSystemDirectory = buildManager.getProjectSystemDir(project)
 
@@ -41,10 +54,10 @@ private final class WriteScalaJpsProjectMetadataCompileTask extends ScalaCompile
       try {
         val lastCrc = readLastCrcFromDisk(crcFilePath)
         if (lastCrc == crc) return // Project has not changed.
-        log.debug(s"Project metadata changed: lastCrc = $lastCrc, currentCrc = $crc")
+        Log.debug(s"Project metadata changed: lastCrc = $lastCrc, currentCrc = $crc")
       } catch {
         case e: IOException =>
-          log.error("Unable to read or find Scala JPS project metadata file", e)
+          Log.error("Unable to read or find Scala JPS project metadata crc file", e)
       }
     }
 
@@ -57,7 +70,8 @@ private final class WriteScalaJpsProjectMetadataCompileTask extends ScalaCompile
       modulesWithScalaSdkElement.addContent(moduleElement)
     }
     element.addContent(modulesWithScalaSdkElement)
-    buildManager.runCommand(() => {
+
+    val writeToDiskTask: Runnable = () => {
       if (!project.isDefault) {
         buildManager.clearState(project)
       }
@@ -70,16 +84,18 @@ private final class WriteScalaJpsProjectMetadataCompileTask extends ScalaCompile
         ))(_.writeLong(crc))
       } catch {
         case e: IOException =>
-          log.error("Unable to write Scala JPS project metadata file", e)
+          Log.error("Unable to write Scala JPS project metadata file", e)
           throw new RuntimeException(e)
       }
-    })
+    }
+
+    if (runInBuildManagerThread) {
+      buildManager.runCommand(writeToDiskTask)
+    } else {
+      writeToDiskTask.run()
+    }
   }
 
   private def readLastCrcFromDisk(crcFilePath: Path): Long =
     Using.resource(new DataInputStream(Files.newInputStream(crcFilePath, StandardOpenOption.READ)))(_.readLong())
-}
-
-private object WriteScalaJpsProjectMetadataCompileTask {
-  val Log: Logger = Logger.getInstance(classOf[WriteScalaJpsProjectMetadataCompileTask])
 }

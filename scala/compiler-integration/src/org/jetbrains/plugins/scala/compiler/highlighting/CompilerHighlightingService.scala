@@ -22,12 +22,11 @@ import com.intellij.psi.{PsiFile, PsiManager}
 import com.intellij.task.{ProjectTaskContext, ProjectTaskManager}
 import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.util.ui.UIUtil
-import kotlinx.coroutines.{BuildersKt, CoroutineScope}
 import org.jetbrains.bsp.BspUtil
 import org.jetbrains.bsp.project.{BspProjectTaskRunner, CustomTaskArguments}
 import org.jetbrains.jps.incremental.scala.remote.SourceScope
 import org.jetbrains.plugins.scala.build.CompilerEventReporter
-import org.jetbrains.plugins.scala.compiler.{CompileServerLauncher, CompilerIntegrationBundle}
+import org.jetbrains.plugins.scala.compiler.{CompileServerLauncher, CompilerIntegrationBundle, WriteScalaJpsProjectMetadataCompileTask}
 import org.jetbrains.plugins.scala.extensions._
 import org.jetbrains.plugins.scala.lang.psi.api.ScalaFile
 import org.jetbrains.plugins.scala.project.{ModuleExt, ScalaLanguageLevel}
@@ -37,6 +36,7 @@ import org.jetbrains.plugins.scala.util.{CanonicalPath, DocumentVersion}
 import java.io.EOFException
 import java.util.concurrent.atomic.{AtomicBoolean, AtomicReference}
 import java.util.concurrent.{ConcurrentSkipListSet, ScheduledExecutorService, ScheduledFuture, TimeUnit}
+import kotlinx.coroutines.{BuildersKt, CoroutineScope}
 import scala.collection.immutable
 import scala.concurrent.duration._
 import scala.concurrent.{Await, Future, Promise}
@@ -288,6 +288,7 @@ private final class CompilerHighlightingService(project: Project, coroutineScope
     val CompilationRequest.IncrementalRequest(fileCompilationScopes, _, _) = request
     val modules = fileCompilationScopes.values.map(_.module.findRepresentativeModuleForSharedSourceModuleOrSelf).toSet
     val sourceScope = mergeSourceScope(request)
+    WriteScalaJpsProjectMetadataCompileTask.writeJpsProjectMetadata(force = false, runInBuildManagerThread = false, project)
     IncrementalCompiler.compile(project, modules, sourceScope, client)
 
     if (!DocumentUtil.stillValid(documentVersions)) return
