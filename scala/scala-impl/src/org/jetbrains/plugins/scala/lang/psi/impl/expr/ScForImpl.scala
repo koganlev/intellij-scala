@@ -7,7 +7,7 @@ import com.intellij.psi.scope._
 import com.intellij.psi.tree.IElementType
 import org.jetbrains.plugins.scala.ScalaBundle
 import org.jetbrains.plugins.scala.caches.{BlockModificationTracker, cached}
-import org.jetbrains.plugins.scala.extensions.{Model, ObjectExt, PsiElementExt, StringsExt}
+import org.jetbrains.plugins.scala.extensions.{IterableOnceExt, Model, ObjectExt, PsiElementExt, StringsExt}
 import org.jetbrains.plugins.scala.lang.lexer.{ScalaModifier, ScalaTokenTypes}
 import org.jetbrains.plugins.scala.lang.psi.ScalaPsiUtil
 import org.jetbrains.plugins.scala.lang.psi.api.base.patterns._
@@ -122,7 +122,9 @@ class ScForImpl(node: ASTNode) extends ScExpressionImplBase(node) with ScFor wit
       e.prevSiblings
         .takeWhile(_.is[PsiComment, PsiWhiteSpace])
         .map(_.getText)
-        .mkString("\n", "", e.getText + "\n")
+        .toSeq
+        .reverseIterator
+        .mkString(if (e.is[ScBlock]) "" else "\n", "", e.getText + "\n")
     } else {
       e.getText
     }
@@ -130,7 +132,7 @@ class ScForImpl(node: ASTNode) extends ScExpressionImplBase(node) with ScFor wit
 
   protected def bodyToText(expr: ScalaPsiElement): String = toTextWithPrevWhitespaceInScala3(expr)
 
-  private def generateDesugaredExprWithMappings(forDisplay: Boolean) =
+  private def generateDesugaredExprWithMappings(forDisplay: Boolean): Option[(ScExpression, Map[ScPattern, ScPattern], Map[ScEnumerator, ScEnumerator.DesugaredEnumerator])] =
     generateDesugaredExprTextWithMappings(forDisplay).map {
       case (expression, patternToPosition, enumToPosition) =>
         val patternMapping = for {
@@ -146,7 +148,7 @@ class ScForImpl(node: ASTNode) extends ScExpressionImplBase(node) with ScFor wit
         (expression, patternMapping.toMap, enumMapping.toMap)
     }
 
-  private def generateDesugaredExprTextWithMappings(forDisplay: Boolean) = {
+  private def generateDesugaredExprTextWithMappings(forDisplay: Boolean): Option[(ScExpression, Iterator[(ScPattern, PsiElement)], Iterator[(ScEnumerator, PsiElement)])] = {
     val forceSingleLine = !(forDisplay && this.getText.contains("\n"))
 
     var nextNameIdx = 0
@@ -261,6 +263,29 @@ class ScForImpl(node: ASTNode) extends ScExpressionImplBase(node) with ScFor wit
       ret
     }
 
+    case class ForBinding(forBinding: ScForBinding) {
+
+      def exprText: String =
+        forBinding.expr
+          .fold("???")(toTextWithNormalizedUnderscores)
+
+      val pattern: Option[ScPattern] = Option(forBinding.pattern)
+
+      private val bindingPattern: Option[ScBindingPattern] = pattern.collect {
+        case pattern: ScBindingPattern => pattern
+      }
+
+      val isBinding: Boolean = bindingPattern.isDefined
+      val isWildCard: Boolean = pattern.exists(_.is[ScWildcardPattern])
+
+      val name: String = bindingPattern.fold({
+        nextNameIdx += 1
+        s"v$$${if (forDisplay) "" else "forIntellij"}$nextNameIdx"
+      })(_.name)
+
+      def patternText: String = pattern.fold(name)(_.getText)
+    }
+
     def appendGen(gen: ScGenerator, restEnums: Seq[ScEnumerator]): Unit = {
       val rvalue = gen.expr.map(normalizeUnderscores)
       val isLastGen = !restEnums.exists(_.is[ScGenerator])
@@ -316,29 +341,6 @@ class ScForImpl(node: ASTNode) extends ScExpressionImplBase(node) with ScFor wit
         }
       }
 
-      case class ForBinding(forBinding: ScForBinding) {
-
-        def exprText: String =
-          forBinding.expr
-            .fold("???")(toTextWithNormalizedUnderscores)
-
-        val pattern: Option[ScPattern] = Option(forBinding.pattern)
-
-        private val bindingPattern: Option[ScBindingPattern] = pattern.collect {
-          case pattern: ScBindingPattern => pattern
-        }
-
-        val isBinding: Boolean = bindingPattern.isDefined
-        val isWildCard: Boolean = pattern.exists(_.is[ScWildcardPattern])
-
-        val name: String = bindingPattern.fold({
-          nextNameIdx += 1
-          s"v$$${if (forDisplay) "" else "forIntellij"}$nextNameIdx"
-        })(_.name)
-
-        def patternText: String = pattern.fold(name)(_.getText)
-      }
-
       def printForBindings(forBindings: Seq[ForBinding], newLines: Boolean): Unit = {
         if (newLines) {
           resultText ++= "\n"
@@ -387,7 +389,7 @@ class ScForImpl(node: ASTNode) extends ScExpressionImplBase(node) with ScFor wit
               val usedBindings = if (forDisplay) forBindings.filter(!_.isWildCard) else forBindings
               val needsArgParenthesis = argsWithoutWildcards.length + usedBindings.size != 1
 
-              // if args is empty we return ()
+              // if args is empty, we return ()
               if (needsArgParenthesis)
                 resultText ++= "("
               resultText ++= (argsWithoutWildcards.map(_._2) ++ usedBindings.map(_.name)).mkString(", ")
@@ -487,55 +489,79 @@ class ScForImpl(node: ASTNode) extends ScExpressionImplBase(node) with ScFor wit
       }
     }
 
-    enumerators.flatMap(_.generators.headOption).map { firstGen =>
-      val restEnums = firstGen.withNextSiblings
-        .collect {
-          case e: ScEnumerator => e
-        }.toList
-        .tail
+    val allEnumerators = enumerators.fold(Seq.empty[ScEnumerator])(_.enumerators)
+    val (initialBindings, firstGenerator, restEnumerators) = {
+      val (initialBindings, rest) = allEnumerators.span(!_.is[ScGenerator])
 
-      appendGen(firstGen, restEnums)
-
-      val lambdaPrefix = underscores.valuesIterator match {
-        case iterator if iterator.isEmpty => ""
-        case iterator =>
-          (iterator.map(underscoreName).toSeq match {
-            case Seq(arg) => arg
-            case args => args.commaSeparated(model = Model.Parentheses)
-          }) + " " + `=>` + " "
-      }
-
-      // we need the braces to handle incomplete fors, because createExpressionWithContextFromText
-      // needs to parse exactly one expression.
-      // The parenthesis are needed for correct newline-handling
-      val prefix = "{("
-      resultText.insert(0, prefix + lambdaPrefix)
-      resultText ++= ")}"
-      val expression = ScalaPsiElementFactory.createExpressionWithContextFromText(
-        resultText.toString,
-        getContext,
-        this
-      )
-      val shiftOffset = lambdaPrefix.length + prefix.length
-
-      def withElements[T](mappings: mutable.Map[T, Int]) = for {
-        (original, offset) <- if (forDisplay) Iterator.empty else mappings.iterator
-
-        element = expression.findElementAt(offset + shiftOffset)
-        if element != null
-      } yield original -> element
-
-      val desugared = expression match {
-        case ScBlock(ScParenthesisedExpr(desugaredFor)) =>
-          desugaredFor.context = getContext
-          desugaredFor.child = this
-          desugaredFor
+      rest match {
+        case (firstGenerator: ScGenerator) +: restEnumerators =>
+          (initialBindings.filterByType[ScForBinding], firstGenerator, restEnumerators)
         case _ =>
-          expression
+          return None
+      }
+    }
+
+    val lambdaPrefix = underscores.valuesIterator match {
+      case iterator if iterator.isEmpty => ""
+      case iterator =>
+        (iterator.map(underscoreName).toSeq match {
+          case Seq(arg) => arg
+          case args => args.commaSeparated(model = Model.Parentheses)
+        }) + " " + `=>` + " "
+    }
+
+    if (initialBindings.isEmpty) {
+      appendGen(firstGenerator, restEnumerators)
+    } else {
+      resultText += '{'
+      if (!forceSingleLine) {
+        resultText += '\n'
       }
 
-      (desugared, withElements(patternMappings), withElements(enumMappings))
+      for (binding <- initialBindings) {
+        val b = ForBinding(binding)
+        resultText ++= "val "
+        markMappingHere(b.pattern, patternMappings)
+        resultText ++= b.patternText
+        resultText ++= " = "
+        resultText ++= b.exprText
+        resultText += (if (forceSingleLine) ';' else '\n')
+      }
+
+      appendGen(firstGenerator, restEnumerators)
+      resultText += '}'
     }
+
+    // we need the braces to handle incomplete fors, because createExpressionWithContextFromText
+    // needs to parse exactly one expression.
+    // The parenthesis is needed for correct newline-handling
+    val prefix = "{("
+    resultText.insert(0, prefix + lambdaPrefix)
+    val shiftOffset = prefix.length + lambdaPrefix.length
+    resultText ++= ")}"
+    val expression = ScalaPsiElementFactory.createExpressionWithContextFromText(
+      resultText.toString,
+      getContext,
+      this
+    )
+
+    def withElements[T](mappings: mutable.Map[T, Int]) = for {
+      (original, offset) <- if (forDisplay) Iterator.empty else mappings.iterator
+
+      element = expression.findElementAt(offset + shiftOffset)
+      if element != null
+    } yield original -> element
+
+    val desugared = expression match {
+      case ScBlock(ScParenthesisedExpr(desugaredFor)) =>
+        desugaredFor.context = getContext
+        desugaredFor.child = this
+        desugaredFor
+      case _ =>
+        expression
+    }
+
+    Some((desugared, withElements(patternMappings), withElements(enumMappings)))
   }
 
   private def hasMethod(ty: ScType, methodName: String): Boolean = {

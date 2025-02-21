@@ -183,7 +183,7 @@ object ScalaCompletionUtil {
     val typeText = typez.getText
     val text = replaceDummy("class a { " + typeText + " " + additionText + "}")
 
-    checkWith(manager.getProject, text)
+    checkWith(manager.getProject, text, if (typez.isInScala3File) Scala3Language.INSTANCE else ScalaLanguage.INSTANCE)
   }
 
   import CompletionUtil.DUMMY_IDENTIFIER_TRIMMED

@@ -17,6 +17,8 @@ class ScEnumeratorsImpl(node: ASTNode) extends ScalaPsiElementImpl(node) with Sc
 
   override def forBindings: ArraySeq[ScForBinding] = ArraySeq.unsafeWrapArray(findChildrenByClass[ScForBinding](classOf[ScForBinding]))
 
+  override def enumerators: Seq[ScEnumerator] = ArraySeq.unsafeWrapArray(findChildrenByClass[ScEnumerator](classOf[ScEnumerator]))
+
   override def generators: ArraySeq[ScGenerator] = ArraySeq.unsafeWrapArray(findChildrenByClass[ScGenerator](classOf[ScGenerator]))
 
   override def guards: ArraySeq[ScGuard] = ArraySeq.unsafeWrapArray(findChildrenByClass[ScGuard](classOf[ScGuard]))

@@ -8,7 +8,21 @@ import org.jetbrains.plugins.scala.project.settings.ScalaCompilerConfiguration
 import org.jetbrains.plugins.scala.util.runners.WithIndexingMode
 import org.jetbrains.plugins.scala.{LatestScalaVersions, ScalaBundle, ScalaVersion}
 
-abstract class ForComprehensionHighlightingTestBase extends ScalaHighlightingTestBase
+abstract class ForComprehensionHighlightingTestBase extends ScalaHighlightingTestBase {
+  def test_guard_before_generator(): Unit = {
+    val code =
+      """
+        |val x: Option[Int] = for {
+        |  if true
+        |  x <- Some(3)
+        |} yield x
+      """.stripMargin
+
+    assertMessagesSorted(errorsFromScalaCode(code))(
+      Error("if true", ScalaBundle.message("for.guards.can.only.be.used.after.the.first.generator")),
+    )
+  }
+}
 
 class ForComprehensionHighlightingTest extends ForComprehensionHighlightingTestBase {
   def test_guard_type(): Unit = {
@@ -274,6 +288,20 @@ class ForComprehensionHighlightingTest extends ForComprehensionHighlightingTestB
 
     assertNoErrors(code)
   }
+
+  def test_for_binding_before_generator(): Unit = {
+    val code =
+      """
+        |val x: Option[Int] = for {
+        |  a = 1
+        |  x <- Some(a)
+        |} yield x
+      """.stripMargin
+
+    assertMessagesSorted(errorsFromScalaCode(code))(
+      Error("a = 1", ScalaBundle.message("for.bindings.can.only.be.used.after.the.first.generator")),
+    )
+  }
 }
 
 class ForComprehensionHighlightingTest_with_cats_2_12 extends ForComprehensionHighlightingTestBase {
@@ -502,6 +530,8 @@ class ForComprehensionSemicolonTest extends ForComprehensionHighlightingTestBase
 
   def test_error_semicolons_with_newlines(): Unit =
     assertEquals(2 + 2 + 3 + 3, errors("for{\n; \n; \nx <- Seq(1)\n;\n;\n;\nif x == 3\n;\n;;;\n y = x\n;;\n;} ()"))
+
+  override def test_guard_before_generator(): Unit = ()
 }
 
 abstract class ForComprehensionRefutabilityTestBase_3 extends ForComprehensionHighlightingTestBase {
@@ -571,19 +601,7 @@ class ForComprehensionRefutabilityTest_3_3 extends ForComprehensionRefutabilityT
   override protected def supportedIn(version: ScalaVersion): Boolean = version == LatestScalaVersions.Scala_3_3
 }
 
-class ForComprehensionRefutabilityTest_3_3_future extends ForComprehensionRefutabilityTestBase_3 {
-  override protected def supportedIn(version: ScalaVersion): Boolean = version == LatestScalaVersions.Scala_3_3
-
-  override protected def setUp(): Unit = {
-    super.setUp()
-
-    val defaultProfile = ScalaCompilerConfiguration.instanceIn(getProject).defaultProfile
-    val newSettings = defaultProfile.getSettings.copy(
-      additionalCompilerOptions = defaultProfile.getSettings.additionalCompilerOptions :+ "-source:future"
-    )
-    defaultProfile.setSettings(newSettings)
-  }
-
+trait NoWithFilterOnIrrefutability { this: ForComprehensionRefutabilityTestBase_3 =>
   override def test_missing_withFilter(): Unit = {
     val code =
       """
@@ -596,7 +614,21 @@ class ForComprehensionRefutabilityTest_3_3_future extends ForComprehensionRefuta
   }
 }
 
-class ForComprehensionRefutabilityTest_From_3_4 extends ForComprehensionRefutabilityTestBase_3 {
+class ForComprehensionRefutabilityTest_3_3_future extends ForComprehensionRefutabilityTestBase_3 with NoWithFilterOnIrrefutability {
+  override protected def supportedIn(version: ScalaVersion): Boolean = version == LatestScalaVersions.Scala_3_3
+
+  override protected def setUp(): Unit = {
+    super.setUp()
+
+    val defaultProfile = ScalaCompilerConfiguration.instanceIn(getProject).defaultProfile
+    val newSettings = defaultProfile.getSettings.copy(
+      additionalCompilerOptions = defaultProfile.getSettings.additionalCompilerOptions :+ "-source:future"
+    )
+    defaultProfile.setSettings(newSettings)
+  }
+}
+
+class ForComprehensionRefutabilityTest_From_3_4 extends ForComprehensionRefutabilityTestBase_3 with NoWithFilterOnIrrefutability{
   override protected def supportedIn(version: ScalaVersion): Boolean = version >= LatestScalaVersions.Scala_3_4
 
   override def test_missing_withFilter(): Unit = {
@@ -638,4 +670,48 @@ class ForComprehensionRefutabilityTest_From_3_4 extends ForComprehensionRefutabi
       |  f
       |""".stripMargin
   )
+}
+
+class ForComprehensionTest_From_3_6_2_With_BetterFor extends ForComprehensionRefutabilityTestBase_3 with NoWithFilterOnIrrefutability{
+  override protected def supportedIn(version: ScalaVersion): Boolean = version >= LatestScalaVersions.Scala_3_6.withMinor(2)
+
+  def test_initial_for_bindings(): Unit = assertNoErrors(
+    """
+      |val x: Option[Int] =
+      |  for {
+      |    a = 1
+      |    b = a
+      |    c <- Some(b)
+      |  } yield c
+      |""".stripMargin
+  )
+
+  def test_guard_before_generator_after_binding(): Unit = {
+    val code =
+      """
+        |val x: Option[Int] = for {
+        |  a = 1
+        |  if true
+        |  x <- Some(a)
+        |} yield x
+      """.stripMargin
+
+    assertMessagesSorted(errorsFromScalaCode(code))(
+      Error("if true", ScalaBundle.message("for.guards.can.only.be.used.after.the.first.generator")),
+    )
+  }
+
+  def test_irrefutability_of_initial_for_bindings(): Unit = {
+    val code =
+      """
+        |val x: Option[String] = for {
+        |  a: String = 1
+        |  x <- Some(a)
+        |} yield x
+      """.stripMargin
+
+    assertMessagesSorted(errorsFromScalaCode(code))(
+      Error("a: String", "Pattern type is incompatible with expected type, found: String, required: 1"),
+    )
+  }
 }
