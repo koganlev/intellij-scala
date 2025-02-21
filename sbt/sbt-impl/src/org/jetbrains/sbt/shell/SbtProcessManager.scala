@@ -119,7 +119,7 @@ final class SbtProcessManager(project: Project) extends Disposable {
     val workingDir = new File(workingDirPath)
 
     val sbtSettings = getSbtSettings(workingDirPath)
-    lazy val launcher = launcherJar(sbtSettings)
+    lazy val launcher = SbtUtil.getLauncherJar(sbtSettings)
 
     // an id to identify this boot of sbt as being launched from idea, so that any plugins it injects are never ever loaded otherwise
     // use sbtStructureVersion as approximation of compatible versions of IDEA this is allowed to launch with.
@@ -131,7 +131,7 @@ final class SbtProcessManager(project: Project) extends Disposable {
     javaParameters.setJdk(sdk)
     javaParameters.configureByProject(project, 1, sdk)
     javaParameters.setWorkingDirectory(workingDir)
-    javaParameters.setJarPath(launcher.getCanonicalPath)
+    javaParameters.setJarPath(launcher.toCanonicalPath.toString)
 
     val debugConnection = if (sbtSettings.shellDebugMode) Option(addDebugParameters(javaParameters)) else None
 
@@ -145,7 +145,7 @@ final class SbtProcessManager(project: Project) extends Disposable {
       }
     }
 
-    val projectSbtVersion = detectSbtVersion(workingDir, launcher)
+    val projectSbtVersion = detectSbtVersion(workingDir.toPath, launcher)
     val addPluginCommandSupported = SbtVersionCapabilities.isAddPluginCommandSupported(projectSbtVersion)
     log.debug(s"projectSbtVersion = $projectSbtVersion")
     log.debug(s"addPluginCommandSupported = $addPluginCommandSupported")
@@ -275,9 +275,6 @@ final class SbtProcessManager(project: Project) extends Disposable {
   }
 
   private def getSbtSettings(dir: String) = SbtExternalSystemManager.executionSettingsFor(project, dir)
-
-  private def launcherJar(sbtSettings: SbtExecutionSettings): File =
-    sbtSettings.customLauncher.getOrElse(getDefaultLauncher)
 
   /**
    * Because the regular GeneralCommandLine process doesn't mesh well with JLine on Windows, use a

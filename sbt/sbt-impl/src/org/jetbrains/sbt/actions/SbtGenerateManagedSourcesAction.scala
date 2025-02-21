@@ -12,7 +12,7 @@ import org.jetbrains.sbt.buildinfo.BuildInfo
 import org.jetbrains.sbt.icons.Icons
 import org.jetbrains.sbt.project.structure.SbtStructureDump
 import org.jetbrains.sbt.project.{SbtExternalSystemManager, SbtProjectSystem}
-import org.jetbrains.sbt.{SbtBundle, SbtUtil, SbtVersion, SbtVersionCapabilities}
+import org.jetbrains.sbt.{SbtBundle, SbtUtil, SbtVersionCapabilities}
 
 import java.nio.file.{Files, Path}
 import scala.util.control.NonFatal
@@ -52,9 +52,9 @@ private final class SbtGenerateManagedSourcesAction extends AnAction(
         }
 
         try {
-          val launcher = settings.customLauncher.getOrElse(SbtUtil.getDefaultLauncher)
+          val launcher = SbtUtil.getLauncherJar(settings)
 
-          val sbtVersion = SbtUtil.detectSbtVersion(projectBasePath.toFile, launcher)
+          val sbtVersion = SbtUtil.detectSbtVersion(projectBasePath, launcher)
           val sbtStructurePluginBinVersion = SbtUtil.structurePluginBinaryVersion(sbtVersion)
           val addPluginCommandSupported = SbtVersionCapabilities.isAddPluginCommandSupported(sbtVersion)
 
@@ -90,12 +90,12 @@ private final class SbtGenerateManagedSourcesAction extends AnAction(
             settings.vmExecutable,
             settings.vmOptions,
             settings.userSetEnvironment,
-            launcher,
+            launcher.toFile,
             settings.sbtOptions,
             setupOptions,
             generateCommand,
             SbtBundle.message("sbt.generate.managed.sources.task.progress.title"),
-            settings.passParentEnvironment
+            settings.passParentEnvironment,
           )(indicator)(using reporter)
 
           sbtResult match {

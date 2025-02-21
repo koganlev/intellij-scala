@@ -67,14 +67,14 @@ class SbtProjectResolver extends ExternalSystemProjectResolver[SbtExecutionSetti
       if (file.isDirectory) file else file.getParentFile
     }
 
-    val sbtLauncher = settings.customLauncher.getOrElse(getDefaultLauncher)
-    val sbtVersion = detectSbtVersion(projectRoot, sbtLauncher)
+    val sbtLauncher = SbtUtil.getLauncherJar(settings)
+    val sbtVersion = detectSbtVersion(projectRoot.toPath, sbtLauncher)
 
     //TODO: is it still actual given that sbt version is stored in settings?
     implicit val context: ImportContext = ImportContext(sbtVersion, settings)
 
     if (isPreview) dummyProject(projectRoot, settings).toDataNode
-    else importProject(taskId, settings, projectRoot, sbtLauncher, listener)
+    else importProject(taskId, settings, projectRoot, sbtLauncher.toFile, listener)
   }
 
   private def importProject(
@@ -149,7 +149,7 @@ class SbtProjectResolver extends ExternalSystemProjectResolver[SbtExecutionSetti
     projectRoot: File,
     sbtLauncher: File,
     sbtVersion: SbtVersion,
-    settings:SbtExecutionSettings,
+    settings: SbtExecutionSettings,
     @Nullable project: Project
   )(implicit reporter: BuildReporter): Try[(Elem, BuildMessages)] = {
     SbtProjectResolver.processOutputOfLatestStructureDump = ""

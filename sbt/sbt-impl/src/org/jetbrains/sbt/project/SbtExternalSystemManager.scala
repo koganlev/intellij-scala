@@ -91,7 +91,7 @@ object SbtExternalSystemManager {
       val file = new File(realProjectPath)
       if (file.isDirectory) file else file.getParentFile
     }
-    val sbtVersion = detectSbtVersion(projectRoot, sbtLauncher)
+    val sbtVersion = detectSbtVersion(projectRoot.toPath, sbtLauncher.toPath)
 
     val projectJdkName = bootstrapJdk(project, projectSettings)
     val vmExecutable = getVmExecutable(projectJdkName, settingsState, sbtVersion)

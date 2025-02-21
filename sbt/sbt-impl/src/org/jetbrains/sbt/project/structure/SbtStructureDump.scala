@@ -90,11 +90,11 @@ class SbtStructureDump {
     sbtLauncher: File,
     sbtStructureJar: File,
     preferScala2: Boolean,
-    passParentEnvironment: Boolean
+    passParentEnvironment: Boolean,
   )(implicit reporter: BuildReporter): Try[BuildMessages] = {
     val optString = makeOptionsStringLiteral(options)
 
-    val sbtVersion = SbtUtil.detectSbtVersion(directory, SbtUtil.getDefaultLauncher)
+    val sbtVersion = SbtUtil.detectSbtVersion(directory.toPath, sbtLauncher.toPath)
 
     val SeqFqn = SbtVersionCapabilities.collectionsSeqClassFqn(sbtVersion)
     val setCommands = Seq(

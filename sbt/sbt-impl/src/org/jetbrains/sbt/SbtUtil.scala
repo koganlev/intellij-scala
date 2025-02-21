@@ -23,6 +23,7 @@ import org.jetbrains.sbt.Sbt.SbtModuleChildKeyInstance
 import org.jetbrains.sbt.buildinfo.BuildInfo
 import org.jetbrains.sbt.project.SbtProjectSystem
 import org.jetbrains.sbt.project.data.{SbtBuildModuleData, SbtModuleData, SbtProjectData}
+import org.jetbrains.sbt.project.settings.SbtExecutionSettings
 import org.jetbrains.sbt.project.structure.{JvmOpts, SbtOption, SbtOpts}
 import org.jetbrains.sbt.settings.SbtSettings
 
@@ -121,8 +122,8 @@ object SbtUtil {
       sbtVersion.value.major(2) //effectively ~ 0.13
   }
 
-  def detectSbtVersion(directory: File, sbtLauncher: => File): SbtVersion =
-    SbtVersionDetector.detectSbtVersion(directory, sbtLauncher)
+  def detectSbtVersion(projectRoot: Path, sbtLauncher: => Path): SbtVersion =
+    SbtVersionDetector.detectSbtVersion(projectRoot, sbtLauncher)
 
   def getSbtModuleData(module: Module): Option[SbtModuleData] = {
     val project = module.getProject
@@ -201,6 +202,9 @@ object SbtUtil {
   }
 
   def getDefaultLauncher: File = getLauncherDir / "sbt-launch.jar"
+
+  def getLauncherJar(settings: SbtExecutionSettings): Path =
+    settings.customLauncher.getOrElse(getDefaultLauncher).toPath
 
   /** Normalizes pathname so that backslashes don't get interpreted as escape characters in interpolated strings. */
   def normalizePath(file: File): String = file.getAbsolutePath.replace('\\', '/')

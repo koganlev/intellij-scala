@@ -1,31 +1,36 @@
 package org.jetbrains.sbt
 
 import com.intellij.openapi.project.Project
-import org.jetbrains.plugins.scala.extensions.RichFile
+import org.jetbrains.annotations.TestOnly
+import org.jetbrains.plugins.scala.extensions.PathExt
 import org.jetbrains.sbt.project.SbtExternalSystemManager
 
-import java.io.{BufferedInputStream, File, FileInputStream}
+import java.io.{BufferedInputStream, File}
+import java.nio.file.{FileSystems, Files, Path}
 import java.util.Properties
-import java.util.jar.JarFile
 import scala.util.Using
 
 object SbtVersionDetector {
 
   def detectSbtVersion(project: Project): SbtVersion = {
     val settings = SbtExternalSystemManager.executionSettingsFor(project)
-    val projectBaseDir = new File(settings.realProjectPath)
-    val launcher = settings.customLauncher.getOrElse(SbtUtil.getDefaultLauncher)
+    val projectBaseDir = Path.of(settings.realProjectPath)
+    val launcher = SbtUtil.getLauncherJar(settings)
     detectSbtVersion(projectBaseDir, launcher)
   }
 
   /**
    * The version of sbt defined in `project/build.properties` or fallback to the sbt version corresponding to launcher
    */
-  def detectSbtVersion(projectDir: File, sbtLauncher: => File): SbtVersion = {
+  def detectSbtVersion(projectDir: Path, sbtLauncher: => Path): SbtVersion = {
     val fromProject = sbtVersionInProjectPropertiesFile(projectDir)
     val fromProjectOrLauncher = fromProject.orElse(sbtVersionInBootPropertiesOfSbtLauncher(sbtLauncher)).map(SbtVersion(_))
     fromProjectOrLauncher.getOrElse(SbtVersion.Latest.Sbt_1)
   }
+
+//  @TestOnly
+//  def detectSbtVersion(projectDir: File, sbtLauncher: => File): SbtVersion =
+//    detectSbtVersion(projectDir.toPath, sbtLauncher.toPath)
 
   /**
    * Reads sbt version from the `project/build.properties` file.<br>
@@ -33,18 +38,18 @@ object SbtVersionDetector {
    *   sbt.version = 1.10.7
    * }}}
    */
-  private def sbtVersionInProjectPropertiesFile(projectDir: File): Option[String] = {
+  private def sbtVersionInProjectPropertiesFile(projectDir: Path): Option[String] = {
     val projectPropertiesFile = projectDir / Sbt.ProjectDirectory / Sbt.PropertiesFile
-    if (projectPropertiesFile.exists())
+    if (Files.exists(projectPropertiesFile))
       readPropertyFrom(projectPropertiesFile, "sbt.version")
     else
       None
   }
 
   //noinspection SameParameterValue
-  private def readPropertyFrom(file: File, name: String): Option[String] = {
-    Using.resource(new BufferedInputStream(new FileInputStream(file))) { input =>
-      val properties = new Properties()
+  private def readPropertyFrom(propertiesFilePath: Path, name: String): Option[String] = {
+    Using.resource(new BufferedInputStream(Files.newInputStream(propertiesFilePath))) { input =>
+    val properties = new Properties()
       properties.load(input)
       Option(properties.getProperty(name))
     }
@@ -62,7 +67,7 @@ object SbtVersionDetector {
    *   ...
    * }}}
    */
-  private def sbtVersionInBootPropertiesOfSbtLauncher(launcherJar: File): Option[String] = {
+  private def sbtVersionInBootPropertiesOfSbtLauncher(launcherJar: Path): Option[String] = {
     val appProperties = readSectionFromBootPropertiesOf(launcherJar, sectionName = "app")
     if (appProperties.get("name").contains("sbt")) {
       for {
@@ -74,15 +79,15 @@ object SbtVersionDetector {
   }
 
   //noinspection SameParameterValue
-  private def readSectionFromBootPropertiesOf(launcherFile: File, sectionName: String): Map[String, String] = {
-    val jar = new JarFile(launcherFile)
-    try {
-      Option(jar.getEntry("sbt/sbt.boot.properties")).fold(Map.empty[String, String]) { entry =>
-        val lines = scala.io.Source.fromInputStream(jar.getInputStream(entry)).getLines().toArray.toSeq
+  private def readSectionFromBootPropertiesOf(launcherJar: Path, sectionName: String): Map[String, String] = {
+    Using.resource(FileSystems.newFileSystem(launcherJar)) { fs =>
+      val bootPropertiesPath = fs.getPath("sbt/sbt.boot.properties")
+      if (Files.exists(bootPropertiesPath)) {
+        val lines = Files.lines(bootPropertiesPath).toArray.map(_.toString).toSeq
         readSectionFromBootPropertiesFileContent(lines, sectionName)
+      } else {
+        Map.empty[String, String]
       }
-    } finally {
-      jar.close()
     }
   }
 
