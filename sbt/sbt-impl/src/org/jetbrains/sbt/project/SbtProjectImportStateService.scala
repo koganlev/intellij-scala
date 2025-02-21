@@ -4,11 +4,10 @@ import com.intellij.openapi.components.Service
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil
 import com.intellij.openapi.module.{Module, ModuleManager}
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.roots.{DependencyScope, LibraryOrderEntry, ModuleRootManager, OrderRootType}
+import com.intellij.openapi.roots.{LibraryOrderEntry, ModuleRootManager, OrderRootType}
 import com.intellij.psi.PsiFile
 import org.jetbrains.plugins.scala.project.ModuleExt
 import org.jetbrains.sbt.project.SbtProjectUtil.{cachedModuleForPsiFile, isInSbtProject}
-import org.jetbrains.sbt.settings.SbtSettings
 
 import java.util.concurrent.ConcurrentHashMap
 
@@ -64,25 +63,18 @@ private[sbt] final class SbtProjectImportStateService(project: Project) {
     newState
   }
 
-  private def hasSbtLibrary(buildModule: Module): Boolean =
-    SbtSettings.getInstance(project)
-      .getLinkedProjectSettings(buildModule)
-      .flatMap(s => Option(s.sbtVersion))
-      .flatMap { version =>
-        ModuleRootManager.getInstance(buildModule)
-          .getOrderEntries
-          .iterator
-          .collectFirst {
-            case library: LibraryOrderEntry if isSbtLibrary(library, version) => library
-          }
-      }
-      .isDefined
+  private def hasSbtLibrary(buildModule: Module): Boolean = {
+    val dependencies = ModuleRootManager.getInstance(buildModule).getOrderEntries
+    val sbtLibrary = dependencies.iterator.collectFirst {
+      case library: LibraryOrderEntry if isSbtLibrary(library) => library
+    }
+    sbtLibrary.isDefined
+  }
 
-  private def isSbtLibrary(library: LibraryOrderEntry, version: String): Boolean = {
-    def expectedName = library.getLibraryName == s"sbt: sbt-$version"
-    def expectedDependencyScope = library.getScope == DependencyScope.PROVIDED
+  private def isSbtLibrary(library: LibraryOrderEntry): Boolean = {
+    def expectedName = Option(library.getLibraryName).exists(_.startsWith(s"sbt: sbt-"))
     def expectedJars = library.getRootFiles(OrderRootType.CLASSES).nonEmpty
-    expectedName && expectedDependencyScope && expectedJars
+    expectedName && expectedJars
   }
 }
 
