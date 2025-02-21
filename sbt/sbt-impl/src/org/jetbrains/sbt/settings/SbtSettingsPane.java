@@ -132,13 +132,14 @@ public class SbtSettingsPane {
     }
 
     public String getCustomVMPath() {
-        String pathOrName = jrePathEditor.getJrePathOrName();
-        return Optional.ofNullable(pathOrName)
-                .flatMap(p -> Optional.ofNullable(ProjectJdkTable.getInstance().findJdk(pathOrName)))
-                .map(Sdk::getHomePath)
-                .orElse(pathOrName);
+        // NOTE: we need to add an extra `isAlternativeJreSelected ` check because for some reason
+        // `getJrePathOrName` will return the previous selected value when the default value is selected
+        // This makes it impossible to "unselect" previously select JDK ¯\_(ツ)_/¯
+        var pathOrName = jrePathEditor.isAlternativeJreSelected() ? jrePathEditor.getJrePathOrName() : null;
+        var foundJdk = Optional.ofNullable(pathOrName).map(ProjectJdkTable.getInstance()::findJdk);
+        var foundJdkHomePath = foundJdk.map(Sdk::getHomePath);
+        return foundJdkHomePath.orElse(pathOrName);
     }
-
 
     @SuppressWarnings("unused")
     public void setCustomVMPath(@Nullable String path) {
