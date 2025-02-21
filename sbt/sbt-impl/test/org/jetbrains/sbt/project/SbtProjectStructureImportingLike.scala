@@ -192,8 +192,7 @@ abstract class SbtProjectStructureImportingLike extends SbtExternalSystemImporti
 
   protected def setSbtSettingsCustomSdk(sdk: Sdk): Unit = {
     val settings = SbtSettings.getInstance(myProject)
-    settings.setCustomVMPath(sdk.getHomePath)
-    settings.setCustomVMEnabled(true)
+    settings.setCustomVMPath(sdk.getHomePath.ensuring(_ != null))
   }
 
   protected def setOptions(project: Project, source: LanguageLevel, target: String, other: Seq[String]): Unit = {

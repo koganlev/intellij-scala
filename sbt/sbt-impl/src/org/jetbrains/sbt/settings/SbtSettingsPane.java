@@ -124,8 +124,8 @@ public class SbtSettingsPane {
         return DistributionComboBoxUtils.getLocalDistributionInfoPath(sbtLauncherChooser);
     }
 
-    public void setCustomLauncherEnabled(boolean enabled, String launcherPath) {
-        DistributionInfo distribution = enabled
+    public void setCustomLauncher(@Nullable String launcherPath) {
+        DistributionInfo distribution = launcherPath != null
                 ? new LocalDistributionInfo(launcherPath)
                 : sbtLauncherBundledDistributionInfo;
         sbtLauncherChooser.setSelectedDistribution(distribution);
@@ -141,11 +141,12 @@ public class SbtSettingsPane {
 
 
     @SuppressWarnings("unused")
-    public void setCustomVMPath(@Nullable String path, boolean useCustomVM) {
+    public void setCustomVMPath(@Nullable String path) {
         // determine name or path based on available sdk's to maintain compatibility with old form data model
         Optional<Sdk> maybeSdk = Optional.ofNullable(path).map(ExternalSystemJdkUtil::findJdkInSdkTableByPath);
         String pathOrName = maybeSdk.map(Sdk::getName).orElse(path);
-        jrePathEditor.setPathOrName(pathOrName, useCustomVM);
+        boolean useAlternativeJre = path != null;
+        jrePathEditor.setPathOrName(pathOrName, useAlternativeJre);
     }
 
     public String getMaximumHeapSize() {

@@ -7,12 +7,10 @@ class SbtSettingsControl(settings: SbtSettings) extends ExternalSystemSettingsCo
   private val pane = new SbtSettingsPane(settings.getProject)
 
   override def isModified: Boolean = ! {
-    pane.isCustomLauncher == settings.customLauncherEnabled &&
       pane.getLauncherPath == settings.customLauncherPath &&
       pane.getMaximumHeapSize == settings.maximumHeapSize &&
       pane.getVmParameters == settings.vmParameters &&
       pane.getSbtCommandArgs == settings.sbtOptions &&
-      pane.isCustomVM == settings.customVMEnabled &&
       pane.getCustomVMPath == settings.customVMPath &&
       pane.getSbtEnvironment == settings.sbtEnvironment &&
       pane.getSbtPassParentEnvironment == settings.sbtPassParentEnvironment
@@ -28,23 +26,21 @@ class SbtSettingsControl(settings: SbtSettings) extends ExternalSystemSettingsCo
   override def disposeUIResources(): Unit = {}
 
   override def apply(settings: SbtSettings): Unit = {
-    settings.customLauncherEnabled = pane.isCustomLauncher
     settings.customLauncherPath = pane.getLauncherPath
     settings.maximumHeapSize = pane.getMaximumHeapSize
     settings.vmParameters = pane.getVmParameters
     settings.sbtOptions = pane.getSbtCommandArgs
-    settings.customVMEnabled = pane.isCustomVM
     settings.customVMPath = pane.getCustomVMPath
     settings.sbtEnvironment = pane.getSbtEnvironment
     settings.sbtPassParentEnvironment = pane.getSbtPassParentEnvironment
   }
 
   override def reset(): Unit = {
-    pane.setCustomLauncherEnabled(settings.customLauncherEnabled, settings.customLauncherPath)
+    pane.setCustomLauncher(settings.customLauncherPath)
     pane.setMaximumHeapSize(settings.maximumHeapSize)
     pane.setMyVmParameters(settings.vmParameters)
     pane.setSbtCommandArgs(settings.sbtOptions)
-    pane.setCustomVMPath(settings.customVMPath, settings.customVMEnabled)
+    pane.setCustomVMPath(settings.customVMPath)
     pane.setSbtEnvironment(settings.sbtEnvironment)
     pane.setSbtPassParentEnvironment(settings.sbtPassParentEnvironment)
   }

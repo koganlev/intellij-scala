@@ -8,7 +8,7 @@ import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.util.messages.Topic
 import com.intellij.util.xmlb.annotations.XCollection
-import org.jetbrains.annotations.NotNull
+import org.jetbrains.annotations.{NotNull, Nullable}
 import org.jetbrains.plugins.scala.util.UnloadAwareDisposable
 import org.jetbrains.sbt.project.settings.{SbtProjectSettings, SbtProjectSettingsListener, SbtProjectSettingsListenerAdapter}
 import org.jetbrains.sbt.settings.SbtSettings.defaultMaxHeapSize
@@ -29,6 +29,7 @@ import scala.beans.BeanProperty
  *      (UI for current settings)
  * @see [[org.jetbrains.sbt.project.settings.SbtProjectSettings]]
  */
+//noinspection ConvertNullInitializerToUnderscore
 @State(
   name = "ScalaSbtSettings",
   storages = Array(new Storage(value = "sbt.xml", roamingType = RoamingType.DISABLED)),
@@ -39,14 +40,12 @@ final class SbtSettings(project: Project)
   extends AbstractExternalSystemSettings[SbtSettings, SbtProjectSettings, SbtProjectSettingsListener](SbtSettings.SbtTopic, project)
   with PersistentStateComponent[SbtSettings.State] {
 
-  @BeanProperty var customLauncherEnabled: Boolean = false
-  @BeanProperty var customLauncherPath: String = ""
+  @BeanProperty @Nullable var customLauncherPath: String = null
   @BeanProperty var maximumHeapSize: String = defaultMaxHeapSize
   @BeanProperty var vmParameters: String = ""
   @BeanProperty var sbtOptions: String = ""
-  @BeanProperty var customVMEnabled: Boolean = false
-  @BeanProperty var customVMPath: String = ""
-  @BeanProperty var customSbtStructurePath: String = ""
+  @BeanProperty @Nullable var customVMPath: String = null
+  @BeanProperty @Nullable var customSbtStructurePath: String = null
   @BeanProperty var sbtEnvironment: j.Map[String, String] = j.Collections.emptyMap
   @BeanProperty var sbtPassParentEnvironment: Boolean = true
 
@@ -54,11 +53,9 @@ final class SbtSettings(project: Project)
     val state = new SbtSettings.State
     fillState(state)
 
-    state.customLauncherEnabled = customLauncherEnabled
     state.customLauncherPath = customLauncherPath
     state.maximumHeapSize = maximumHeapSize
     state.vmParameters = vmParameters
-    state.customVMEnabled = customVMEnabled
     state.customVMPath = customVMPath
     state.customSbtStructurePath = customSbtStructurePath
     state.sbtOptions = sbtOptions
@@ -71,12 +68,10 @@ final class SbtSettings(project: Project)
   override def loadState(state: SbtSettings.State): Unit = {
     super[AbstractExternalSystemSettings].loadState(state)
 
-    customLauncherEnabled = state.customLauncherEnabled
     customLauncherPath = state.customLauncherPath
     maximumHeapSize = state.maximumHeapSize
     vmParameters = state.vmParameters
     sbtOptions = state.sbtOptions
-    customVMEnabled = state.customVMEnabled
     customVMPath = state.customVMPath
     customSbtStructurePath = state.customSbtStructurePath
     sbtEnvironment = state.sbtEnvironment
@@ -94,12 +89,10 @@ final class SbtSettings(project: Project)
   }
 
   override def copyExtraSettingsFrom(settings: SbtSettings): Unit = {
-    customLauncherEnabled = settings.customLauncherEnabled
     customLauncherPath = settings.customLauncherPath
     maximumHeapSize = settings.maximumHeapSize
     vmParameters = settings.vmParameters
     sbtOptions = settings.sbtOptions
-    customVMEnabled = settings.customVMEnabled
     customVMPath = settings.customVMPath
     customSbtStructurePath = settings.customSbtStructurePath
     sbtEnvironment = settings.sbtEnvironment
@@ -126,15 +119,14 @@ object SbtSettings {
 
   val SbtTopic: Topic[SbtProjectSettingsListener] = new Topic("sbt-specific settings", classOf[SbtProjectSettingsListener])
 
+  //noinspection ConvertNullInitializerToUnderscore
   class State extends AbstractExternalSystemSettings.State[SbtProjectSettings] {
-    @BeanProperty var customLauncherEnabled: Boolean = false
-    @BeanProperty var customLauncherPath: String = ""
+    @BeanProperty @Nullable var customLauncherPath: String = null
     @BeanProperty var maximumHeapSize: String = defaultMaxHeapSize
     @BeanProperty var vmParameters: String = ""
     @BeanProperty var sbtOptions: String = ""
-    @BeanProperty var customVMEnabled: Boolean = false
-    @BeanProperty var customVMPath: String = ""
-    @BeanProperty var customSbtStructurePath: String = ""
+    @BeanProperty @Nullable var customVMPath: String = null
+    @BeanProperty @Nullable var customSbtStructurePath: String = null
     @BeanProperty var sbtEnvironment: j.Map[String, String] = j.Collections.emptyMap()
     @BeanProperty var sbtPassParentEnvironment: Boolean = true
 
