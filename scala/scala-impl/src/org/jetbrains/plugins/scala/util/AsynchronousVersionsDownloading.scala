@@ -67,4 +67,10 @@ trait AsynchronousVersionsDownloading {
     }
   }
 
+  protected def updateVersionsAfterDownloading[T <: Object: ClassTag](isModified: AtomicBoolean, comboBox: SComboBox[T], elements: Seq[T]): Unit =
+    if (isModified.get()) {
+      comboBox.updateComboBoxModel(elements.toArray, comboBox.getSelectedItemTyped)
+    } else {
+      comboBox.updateComboBoxModel(elements.toArray, None)
+    }
 }
