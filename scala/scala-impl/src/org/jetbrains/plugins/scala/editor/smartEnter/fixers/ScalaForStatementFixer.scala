@@ -2,9 +2,10 @@ package org.jetbrains.plugins.scala.editor.smartEnter.fixers
 
 import com.intellij.application.options.CodeStyle
 import com.intellij.openapi.editor.{Document, Editor}
+import com.intellij.psi.PsiErrorElement
 import org.jetbrains.plugins.scala.editor.smartEnter.ScalaSmartEnterProcessor
 import org.jetbrains.plugins.scala.extensions.{IteratorExt, ObjectExt, PsiElementExt}
-import org.jetbrains.plugins.scala.lang.psi.api.expr.{ScBlockExpr, ScEnumerator, ScFor}
+import org.jetbrains.plugins.scala.lang.psi.api.expr.{ScBlockExpr, ScEnumerator, ScEnumerators, ScFor}
 import org.jetbrains.plugins.scala.util.IndentUtil
 
 // TODO(SCL-23041): indentation-based syntax support
@@ -38,7 +39,7 @@ final class ScalaForStatementFixer extends ScalaForStatementFixerBase {
         val currentOffset = editor.getCaretModel.getOffset
         if (hasRelevantMissingRightBraceErrorAfter(forStatement, rightBracket)) {
           // parsed right brace belongs to one of the parents, and this for is actually without a brace
-          document.insertString(cond.endOffset, matchingBracketText(leftBracket))
+          document.insertString(findLastEnumeratorOffset(cond), matchingBracketText(leftBracket))
           if (cond.startsFromNewLine()) {
             placeAfterCurrentEnumerator(forStatement, newLines = 2) // additional newline to move new '}' down
           }
@@ -70,8 +71,8 @@ final class ScalaForStatementFixer extends ScalaForStatementFixerBase {
     forStatement.enumerators.foreach { enumerators =>
       val caretModel = editor.getCaretModel
       val currentOffset = caretModel.getOffset
-      val anchor = enumerators.children
-        .filterByType[ScEnumerator]
+      val anchor = enumerators.
+        enumerators
         .find(_.getTextRange.containsOffset(currentOffset))
         .getOrElse(enumerators)
       document.insertString(anchor.endOffset, "\n" * newLines)
@@ -87,4 +88,13 @@ final class ScalaForStatementFixer extends ScalaForStatementFixerBase {
         caretModel.moveToOffset(anchor.endOffset + 1 + indent)
       }
     }
+
+  private def findLastEnumeratorOffset(enums: ScEnumerators): Int = {
+    enums.enumerators
+      .reverseIterator
+      .dropWhile(_.lastChild.exists(_.is[PsiErrorElement]))
+      .nextOption()
+      .getOrElse(enums)
+      .endOffset
+  }
 }

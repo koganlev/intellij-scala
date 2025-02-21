@@ -2138,13 +2138,13 @@ class ScalaEndMarkerCompletionTest extends ScalaCompletionTestBase {
 
   def testForOldStyle(): Unit = checkLookupElement(
     fileText =
-      s"""for x <- 0 to 5
+      s"""for (x <- 0 to 5)
          |  println(x)
          |  println(x * 2)
          |e$CARET
          |""".stripMargin,
     resultText =
-      s"""for x <- 0 to 5
+      s"""for (x <- 0 to 5)
          |  println(x)
          |  println(x * 2)
          |end for
