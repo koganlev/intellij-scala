@@ -150,8 +150,16 @@ public class SbtSettingsPane {
         jrePathEditor.setPathOrName(pathOrName, useAlternativeJre);
     }
 
-    public String getMaximumHeapSize() {
-        return maximumHeapSize.getText();
+    @Nullable
+    public Integer getMaximumHeapSize() {
+        String text = maximumHeapSize.getText();
+        if (text.isEmpty())
+            return null;
+        try {
+            return Integer.parseInt(text);
+        } catch (NumberFormatException e) {
+            return null;
+        }
     }
 
     public void setMaximumHeapSize(String value) {

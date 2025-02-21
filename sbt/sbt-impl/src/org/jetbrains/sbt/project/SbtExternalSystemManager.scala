@@ -201,14 +201,13 @@ object SbtExternalSystemManager {
   ): Seq[String] = {
     @NonNls val userOptions = settings.vmParameters.split("\\s+").toSeq.filter(_.nonEmpty)
 
-    @NonNls val maxHeapSizeString = settings.maximumHeapSize.trim
+    @NonNls val maxHeapSizeString = settings.maximumHeapSize
     @NonNls val maxHeapOptions =
-      if (maxHeapSizeString.nonEmpty) {
+      if (maxHeapSizeString != null) {
         val maxHeapSize =
-          JvmMemorySize.parse(maxHeapSizeString + "M")
-            .orElse(JvmMemorySize.parse(maxHeapSizeString))
+          JvmMemorySize.parse(s"${maxHeapSizeString}M")
             .map(_.toString)
-            .getOrElse(maxHeapSizeString + "M")
+            .getOrElse(s"${maxHeapSizeString}M")
 
         Seq(s"-Xmx$maxHeapSize")
       } else Seq.empty
@@ -237,7 +236,7 @@ object SbtExternalSystemManager {
   }
 
 
-  /** @param select Allow only options that pass this filter on option name */
+  /** @param select Allow only options that pass this filter on the option name */
   private def proxyOptions(select: String => Boolean): Seq[String] = {
     val optionsMap = SbtUtil.getStaticProxyConfigurationJvmOptions
     optionsMap.toSeq.collect { case (name,value) if select(name) => s"-D$name=$value" }

@@ -11,7 +11,6 @@ import com.intellij.util.xmlb.annotations.XCollection
 import org.jetbrains.annotations.{NotNull, Nullable}
 import org.jetbrains.plugins.scala.util.UnloadAwareDisposable
 import org.jetbrains.sbt.project.settings.{SbtProjectSettings, SbtProjectSettingsListener, SbtProjectSettingsListenerAdapter}
-import org.jetbrains.sbt.settings.SbtSettings.defaultMaxHeapSize
 import org.jetbrains.sbt.{JvmMemorySize, RichOption}
 
 import java.{util => j}
@@ -41,7 +40,8 @@ final class SbtSettings(project: Project)
   with PersistentStateComponent[SbtSettings.State] {
 
   @BeanProperty @Nullable var customLauncherPath: String = null
-  @BeanProperty var maximumHeapSize: String = defaultMaxHeapSize
+  @ReportValue
+  @BeanProperty var maximumHeapSize: Integer = null
   @BeanProperty var vmParameters: String = ""
   @BeanProperty var sbtOptions: String = ""
   @BeanProperty @Nullable var customVMPath: String = null
@@ -114,7 +114,6 @@ final class SbtSettings(project: Project)
 object SbtSettings {
   def getInstance(@NotNull project: Project): SbtSettings = project.getService(classOf[SbtSettings])
 
-  val defaultMaxHeapSize: String = ""
   val hiddenDefaultMaxHeapSize: JvmMemorySize = JvmMemorySize.Megabytes(1536)
 
   val SbtTopic: Topic[SbtProjectSettingsListener] = new Topic("sbt-specific settings", classOf[SbtProjectSettingsListener])
@@ -122,7 +121,8 @@ object SbtSettings {
   //noinspection ConvertNullInitializerToUnderscore
   class State extends AbstractExternalSystemSettings.State[SbtProjectSettings] {
     @BeanProperty @Nullable var customLauncherPath: String = null
-    @BeanProperty var maximumHeapSize: String = defaultMaxHeapSize
+    @ReportValue
+    @BeanProperty @Nullable var maximumHeapSize: Integer = null
     @BeanProperty var vmParameters: String = ""
     @BeanProperty var sbtOptions: String = ""
     @BeanProperty @Nullable var customVMPath: String = null

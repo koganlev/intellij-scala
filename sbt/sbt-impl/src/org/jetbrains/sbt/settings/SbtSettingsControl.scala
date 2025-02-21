@@ -14,7 +14,6 @@ class SbtSettingsControl(settings: SbtSettings) extends ExternalSystemSettingsCo
       pane.getCustomVMPath == settings.customVMPath &&
       pane.getSbtEnvironment == settings.sbtEnvironment &&
       pane.getSbtPassParentEnvironment == settings.sbtPassParentEnvironment
-
   }
 
   override def showUi(show: Boolean): Unit =
@@ -37,7 +36,7 @@ class SbtSettingsControl(settings: SbtSettings) extends ExternalSystemSettingsCo
 
   override def reset(): Unit = {
     pane.setCustomLauncher(settings.customLauncherPath)
-    pane.setMaximumHeapSize(settings.maximumHeapSize)
+    pane.setMaximumHeapSize(Option(settings.maximumHeapSize).map(_.toString).getOrElse(""))
     pane.setMyVmParameters(settings.vmParameters)
     pane.setSbtCommandArgs(settings.sbtOptions)
     pane.setCustomVMPath(settings.customVMPath)
