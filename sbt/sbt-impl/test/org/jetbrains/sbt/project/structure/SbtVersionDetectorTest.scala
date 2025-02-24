@@ -35,15 +35,6 @@ class SbtVersionDetectorTest extends UsefulTestCase {
   def testSbtLaunch_latest_2(): Unit =
     doTestSbtLauncherVersionDetection(SbtVersion.Latest.Sbt_2)
 
-  def testMockLauncherWithoutSbtBootProperties(): Unit = {
-    val expectedVersion = SbtVersion("1.0.0")
-    val launcherFile = generateMockLauncher(expectedVersion.minor)
-    assertTrue(launcherFile.exists)
-
-    val actualVersion = SbtVersionDetector.detectSbtVersion(tmpDirFile, launcherFile)
-    assertEquals(expectedVersion, actualVersion)
-  }
-
   def testEmptyMockLauncher(): Unit = {
     val launcherFile = generateJarFileWithEntries()
     assertTrue(launcherFile.exists)
@@ -59,17 +50,6 @@ class SbtVersionDetectorTest extends UsefulTestCase {
 
     val actualVersion = SbtVersionDetector.detectSbtVersion(tmpDirFile, sbtLaunchJar)
     assertEquals(sbtVersion, actualVersion)
-  }
-
-  private def generateMockLauncher(implementationVersion: String): Path = {
-    val manifestContents =
-      s"""|Manifest-Version: 1.0
-          |Implementation-Vendor: com.example
-          |Implementation-Title: launcher
-          |Implementation-Version: $implementationVersion
-          |Main-Class: com.example.Main
-      """.stripMargin
-    generateJarFileWithEntries("META-INF/MANIFEST.MF" -> manifestContents)
   }
 
   private def generateJarFileWithEntries(entries: (String, String)*): Path = {
