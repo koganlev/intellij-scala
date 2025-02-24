@@ -180,7 +180,7 @@ private final class DocumentCompiler(project: Project) {
       // Although the UI setting is disabled for earlier versions, it's per-project rather than per-module and the versions can be modified independently
       if (module.scalaLanguageLevel.exists(_ >= ScalaLanguageLevel.Scala_3_3) && ScalaProjectSettings.getInstance(project).isUseCompilerTypes) {
         scalacOptions :++= Seq(
-          "-Xplugin:" + ScalaPluginJars.compilerPluginJar.toAbsolutePath.toString,
+          "-Xplugin:" + ScalaPluginJars.compilerPluginJar_3_3.toAbsolutePath.toString,
           "-Xplugin-require:intellij-compiler-plugin"
         )
       }
