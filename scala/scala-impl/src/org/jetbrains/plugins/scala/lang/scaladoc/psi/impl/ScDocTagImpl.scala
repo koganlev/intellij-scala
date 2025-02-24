@@ -28,11 +28,13 @@ class ScDocTagImpl(node: ASTNode) extends ScalaPsiElementImpl(node) with ScDocTa
 
   override def getValueElement: PsiDocTagValue = findChildByClass(classOf[PsiDocTagValue])
   
-  override def getName: String =
-    if (getNameElement != null)
-      getNameElement.getText
+  override def getName: String = {
+    val nameElement = getNameElement
+    if (nameElement != null)
+      getNameElement.getText.substring(1) //strip @
     else
       null
+  }
 
   override def setName(name: String): PsiElement = {
     val tagNameNode = findChildByType[PsiElement](ScalaDocTokenType.DOC_TAG_NAME)

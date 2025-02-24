@@ -2,10 +2,8 @@ package org.jetbrains.sbt.project
 
 import com.intellij.compiler.CompilerConfiguration
 import com.intellij.compiler.impl.javaCompiler.javac.JavacConfiguration
-import com.intellij.notification.{Notification, NotificationType, Notifications}
-import com.intellij.openapi.compiler.{CompilerMessage, CompilerMessageCategory}
 import com.intellij.openapi.externalSystem.service.project.ProjectDataManager
-import com.intellij.openapi.module.{Module, ModuleManager}
+import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.roots.{LanguageLevelModuleExtension, LanguageLevelProjectExtension, ModuleRootModificationUtil}
@@ -13,25 +11,19 @@ import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.{VirtualFile, VirtualFileManager}
 import com.intellij.pom.java.LanguageLevel
 import com.intellij.psi.PsiManager
-import com.intellij.testFramework.CompilerTester
 import org.jetbrains.jps.model.java.{JavaResourceRootType, JavaSourceRootType}
 import org.jetbrains.jps.model.module.JpsModuleSourceRootType
-import org.jetbrains.plugins.scala.compiler.CompileServerLauncher
-import org.jetbrains.plugins.scala.compiler.data.IncrementalityType
-import org.jetbrains.plugins.scala.project.settings.{ScalaCompilerConfigurable, ScalaCompilerConfiguration, ScalaCompilerSettings}
 import org.jetbrains.plugins.scala.util.TestUtils
 import org.jetbrains.plugins.scala.util.assertions.CollectionsAssertions.assertCollectionEquals
 import org.jetbrains.sbt.actions.SbtDirectoryCompletionContributor
-import org.jetbrains.sbt.project.SbtProjectStructureImportingLike.CollectingNotificationsListener
 import org.jetbrains.sbt.project.settings.SbtProjectSettings
-import org.jetbrains.sbt.project.utils.ProjectStructureComparisonContext
+import org.jetbrains.sbt.project.utils.{CompilerUtils, ProjectStructureComparisonContext}
 import org.jetbrains.sbt.settings.SbtSettings
 import org.junit.Assert
 import org.junit.Assert.fail
 
 import java.io.File
 import java.nio.file.Path
-import scala.collection.mutable
 import scala.jdk.CollectionConverters.{CollectionHasAsScala, SeqHasAsJava}
 
 abstract class SbtProjectStructureImportingLike extends SbtExternalSystemImportingTestLike
@@ -55,8 +47,7 @@ abstract class SbtProjectStructureImportingLike extends SbtExternalSystemImporti
     ProjectStructureComparisonContext.Implicit.default(getProject)
 
   protected def runTest(expected: project): Unit = {
-    val notificationsCollector = new CollectingNotificationsListener(Set(NotificationType.WARNING, NotificationType.ERROR))
-    getProject.getMessageBus.connect().subscribe(Notifications.TOPIC, notificationsCollector)
+    val notificationsCollector = CollectingNotificationsListener.subscribeOnWarningsAndErrors(getProject)
 
     importProject(false)
 
@@ -253,50 +244,6 @@ abstract class SbtProjectStructureImportingLike extends SbtExternalSystemImporti
   }
 
   protected def buildCrossProjectAndAssertNoWarningsOrErrors(): Unit = {
-    val compilerConfiguration = ScalaCompilerConfiguration.instanceIn(getProject)
-    val incrementalityType = compilerConfiguration.incrementalityType
-    Assert.assertEquals(
-      s"Cross-built projects with shared sources should have ${IncrementalityType.SBT} incrementality type",
-      IncrementalityType.SBT,
-      incrementalityType
-    )
-
-    val modules = ModuleManager.getInstance(getProject).getModules
-    val compiler = new CompilerTester(getProject, java.util.Arrays.asList(modules: _*), null, false)
-
-    def buildMessageText(message: CompilerMessage): String = {
-      s"""[${message.getCategory}] ${message.getVirtualFile}
-         |${message.getMessage}""".stripMargin
-    }
-
-    try {
-      val messages = compiler.rebuild().asScala.toSeq
-      val warningsOrErrors: Seq[CompilerMessage] = messages.filter(m => Set(CompilerMessageCategory.ERROR, CompilerMessageCategory.WARNING).contains(m.getCategory))
-      Assert.assertEquals(
-        s"Expecting no compilation warnings or errors (with ${incrementalityType} incremental compiler)",
-        "",
-        warningsOrErrors.map(buildMessageText).mkString("\n")
-      )
-    } finally {
-      // Manually clean up compiler-related allocated resources to prevent resource leaks after test end
-      compiler.tearDown()
-      CompileServerLauncher.stopServerAndWait()
-    }
-  }
-}
-
-object SbtProjectStructureImportingLike {
-
-  //TODO: move it to some base class and call assertNoNotificationsShown in more tests (BSP/Maven/Gradle/new project wizard)
-  private class CollectingNotificationsListener(types: Set[NotificationType]) extends Notifications {
-    private val notifications = mutable.ArrayBuffer[Notification]()
-
-    def getNotifications: Seq[Notification] = notifications.toSeq
-
-    override def notify(notification: Notification): Unit = {
-      if (types.contains(notification.getType)) {
-        notifications += notification
-      }
-    }
+    CompilerUtils.buildCrossProjectAndAssertNoWarningsOrErrors(getProject)
   }
 }
