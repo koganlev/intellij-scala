@@ -36,13 +36,21 @@ trait ProjectStructureMatcher {
   protected def defaultAssertMatch: AttributeMatchType
 
   final def assertMatch[T](what: String, expected: Seq[T], actual: Seq[T])
-                          (mt: Option[DslUtils.MatchType]): Unit = {
+                          (mt: Option[DslUtils.MatchType])
+                          (implicit compareContext: ProjectStructureComparisonContext): Unit = {
+    val actualAdopted = if (actual.headOption.exists(_.isInstanceOf[String]))
+      compareContext.macroSubstitutor
+        .replaceValuesWithMacro(actual.map(_.asInstanceOf[String]), expected.map(_.asInstanceOf[String]))
+        .map(_.asInstanceOf[T])
+    else
+      actual
     val matcher = mt.map(convertMatchType).getOrElse(defaultAssertMatch)
-    matcher.assertMatch(what, expected, actual)
+    matcher.assertMatch(what, expected, actualAdopted)
   }
 
   def assertMatchWithIgnoredOrder[T : Ordering](what: String, expected: Seq[T], actual: Seq[T])
-                                               (mt: Option[DslUtils.MatchType]): Unit =
+                                               (mt: Option[DslUtils.MatchType])
+                                               (implicit compareContext: ProjectStructureComparisonContext): Unit =
     assertMatch(what, expected.sorted, actual.sorted)(mt)
 
   def assertProjectsEqual(
@@ -193,7 +201,8 @@ trait ProjectStructureMatcher {
     assertEquals("Project javacOptions", expectedOptions.mkString(" "), actual)
   }
 
-  private def assertModuleContentRootsEqual(module: Module)(expected: Seq[String])(mt: Option[MatchType]): Unit = {
+  private def assertModuleContentRootsEqual(module: Module)(expected: Seq[String])(mt: Option[MatchType])
+                                           (implicit compareContext: ProjectStructureComparisonContext): Unit = {
     val expectedRoots = expected.map(VfsUtilCore.pathToUrl)
     val actualRoots = roots.ModuleRootManager.getInstance(module).getContentEntries.map(_.getUrl).toSeq
     assertMatch(s"Content root of module `${module.getName}`", expectedRoots, actualRoots)(mt)
@@ -255,7 +264,7 @@ trait ProjectStructureMatcher {
   ): Unit = {
     val actualFolders = contentRootToFolders.flatMap { case (contentRoot, contentFolders) =>
       if (expected.exists(compareContext.macroSubstitutor.containsSomeMacro))
-        contentFolders.map(_.getUrl)
+        contentFolders.map(_.getUrl.stripPrefix("file://"))
       else
         contentFolders.map(mapContentFolderToUrl(_, contentRoot))
     }.toSeq
@@ -331,7 +340,8 @@ trait ProjectStructureMatcher {
     }
   }
 
-  private def assertLibraryContentsEqual(expected: library, actual: Library): Unit = {
+  private def assertLibraryContentsEqual(expected: library, actual: Library)
+                                        (implicit compareContext: ProjectStructureComparisonContext): Unit = {
     expected.foreach(libClasses)(assertLibraryFilesEqual(actual, roots.OrderRootType.CLASSES))
     expected.foreach(libSources)(assertLibraryFilesEqual(actual, roots.OrderRootType.SOURCES))
     expected.foreach(libJavadocs)(assertLibraryFilesEqual(actual, roots.JavadocOrderRootType.getInstance))
@@ -340,7 +350,8 @@ trait ProjectStructureMatcher {
   // TODO: support non-local library contents (if necessary)
   // This implementation works well only for local files; *.zip and other archives are not supported
   // @dancingrobot84
-  private def assertLibraryFilesEqual(lib: Library, fileType: roots.OrderRootType)(expectedFiles: Seq[String])(mt: Option[MatchType]): Unit = {
+  private def assertLibraryFilesEqual(lib: Library, fileType: roots.OrderRootType)(expectedFiles: Seq[String])(mt: Option[MatchType])
+                                     (implicit compareContext: ProjectStructureComparisonContext): Unit = {
     val expectedNormalized = expectedFiles.map(normalizePathSeparators)
     val actualNormalised = lib.getFiles(fileType).flatMap(f => Option(PathUtil.getLocalPath(f))).toSeq.map(normalizePathSeparators)
     assertMatch("Library file", expectedNormalized, actualNormalised)(mt)

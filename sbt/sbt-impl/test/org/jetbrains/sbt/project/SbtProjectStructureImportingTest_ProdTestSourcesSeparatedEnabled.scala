@@ -21,6 +21,9 @@ import org.junit.experimental.categories.Category
 
 import java.net.URI
 
+/**
+ * @see [[SbtProjectStructureImportingTest]]
+ */
 @Category(Array(classOf[SlowTests]))
 final class SbtProjectStructureImportingTest_ProdTestSourcesSeparatedEnabled extends SbtProjectStructureImportingLike {
 
@@ -2120,7 +2123,7 @@ final class SbtProjectStructureImportingTest_ProdTestSourcesSeparatedEnabled ext
             testSources := Nil
             testResources := Nil
             excluded := Nil
-            compileOutputPath := "$PROJECT_ROOT$/target/out/jvm/scala-3.3.3/root/classes"
+            compileOutputPath := "%PROJECT_ROOT%/target/out/jvm/scala-3.3.3/root/classes"
             compileTestOutputPath := null
           },
           new module("root.test") {
@@ -2136,7 +2139,7 @@ final class SbtProjectStructureImportingTest_ProdTestSourcesSeparatedEnabled ext
             testResources := Seq("resources")
             excluded := Nil
             compileOutputPath := null
-            compileTestOutputPath := "$PROJECT_ROOT$/target/out/jvm/scala-3.3.3/root/test-classes"
+            compileTestOutputPath := "%PROJECT_ROOT%/target/out/jvm/scala-3.3.3/root/test-classes"
           },
 
           new module("root.subProject1") {
@@ -2162,7 +2165,7 @@ final class SbtProjectStructureImportingTest_ProdTestSourcesSeparatedEnabled ext
             testSources := Nil
             testResources := Nil
             excluded := Nil
-            compileOutputPath := "$PROJECT_ROOT$/target/out/jvm/scala-3.3.3/subproject1/classes"
+            compileOutputPath := "%PROJECT_ROOT%/target/out/jvm/scala-3.3.3/subproject1/classes"
             compileTestOutputPath := null
           },
           new module("root.subProject1.test") {
@@ -2178,7 +2181,7 @@ final class SbtProjectStructureImportingTest_ProdTestSourcesSeparatedEnabled ext
             testResources := Seq("resources")
             excluded := Nil
             compileOutputPath := null
-            compileTestOutputPath := "$PROJECT_ROOT$/target/out/jvm/scala-3.3.3/subproject1/test-classes"
+            compileTestOutputPath := "%PROJECT_ROOT%/target/out/jvm/scala-3.3.3/subproject1/test-classes"
           },
 
 
@@ -2205,7 +2208,7 @@ final class SbtProjectStructureImportingTest_ProdTestSourcesSeparatedEnabled ext
             testSources := Nil
             testResources := Nil
             excluded := Nil
-            compileOutputPath := "$PROJECT_ROOT$/target/out/jvm/scala-3.6.2/subproject2/classes"
+            compileOutputPath := "%PROJECT_ROOT%/target/out/jvm/scala-3.6.2/subproject2/classes"
             compileTestOutputPath := null
           },
           new module("root.subProject2.test") {
@@ -2221,7 +2224,7 @@ final class SbtProjectStructureImportingTest_ProdTestSourcesSeparatedEnabled ext
             testResources := Seq("resources")
             excluded := Nil
             compileOutputPath := null
-            compileTestOutputPath := "$PROJECT_ROOT$/target/out/jvm/scala-3.6.2/subproject2/test-classes"
+            compileTestOutputPath := "%PROJECT_ROOT%/target/out/jvm/scala-3.6.2/subproject2/test-classes"
           },
         )
       }
@@ -2258,10 +2261,144 @@ final class SbtProjectStructureImportingTest_ProdTestSourcesSeparatedEnabled ext
     )
   }
 
+  // reduced version of the example project from SCL-23577
+  def testProjectIntegrationTestSourcesOutsideContentRoot(): Unit = {
+    runTest(
+      new project("root") {
+        lazy val scalaLibraries: Seq[library] = ProjectStructureTestUtils.expectedScalaLibraryWithScalaSdkForSbt(useEnv = true)("2.13.14")
+        libraries := scalaLibraries
+
+        lazy val root: module = new module("root") {
+          contentRoots := Seq(getProjectPath)
+          libraryDependencies := Nil
+          moduleDependencies ++= Seq(
+            new dependency(rootMain) { isExported := false },
+            new dependency(rootTest) { isExported := false }
+          )
+        }
+        lazy val rootMain: module = new module("root.main") {
+          libraryDependencies := scalaLibraries
+          moduleDependencies := Nil
+          emptySourceResourceDirs(this)
+          contentRoots := Seq(
+            "%PROJECT_ROOT%/src/main",
+            "%PROJECT_ROOT%/target/scala-2.13/src_managed/main",
+            "%PROJECT_ROOT%/target/scala-2.13/resource_managed/main"
+          )
+        }
+        lazy val rootTest: module = new module("root.test") {
+          libraryDependencies := scalaLibraries
+          moduleDependencies += new dependency(rootMain) { isExported := false }
+          emptySourceResourceDirs(this)
+          contentRoots := Seq(
+            "%PROJECT_ROOT%/src/test",
+            "%PROJECT_ROOT%/target/scala-2.13/src_managed/test",
+            "%PROJECT_ROOT%/target/scala-2.13/resource_managed/test"
+          )
+        }
+
+        lazy val subProject: module = new module("root.subProject") {
+          libraryDependencies := Nil
+          moduleDependencies ++= Seq(
+            new dependency(subProjectMain) { isExported := false },
+            new dependency(subProjectTest) { isExported := false }
+          )
+          emptySourceResourceDirs(this)
+          excluded := Seq("target")
+          contentRoots := Seq("%PROJECT_ROOT%/subProject")
+        }
+        lazy val subProjectMain: module = new module("root.subProject.main") {
+          libraryDependencies := scalaLibraries
+          moduleDependencies := Nil
+          contentRoots := Seq(
+            "%PROJECT_ROOT%/subProject/src/main",
+            "%PROJECT_ROOT%/subProject/target/scala-2.13/src_managed/main",
+            "%PROJECT_ROOT%/subProject/target/scala-2.13/resource_managed/main"
+          )
+          sources := Seq("%PROJECT_ROOT%/subProject/src/main/scala")
+          resources := Seq("%PROJECT_ROOT%/subProject/src/main/resources")
+          testSources := Nil
+          testResources := Nil
+          excluded := Nil
+        }
+        lazy val subProjectTest: module = new module("root.subProject.test") {
+          libraryDependencies := scalaLibraries
+          moduleDependencies += new dependency(subProjectMain) { isExported := false }
+          contentRoots := Seq(
+            "%PROJECT_ROOT%/subProject/src/test",
+            "%PROJECT_ROOT%/subProject/target/scala-2.13/src_managed/test",
+            "%PROJECT_ROOT%/subProject/target/scala-2.13/resource_managed/test"
+          )
+          sources := Nil
+          resources := Nil
+          testSources := Seq("%PROJECT_ROOT%/subProject/src/test/scala")
+          testResources := Seq("%PROJECT_ROOT%/subProject/src/test/resources")
+          excluded := Nil
+        }
+
+        lazy val subProjectIntegrationTest: module = new module("root.subProject-integration-test") {
+          libraryDependencies := Nil
+          moduleDependencies ++= Seq(
+            new dependency(subProjectIntegrationTestMain) { isExported := false },
+            new dependency(subProjectIntegrationTestTest) { isExported := false }
+          )
+          emptySourceResourceDirs(this)
+          contentRoots := Seq("%PROJECT_ROOT%/derived-projects/subProject-integration-test")
+          excluded := Seq("target")
+        }
+        lazy val subProjectIntegrationTestMain: module = new module("root.subProject-integration-test.main") {
+          libraryDependencies := scalaLibraries
+          moduleDependencies += new dependency(subProjectMain) { isExported := false }
+          contentRoots := Seq(
+            "%PROJECT_ROOT%/derived-projects/subProject-integration-test/src/main",
+            "%PROJECT_ROOT%/derived-projects/subProject-integration-test/target/scala-2.13/src_managed/main",
+            "%PROJECT_ROOT%/derived-projects/subProject-integration-test/target/scala-2.13/resource_managed/main"
+          )
+          sources := Seq("%PROJECT_ROOT%/derived-projects/subProject-integration-test/src/main/scala")
+          resources := Seq("%PROJECT_ROOT%/derived-projects/subProject-integration-test/src/main/resources")
+          testSources := Nil
+          testResources := Nil
+          excluded := Nil
+        }
+        lazy val subProjectIntegrationTestTest: module = new module("root.subProject-integration-test.test") {
+          libraryDependencies := scalaLibraries
+          moduleDependencies ++= Seq(
+            new dependency(subProjectMain) { isExported := false },
+            new dependency(subProjectTest) { isExported := false },
+            new dependency(subProjectIntegrationTestMain) { isExported := false }
+          )
+          contentRoots := Seq(
+            "%PROJECT_ROOT%/subProject/src/it/java",
+            "%PROJECT_ROOT%/subProject/src/it/scala",
+            "%PROJECT_ROOT%/subProject/src/it/scala-2",
+            "%PROJECT_ROOT%/subProject/src/it/scala-2.13",
+            "%PROJECT_ROOT%/derived-projects/subProject-integration-test/target/scala-2.13/src_managed/test",
+            "%PROJECT_ROOT%/subProject/src/it/resources",
+            "%PROJECT_ROOT%/derived-projects/subProject-integration-test/target/scala-2.13/resource_managed/test",
+          )
+          sources := Nil
+          resources := Nil
+          testSources := Seq("%PROJECT_ROOT%/subProject/src/it/scala")
+          excluded := Nil
+        }
+
+        modules := Seq(
+          root,
+          rootMain,
+          rootTest,
+          subProject,
+          subProjectMain,
+          subProjectTest,
+          subProjectIntegrationTest,
+          subProjectIntegrationTestMain,
+          subProjectIntegrationTestTest,
+        )
+      }
+    )
+  }
 
   private def createModuleWithSourceSet(moduleName: String, group: Array[String] = null): Seq[module] =
     Seq(moduleName, s"$moduleName.main", s"$moduleName.test").map { name =>
       new module(name, group)
     }
-
 }

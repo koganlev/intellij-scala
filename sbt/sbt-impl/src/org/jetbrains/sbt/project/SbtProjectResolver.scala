@@ -1264,17 +1264,17 @@ class SbtProjectResolver extends ExternalSystemProjectResolver[SbtExecutionSetti
     val directoryData: Seq[DirectoryData] = configurationData.map(selector).getOrElse(Seq.empty)
 
     // NOTE: At least since 2015 we filtered out source roots that are outside project roots (~IntelliJ module).
-    // The reason was because back then IntelliJ module content root was equal to the project root (1-1 correpondance).
-    // But IntelliJ doesn't allow to register source roots outside content roots.
-    // But since we introduced separate modules for main/test sources, it's no an issue any more:
-    // Separate content roots are registered for all source/resource root dirs (e.g. src/main or target/.../src_managed/main)
+    //
+    // The reason was because back then IntelliJ module content root had 1-1 correspondence with the project root.
+    // But IntelliJ doesn't allow registering source roots outside content roots,
+    // so we had to filter out directories from outside.
+    //
+    // But since we introduced separate modules for main/test sources, it's no an issue anymore:
+    // Separate content roots are registered for all source/resource root dirs
+    // (e.g., src/main or target/.../src_managed/main)
     // Source directories will be added to proper content roots and won't be outside them
     // (see logic in `createContentRootNodes`)
-
-    // For a start, we do it for sbt 2.x because in sbt 2.x generated sources of all projects
-    // are located in a single `target` directory of the build root.
-    // TODO: enable it for sbt 1 as well. This will help sbt 1.x as well, e.g., to fix SCL-23577 or other similar cases.
-    if (context.sbtVersion.isSbt2 && context.useSeparateProdTestSources)
+    if (context.useSeparateProdTestSources)
       directoryData
     else
       directoryData.filterNot(_.file.isOutsideOf(project.base))
@@ -1475,6 +1475,6 @@ object SbtProjectResolver {
     executionSettings: SbtExecutionSettings,
   ) {
     def useSeparateProdTestSources: Boolean = executionSettings.separateProdTestSources
-    def useSeparateCompilerOutputPaths = executionSettings.useSeparateCompilerOutputPaths
+    def useSeparateCompilerOutputPaths: Boolean = executionSettings.useSeparateCompilerOutputPaths
   }
 }

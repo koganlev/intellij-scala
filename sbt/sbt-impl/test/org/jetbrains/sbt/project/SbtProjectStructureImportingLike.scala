@@ -225,6 +225,14 @@ abstract class SbtProjectStructureImportingLike extends SbtExternalSystemImporti
     ProjectStructureDsl.excluded := Seq("target")
   }
 
+  protected def emptySourceResourceDirs(module: module): Unit = {
+    import module._
+    ProjectStructureDsl.sources := Nil
+    ProjectStructureDsl.testSources := Nil
+    ProjectStructureDsl.resources := Nil
+    ProjectStructureDsl.testResources := Nil
+  }
+
   protected def injectVariable(file: File, variableName: String, value: String): Unit = {
     val fileContent = FileUtil.loadFile(file)
     val updatedContent = fileContent.replace(variableName, value)

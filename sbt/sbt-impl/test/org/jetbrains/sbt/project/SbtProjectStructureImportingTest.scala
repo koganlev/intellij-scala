@@ -23,6 +23,9 @@ import org.junit.experimental.categories.Category
 import java.io.File
 import java.net.URI
 
+/**
+ * @see [[SbtProjectStructureImportingTest_ProdTestSourcesSeparatedEnabled]]
+ */
 @Category(Array(classOf[SlowTests]))
 final class SbtProjectStructureImportingTest extends SbtProjectStructureImportingLike {
 
@@ -1167,22 +1170,22 @@ final class SbtProjectStructureImportingTest extends SbtProjectStructureImportin
             libraryDependencies := expectedScala_3_3
             commonSourceResourceAndTargetDirs(this)
             excluded := Seq("target")
-            compileOutputPath := "$PROJECT_ROOT$/target/out/jvm/scala-3.3.3/root/classes"
-            compileTestOutputPath := "$PROJECT_ROOT$/target/out/jvm/scala-3.3.3/root/test-classes"
+            compileOutputPath := "%PROJECT_ROOT%/target/out/jvm/scala-3.3.3/root/classes"
+            compileTestOutputPath := "%PROJECT_ROOT%/target/out/jvm/scala-3.3.3/root/test-classes"
           },
           new module("root.subProject1") {
             libraryDependencies := expectedScala_3_3
             commonSourceResourceAndTargetDirs(this)
             excluded := Seq("target")
-            compileOutputPath := "$PROJECT_ROOT$/target/out/jvm/scala-3.3.3/subproject1/classes"
-            compileTestOutputPath := "$PROJECT_ROOT$/target/out/jvm/scala-3.3.3/subproject1/test-classes"
+            compileOutputPath := "%PROJECT_ROOT%/target/out/jvm/scala-3.3.3/subproject1/classes"
+            compileTestOutputPath := "%PROJECT_ROOT%/target/out/jvm/scala-3.3.3/subproject1/test-classes"
           },
           new module("root.subProject2") {
             libraryDependencies := expectedScala_3_6
             commonSourceResourceAndTargetDirs(this)
             excluded := Seq("target")
-            compileOutputPath := "$PROJECT_ROOT$/target/out/jvm/scala-3.6.2/subproject2/classes"
-            compileTestOutputPath := "$PROJECT_ROOT$/target/out/jvm/scala-3.6.2/subproject2/test-classes"
+            compileOutputPath := "%PROJECT_ROOT%/target/out/jvm/scala-3.6.2/subproject2/classes"
+            compileTestOutputPath := "%PROJECT_ROOT%/target/out/jvm/scala-3.6.2/subproject2/test-classes"
           },
         )
       }
