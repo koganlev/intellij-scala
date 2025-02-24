@@ -4,7 +4,7 @@ import com.intellij.build.FilePosition
 import com.intellij.build.events.EventResult
 import org.jetbrains.plugins.scala.build.{BuildMessages, BuildReporter}
 
-import java.io.File
+import java.nio.file.Path
 import scala.collection.mutable
 
 private[sbt] final class GenerateManagedSourcesReporter extends BuildReporter {
@@ -27,7 +27,7 @@ private[sbt] final class GenerateManagedSourcesReporter extends BuildReporter {
 
   override def info(message: String, position: Option[FilePosition]): Unit = {}
 
-  override def clear(file: File): Unit = {}
+  override def clear(file: Path): Unit = {}
 
   override def log(message: String): Unit = {
     if (splitLine && logLevelPrefixes.exists(message.startsWith)) {

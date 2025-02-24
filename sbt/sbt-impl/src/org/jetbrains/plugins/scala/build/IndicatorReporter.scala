@@ -6,7 +6,7 @@ import com.intellij.execution.process.{AnsiEscapeDecoder, ProcessOutputTypes}
 import com.intellij.openapi.progress.ProgressIndicator
 import org.jetbrains.sbt.SbtBundle
 
-import java.io.File
+import java.nio.file.Path
 
 class IndicatorReporter(indicator: ProgressIndicator) extends BuildReporter {
   //text with ANSI escape sequences can come from sbt output (see SCL-20873)
@@ -70,5 +70,5 @@ class IndicatorReporter(indicator: ProgressIndicator) extends BuildReporter {
   override def startTask(eventId: BuildMessages.EventId, parent: Option[BuildMessages.EventId], message: String, time: Long): Unit = ()
   override def progressTask(eventId: BuildMessages.EventId, total: Long, progress: Long, unit: String, message: String, time: Long): Unit = ()
   override def finishTask(eventId: BuildMessages.EventId, message: String, result: EventResult, time: Long): Unit = ()
-  override def clear(file: File): Unit = ()
+  override def clear(file: Path): Unit = ()
 }

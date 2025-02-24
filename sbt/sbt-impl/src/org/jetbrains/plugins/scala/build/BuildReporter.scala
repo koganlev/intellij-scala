@@ -5,7 +5,7 @@ import com.intellij.build.events._
 import org.jetbrains.annotations.{Nls, NotNull}
 import org.jetbrains.plugins.scala.build.BuildMessages.EventId
 
-import java.io.File
+import java.nio.file.Path
 
 trait BuildReporter {
 
@@ -34,7 +34,7 @@ trait BuildReporter {
   def info(@Nls message: String, position: Option[FilePosition]): Unit
 
   /** Clear any messages associated with file. */
-  def clear(file: File): Unit
+  def clear(file: Path): Unit
 
   /** Print message to log. */
   def log(@Nls message: String): Unit

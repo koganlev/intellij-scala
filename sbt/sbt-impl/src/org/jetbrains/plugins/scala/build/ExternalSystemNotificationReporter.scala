@@ -11,7 +11,7 @@ import org.jetbrains.plugins.scala.build.BuildMessages.EventId
 import org.jetbrains.plugins.scala.build.ExternalSystemNotificationReporter._
 import org.jetbrains.sbt.SbtBundle
 
-import java.io.File
+import java.nio.file.Path
 import scala.collection.mutable
 import scala.jdk.CollectionConverters._
 import scala.util.Random
@@ -155,7 +155,7 @@ class ExternalSystemNotificationReporter(workingDir: String,
       }
   }
 
-  override def clear(file: File): Unit = ()
+  override def clear(file: Path): Unit = ()
 
   private def event(@Nls message: String, kind: MessageEvent.Kind, position: Option[FilePosition], @Nls @Nullable details: String) =
     BuildMessages.message(taskId, message, kind, position, eventTime = System.currentTimeMillis, details)

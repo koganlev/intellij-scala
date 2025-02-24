@@ -3,7 +3,8 @@ package org.jetbrains.plugins.scala.build
 import com.intellij.build.FilePosition
 import com.intellij.build.events.EventResult
 
-import java.io.{File, PrintStream}
+import java.io.PrintStream
+import java.nio.file.Path
 
 class ConsoleReporter(
   val name: String,
@@ -63,7 +64,7 @@ class ConsoleReporter(
   override def finishTask(eventId: BuildMessages.EventId, message: String, result: EventResult, time: Long): Unit =
     myPrintln(s"[$name] task ${eventId.id} finish. time: $time. message: $message. result: $result")
 
-  override def clear(file: File): Unit = ()
+  override def clear(file: Path): Unit = ()
 
   private def positionString(position: Option[FilePosition]) =
     position.map("at" + _.toString).getOrElse("")

@@ -265,7 +265,7 @@ class BspTask[T](project: Project,
     }
 
     if (uriDiagnostics.isEmpty && reset) {
-      reporter.clear(filePath.toFile)
+      reporter.clear(filePath)
       buildMessages
     } else
       uriDiagnostics

@@ -4,8 +4,8 @@ import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.module.Module
 import org.jetbrains.annotations.ApiStatus
 
-import java.io.File
 import java.net.URI
+import java.nio.file.Path
 import scala.jdk.CollectionConverters.IteratorHasAsScala
 
 @ApiStatus.Internal
@@ -30,7 +30,7 @@ trait SbtBuildModuleUriProvider {
    * Same as `getBuildModuleUri` but returns a base directory instead of URI
    * (read about the difference in `org.jetbrains.sbt.project.data.SbtModuleData`)
    */
-  def getBuildModuleBaseDirectory(module: Module): Option[File]
+  def getBuildModuleBaseDirectory(module: Module): Option[Path]
 }
 
 object SbtBuildModuleUriProvider {
@@ -42,7 +42,7 @@ object SbtBuildModuleUriProvider {
     implementations.asScala.flatMap(_.getBuildModuleUri(module)).nextOption()
   }
 
-  def getBuildModuleBaseDirectory(module: Module): Option[File] = {
+  def getBuildModuleBaseDirectory(module: Module): Option[Path] = {
     val implementations = EP.getExtensionList.iterator()
     implementations.asScala.flatMap(_.getBuildModuleBaseDirectory(module)).nextOption()
   }

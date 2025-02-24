@@ -42,9 +42,9 @@ class CompilerEventReporter(project: Project,
   }
 
   /** Clear any messages associated with file. */
-  override def clear(file: java.io.File): Unit = {
-    files.add(file.toPath)
-    val event = CompilerEvent.CompilationFinished(compilationId, None, Set(SerializablePath(file.toPath)))
+  override def clear(file: Path): Unit = {
+    files.add(file)
+    val event = CompilerEvent.CompilationFinished(compilationId, None, Set(SerializablePath(file)))
     publisher.eventReceived(event)
   }
 

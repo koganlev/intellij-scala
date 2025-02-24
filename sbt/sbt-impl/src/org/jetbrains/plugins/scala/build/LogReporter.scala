@@ -3,7 +3,7 @@ import com.intellij.build.FilePosition
 import com.intellij.build.events.EventResult
 import com.intellij.openapi.diagnostic.Logger
 
-import java.io.File
+import java.nio.file.Path
 
 class LogReporter extends BuildReporter {
 
@@ -53,7 +53,7 @@ class LogReporter extends BuildReporter {
   }
 
   /** Clear any messages associated with file. */
-  override def clear(file: File): Unit = {
+  override def clear(file: Path): Unit = {
     logger.debug(s"messages cleared for $file")
   }
 
