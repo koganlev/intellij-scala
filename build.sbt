@@ -87,7 +87,8 @@ lazy val scalaCommunity: sbt.Project =
         repackagedZinc,
         worksheetReplInterfaceImpls,
         compileServer,
-        scalaCompilerPlugin,
+        scalaCompilerPlugin_2_13,
+        scalaCompilerPlugin_3_3,
         nailgunRunners,
         copyrightIntegration,
         javaDecompilerIntegration,
@@ -487,14 +488,17 @@ lazy val compileServer =
       Compile / unmanagedJars ++= Common.jpsClasspath.value
     )
 
-lazy val scalaCompilerPlugin: sbt.Project =
-  newPlainScalaProject("compiler-plugin", file("scala/compiler-plugin"))
-    .settings(
-      scalaVersion := Versions.scala3Version,
-      Compile / scalacOptions := globalScala3ScalacOptions,
-      libraryDependencies ++= Seq(Dependencies.scala3Compiler),
-      packageMethod := PackagingMethod.Standalone("lib/jps/compiler-plugin.jar"),
-    )
+lazy val scalaCompilerPlugin_2_13: sbt.Project =
+  newPlainScalaProject("compiler-plugin-2_13", file("scala/compiler-plugin/scala-2.13")).settings(
+    scalaVersion := "2.13.15", libraryDependencies += "org.scala-lang" % "scala-compiler" % "2.13.15", Compile / scalacOptions := globalScalacOptions,
+    packageMethod := PackagingMethod.Standalone("lib/jps/compiler-plugin-2.13.jar"),
+  )
+
+lazy val scalaCompilerPlugin_3_3: sbt.Project =
+  newPlainScalaProject("compiler-plugin-3_3", file("scala/compiler-plugin/scala-3.3")).settings(
+    scalaVersion := "3.3.4", libraryDependencies += "org.scala-lang" %% "scala3-compiler" % "3.3.4", Compile / scalacOptions := globalScala3ScalacOptions,
+    packageMethod := PackagingMethod.Standalone("lib/jps/compiler-plugin-3.3.jar"),
+  )
 
 lazy val compilerJps =
   newPlainScalaProject("compiler-jps", file("scala/compiler-jps"))

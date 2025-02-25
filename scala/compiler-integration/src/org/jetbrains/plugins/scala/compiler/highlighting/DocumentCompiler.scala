@@ -176,13 +176,16 @@ private final class DocumentCompiler(project: Project) {
 
     override protected def scalaParameters: Seq[String] = {
       var scalacOptions = CompilerOptions.scalacOptions(module)
-      // The compiler plugin is currently only compatible with Scala 3.3+ (see CompilerPlugin)
-      // Although the UI setting is disabled for earlier versions, it's per-project rather than per-module and the versions can be modified independently
-      if (module.scalaLanguageLevel.exists(_ >= ScalaLanguageLevel.Scala_3_3) && ScalaProjectSettings.getInstance(project).isUseCompilerTypes) {
-        scalacOptions :++= Seq(
-          "-Xplugin:" + ScalaPluginJars.compilerPluginJar.toAbsolutePath.toString,
-          "-Xplugin-require:compiler-plugin"
-        )
+      // The setting is per-project rather than per-module
+      if (ScalaProjectSettings.getInstance(project).isUseCompilerTypes) {
+        val compilerPluginJar: Option[Path] = module.scalaLanguageLevel.flatMap {
+          case ScalaLanguageLevel.Scala_2_13                  => Some(ScalaPluginJars.compilerPluginJar_2_13)
+          case level if level >= ScalaLanguageLevel.Scala_3_3 => Some(ScalaPluginJars.compilerPluginJar_3_3)
+          case _ => None
+        }
+        compilerPluginJar.foreach { jar =>
+          scalacOptions :++= Seq("-Xplugin:" + jar.toAbsolutePath.toString, "-Xplugin-require:intellij-compiler-plugin")
+        }
       }
       if (!CompilerOptions.containsStopAfter(scalacOptions)) {
         val stopAfter = module.scalaLanguageLevel match {

@@ -121,14 +121,8 @@ public class EditorSettingsSectionPanel extends SettingsSectionPanel {
         useCompilerRanges.setVisible(forScala2 || forScala3);
         useCompilerRangesHelp.setVisible(forScala2 || forScala3);
 
-        useCompilerTypes.setVisible(forScala3);
-        useCompilerTypesHelp.setVisible(forScala3);
-
-        boolean forScala3_3 = typeCheckerScala3.getSelectedItem() == ScalaProjectSettings.TypeChecker.Compiler &&
-                ScalaProjectUtil.hasScala(myProject, ScalaLanguageLevel.Scala_3_3);
-
-        // Always show the (possibly disabled) option for Scala 3.* to clarify that it requires Scala 3.3+
-        useCompilerTypes.setEnabled(forScala3_3);
+        useCompilerTypes.setVisible(forScala2 || forScala3);
+        useCompilerTypesHelp.setVisible(forScala2 || forScala3);
     }
 
     @Override

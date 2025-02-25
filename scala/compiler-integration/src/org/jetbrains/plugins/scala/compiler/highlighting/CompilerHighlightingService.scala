@@ -30,7 +30,7 @@ import org.jetbrains.plugins.scala.compiler.{CompileServerLauncher, CompilerInte
 import org.jetbrains.plugins.scala.extensions._
 import org.jetbrains.plugins.scala.lang.psi.api.ScalaFile
 import org.jetbrains.plugins.scala.project.{ModuleExt, ScalaLanguageLevel}
-import org.jetbrains.plugins.scala.settings.ScalaHighlightingMode
+import org.jetbrains.plugins.scala.settings.{ScalaHighlightingMode, ScalaProjectSettings}
 import org.jetbrains.plugins.scala.util.{CanonicalPath, DocumentVersion}
 
 import java.io.EOFException
@@ -347,7 +347,7 @@ private final class CompilerHighlightingService(project: Project, coroutineScope
       if (document == null || module == null || psiFile == null)
         None
       else if (psiFile.is[ScalaFile]) {
-        if (!psiFile.isScalaWorksheet && module.scalaLanguageLevel.exists(_ >= ScalaLanguageLevel.Scala_3_3)) {
+        if (!psiFile.isScalaWorksheet && module.hasScala && (module.scalaLanguageLevel.exists(_ >= ScalaLanguageLevel.Scala_3_3) || ScalaProjectSettings.in(project).isUseCompilerTypes)) {
           val sourceScope = calculateSourceScope(vf)
           Some((module, sourceScope, document, vf))
         } else None
