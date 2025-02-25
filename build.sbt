@@ -87,6 +87,7 @@ lazy val scalaCommunity: sbt.Project =
         repackagedZinc,
         worksheetReplInterfaceImpls,
         compileServer,
+        scalaCompilerPlugin_2_13,
         scalaCompilerPlugin_3_3,
         nailgunRunners,
         copyrightIntegration,
@@ -486,6 +487,12 @@ lazy val compileServer =
       //At runtime the classpath will be constructed in by Platform.
       Compile / unmanagedJars ++= Common.jpsClasspath.value
     )
+
+lazy val scalaCompilerPlugin_2_13: sbt.Project =
+  newPlainScalaProject("compiler-plugin-2_13", file("scala/compiler-plugin/scala-2.13")).settings(
+    scalaVersion := "2.13.15", libraryDependencies += "org.scala-lang" % "scala-compiler" % "2.13.15", Compile / scalacOptions := globalScalacOptions,
+    packageMethod := PackagingMethod.Standalone("lib/jps/compiler-plugin-2.13.jar"),
+  )
 
 lazy val scalaCompilerPlugin_3_3: sbt.Project =
   newPlainScalaProject("compiler-plugin-3_3", file("scala/compiler-plugin/scala-3.3")).settings(
