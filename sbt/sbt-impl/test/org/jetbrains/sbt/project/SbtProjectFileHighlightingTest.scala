@@ -38,7 +38,6 @@ abstract class SbtProjectFileHighlightingTestBase(sbtVersion: String) extends Sb
 
     assertFalse("plugins.sbt should not be highlighted before the project has been imported", shouldHighlightPluginsSbtBefore)
     assertFalse("build.sbt should not be highlighted before the project has been imported", shouldHighlightBuildSbtBefore)
-    assertFalse("The sbt project should not have been imported yet", SbtProjectImportStateService.instance(getProject).isImported(findPsiFile(buildSbtPath)))
 
     importProject(false)
 

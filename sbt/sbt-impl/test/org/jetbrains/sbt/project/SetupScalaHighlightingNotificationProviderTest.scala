@@ -44,9 +44,6 @@ class SetupScalaHighlightingNotificationProviderTest extends SbtExternalSystemIm
     assertFalse("Greeter.java should not be highlighted before the project has been imported", shouldHighlightGreeterBefore)
     assertFalse("AbstractGreeter.kt should not be highlighted before the project has been imported", shouldHighlightAbstractGreeterBefore)
     assertFalse("HelloWorldGreeter.scala should not be highlighted before the project has been imported", shouldHighlightHelloWorldGreeterBefore)
-    assertFalse("The sbt project should not have been imported yet (Greeter.java)", SbtProjectImportStateService.instance(getProject).isImported(greeterPsiFileBefore))
-    assertFalse("The sbt project should not have been imported yet (AbstractGreeter.kt)", SbtProjectImportStateService.instance(getProject).isImported(abstractGreeterPsiFileBefore))
-    assertFalse("The sbt project should not have been imported yet (HelloWorldGreeter.scala)", SbtProjectImportStateService.instance(getProject).isImported(helloWorldGreeterPsiFileBefore))
 
     importProject(false)
 

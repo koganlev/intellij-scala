@@ -21,4 +21,7 @@
     <extensions defaultExtensionNs="com.intellij">
         <externalProjectDataService implementation="org.jetbrains.plugins.scala.project.gradle.ScalaGradleDataService"/>
     </extensions>
+    <extensions defaultExtensionNs="org.jetbrains.sbt">
+        <buildToolModuleHandler implementation="org.jetbrains.plugins.scala.project.gradle.GradleModuleHandler"/>
+    </extensions>
 </idea-plugin>

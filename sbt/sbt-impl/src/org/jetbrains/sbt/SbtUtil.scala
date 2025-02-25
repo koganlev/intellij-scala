@@ -8,26 +8,23 @@ import com.intellij.openapi.externalSystem.model.{DataNode, Key}
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil
 import com.intellij.openapi.module.{Module, ModuleManager}
 import com.intellij.openapi.project.{Project, ProjectUtil}
-import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.platform.workspace.storage.{EntityStorage, SymbolicEntityId, WorkspaceEntityWithSymbolicId}
-import com.intellij.psi.PsiFile
 import com.intellij.util.net.{ProxyConfiguration, ProxyCredentialStore, ProxyCredentialStoreKt, ProxySettings, ProxyUtils}
 import com.intellij.util.{EnvironmentUtil, SystemProperties}
 import org.jetbrains.annotations.VisibleForTesting
 import org.jetbrains.plugins.scala.build.BuildReporter
 import org.jetbrains.plugins.scala.extensions.RichFile
-import org.jetbrains.plugins.scala.project.{ProjectPsiFileExt, Version}
+import org.jetbrains.plugins.scala.project.Version
 import org.jetbrains.plugins.scala.util.{ExternalSystemUtil, JarManifestUtils}
 import org.jetbrains.sbt.Sbt.SbtModuleChildKeyInstance
 import org.jetbrains.sbt.buildinfo.BuildInfo
+import org.jetbrains.sbt.project.SbtProjectSystem
 import org.jetbrains.sbt.project.data.{SbtBuildModuleData, SbtModuleData, SbtProjectData}
 import org.jetbrains.sbt.project.structure.{JvmOpts, SbtOption, SbtOpts}
-import org.jetbrains.sbt.project.{SbtBspProjectHandler, SbtProjectImportProvider, SbtProjectSystem}
 import org.jetbrains.sbt.settings.SbtSettings
 
 import java.io.{BufferedInputStream, File, FileInputStream}
 import java.net.URI
-import java.nio.file.Path
 import java.util.Properties
 import java.util.jar.JarFile
 import scala.collection.mutable
@@ -430,29 +427,4 @@ object SbtUtil {
 
   def getDefaultModuleFilesDirectory(projectRoot: File): String =
     (projectRoot / Sbt.ModulesDirectory).path
-
-  /**
-   * Determines if the project the provided file is in should be treated as an sbt project (has been imported using our
-   * built-in sbt support). Alternatively, the project could be imported as such, but only if it hasn't been imported
-   * by a BSP handler already.
-   *
-   * We use the result of this function to determine if we should highlight certain sbt project files and source files
-   * and show notification banners depending on the import state of the project.
-   */
-  private[sbt] def couldFileBeInSbtProject(file: PsiFile): Boolean =
-    isFileInSbtModule(file) || couldBeImportedAsSbtProject(file.getProject) && !SbtBspProjectHandler.isImportedAsBspProject(file.getProject)
-
-  private def isFileInSbtModule(file: PsiFile): Boolean =
-    file.module.exists(isSbtModule)
-
-  private def couldBeImportedAsSbtProject(project: Project): Boolean = {
-    val workingDir =
-      try getWorkingDirPath(project)
-      catch {
-        case _: IllegalStateException => return false
-      }
-    val projectDir = Path.of(workingDir)
-    val projectDirVirtualFile = VirtualFileManager.getInstance().findFileByNioPath(projectDir)
-    SbtProjectImportProvider.canImport(projectDirVirtualFile)
-  }
 }

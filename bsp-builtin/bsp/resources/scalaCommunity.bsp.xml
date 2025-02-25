@@ -24,8 +24,7 @@
     </extensions>
 
     <extensions defaultExtensionNs="org.jetbrains.sbt">
-        <!--suppress PluginXmlValidity -->
-        <bspProjectHandler implementation="org.jetbrains.bsp.project.BuiltinSbtBspProjectHandler"/>
+        <buildToolModuleHandler implementation="org.jetbrains.bsp.project.BspModuleHandler"/>
     </extensions>
     
     <extensions defaultExtensionNs="com.intellij">

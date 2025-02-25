@@ -29,4 +29,7 @@
   <extensions defaultExtensionNs="org.jetbrains.idea.maven">
     <repositoryProvider implementation="org.jetbrains.sbt.resolvers.SbtMavenRepositoryProvider"/>
   </extensions>
+  <extensions defaultExtensionNs="org.jetbrains.sbt">
+    <buildToolModuleHandler implementation="org.jetbrains.plugins.scala.project.maven.MavenModuleHandler"/>
+  </extensions>
 </idea-plugin>

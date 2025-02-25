@@ -8,7 +8,6 @@ import com.intellij.openapi.roots.JavaProjectRootsUtil
 import com.intellij.psi.PsiFile
 import org.jetbrains.annotations.{ApiStatus, TestOnly}
 import org.jetbrains.plugins.scala.ScalaFileType
-import org.jetbrains.sbt.SbtUtil
 import org.jetbrains.sbt.project.SbtProjectImportStateService
 
 private final class SbtProjectImportStateProblemHighlightFilter extends ProblemHighlightFilter {
@@ -19,9 +18,6 @@ private final class SbtProjectImportStateProblemHighlightFilter extends ProblemH
     if (!isTrackedFileType(psiFile.getFileType)) return true
 
     val project = psiFile.getProject
-    // If this is not an sbt project, or it could not be imported as an sbt project,
-    // this filter does not decide whether the file should be highlighted.
-    if (!SbtUtil.couldFileBeInSbtProject(psiFile)) return true
 
     // If the sbt project is fully imported, the files should be highlighted.
     if (SbtProjectImportStateService.instance(project).isImported(psiFile)) return true

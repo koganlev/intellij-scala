@@ -14,8 +14,8 @@ import org.jetbrains.annotations.Nullable
 import org.jetbrains.plugins.scala.project.notification.isScalaSourceFile
 import org.jetbrains.plugins.scala.project.template.ScalaFrameworkType
 import org.jetbrains.plugins.scala.project.{ModuleExt, ScalaProjectConfigurationService}
+import org.jetbrains.sbt.SbtBundle
 import org.jetbrains.sbt.codeInsight.daemon.SbtProjectImportStateProblemHighlightFilter
-import org.jetbrains.sbt.{SbtBundle, SbtUtil}
 
 import javax.swing.JComponent
 import javax.swing.event.HyperlinkEvent
@@ -34,7 +34,7 @@ private final class SetupScalaHighlightingNotificationProvider extends EditorNot
     val psiFile = PsiManager.getInstance(project).findFile(file)
     if (psiFile eq null) return null
 
-    if (SbtUtil.couldFileBeInSbtProject(psiFile)) {
+    if (SbtProjectUtil.isInSbtProject(psiFile)) {
       // We do not track the file type of this source file, do not show any notifications.
       if (!SbtProjectImportStateProblemHighlightFilter.isTrackedFileType(file.getFileType)) return null
       // Project reload is already in progress, do not show any notifications.

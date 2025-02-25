@@ -29,8 +29,6 @@ private final class SbtProjectImportStateNotificationProvider extends EditorNoti
         // Not an sbt file, do not show any notifications.
         return null
     }
-    // The project is not an sbt project, or it could not be imported as an sbt project, do not show any notifications.
-    if (!SbtUtil.couldFileBeInSbtProject(sbtFile)) return null
     // The sbt file is not a part of the current project, do not show any notifications.
     if (!SbtProblemHighlightFilter.shouldHighlightSbtFile(sbtFile)) return null
     // Project reload is already in progress, do not show any notifications.

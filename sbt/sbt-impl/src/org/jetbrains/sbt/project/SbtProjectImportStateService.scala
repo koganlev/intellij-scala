@@ -2,13 +2,12 @@ package org.jetbrains.sbt.project
 
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil
-import com.intellij.openapi.module.{Module, ModuleManager, ModuleUtilCore}
+import com.intellij.openapi.module.{Module, ModuleManager}
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.roots.{DependencyScope, LibraryOrderEntry, ModuleRootManager, OrderRootType, ProjectRootManager}
+import com.intellij.openapi.roots.{DependencyScope, LibraryOrderEntry, ModuleRootManager, OrderRootType}
 import com.intellij.psi.PsiFile
-import org.jetbrains.plugins.scala.caches.cachedInUserData
-import org.jetbrains.plugins.scala.extensions.inReadAction
-import org.jetbrains.plugins.scala.project.{ModuleExt, ProjectPsiFileExt}
+import org.jetbrains.plugins.scala.project.ModuleExt
+import org.jetbrains.sbt.project.SbtProjectUtil.{cachedModuleForPsiFile, isInSbtProject}
 import org.jetbrains.sbt.settings.SbtSettings
 
 import java.util.concurrent.ConcurrentHashMap
@@ -20,22 +19,33 @@ private[sbt] final class SbtProjectImportStateService(project: Project) {
   private val state: ConcurrentHashMap[String, State] = new ConcurrentHashMap()
 
   /**
-   * Checks if the project has been fully imported as an sbt project using the built-in sbt support. In any other case,
-   * it returns `false`.
+   * Checks if the project the provided file is in is imported as an sbt project using the
+   * native sbt build tool support.
    *
-   * @note This method also returns `false` for sbt projects imported via BSP.
-   * @see [[org.jetbrains.sbt.SbtUtil.couldBeSbtProject]] which should most likely be called before this method
+   * @param file the file whose project will be checked if it is an sbt project
+   * @return `true` if the file is in an sbt project imported using the native sbt build tool support and the project
+   *         is fully imported. `true` if the project is not handled by the native sbt build tool support.
+   *         `false` or the module is not linked to an external system project and not handled by any other build tool.
    */
   def isImported(file: PsiFile): Boolean = {
-    val relevantPath = cachedModuleForPsiFile(file)
-      .flatMap(m => Option(ExternalSystemApiUtil.getExternalRootProjectPath(m)))
-    relevantPath match {
-      case Some(path) =>
-        val s = state.computeIfAbsent(path, computeImportState)
-        s == State.Imported
+    cachedModuleForPsiFile(file) match {
+      case Some(m) if isInSbtProject(m) =>
+        val relevantPath = Option(ExternalSystemApiUtil.getExternalRootProjectPath(m))
+        relevantPath match {
+          case Some(path) =>
+            val s = state.computeIfAbsent(path, computeImportState)
+            s == State.Imported
+          case None =>
+            // Cannot find a module linked to an external system project, and it is not handled by another build tool,
+            // assume the project is not imported.
+            false
+        }
+      case Some(_) =>
+        // Handled by some other build tool.
+        true
       case None =>
-        // The project has not even been linked to the external system machinery. It is therefore not imported.
-        false
+        // Cannot find a module for the file, do not assume anything about the project.
+        true
     }
   }
 
@@ -74,14 +84,6 @@ private[sbt] final class SbtProjectImportStateService(project: Project) {
     def expectedJars = library.getRootFiles(OrderRootType.CLASSES).nonEmpty
     expectedName && expectedDependencyScope && expectedJars
   }
-
-  private def cachedModuleForPsiFile(file: PsiFile): Option[Module] =
-    file.module.orElse {
-      cachedInUserData("moduleForAnyTypeOfFile", file, ProjectRootManager.getInstance(project)) {
-        // assuming that most of the time, the cached value will be read instead of recomputed
-        inReadAction(Option(ModuleUtilCore.findModuleForPsiElement(file)))
-      }
-    }
 }
 
 private[sbt] object SbtProjectImportStateService {

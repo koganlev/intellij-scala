@@ -747,7 +747,10 @@ lazy val copyrightIntegration =
 
 lazy val gradleIntegration =
   newProject("gradle", file("scala/integration/gradle"))
-    .dependsOn(scalaImpl % "test->test;compile->compile", sbtImpl % "test->test")
+    .dependsOn(
+      scalaImpl % "test->test;compile->compile",
+      sbtImpl % "test->test;compile->compile"
+    )
     .settings(
       intellijPlugins ++= Seq(
         "com.intellij.gradle",     // required by Android
@@ -770,7 +773,7 @@ lazy val mavenIntegration =
     .dependsOn(
       scalaImpl % "test->test;compile->compile",
       testingSupport,
-      sbtImpl % "test->test"
+      sbtImpl % "test->test;compile->compile"
     )
     .settings(
       intellijPlugins += "org.jetbrains.idea.maven".toPlugin,
