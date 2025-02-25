@@ -18,41 +18,30 @@ import scala.jdk.DurationConverters.ScalaDurationOps
 import scala.util.matching.Regex
 import scala.util.{Failure, Success, Try}
 
-case class Versions(defaultVersion: String,
-                    versions: Seq[String])
-
 object Versions {
 
   import Entity._
 
   sealed abstract class Kind(private[Versions] val entities: List[Entity]) {
 
-    final def loadVersionsWithProgressDialog(): Versions = {
+    final def loadVersionsWithProgressDialog(): Seq[Version] = {
       val cancelable = true
       val loaded = withProgressSynchronously(ScalaBundle.message("title.fetching.available.this.versions", this), canBeCanceled = cancelable) {
         loadVersions(entities, cancelable, ProgressManager.getInstance().getProgressIndicator, propagateDownloadExceptions = false)
       }
-      mapVersionListToVersions(loaded)
+      loaded.sorted.reverse
     }
 
     @RequiresBackgroundThread
-    final def loadVersionsWithProgress(indicator: ProgressIndicator): Versions = {
+    final def loadVersionsWithProgress(indicator: ProgressIndicator): Seq[Version] = {
       val loaded = loadVersions(entities, cancelable = true, indicator, propagateDownloadExceptions = true)
-      mapVersionListToVersions(loaded)
-    }
-
-    private def mapVersionListToVersions(versions: Seq[Version]): Versions = {
-      val stringVersions = versions
-        .sorted
-        .reverse
-        .map(_.presentation)
-      Versions(defaultVersion, stringVersions)
+      loaded.sorted.reverse
     }
 
     def initiallySelectedVersion(versions: Seq[String]): String =
       versions.headOption.getOrElse(defaultVersion)
 
-    lazy val allHardcodedVersions: Versions = {
+    lazy val allHardcodedVersions: Seq[Version] = {
       val versions = entities
         .flatMap {
           case DownloadableEntity(_, minVersionStr, hardcodedVersions, _) =>
@@ -63,7 +52,7 @@ object Versions {
           case StaticEntity(_, hardcodedVersions) =>
             hardcodedVersions.map(Version.apply)
         }
-      mapVersionListToVersions(versions)
+      versions.sorted.reverse
     }
 
     protected def defaultVersion: String =
@@ -98,9 +87,9 @@ object Versions {
     /** Scala3 is only supported since sbt 1.5.0 */
     val MinSbtVersionForScala3 = "1.5.0"
 
-    def sbtVersionsForScala3(sbtVersions: Versions): Versions = {
+    def sbtVersionsForScala3(sbtVersions: Seq[Version]): Seq[Version] = {
       val minVersion = Version(MinSbtVersionForScala3)
-      Versions(LatestSbtVersion, sbtVersions.versions.collect { case v if Version(v) >= minVersion => v })
+      sbtVersions.collect { case v if v >= minVersion => v }
     }
   }
 

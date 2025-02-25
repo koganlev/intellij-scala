@@ -1,6 +1,6 @@
 package org.jetbrains.sbt.project.template
 
-import org.jetbrains.plugins.scala.project.Versions
+import org.jetbrains.plugins.scala.project.{Version, Versions}
 
 class ScalaModuleBuilderSelections(
   var scalaVersion: Option[String],
@@ -16,8 +16,8 @@ class ScalaModuleBuilderSelections(
    */
   var scrollScalaVersionDropdownToTheTop = false
 
-  def updateScalaVersion(versions: Versions): Unit = {
-    val version = scalaVersion.getOrElse(Versions.Scala.initiallySelectedVersion(versions.versions))
+  def updateScalaVersion(versions: Seq[String]): Unit = {
+    val version = scalaVersion.getOrElse(Versions.Scala.initiallySelectedVersion(versions))
 
     scalaVersion = Some(version)
     scrollScalaVersionDropdownToTheTop = scalaVersion.isEmpty
@@ -28,7 +28,7 @@ class ScalaModuleBuilderSelections(
 }
 
 final class SbtModuleBuilderSelections(
-  var sbtVersion: Option[String],
+  var sbtVersion: Option[Version],
   _scalaVersion: Option[String],
   _downloadScalaSdkSources: Boolean,
   var downloadSbtSources: Boolean,
@@ -38,8 +38,8 @@ final class SbtModuleBuilderSelections(
   override def copy(): SbtModuleBuilderSelections =
     new SbtModuleBuilderSelections(sbtVersion, scalaVersion, downloadScalaSdkSources, downloadSbtSources, packagePrefix)
 
-  def updateSbtVersion(versions: Versions): Unit = {
-    val version = sbtVersion.getOrElse(Versions.SBT.initiallySelectedVersion(versions.versions))
+  def updateSbtVersion(versions: Seq[Version]): Unit = {
+    val version = sbtVersion.getOrElse(Version(Versions.SBT.initiallySelectedVersion(versions.map(_.presentation))))
     sbtVersion = Some(version)
   }
 }
