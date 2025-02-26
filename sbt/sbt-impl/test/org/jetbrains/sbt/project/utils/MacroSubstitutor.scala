@@ -20,11 +20,19 @@ class MacroSubstitutor(val substitutions: Map[String, String]) {
     }
   }
 
-  def replaceValuesWithMacro(actualItems: Seq[String], expectedItems: Seq[String]): Seq[String] =
-    actualItems.zipWithIndex.map { case (actual, idx) =>
-      val adopted = expectedItems.lift(idx).map(expected => replaceValuesWithMacro(actual, expected))
-      adopted.getOrElse(actual)
+  def replaceValuesWithMacro(actualItems: Seq[String], expectedItems: Seq[String]): Seq[String] = {
+    // for some reason, some expected test data can be null =/
+    val substitutionsWithKeysPresentInExpectedData: Map[String, String] = if (expectedItems.nonEmpty)
+      substitutions.filter { case (key, _) => expectedItems.exists(i => i != null && i.contains(key) ) }
+    else
+      substitutions
+
+    actualItems.zipWithIndex.map { case (actual, _) =>
+      substitutionsWithKeysPresentInExpectedData.foldLeft(actual) { case (actualCurrent, (key, value)) =>
+        actualCurrent.replace(value, key)
+      }
     }
+  }
 
   def containsSomeMacro(value: String): Boolean =
     value != null && substitutions.exists { case (key, _) => value.contains(key) }

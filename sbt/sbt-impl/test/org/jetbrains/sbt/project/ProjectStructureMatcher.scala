@@ -3,6 +3,7 @@ package project
 
 import com.intellij.compiler.CompilerConfiguration
 import com.intellij.compiler.impl.javaCompiler.javac.JavacConfiguration
+import com.intellij.notification.Notification
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil
 import com.intellij.openapi.module.{Module, ModuleManager}
 import com.intellij.openapi.project.Project
@@ -84,7 +85,8 @@ trait ProjectStructureMatcher {
   private implicit val ideaLibraryEntryNameImplicit: HasName[roots.LibraryOrderEntry] =
     (entry: roots.LibraryOrderEntry) => entry.getLibraryName
 
-  private def assertProjectSdkEqual(project: Project)(expectedSdkRef: SdkReference): Unit = {
+  private def assertProjectSdkEqual(project: Project)(expectedSdkRef: SdkReference)
+                                   (implicit compareContext: ProjectStructureComparisonContext): Unit = {
     val expectedSdk = SdkUtils.findProjectSdk(expectedSdkRef).getOrElse {
       fail(s"Sdk $expectedSdkRef nof found").asInstanceOf[Nothing]
     }
@@ -152,7 +154,8 @@ trait ProjectStructureMatcher {
     Assert.assertEquals(s"Module java target bytecode level (${module.getName})", expected, actual)
   }
 
-  private def assertProjectJavaLanguageLevel(project: Project)(expected: LanguageLevel): Unit = {
+  private def assertProjectJavaLanguageLevel(project: Project)(expected: LanguageLevel)
+                                            (implicit compareContext: ProjectStructureComparisonContext): Unit = {
     val settings = roots.LanguageLevelProjectExtension.getInstance(project)
     val actual = settings.getLanguageLevel
     assertEquals("Project java language level", expected, actual)
@@ -171,7 +174,8 @@ trait ProjectStructureMatcher {
     Assert.assertEquals(s"Module javacOptions (${module.getName})", expectedOptions, actual)
   }
 
-  private def assertModuleCompileOrder(module: Module)(expected: CompileOrder): Unit = {
+  private def assertModuleCompileOrder(module: Module)(expected: CompileOrder)
+                                      (implicit compareContext: ProjectStructureComparisonContext): Unit = {
     assertEquals("Compile order", expected, module.scalaCompilerSettings.compileOrder)
   }
 
@@ -203,8 +207,8 @@ trait ProjectStructureMatcher {
 
   private def assertModuleContentRootsEqual(module: Module)(expected: Seq[String])(mt: Option[MatchType])
                                            (implicit compareContext: ProjectStructureComparisonContext): Unit = {
-    val expectedRoots = expected.map(VfsUtilCore.pathToUrl)
-    val actualRoots = roots.ModuleRootManager.getInstance(module).getContentEntries.map(_.getUrl).toSeq
+    val expectedRoots = expected
+    val actualRoots = roots.ModuleRootManager.getInstance(module).getContentEntries.map(_.getUrl.stripPrefix("file://")).toSeq
     assertMatch(s"Content root of module `${module.getName}`", expectedRoots, actualRoots)(mt)
   }
 
@@ -230,7 +234,8 @@ trait ProjectStructureMatcher {
     }
   }
 
-  private def assertSingleContentRoot(contentRoots: Seq[ContentEntry], moduleName: String): Unit =
+  private def assertSingleContentRoot(contentRoots: Seq[ContentEntry], moduleName: String)
+                                     (implicit compareContext: ProjectStructureComparisonContext): Unit =
     assertEquals(s"Expected single content root in module $moduleName, Got: $contentRoots", 1, contentRoots.length)
 
   private def assertModuleExcludedFoldersEqual(module: Module, singleContentRootModules: Boolean)
@@ -325,7 +330,8 @@ trait ProjectStructureMatcher {
     assert(index == 0 || index == -1, "Library for unmanaged jars exists, but it is not the highest in the order")
   }
 
-  private def assertDependencyScopeAndExportedFlagEqual(expected: dependency[_], actual: roots.ExportableOrderEntry): Unit = {
+  private def assertDependencyScopeAndExportedFlagEqual(expected: dependency[_], actual: roots.ExportableOrderEntry)
+                                                       (implicit compareContext: ProjectStructureComparisonContext): Unit = {
     expected.foreach0(isExported)(it => assertEquals("Dependency isExported flag", it, actual.isExported))
     expected.foreach0(scope)(it => assertEquals("Dependency scope", it, actual.getScope))
   }
@@ -383,7 +389,8 @@ trait ProjectStructureMatcher {
     }
   }
 
-  private def asserModuleFileDirectoryPathEqual(module: Module)(expected: String): Unit = {
+  private def asserModuleFileDirectoryPathEqual(module: Module)(expected: String)
+                                               (implicit compareContext: ProjectStructureComparisonContext): Unit = {
     val moduleName = module.getName
     val externalProjectRoot = ExternalSystemApiUtil.getExternalRootProjectPath(module)
     assertNotNull(s"The external project root for $moduleName is null", externalProjectRoot)
@@ -436,8 +443,19 @@ trait ProjectStructureMatcher {
     what: String,
     expected: T,
     actual: T
-  ): Unit = {
-    org.junit.Assert.assertEquals(s"$what mismatch", expected, actual)
+  )(implicit compareContext: ProjectStructureComparisonContext): Unit = {
+    val actualAdopted: T = actual match {
+      case s: String =>
+        compareContext.macroSubstitutor
+          .replaceValuesWithMacro(s, expected.asInstanceOf[String])
+          .asInstanceOf[T]
+      case p: Path =>
+        val pathNew = compareContext.macroSubstitutor.replaceValuesWithMacro(p.toString, expected.asInstanceOf[Path].toString)
+        Path.of(pathNew).asInstanceOf[T]
+      case _ =>
+        actual
+    }
+    org.junit.Assert.assertEquals(s"$what mismatch", expected, actualAdopted)
   }
 
   private def pairModules[T <: Attributed, U](expected: Seq[T], actual: Seq[U])

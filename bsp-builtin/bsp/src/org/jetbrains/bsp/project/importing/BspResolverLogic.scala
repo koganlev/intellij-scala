@@ -205,6 +205,13 @@ private[importing] object BspResolverLogic {
       throw ex
   }
 
+  /**
+   * The method returns the list of "shared" sources with the targets that use it.
+   * The source entry is called "shared" if it's used in more then 1 target.
+   *
+   * @note It's somehow similar to `org.jetbrains.sbt.project.ExternalSourceRootResolution.sharedAndExternalRootsIn`
+   *       (analog for the SBT external system)
+   */
   private def sharedSourceEntries(
     idToSourceEntries: Map[BuildTargetIdentifier, Seq[SourceEntry]],
     idToTarget: Map[BuildTargetIdentifier, BuildTarget]
@@ -670,7 +677,7 @@ private[importing] object BspResolverLogic {
 
     // synthetic root module when no natural module is at root
     val rootModule =
-      if (projectModules.modules.exists (_.data.basePath.exists(_.toPath == projectRoot))) None
+      if (projectModules.modules.exists(_.data.basePath.exists(_.toPath == projectRoot))) None
       else {
         val name = projectRoot.getFileName.toString + "-root"
         val moduleData = new ModuleData(name, BSP.ProjectSystemId, BspSyntheticModuleType.Id, name, moduleFileDirectoryPath, projectRootPath)
@@ -974,16 +981,20 @@ private[importing] object BspResolverLogic {
     }
   }
 
-  /** Use moduleBase content root when possible, or create a new content root if dir is not within moduleBase. */
-  private[importing] def getContentRoot(dir: Path, moduleBase: Option[ContentRootData]) = {
+  /**
+   * Returns `moduleBase` when the directory `dir` is located somewhere inside `moduleBase`.<br>
+   * Creates a new content root equal to `dir` otherwise.
+   */
+  private[importing] def getContentRoot(dir: Path, moduleBase: Option[ContentRootData]): ContentRootData = {
     val baseRoot = for {
       contentRoot <- moduleBase
       if FileUtil.isAncestor(contentRoot.getRootPath, dir.toCanonicalPath.toString, false)
     } yield contentRoot
 
-    baseRoot.getOrElse(new ContentRootData(BSP.ProjectSystemId, dir.toCanonicalPath.toString))
+    baseRoot.getOrElse {
+      new ContentRootData(BSP.ProjectSystemId, dir.toCanonicalPath.toString)
+    }
   }
-
 
   private[importing] def calculateModuleDependencies(projectModules: ProjectModules): Seq[ModuleDep] = for {
     moduleDescription <- projectModules.modules

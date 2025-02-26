@@ -335,6 +335,9 @@ object SbtUtil {
       }
   }
 
+  /**
+   * @return path of the directory containing IntelliJ module files (~ `./.idea/modules`)
+   */
   def getDefaultModuleFilesDirectory(projectRoot: File): String =
     (projectRoot / Sbt.ModulesDirectory).path
 
