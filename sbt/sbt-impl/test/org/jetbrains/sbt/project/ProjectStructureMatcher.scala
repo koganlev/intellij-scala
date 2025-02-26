@@ -448,7 +448,17 @@ trait ProjectStructureMatcher {
                               (implicit nameOfT: HasName[T], nameOfU: HasName[U], compareContext: ProjectStructureComparisonContext): Seq[(T, U)] =
     expected.flatMap(e => actual.find(a => convertIfScalaCli(nameOfU(a)) == nameOfT(e)).map((e, _)))
 
-  protected def assertNoNotificationsShown(myProject: Project): Unit = {
+  protected def assertNoNotificationsShown(myProject: Project, notifications: Seq[Notification] = Nil): Unit = {
+    if (notifications.nonEmpty) {
+      val notificationsText = notifications.map(notificationMessage).mkString("\n")
+      fail(
+        s"""Expected no notifications, but following notifications were shown:
+           |$notificationsText""".stripMargin
+      )
+    }
+
+    // check no custom notifications are shown
+    // (this MIGHT be redundant as `notifications` parameter might already cover this, shouldn't it?)
     myProject.getUserData(ShownNotificationsKey) match {
       case null =>
       case notifications =>
@@ -466,6 +476,15 @@ trait ProjectStructureMatcher {
        |Title: ${data.getTitle}
        |Message: ${data.getMessage}
        |NotificationSource: ${data.getNotificationSource}
+       |""".stripMargin
+  }
+
+  private def notificationMessage(shownNotification: Notification) = {
+    s"""Notification was shown during ${shownNotification.id} module creation.
+       |Group id: ${shownNotification.getGroupId}
+       |Title: ${shownNotification.getTitle}
+       |Subtitle: ${shownNotification.getSubtitle}
+       |Content: ${shownNotification.getContent}
        |""".stripMargin
   }
 }

@@ -2,6 +2,7 @@ package org.jetbrains.sbt.project
 
 import com.intellij.compiler.CompilerConfiguration
 import com.intellij.compiler.impl.javaCompiler.javac.JavacConfiguration
+import com.intellij.notification.{Notification, NotificationType, Notifications}
 import com.intellij.openapi.externalSystem.service.project.ProjectDataManager
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
@@ -16,6 +17,7 @@ import org.jetbrains.jps.model.module.JpsModuleSourceRootType
 import org.jetbrains.plugins.scala.util.TestUtils
 import org.jetbrains.plugins.scala.util.assertions.CollectionsAssertions.assertCollectionEquals
 import org.jetbrains.sbt.actions.SbtDirectoryCompletionContributor
+import org.jetbrains.sbt.project.SbtProjectStructureImportingLike.CollectingNotificationsListener
 import org.jetbrains.sbt.project.settings.SbtProjectSettings
 import org.jetbrains.sbt.project.utils.ProjectStructureComparisonContext
 import org.jetbrains.sbt.settings.SbtSettings
@@ -24,6 +26,7 @@ import org.junit.Assert.fail
 
 import java.io.File
 import java.nio.file.Path
+import scala.collection.mutable
 import scala.jdk.CollectionConverters.{CollectionHasAsScala, SeqHasAsJava}
 
 
@@ -45,6 +48,9 @@ abstract class SbtProjectStructureImportingLike extends SbtExternalSystemImporti
   }
 
   protected def runTest(expected: project): Unit = {
+    val notificationsCollector = new CollectingNotificationsListener(Set(NotificationType.WARNING, NotificationType.ERROR))
+    getProject.getMessageBus.connect().subscribe(Notifications.TOPIC, notificationsCollector)
+
     importProject(false)
 
     val projectData = ProjectDataManager.getInstance.getExternalProjectsData(getProject, getExternalSystemId).asScala.toSeq
@@ -60,7 +66,7 @@ abstract class SbtProjectStructureImportingLike extends SbtExternalSystemImporti
 
     val compareContext = ProjectStructureComparisonContext.Implicit.default(getProject)
     assertProjectsEqual(expected, myProject, !enableSeparateModulesForProdTest)(compareContext)
-    assertNoNotificationsShown(myProject)
+    assertNoNotificationsShown(myProject, notificationsCollector.getNotifications)
   }
 
   /**
@@ -82,12 +88,12 @@ abstract class SbtProjectStructureImportingLike extends SbtExternalSystemImporti
     projectRelativePath: String,
     rootType: JpsModuleSourceRootType[_]
   )
-   object ExpectedDirectoryCompletionVariant {
-     implicit val expectedDirectoryCompletionVariantOrdering: Ordering[ExpectedDirectoryCompletionVariant] =
-       (x: ExpectedDirectoryCompletionVariant, y: ExpectedDirectoryCompletionVariant) => {
-         x.projectRelativePath compare y.projectRelativePath
-       }
-   }
+  object ExpectedDirectoryCompletionVariant {
+    implicit val expectedDirectoryCompletionVariantOrdering: Ordering[ExpectedDirectoryCompletionVariant] =
+      (x: ExpectedDirectoryCompletionVariant, y: ExpectedDirectoryCompletionVariant) => {
+        x.projectRelativePath compare y.projectRelativePath
+      }
+  }
 
   protected val DefaultSbtContentRootsScala212: Seq[ExpectedDirectoryCompletionVariant] =
     defaultSbtContentRootsScala2("2.12")
@@ -237,5 +243,21 @@ abstract class SbtProjectStructureImportingLike extends SbtExternalSystemImporti
     val fileContent = FileUtil.loadFile(file)
     val updatedContent = fileContent.replace(variableName, value)
     FileUtil.writeToFile(file, updatedContent)
+  }
+}
+
+object SbtProjectStructureImportingLike {
+
+  //TODO: move it to some base class and call assertNoNotificationsShown in more tests (BSP/Maven/Gradle/new project wizard)
+  private class CollectingNotificationsListener(types: Set[NotificationType]) extends Notifications {
+    private val notifications = mutable.ArrayBuffer[Notification]()
+
+    def getNotifications: Seq[Notification] = notifications.toSeq
+
+    override def notify(notification: Notification): Unit = {
+      if (types.contains(notification.getType)) {
+        notifications += notification
+      }
+    }
   }
 }
