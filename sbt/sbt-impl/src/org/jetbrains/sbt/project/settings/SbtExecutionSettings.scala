@@ -27,7 +27,8 @@ class SbtExecutionSettings(val realProjectPath: String,
                            val userSetEnvironment: Map[String, String],
                            val passParentEnvironment: Boolean,
                            val useSeparateCompilerOutputPaths: Boolean,
-                           val separateProdTestSources: Boolean
+                           val separateProdTestSources: Boolean,
+                           val sbtVersion: String
                           ) extends ExternalSystemExecutionSettings {
 
   /** If a custom VM executable is configured, return it. If it's not a valid path, warn user. */

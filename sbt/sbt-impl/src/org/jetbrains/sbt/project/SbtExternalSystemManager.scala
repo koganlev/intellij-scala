@@ -17,6 +17,7 @@ import org.jetbrains.annotations.NonNls
 import org.jetbrains.jps.model.java.JdkVersionDetector
 import org.jetbrains.plugins.scala.extensions.{RichFile, invokeAndWait}
 import org.jetbrains.sbt.SbtBundle
+import org.jetbrains.sbt.SbtUtil.{detectSbtVersion, getDefaultLauncher}
 import org.jetbrains.sbt.project.settings._
 import org.jetbrains.sbt.project.structure.SbtOpts
 import org.jetbrains.sbt.settings.{SbtExternalSystemConfigurable, SbtSettings}
@@ -83,6 +84,14 @@ object SbtExternalSystemManager {
     val customSbtStructureFile = settingsState.customSbtStructurePath.nonEmpty.option(settingsState.customSbtStructurePath.toFile)
 
     val realProjectPath = Option(projectSettings.getExternalProjectPath).getOrElse(path)
+
+    val sbtLauncher = customLauncher.getOrElse(getDefaultLauncher)
+    val projectRoot = {
+      val file = new File(realProjectPath)
+      if (file.isDirectory) file else file.getParentFile
+    }
+    val sbtVersion = detectSbtVersion(projectRoot, sbtLauncher)
+
     val projectJdkName = bootstrapJdk(project, projectSettings)
     val vmExecutable = getVmExecutable(projectJdkName, settingsState)
     val jreHome = vmExecutable.parent.flatMap(_.parent)
@@ -106,7 +115,8 @@ object SbtExternalSystemManager {
       userSetEnvironment = settingsState.sbtEnvironment.asScala.toMap,
       passParentEnvironment = settingsState.sbtPassParentEnvironment,
       useSeparateCompilerOutputPaths = projectSettings.useSeparateCompilerOutputPaths,
-      separateProdTestSources = projectSettings.separateProdAndTestSources
+      separateProdTestSources = projectSettings.separateProdAndTestSources,
+      sbtVersion = sbtVersion
     )
   }
 

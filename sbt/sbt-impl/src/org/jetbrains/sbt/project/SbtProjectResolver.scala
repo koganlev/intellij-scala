@@ -67,10 +67,9 @@ class SbtProjectResolver extends ExternalSystemProjectResolver[SbtExecutionSetti
     }
 
     val sbtLauncher = settings.customLauncher.getOrElse(getDefaultLauncher)
-    val sbtVersion = detectSbtVersion(projectRoot, sbtLauncher)
 
-    if (isPreview) dummyProject(projectRoot, settings, sbtVersion).toDataNode
-    else importProject(taskId, settings, projectRoot, sbtLauncher, sbtVersion, listener)
+    if (isPreview) dummyProject(projectRoot, settings).toDataNode
+    else importProject(taskId, settings, projectRoot, sbtLauncher, listener)
   }
 
   private def importProject(
@@ -78,7 +77,6 @@ class SbtProjectResolver extends ExternalSystemProjectResolver[SbtExecutionSetti
     settings: SbtExecutionSettings,
     projectRoot: File,
     sbtLauncher: File,
-    @NonNls sbtVersion: String,
     notifications: ExternalSystemTaskNotificationListener
   ): DataNode[ESProjectData] = {
 
@@ -93,7 +91,7 @@ class SbtProjectResolver extends ExternalSystemProjectResolver[SbtExecutionSetti
     } else esReporter
 
     val startTime = System.currentTimeMillis()
-    val structureDump = dumpStructure(projectRoot, sbtLauncher, Version(sbtVersion), settings, taskId.findProject())
+    val structureDump = dumpStructure(projectRoot, sbtLauncher, Version(settings.sbtVersion), settings, taskId.findProject())
 
     // side-effecty status reporting
     structureDump.foreach { _ =>
@@ -105,7 +103,7 @@ class SbtProjectResolver extends ExternalSystemProjectResolver[SbtExecutionSetti
     val conversionResult: Try[DataNode[ESProjectData]] = structureDump
       .map { case (elem, _) =>
         val data = elem.deserialize[sbtStructure.StructureData].getOrElse(throw new IllegalStateException("Could not deserialize sbt structure data"))
-        convert(normalizePath(projectRoot), data, settings.jdk, sbtVersion, settings).toDataNode
+        convert(normalizePath(projectRoot), data, settings.jdk, settings.sbtVersion, settings).toDataNode
       }
       .recoverWith {
         case ImportCancelledException(cause) =>
@@ -289,7 +287,7 @@ class SbtProjectResolver extends ExternalSystemProjectResolver[SbtExecutionSetti
    * Create project preview without using sbt, since sbt import can fail and users would have to do a manual edit of the project.
    * Also sbt boot makes the whole process way too slow.
    */
-  private def dummyProject(projectRoot: File, settings: SbtExecutionSettings, sbtVersion: String): Node[ESProjectData] = {
+  private def dummyProject(projectRoot: File, settings: SbtExecutionSettings): Node[ESProjectData] = {
 
     // TODO add default scala sdk and sbt libs (newest versions or so)
 
@@ -324,7 +322,7 @@ class SbtProjectResolver extends ExternalSystemProjectResolver[SbtExecutionSetti
 
     val dummySbtProjectData = SbtProjectData(
       settings.jdk.map(JdkByName),
-      sbtVersion,
+      settings.sbtVersion,
       projectPath,
       prodTestSourcesSeparated = false
     )
@@ -334,7 +332,7 @@ class SbtProjectResolver extends ExternalSystemProjectResolver[SbtExecutionSetti
 
     val dummyBuildData = BuildData(projectUri, Seq.empty, Seq.empty, Seq.empty, Seq.empty)
     val projectToParentModule = projectToModule.view.mapValues(_.parent).toMap
-    createBuildModule(dummyBuildData, projects, getDefaultModuleFilesDirectory(projectRoot), None, sbtVersion, projectToParentModule, buildProjectsGroup)
+    createBuildModule(dummyBuildData, projects, getDefaultModuleFilesDirectory(projectRoot), None, settings.sbtVersion, projectToParentModule, buildProjectsGroup)
 
     projectNode
   }
