@@ -5,7 +5,6 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil
 import com.intellij.openapi.projectRoots.ProjectJdkTable
 import com.intellij.openapi.roots.DependencyScope
-import com.intellij.openapi.util.io.FileUtil
 import com.intellij.pom.java.LanguageLevel
 import com.intellij.testFramework.IdeaTestUtil
 import org.jetbrains.annotations.Nullable
@@ -20,7 +19,6 @@ import org.junit.Assert
 import org.junit.Assert.{assertEquals, assertTrue}
 import org.junit.experimental.categories.Category
 
-import java.io.File
 import java.net.URI
 
 /**

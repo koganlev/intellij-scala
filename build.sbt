@@ -60,6 +60,7 @@ lazy val scalaCommunity: sbt.Project =
       scalaMetaImpl % "test->test;compile->compile",
       structureView % "test->test;compile->compile",
       sbtImpl % "test->test;compile->compile",
+      sbtProjectImportingTests % "test->test",
       compilerIntegration % "test->test;compile->compile",
       debugger % "test->test;compile->compile",
       testingSupport % "test->test;compile->compile",
@@ -434,9 +435,20 @@ lazy val scalaLanguageUtilsRt: sbt.Project =
 
 lazy val sbtImpl =
   newProject("sbt-impl", file("sbt/sbt-impl"))
-    .dependsOn(sbtApi, scalaImpl % "test->test;compile->compile")
+    .dependsOn(
+      sbtApi,
+      scalaImpl % "test->test;compile->compile",
+    )
     .settings(
       intellijPlugins += "org.jetbrains.idea.maven".toPlugin
+    )
+
+lazy val sbtProjectImportingTests =
+  newProject("sbt-project-importing-tests", file("sbt/sbt-project-importing-tests"))
+    .dependsOn(
+      sbtImpl % "compile->compile;test->test",
+      // this dependency is added primarily use CompileServerLauncher from sbt importing test (to shut it down)
+      compilerIntegration
     )
 
 lazy val compilerIntegration =

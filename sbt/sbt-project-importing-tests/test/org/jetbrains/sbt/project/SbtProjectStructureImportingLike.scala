@@ -3,8 +3,9 @@ package org.jetbrains.sbt.project
 import com.intellij.compiler.CompilerConfiguration
 import com.intellij.compiler.impl.javaCompiler.javac.JavacConfiguration
 import com.intellij.notification.{Notification, NotificationType, Notifications}
+import com.intellij.openapi.compiler.{CompilerMessage, CompilerMessageCategory}
 import com.intellij.openapi.externalSystem.service.project.ProjectDataManager
-import com.intellij.openapi.module.Module
+import com.intellij.openapi.module.{Module, ModuleManager}
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.roots.{LanguageLevelModuleExtension, LanguageLevelProjectExtension, ModuleRootModificationUtil}
@@ -12,8 +13,11 @@ import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.{VirtualFile, VirtualFileManager}
 import com.intellij.pom.java.LanguageLevel
 import com.intellij.psi.PsiManager
+import com.intellij.testFramework.CompilerTester
 import org.jetbrains.jps.model.java.{JavaResourceRootType, JavaSourceRootType}
 import org.jetbrains.jps.model.module.JpsModuleSourceRootType
+import org.jetbrains.plugins.scala.compiler.CompileServerLauncher
+import org.jetbrains.plugins.scala.compiler.data.IncrementalityType
 import org.jetbrains.plugins.scala.util.TestUtils
 import org.jetbrains.plugins.scala.util.assertions.CollectionsAssertions.assertCollectionEquals
 import org.jetbrains.sbt.actions.SbtDirectoryCompletionContributor
@@ -28,7 +32,6 @@ import java.io.File
 import java.nio.file.Path
 import scala.collection.mutable
 import scala.jdk.CollectionConverters.{CollectionHasAsScala, SeqHasAsJava}
-
 
 abstract class SbtProjectStructureImportingLike extends SbtExternalSystemImportingTestLike
   with ProjectStructureMatcher
@@ -243,6 +246,35 @@ abstract class SbtProjectStructureImportingLike extends SbtExternalSystemImporti
     val fileContent = FileUtil.loadFile(file)
     val updatedContent = fileContent.replace(variableName, value)
     FileUtil.writeToFile(file, updatedContent)
+  }
+
+  protected def buildProjectAndAssertNoWarningsOrErrorsWithAllIncrementalityTypes(): Unit = {
+    buildProjectAndAssertNoWarningsOrErrors(IncrementalityType.SBT)
+    buildProjectAndAssertNoWarningsOrErrors(IncrementalityType.IDEA)
+  }
+
+  protected def buildProjectAndAssertNoWarningsOrErrors(incrementalityType: IncrementalityType): Unit = {
+    val modules = ModuleManager.getInstance(getProject).getModules
+    val compiler = new CompilerTester(getProject, java.util.Arrays.asList(modules: _*), null, false)
+
+    def buildMessageText(message: CompilerMessage): String = {
+      s"""[${message.getCategory}] ${message.getVirtualFile}
+         |${message.getMessage}""".stripMargin
+    }
+
+    try {
+      val messages = compiler.rebuild().asScala.toSeq
+      val warningsOrErrors: Seq[CompilerMessage] = messages.filter(m => Set(CompilerMessageCategory.ERROR, CompilerMessageCategory.WARNING).contains(m.getCategory))
+      Assert.assertEquals(
+        s"Expecting no compilation warnings or errors (with ${incrementalityType} incremental compiler)",
+        "",
+        warningsOrErrors.map(buildMessageText).mkString("\n")
+      )
+    } finally {
+      // Manually clean up compiler-related allocated resources to prevent resource leaks after test end
+      compiler.tearDown()
+      CompileServerLauncher.stopServerAndWait()
+    }
   }
 }
 
