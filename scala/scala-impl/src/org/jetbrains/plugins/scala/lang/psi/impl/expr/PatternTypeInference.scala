@@ -132,9 +132,9 @@ object PatternTypeInference {
     scrutineeType: ScType
   ): ScSubstitutor = {
     val noTopLevelTypeVariables = scrutineeType.removeAliasDefinitions().recursiveUpdate {
-      case abs: ScAbstractType    => ReplaceWith(abs.upper) //arguments inside are considered bound
-      case tpt: TypeParameterType => ReplaceWith(tpt.upperType)
-      case _                      => Stop
+      case abs: ScAbstractType    if !abs.upper.isAny     => ReplaceWith(abs.upper) //arguments inside are considered bound
+      case tpt: TypeParameterType if !tpt.upperType.isAny => ReplaceWith(tpt.upperType)
+      case _                                              => Stop
     }
 
     pattern match {

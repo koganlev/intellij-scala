@@ -58,42 +58,42 @@ class PatternTypeInferenceTest extends ScalaLightCodeInsightFixtureTestCase {
   )
 
   //@TODO:
-//  def testInstantiateScrutineeTypeVariables(): Unit = checkTextHasNoErrors(
-//    """
-//      |trait Base[A, B]
-//      |trait ChildA[A] extends Base[A, B]
-//      |
-//      |def foo[A, B](child: Base[A, B], doesntWork: A): Boolean =
-//      |  child match {
-//      |    case childA: ChildA[s] =>
-//      |      val a: A = ???
-//      |      val b: B = ???
-//      |      implicitly[s =:= A]
-//      |      implicitly[A =:= B]
-//      |      false
-//      |  }
-//      |""".stripMargin
-//  )
+  //  def testInstantiateScrutineeTypeVariables(): Unit = checkTextHasNoErrors(
+  //    """
+  //      |trait Base[A, B]
+  //      |trait ChildA[A] extends Base[A, B]
+  //      |
+  //      |def foo[A, B](child: Base[A, B], doesntWork: A): Boolean =
+  //      |  child match {
+  //      |    case childA: ChildA[s] =>
+  //      |      val a: A = ???
+  //      |      val b: B = ???
+  //      |      implicitly[s =:= A]
+  //      |      implicitly[A =:= B]
+  //      |      false
+  //      |  }
+  //      |""".stripMargin
+  //  )
 
-//  def testSCL14197(): Unit = checkTextHasNoErrors(
-//    """
-//      |class Base[A, B]
-//      |case class ChildA[T]() extends Base[T, T]
-//      |case class ChildB[T]() extends Base[AnyRef with T, T]
-//      |
-//      |object BugExample extends App {
-//      |  def foo[A, B](child: Base[A, B], doesntWork: A): B = child match {
-//      |    case childA: ChildA[_] => barA(childA, doesntWork) // problem with B
-//      |    case childB: ChildB[_] => barB(childB, doesntWork) // problem with A
-//      |  }
-//      |
-//      |  def barA[T](child: ChildA[T], a: T): T = a
-//      |  def barB[T](child: ChildB[T], a: AnyRef with T): T = a
-//      |
-//      |  println(foo(ChildA[Int](), 1))
-//      |  println(foo(ChildB[String](), "2"))
-//      |}""".stripMargin
-//  )
+  //  def testSCL14197(): Unit = checkTextHasNoErrors(
+  //    """
+  //      |class Base[A, B]
+  //      |case class ChildA[T]() extends Base[T, T]
+  //      |case class ChildB[T]() extends Base[AnyRef with T, T]
+  //      |
+  //      |object BugExample extends App {
+  //      |  def foo[A, B](child: Base[A, B], doesntWork: A): B = child match {
+  //      |    case childA: ChildA[_] => barA(childA, doesntWork) // problem with B
+  //      |    case childB: ChildB[_] => barB(childB, doesntWork) // problem with A
+  //      |  }
+  //      |
+  //      |  def barA[T](child: ChildA[T], a: T): T = a
+  //      |  def barB[T](child: ChildB[T], a: AnyRef with T): T = a
+  //      |
+  //      |  println(foo(ChildA[Int](), 1))
+  //      |  println(foo(ChildB[String](), "2"))
+  //      |}""".stripMargin
+  //  )
 
   def testSCL16108(): Unit = checkTextHasNoErrors(
     """
@@ -272,9 +272,25 @@ class PatternTypeInferenceTest extends ScalaLightCodeInsightFixtureTestCase {
       |      case None => 0
       |    }
       |  }
-      |G}
+      |}
       |""".stripMargin
   )
+
+  def testSCL9014(): Unit = {
+    val text =
+      """
+        |import scala.util.{Success, Try}
+        |class Foo[A, In <: Try[A]] {
+        |    def takeA(a: A) = a
+        |    def takeIn(in: In) = {
+        |      in match {
+        |        case Success(a) ⇒ takeA(a) // cannot infer type
+        |      }
+        |    }
+        |  }
+      """.stripMargin
+    checkTextHasNoErrors(text)
+  }
 
   //@TODO: in scala 3 type parameters of enclosing enums (only?) are also instantiated
 //  def testEnum(): Unit = checkTextHasNoErrors(

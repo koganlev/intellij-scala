@@ -262,7 +262,7 @@ class TypeDiffTest extends ScalaFixtureTestCase {
       "Foo[_ <: A, _ <: B]", "<<Foo>[<<_ <: <A>>, <_ <: <B>>>]>")
   }
 
-// TODO def testWildcard(): Unit = {
+  // TODO def testWildcard(): Unit = {
 
   def testTupleParsing(): Unit = {
     assertParsedAs(
@@ -329,18 +329,18 @@ class TypeDiffTest extends ScalaFixtureTestCase {
 
 
   def testNamedTuple(): Unit = {
-//    assertDiffsAre(
-//      "class A; class B",
-//      "(a: A, b: B)", "(a: A, b: B)"
-//    )
-//    assertDiffsAre(
-//      "class A; class B; class C",
-//      "(a: ~A~, b: B)", "(a: ~C~, b: B)"
-//    )
-//    assertDiffsAre(
-//      "class A; class B; class C",
-//      "(a: A, b: ~B~)", "(a: A, b: ~C~)"
-//    )
+    //    assertDiffsAre(
+    //      "class A; class B",
+    //      "(a: A, b: B)", "(a: A, b: B)"
+    //    )
+    //    assertDiffsAre(
+    //      "class A; class B; class C",
+    //      "(a: ~A~, b: B)", "(a: ~C~, b: B)"
+    //    )
+    //    assertDiffsAre(
+    //      "class A; class B; class C",
+    //      "(a: A, b: ~B~)", "(a: A, b: ~C~)"
+    //    )
 
     // Covariance
     assertDiffsAre(
@@ -491,11 +491,11 @@ class TypeDiffTest extends ScalaFixtureTestCase {
     )
 
     // Base type
-//    assertDiffsAre(
-//      "class P; class R; class F[A, B] extends Function1[A, B]",
-//      "P => R", "F[P, R]",
-//      "Function1[P, R", "F[P, R]"
-//    )
+    //    assertDiffsAre(
+    //      "class P; class R; class F[A, B] extends Function1[A, B]",
+    //      "P => R", "F[P, R]",
+    //      "Function1[P, R", "F[P, R]"
+    //    )
 
     // Parameter type conformance
     assertDiffsAre(
@@ -606,10 +606,10 @@ class TypeDiffTest extends ScalaFixtureTestCase {
     // Components
     assertParsedAs(
       "class A; class B",
-      "A with B", "<<A> with <B>>")
+      "A with B", "<A & B>")
     assertParsedAs(
       "class A; class B; class C",
-      "A with B with C", "<<A> with <B> with <C>>")
+      "A with B with C", "<A & B & C>")
 
     // Refinement
     assertParsedAs(
@@ -633,7 +633,7 @@ class TypeDiffTest extends ScalaFixtureTestCase {
     // Components and refinement
     assertParsedAs(
       "class A; class B",
-      "A with B {def a: A}", "<<A> with <B>{<<def a: A>>}>")
+      "A with B {def a: A}", "<<A & B>{<<def a: A>>}>")
   }
 
   // TODO def testCompound(): Unit = {

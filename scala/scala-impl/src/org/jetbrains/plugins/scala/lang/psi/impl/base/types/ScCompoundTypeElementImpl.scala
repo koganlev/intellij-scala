@@ -21,7 +21,11 @@ class ScCompoundTypeElementImpl(node: ASTNode) extends ScalaPsiElementImpl(node)
 
     val result =
       if (this.isInScala3File && components.nonEmpty) {
-        val andType = componentsTypes.foldRight(Any: ScType)(ScAndType.apply)
+        val andType =
+          if (componentsTypes.isEmpty)        Any
+          else if (componentsTypes.size == 1) componentsTypes.head
+          else                                componentsTypes.reduceRight(ScAndType.apply)
+
         withRefinement(Seq(andType), default = andType)
       } else
         withRefinement(componentsTypes, default = ScCompoundType(componentsTypes))

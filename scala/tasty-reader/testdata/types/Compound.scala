@@ -1,7 +1,7 @@
 package types
 
 trait Compound {
-  type T1 = Int with Long
+  type T1 = Int & Long
 
-  type T2 = Int with Long with Float
+  type T2 = Int & (Long & Float)
 }
