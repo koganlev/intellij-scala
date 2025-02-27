@@ -4,7 +4,6 @@ import com.intellij.codeInsight.daemon.ProblemHighlightFilter
 import com.intellij.ide.scratch.ScratchUtil
 import com.intellij.openapi.roots.{JavaProjectRootsUtil, ProjectRootManager}
 import com.intellij.psi.PsiFile
-import com.intellij.psi.impl.IncompleteModelUtil
 import org.jetbrains.plugins.scala.console.ScalaLanguageConsoleUtils
 import org.jetbrains.plugins.scala.lang.psi.api.ScalaFile
 import org.jetbrains.sbt.language.SbtFile
@@ -15,11 +14,7 @@ final class ScalaProblemHighlightFilter extends ProblemHighlightFilter {
     case _: SbtFile =>
       true // `.sbt` files are handled in `org.jetbrains.sbt.codeinsight.daemon.SbtProblemHighlightFilter`
     case file: ScalaFile =>
-      if (isInSourceRoots(file)) {
-        // don't show error highlighting in Scala file while project sync is in progress (SCL-13000, SCL-22458)
-        //noinspection ApiStatus,UnstableApiUsage
-        !IncompleteModelUtil.isIncompleteModel(file)
-      } else isSpecialFile(file)
+      isInSourceRoots(file) || isSpecialFile(file)
     case _ => true
   }
 
