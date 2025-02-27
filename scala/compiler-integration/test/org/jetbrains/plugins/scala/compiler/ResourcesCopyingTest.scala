@@ -1,4 +1,4 @@
-package org.jetbrains.plugins.scala.compiler.zinc
+package org.jetbrains.plugins.scala.compiler
 
 import com.intellij.openapi.module.{Module, ModuleManager}
 import com.intellij.openapi.roots.{CompilerModuleExtension, ModuleRootManager}
@@ -19,7 +19,7 @@ abstract class ResourcesCopyingTestBase(
   separateMainTest: Boolean,
   incrementalityType: IncrementalityType,
   expectedResourcesCopied: Boolean
-) extends ZincTestBase(separateProdAndTestSources = separateMainTest) {
+) extends SbtProjectCompilationTestBase(separateProdAndTestSources = separateMainTest) {
 
   private var apiMainModule: Module = _
   private var apiTestModule: Module = _

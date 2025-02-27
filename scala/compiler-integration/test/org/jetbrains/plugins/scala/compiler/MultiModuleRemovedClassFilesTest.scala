@@ -1,4 +1,4 @@
-package org.jetbrains.plugins.scala.compiler.zinc
+package org.jetbrains.plugins.scala.compiler
 
 import com.intellij.openapi.module.{Module, ModuleManager}
 import com.intellij.openapi.vfs.VfsUtil
@@ -15,13 +15,11 @@ import java.nio.file.Path
 import scala.jdk.CollectionConverters._
 
 @Category(Array(classOf[CompilationTests]))
-class MultiModuleRemovedClassFilesTest_ProdTestSourcesSeparatedEnabled extends ZincTestBase(separateProdAndTestSources = true) {
+class MultiModuleRemovedClassFilesTest extends SbtProjectCompilationTestBase {
 
-  private var module1Main: Module = _
-  private var module1Test: Module = _
+  private var module1: Module = _
 
-  private var module2Main: Module = _
-  private var module2Test: Module = _
+  private var module2: Module = _
 
   override def setUp(): Unit = {
     super.setUp()
@@ -46,14 +44,10 @@ class MultiModuleRemovedClassFilesTest_ProdTestSourcesSeparatedEnabled extends Z
     ScalaCompilerConfiguration.instanceIn(myProject).incrementalityType = IncrementalityType.SBT
 
     val modules = ModuleManager.getInstance(myProject).getModules
-    module1Main = modules.find(_.getName == "root.module1.main").orNull
-    assertNotNull("Could not find module with name 'root.module1.main'", module1Main)
-    module1Test = modules.find(_.getName == "root.module1.test").orNull
-    assertNotNull("Could not find module with name 'root.module1.test'", module1Test)
-    module2Main = modules.find(_.getName == "root.module2.main").orNull
-    assertNotNull("Could not find module with name 'root.module2.main'", module2Main)
-    module2Test = modules.find(_.getName == "root.module2.test").orNull
-    assertNotNull("Could not find module with name 'root.module2.test'", module2Test)
+    module1 = modules.find(_.getName == "root.module1").orNull
+    assertNotNull("Could not find module with name 'root.module1'", module1)
+    module2 = modules.find(_.getName == "root.module2").orNull
+    assertNotNull("Could not find module with name 'root.module2'", module2)
     compiler = new CompilerTester(myProject, java.util.Arrays.asList(modules: _*), null, false)
   }
 
@@ -61,7 +55,7 @@ class MultiModuleRemovedClassFilesTest_ProdTestSourcesSeparatedEnabled extends Z
     val messages1 = compiler.make().asScala.toSeq
     assertNoErrorsOrWarnings(messages1)
 
-    val fooClass = findClassFile(module1Main, "Foo")
+    val fooClass = findClassFile(module1, "Foo")
     removeFile(fooClass)
 
     val projectPath = Path.of(getProjectPath)

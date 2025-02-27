@@ -1,4 +1,4 @@
-package org.jetbrains.plugins.scala.compiler.zinc
+package org.jetbrains.plugins.scala.compiler
 
 import com.intellij.openapi.externalSystem.model.ProjectSystemId
 import com.intellij.openapi.module.Module
@@ -9,7 +9,6 @@ import com.intellij.platform.externalSystem.testFramework.ExternalSystemImportin
 import com.intellij.testFramework.CompilerTester
 import org.jetbrains.annotations.Nullable
 import org.jetbrains.plugins.scala.base.libraryLoaders.SmartJDKLoader
-import org.jetbrains.plugins.scala.compiler.{CompileServerLauncher, JdkVersionDiscovery}
 import org.jetbrains.plugins.scala.extensions.inWriteAction
 import org.jetbrains.plugins.scala.settings.ScalaCompileServerSettings
 import org.jetbrains.sbt.Sbt
@@ -19,7 +18,18 @@ import org.junit.Assert.assertNotNull
 
 import java.nio.file.{Files, Path}
 
-abstract class ZincTestBase(separateProdAndTestSources: Boolean = false) extends ExternalSystemImportingTestCase {
+/**
+ * A base class for writing tests which:
+ *   1. define an sbt project programmatically
+ *   1. import the project using the external system machinery
+ *   1. compile it using the JSP IDEA build system
+ *   1. do assertions on the produced compiler messages and output class files.
+ *
+ * @see [[com.intellij.platform.externalSystem.testFramework.ExternalSystemTestCase]] for methods used for defining
+ *      a project programmatically, or look at other test classes which extend [[SbtProjectCompilationTestBase]]
+ *      for examples.
+ */
+abstract class SbtProjectCompilationTestBase(separateProdAndTestSources: Boolean = false) extends ExternalSystemImportingTestCase {
 
   override def getExternalSystemId: ProjectSystemId = SbtProjectSystem.Id
 

@@ -1,11 +1,10 @@
-package org.jetbrains.plugins.scala.compiler.zinc
+package org.jetbrains.plugins.scala.compiler
 
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.testFramework.CompilerTester
-import org.jetbrains.plugins.scala.compiler.CompileServerLauncher
 import org.junit.Assert.fail
 
-abstract class DisplayModuleNameTestBase(separateProdAndTestSources: Boolean = false) extends ZincTestBase(separateProdAndTestSources) {
+abstract class DisplayModuleNameTestBase(separateProdAndTestSources: Boolean = false) extends SbtProjectCompilationTestBase(separateProdAndTestSources) {
 
   protected def runTest(expectedValue: Boolean): Unit = {
     importProject(false)

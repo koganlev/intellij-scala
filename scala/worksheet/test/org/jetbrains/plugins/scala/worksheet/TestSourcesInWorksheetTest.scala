@@ -6,8 +6,7 @@ import com.intellij.openapi.vfs.{VirtualFile, VirtualFileUtil}
 import com.intellij.testFramework.{CompilerTester, EdtTestUtil}
 import junit.framework.TestCase.assertEquals
 import org.jetbrains.plugins.scala.WorksheetEvaluationTests
-import org.jetbrains.plugins.scala.compiler.CompilerMessagesUtil
-import org.jetbrains.plugins.scala.compiler.zinc.ZincTestBase
+import org.jetbrains.plugins.scala.compiler.{CompilerMessagesUtil, SbtProjectCompilationTestBase}
 import org.jetbrains.plugins.scala.worksheet.actions.topmenu.RunWorksheetAction
 import org.jetbrains.plugins.scala.worksheet.actions.topmenu.RunWorksheetAction.RunWorksheetActionResult
 import org.jetbrains.plugins.scala.worksheet.runconfiguration.WorksheetCache
@@ -20,7 +19,7 @@ import scala.concurrent.duration.Duration
 import scala.jdk.CollectionConverters._
 
 @Category(Array(classOf[WorksheetEvaluationTests]))
-class TestSourcesInWorksheetTest extends ZincTestBase(separateProdAndTestSources = true) {
+class TestSourcesInWorksheetTest extends SbtProjectCompilationTestBase(separateProdAndTestSources = true) {
 
   override def runInDispatchThread(): Boolean = false
 

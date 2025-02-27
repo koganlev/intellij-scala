@@ -1,4 +1,4 @@
-package org.jetbrains.plugins.scala.compiler.zinc
+package org.jetbrains.plugins.scala.compiler
 
 import com.intellij.openapi.module.{Module, ModuleManager}
 import com.intellij.testFramework.CompilerTester
@@ -12,7 +12,7 @@ import org.junit.experimental.categories.Category
 import scala.jdk.CollectionConverters._
 
 @Category(Array(classOf[CompilationTests]))
-class UsePipeliningCompilationTest extends ZincTestBase {
+class UsePipeliningCompilationTest extends SbtProjectCompilationTestBase {
 
   private var module1: Module = _
   private var module2: Module = _
