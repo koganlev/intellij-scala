@@ -6,20 +6,15 @@ import com.intellij.openapi.roots.{JavaProjectRootsUtil, ProjectRootManager}
 import com.intellij.psi.PsiFile
 import org.jetbrains.plugins.scala.console.ScalaLanguageConsoleUtils
 import org.jetbrains.plugins.scala.lang.psi.api.ScalaFile
-import org.jetbrains.plugins.scala.project.ScalaProjectConfigurationService
 import org.jetbrains.sbt.language.SbtFile
 
-/** @see [[ScalaProjectConfigurationService]] */
 final class ScalaProblemHighlightFilter extends ProblemHighlightFilter {
 
   override def shouldHighlight(file: PsiFile): Boolean = file match {
     case _: SbtFile =>
       true // `.sbt` files are handled in `org.jetbrains.sbt.codeinsight.daemon.SbtProblemHighlightFilter`
     case file: ScalaFile =>
-      if (isInSourceRoots(file)) {
-        // don't show error highlighting in Scala file while project sync is in progress (SCL-13000, SCL-22458)
-        !ScalaProjectConfigurationService.getInstance(file.getProject).isSyncInProgress
-      } else isSpecialFile(file)
+      isInSourceRoots(file) || isSpecialFile(file)
     case _ => true
   }
 

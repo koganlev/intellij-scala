@@ -3,6 +3,7 @@ package org.jetbrains.plugins.scala.annotator
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightingLevelManager
 import com.intellij.openapi.roots.ProjectFileIndex
 import com.intellij.openapi.util.TextRange
+import com.intellij.psi.impl.IncompleteModelUtil
 import com.intellij.psi.impl.source.DummyHolder
 import com.intellij.psi.{PsiComment, PsiElement, PsiFile, PsiWhiteSpace}
 import org.jetbrains.annotations.TestOnly
@@ -29,6 +30,13 @@ object HighlightingAdvisor {
   def isTypeAwareHighlightingEnabled(element: PsiElement): Boolean = {
     val settings = ScalaProjectSettings.getInstance(element.getProject)
     if (!settings.isTypeAwareHighlightingEnabled) {
+      // Type-aware highlighting is disabled in settings (using the action toggle or the widget).
+      return false
+    }
+
+    //noinspection ApiStatus,UnstableApiUsage
+    if (IncompleteModelUtil.isIncompleteModel(element)) {
+      // The project is in an incomplete dependencies state. Only run non-type-aware annotators.
       return false
     }
 
