@@ -1,4 +1,4 @@
-package org.jetbrains.plugins.scala.compiler.zinc
+package org.jetbrains.plugins.scala.compiler
 
 import com.intellij.execution.configurations.JavaParameters
 import com.intellij.openapi.module.ModuleManager
@@ -18,7 +18,7 @@ import java.nio.file.Path
 import scala.jdk.CollectionConverters._
 
 @Category(Array(classOf[CompilationTests]))
-class InterleavedCompilationTest extends ZincTestBase {
+class InterleavedCompilationTest extends SbtProjectCompilationTestBase {
 
   override def setUp(): Unit = {
     super.setUp()

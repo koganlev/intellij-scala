@@ -1,4 +1,4 @@
-package org.jetbrains.plugins.scala.compiler.zinc
+package org.jetbrains.plugins.scala.compiler
 
 import com.intellij.openapi.module.{Module, ModuleManager}
 import com.intellij.testFramework.CompilerTester
@@ -13,7 +13,7 @@ import java.nio.file.Path
 import scala.jdk.CollectionConverters._
 
 @Category(Array(classOf[CompilationTests]))
-class SharedSourcesCrossProjectTest_ProdTestSourcesSeparatedEnabled extends ZincTestBase(separateProdAndTestSources = true) {
+class SharedSourcesCrossProjectTest_ProdTestSourcesSeparatedEnabled extends SbtProjectCompilationTestBase(separateProdAndTestSources = true) {
 
   private var middleJSMain: Module = _
   private var middleJSTest: Module = _

@@ -1,4 +1,4 @@
-package org.jetbrains.plugins.scala.compiler.zinc
+package org.jetbrains.plugins.scala.compiler
 
 import org.jetbrains.plugins.scala.CompilationTests
 import org.junit.experimental.categories.Category

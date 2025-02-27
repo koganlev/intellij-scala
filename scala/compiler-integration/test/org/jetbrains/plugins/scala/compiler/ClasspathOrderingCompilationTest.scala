@@ -1,4 +1,4 @@
-package org.jetbrains.plugins.scala.compiler.zinc
+package org.jetbrains.plugins.scala.compiler
 
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.testFramework.CompilerTester
@@ -12,7 +12,7 @@ import org.junit.experimental.categories.Category
 import scala.jdk.CollectionConverters._
 
 @Category(Array(classOf[CompilationTests]))
-class ClasspathOrderingCompilationTest extends ZincTestBase {
+class ClasspathOrderingCompilationTest extends SbtProjectCompilationTestBase {
 
   def testClasspathOrdering_Zinc(): Unit = {
     runClasspathOrderingTest(IncrementalityType.SBT)

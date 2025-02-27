@@ -1,4 +1,4 @@
-package org.jetbrains.plugins.scala.compiler.zinc
+package org.jetbrains.plugins.scala.compiler
 
 import com.intellij.openapi.actionSystem.impl.SimpleDataContext
 import com.intellij.openapi.actionSystem.{ActionManager, ActionUiKind, AnActionEvent}
@@ -15,7 +15,7 @@ import scala.concurrent.TimeoutException
 import scala.jdk.CollectionConverters._
 
 @Category(Array(classOf[SlowTests]))
-class SbtGenerateManagedSourcesActionTest extends ZincTestBase {
+class SbtGenerateManagedSourcesActionTest extends SbtProjectCompilationTestBase {
 
   private var module1: Module = _
   private var module2: Module = _

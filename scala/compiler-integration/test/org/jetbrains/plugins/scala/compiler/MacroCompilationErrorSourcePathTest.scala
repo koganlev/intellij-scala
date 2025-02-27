@@ -1,4 +1,4 @@
-package org.jetbrains.plugins.scala.compiler.zinc
+package org.jetbrains.plugins.scala.compiler
 
 import com.intellij.openapi.compiler.CompilerMessageCategory
 import com.intellij.openapi.module.ModuleManager
@@ -14,7 +14,7 @@ import org.junit.experimental.categories.Category
 import scala.jdk.CollectionConverters._
 
 @Category(Array(classOf[CompilationTests]))
-class MacroCompilationErrorSourcePathTest extends ZincTestBase {
+class MacroCompilationErrorSourcePathTest extends SbtProjectCompilationTestBase {
 
   def testMacroCompilationErrorSourcePath_Zinc(): Unit = {
     runMacroCompilationErrorSourcePathTest(IncrementalityType.SBT)
