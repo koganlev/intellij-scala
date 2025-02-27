@@ -420,7 +420,7 @@ final class SbtProjectStructureImportingTest extends SbtProjectStructureImportin
   )
 
   /** SCL-12520: Generate a shared sources module even when it is used only from a single target module */
-  def testCrossProjectJvmOnly(): Unit = runTest(
+  def testCrossProjectJvmOnly_CrossTypeFull(): Unit = runTest(
     new project("root") {
       val sharedModule: module = new module("root.p1-sources") {
         contentRoots := Seq("%PROJECT_ROOT%/p1/shared")
@@ -432,7 +432,7 @@ final class SbtProjectStructureImportingTest extends SbtProjectStructureImportin
           "%PROJECT_ROOT%/p1/shared/src/test/scala",
           "%PROJECT_ROOT%/p1/shared/src/test/scala-2.13",
         )
-        moduleFileDirectoryPath := "crossProjectJvmOnly/p1/jvm"
+        moduleFileDirectoryPath := "crossProjectJvmOnly_CrossTypeFull/p1/jvm"
       }
 
       val jvmModule: module = new module("root.p1") {
@@ -448,7 +448,7 @@ final class SbtProjectStructureImportingTest extends SbtProjectStructureImportin
           "%PROJECT_ROOT%/p1/jvm/src/test/scala-2.13",
         )
         contentRoots := Seq("%PROJECT_ROOT%/p1/jvm")
-        moduleFileDirectoryPath := "crossProjectJvmOnly/p1/jvm"
+        moduleFileDirectoryPath := "crossProjectJvmOnly_CrossTypeFull/p1/jvm"
       }
 
       val rootModule: module = new module("root") {
@@ -463,17 +463,17 @@ final class SbtProjectStructureImportingTest extends SbtProjectStructureImportin
         contentRoots := Seq(
           "%PROJECT_ROOT%",
         )
-        moduleFileDirectoryPath := "crossProjectJvmOnly"
+        moduleFileDirectoryPath := "crossProjectJvmOnly_CrossTypeFull"
       }
       val rootBuildModule: module = new module("root.root-build") {
-        moduleFileDirectoryPath := "crossProjectJvmOnly"
+        moduleFileDirectoryPath := "crossProjectJvmOnly_CrossTypeFull"
       }
 
       modules := Seq(sharedModule, rootModule, rootBuildModule, jvmModule)
     }
   )
 
-  def testCrossProjectJvmAndJs(): Unit = runTest(
+  def testCrossProjectJvmAndJs_CrossTypeFull(): Unit = runTest(
     new project("root") {
       val sharedModule: module = new module("root.p1.p1-sources") {
         sources := Seq(
@@ -485,7 +485,7 @@ final class SbtProjectStructureImportingTest extends SbtProjectStructureImportin
           "%PROJECT_ROOT%/p1/shared/src/test/scala-2.13",
         )
         contentRoots := Seq("%PROJECT_ROOT%/p1/shared")
-        moduleFileDirectoryPath := "crossProjectJvmAndJs/p1/jvm"
+        moduleFileDirectoryPath := "crossProjectJvmAndJs_CrossTypeFull/p1/jvm"
       }
 
       val jvmModule: module = new module("root.p1.p1JVM") {
@@ -501,7 +501,7 @@ final class SbtProjectStructureImportingTest extends SbtProjectStructureImportin
           "%PROJECT_ROOT%/p1/jvm/src/test/scala-2.13",
         )
         contentRoots := Seq("%PROJECT_ROOT%/p1/jvm")
-        moduleFileDirectoryPath := "crossProjectJvmAndJs/p1/jvm"
+        moduleFileDirectoryPath := "crossProjectJvmAndJs_CrossTypeFull/p1/jvm"
       }
       val jsModule: module = new module("root.p1.p1JS") {
         moduleDependencies += new dependency(sharedModule) {
@@ -516,11 +516,11 @@ final class SbtProjectStructureImportingTest extends SbtProjectStructureImportin
           "%PROJECT_ROOT%/p1/js/src/test/scala-2.13",
         )
         contentRoots := Seq("%PROJECT_ROOT%/p1/js")
-        moduleFileDirectoryPath := "crossProjectJvmAndJs/p1/js"
+        moduleFileDirectoryPath := "crossProjectJvmAndJs_CrossTypeFull/p1/js"
       }
 
       val rootModule: module = new module("root") {
-        moduleFileDirectoryPath := "crossProjectJvmAndJs"
+        moduleFileDirectoryPath := "crossProjectJvmAndJs_CrossTypeFull"
         sources := Seq(
           "%PROJECT_ROOT%/src/main/scala",
           "%PROJECT_ROOT%/src/main/scala-2.13",
@@ -534,7 +534,7 @@ final class SbtProjectStructureImportingTest extends SbtProjectStructureImportin
         )
       }
       val rootBuildModule: module = new module("root.root-build") {
-        moduleFileDirectoryPath := "crossProjectJvmAndJs"
+        moduleFileDirectoryPath := "crossProjectJvmAndJs_CrossTypeFull"
       }
 
       modules := Seq(sharedModule, rootModule, rootBuildModule, jvmModule, jsModule)

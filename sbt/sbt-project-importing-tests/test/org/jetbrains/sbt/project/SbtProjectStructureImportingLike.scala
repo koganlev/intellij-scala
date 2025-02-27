@@ -18,6 +18,7 @@ import org.jetbrains.jps.model.java.{JavaResourceRootType, JavaSourceRootType}
 import org.jetbrains.jps.model.module.JpsModuleSourceRootType
 import org.jetbrains.plugins.scala.compiler.CompileServerLauncher
 import org.jetbrains.plugins.scala.compiler.data.IncrementalityType
+import org.jetbrains.plugins.scala.project.settings.{ScalaCompilerConfigurable, ScalaCompilerConfiguration, ScalaCompilerSettings}
 import org.jetbrains.plugins.scala.util.TestUtils
 import org.jetbrains.plugins.scala.util.assertions.CollectionsAssertions.assertCollectionEquals
 import org.jetbrains.sbt.actions.SbtDirectoryCompletionContributor
@@ -50,6 +51,9 @@ abstract class SbtProjectStructureImportingLike extends SbtExternalSystemImporti
     SbtCachesSetupUtil.setupCoursierAndIvyCache(getProject)
   }
 
+  protected implicit lazy val defaultCompareContext: ProjectStructureComparisonContext =
+    ProjectStructureComparisonContext.Implicit.default(getProject)
+
   protected def runTest(expected: project): Unit = {
     val notificationsCollector = new CollectingNotificationsListener(Set(NotificationType.WARNING, NotificationType.ERROR))
     getProject.getMessageBus.connect().subscribe(Notifications.TOPIC, notificationsCollector)
@@ -67,8 +71,8 @@ abstract class SbtProjectStructureImportingLike extends SbtExternalSystemImporti
         }
     }
 
-    val compareContext = ProjectStructureComparisonContext.Implicit.default(getProject)
-    assertProjectsEqual(expected, myProject, !enableSeparateModulesForProdTest)(compareContext)
+
+    assertProjectsEqual(expected, myProject, !enableSeparateModulesForProdTest)(defaultCompareContext)
     assertNoNotificationsShown(myProject, notificationsCollector.getNotifications)
   }
 
@@ -248,12 +252,15 @@ abstract class SbtProjectStructureImportingLike extends SbtExternalSystemImporti
     FileUtil.writeToFile(file, updatedContent)
   }
 
-  protected def buildProjectAndAssertNoWarningsOrErrorsWithAllIncrementalityTypes(): Unit = {
-    buildProjectAndAssertNoWarningsOrErrors(IncrementalityType.SBT)
-    buildProjectAndAssertNoWarningsOrErrors(IncrementalityType.IDEA)
-  }
+  protected def buildCrossProjectAndAssertNoWarningsOrErrors(): Unit = {
+    val compilerConfiguration = ScalaCompilerConfiguration.instanceIn(getProject)
+    val incrementalityType = compilerConfiguration.incrementalityType
+    Assert.assertEquals(
+      s"Cross-built projects with shared sources should have ${IncrementalityType.SBT} incrementality type",
+      IncrementalityType.SBT,
+      incrementalityType
+    )
 
-  protected def buildProjectAndAssertNoWarningsOrErrors(incrementalityType: IncrementalityType): Unit = {
     val modules = ModuleManager.getInstance(getProject).getModules
     val compiler = new CompilerTester(getProject, java.util.Arrays.asList(modules: _*), null, false)
 

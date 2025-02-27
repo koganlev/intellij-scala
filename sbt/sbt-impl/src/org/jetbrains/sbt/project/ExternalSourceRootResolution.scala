@@ -4,7 +4,6 @@ package project
 import com.intellij.openapi.externalSystem.model.ExternalSystemException
 import com.intellij.openapi.externalSystem.model.project.{ExternalSystemSourceType, ModuleData}
 import com.intellij.openapi.roots.DependencyScope
-import com.intellij.openapi.util.io.FileUtilRt
 import org.jetbrains.plugins.scala.extensions.RichFile
 import org.jetbrains.sbt.project.SbtProjectResolver.ImportContext
 import org.jetbrains.sbt.project.SourceSetType.SourceSetType
@@ -418,7 +417,11 @@ trait ExternalSourceRootResolution { self: SbtProjectResolver =>
 
     moduleNode.add(contentRootNode)
 
-    setupOutputDirectories(moduleNode, contentRootNode)
+    val contentRootData = contentRootNode.data
+    val contentRootPath = contentRootData.getRootPath
+    contentRootData.storePath(ExternalSystemSourceType.EXCLUDED, new File(contentRootPath, "target").getAbsolutePath)
+
+    setupOutputDirectories(moduleNode, contentRootPath, sourceTypeFilter = None)
 
     (moduleNode, contentRootNode)
   }
@@ -433,7 +436,7 @@ trait ExternalSourceRootResolution { self: SbtProjectResolver =>
     )
     val contentRootNode = new ContentRootNode(group.base.path)
     moduleNode.add(new SbtDisplayModuleNameNode(group.name))
-    contentRootNode.storePath(ExternalSystemSourceType.EXCLUDED, getOrCreateTargetDir(group.base.path, "target").getAbsolutePath)
+    contentRootNode.storePath(ExternalSystemSourceType.EXCLUDED, new File(group.base.path, "target").getAbsolutePath)
     moduleNode.add(contentRootNode)
 
     moduleNode.add(ModuleSdkNode.inheritFromProject)
@@ -487,13 +490,10 @@ trait ExternalSourceRootResolution { self: SbtProjectResolver =>
       return None
     }
 
-    moduleNode.setInheritProjectCompileOutputPath(false)
-
-    val (relPath, externalSystemSourceType) =
-      if (sourceSetName == SourceSetType.TEST) ("target/test-classes", ExternalSystemSourceType.TEST)
-      else ("target/classes", ExternalSystemSourceType.SOURCE)
-
-    setupOutputDirectoryBasedOnRelPath(moduleNode, groupPath, externalSystemSourceType, relPath)
+    val esSourceType =
+      if (sourceSetName == SourceSetType.TEST) ExternalSystemSourceType.TEST
+      else ExternalSystemSourceType.SOURCE
+    setupOutputDirectories(moduleNode, groupPath, Some(esSourceType))
 
     val scalaSdk = createScalaSdkData(representativeProject.scala)
     moduleNode.add(ModuleSdkNode.inheritFromProject)
@@ -616,36 +616,35 @@ trait ExternalSourceRootResolution { self: SbtProjectResolver =>
       .filterNot(_.directory.isUnder(representativeProjectBase))
   }
 
-  //target directory are expected by jps compiler:
-  //if they are missing all sources are marked dirty and there is no incremental compilation
-  private def setupOutputDirectories(moduleNode: ModuleDataNodeType, contentRootNode: ContentRootNode): Unit = {
-    val contentRootData = contentRootNode.data
-    val contentRoot = contentRootData.getRootPath
-    contentRootData.storePath(ExternalSystemSourceType.EXCLUDED, getOrCreateTargetDir(contentRoot, "target").getAbsolutePath)
-
+  /**
+   * JPS compiler expects target directories:<br>
+   * if they are missing, all sources are marked dirty, and there is no incremental compilation<br>
+   * (SCL-16698)
+   *
+   * UPD: it seems like we don't have to actually create the directory and pollute the file system,
+   * JPS just needs the output path to be registered
+   *
+   * @param sourceTypeFilter when set, only directories for that source type will be created
+   * @see [[com.intellij.compiler.impl.CompileDriver.validateOutputs]]
+   */
+  private def setupOutputDirectories(
+    moduleNode: ModuleDataNodeType,
+    contentRoot: String,
+    sourceTypeFilter: Option[ExternalSystemSourceType]
+  ): Unit = {
     moduleNode.setInheritProjectCompileOutputPath(false)
 
-    Seq((ExternalSystemSourceType.SOURCE, "target/classes"), (ExternalSystemSourceType.TEST, "target/test-classes")).foreach { case (sourceType, relPath) =>
-        setupOutputDirectoryBasedOnRelPath(moduleNode, contentRoot, sourceType, relPath)
+    val dirs = Seq(
+      (ExternalSystemSourceType.SOURCE, "target/classes"),
+      (ExternalSystemSourceType.TEST, "target/test-classes")
+    )
+    val dirsFiltered = sourceTypeFilter match {
+      case Some(st) => dirs.filter(_._1 == st)
+      case None => dirs
     }
-  }
-
-  private def setupOutputDirectoryBasedOnRelPath(
-    moduleNode: ModuleDataNodeType,
-    basePath: String,
-    sourceType: ExternalSystemSourceType,
-    relPath: String
-  ): Unit =
-    moduleNode.setCompileOutputPath(sourceType, getOrCreateTargetDir(basePath, relPath).getAbsolutePath)
-
-  private def getOrCreateTargetDir(root: String, relPath: String): File = {
-    val file = new File(root, relPath)
-
-    if (!file.exists()) {
-      FileUtilRt.createDirectory(file)
+    dirsFiltered.foreach { case (sourceType, relPath) =>
+      moduleNode.setCompileOutputPath(sourceType, new File(contentRoot, relPath).getAbsolutePath)
     }
-
-    file
   }
 
   private def calculateEsSourceType(root: SourceRoot): ExternalSystemSourceType =

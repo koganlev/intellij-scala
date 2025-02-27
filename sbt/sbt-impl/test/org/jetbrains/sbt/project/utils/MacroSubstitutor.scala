@@ -10,6 +10,12 @@ package org.jetbrains.sbt.project.utils
  */
 class MacroSubstitutor(val substitutions: Map[String, String]) {
 
+  def replaceMacroWithValue(actual: String): String = {
+    substitutions.foldLeft(actual) { case (actualCurrent, (key, value)) =>
+      actualCurrent.replace(key, value)
+    }
+  }
+
   def replaceValuesWithMacro(actual: String, expected: String): String = {
     substitutions.foldLeft(actual) { case (actualCurrent, (key, value)) =>
       // for some reason, some expected test data can be null =/
