@@ -51,7 +51,7 @@ abstract class ScalaMalformedFormatStringInspectionTestBase extends ScalaInspect
   }
 
   private def infoText(info: HighlightInfo) = {
-    val severity = info.getSeverity
+    val severity = info.getSeverity.getName
     val attributeKeyName = info.`type`.getAttributesKey.getExternalName
     // don't want to duplicate `WARNING WARNING_ATTRIBUTES`
     // but would like to see `WARNING NOT_USED_ELEMENT_ATTRIBUTES`
