@@ -21,7 +21,7 @@ object SdkUtils {
       case _                     => None
     }
 
-  private def findMostRecentJdkConfiguredInIde(condition: Sdk => Boolean): Option[Sdk] = {
+  def findMostRecentJdkConfiguredInIde(condition: Sdk => Boolean): Option[Sdk] = {
     import scala.math.Ordering.comparatorToOrdering
     val sdkType = JavaSdk.getInstance()
 
