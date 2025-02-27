@@ -10,7 +10,7 @@ import kotlin.time.Duration
 import kotlin.time.Duration.Companion.minutes
 import kotlin.time.toJavaDuration
 
-class AsyncExpirableCache<K, V>(
+class AsyncExpirableCache<K: Any, V>(
     cs: CoroutineScope,
     maxSize: Long = 10_000,
     expirationTimeout: Duration = 10.minutes,
