@@ -12,7 +12,6 @@
         <extensionPoint qualifiedName="org.intellij.scala.parameterInfoEnhancer" interface="org.jetbrains.plugins.scala.lang.parameterInfo.ScalaParameterInfoEnhancer" dynamic="true"/>
         <extensionPoint qualifiedName="org.intellij.scala.scalaDynamicTypeResolver" interface="org.jetbrains.plugins.scala.lang.resolve.DynamicTypeReferenceResolver" dynamic="true"/>
         <extensionPoint qualifiedName="org.intellij.scala.genericTypeNamesProvider" interface="org.jetbrains.plugins.scala.lang.refactoring.namesSuggester.genericTypes.GenericTypeNamesProvider" dynamic="true"/>
-        <extensionPoint qualifiedName="org.intellij.scala.sdkResolver" interface="org.jetbrains.plugins.scala.project.external.SdkResolver" dynamic="true"/>
         <extensionPoint qualifiedName="org.intellij.scala.unresolvedReferenceFixProvider" interface="org.jetbrains.plugins.scala.annotator.UnresolvedReferenceFixProvider" dynamic="true"/>
         <extensionPoint qualifiedName="org.intellij.scala.interpolatedStringMacroTypeProvider" interface="org.jetbrains.plugins.scala.lang.psi.impl.base.InterpolatedStringMacroTypeProvider" dynamic="true"/>
         <extensionPoint qualifiedName="org.intellij.scala.fileDeclarationsContributor" interface="org.jetbrains.plugins.scala.lang.psi.api.FileDeclarationsContributor" dynamic="true"/>

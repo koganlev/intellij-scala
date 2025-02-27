@@ -11,9 +11,9 @@ import com.intellij.openapi.externalSystem.service.project.manage.ContentRootDat
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil
 import com.intellij.openapi.module.ModuleType
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.roots.impl.libraries.LibraryEx
 import com.intellij.openapi.roots.{LanguageLevelProjectExtension, ProjectRootManager}
+import com.intellij.util.lang.JavaVersion
 import org.jetbrains.plugins.scala.compiler.data.IncrementalityType
 import org.jetbrains.plugins.scala.project.external._
 import org.jetbrains.plugins.scala.project.settings.ScalaCompilerConfiguration
@@ -24,6 +24,7 @@ import org.jetbrains.sbt.settings.SbtSettings
 import java.util
 import scala.jdk.CollectionConverters.CollectionHasAsScala
 import org.jetbrains.plugins.scala.project._
+import org.jetbrains.sbt.project.template.wizard.JdkSbtCompatibilityChecker
 
 class SbtProjectDataService extends ScalaAbstractProjectDataService[SbtProjectData, Project](SbtProjectData.Key) {
 
@@ -81,10 +82,15 @@ class SbtProjectDataService extends ScalaAbstractProjectDataService[SbtProjectDa
 
     val jdk1 = Option(data.jdk).flatMap(SdkUtils.findProjectSdk)
     val jdk2 = jdk1.orElse(existingJdk)
-    val jdk3 = jdk2.orElse(SdkUtils.mostRecentRegisteredJdk)
-
-    val projectJdk: Option[Sdk] = jdk3
-    projectJdk.foreach(ProjectRootManager.getInstance(project).setProjectSdk)
+    val jdk3 = jdk2.orElse {
+      SdkUtils.findMostRecentJdkConfiguredInIde { sdk =>
+        val sbt = Version(data.sbtVersion)
+        val sdkVersion = JavaVersion.parse(sdk.getVersionString)
+        JdkSbtCompatibilityChecker.isSbtAndJdkVersionCompatible(sdkVersion, sbt, strict = true)
+      }
+    }
+    val jdk4 = jdk3.orElse(SdkUtils.mostRecentRegisteredJdk)
+    jdk4.foreach(ProjectRootManager.getInstance(project).setProjectSdk)
   }
 
 

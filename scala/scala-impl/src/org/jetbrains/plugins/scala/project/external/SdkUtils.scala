@@ -11,12 +11,7 @@ import scala.jdk.CollectionConverters.CollectionHasAsScala
 
 object SdkUtils {
 
-  def findProjectSdk(sdkRef: SdkReference): Option[Sdk] = {
-    val sdkFromExternalResolver = SdkResolver.implementations.view.flatMap(_.findSdk(sdkRef)).headOption
-    sdkFromExternalResolver.orElse(findProjectSdk2(sdkRef))
-  }
-
-  private def findProjectSdk2(sdkRef: SdkReference) =
+  def findProjectSdk(sdkRef: SdkReference): Option[Sdk] =
     sdkRef match {
       case JdkByVersion(version) => findMostRecentJdkConfiguredInIde(sdk => Option(sdk.getVersionString).exists(_.contains(version)))
       case JdkByName(version)    => findMostRecentJdkConfiguredInIde(_.getName == version).orElse(findMostRecentJdkConfiguredInIde(_.getName.contains(version)))
@@ -26,7 +21,7 @@ object SdkUtils {
       case _                     => None
     }
 
-  private def findMostRecentJdkConfiguredInIde(condition: Sdk => Boolean): Option[Sdk] = {
+  def findMostRecentJdkConfiguredInIde(condition: Sdk => Boolean): Option[Sdk] = {
     import scala.math.Ordering.comparatorToOrdering
     val sdkType = JavaSdk.getInstance()
 
