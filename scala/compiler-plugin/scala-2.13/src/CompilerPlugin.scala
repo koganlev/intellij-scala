@@ -39,7 +39,7 @@ class CompilerPlugin(val global: Global) extends Plugin {
       private val transformer = new Transformer() {
         override def transform(tree: Tree): Tree = {
           tree.attachments.get[analyzer.MacroExpansionAttachment] match {
-            case Some(analyzer.MacroExpansionAttachment(expandee, expanded: Tree)) if isWhiteboxMacro(global)(expandee.symbol) =>
+            case Some(analyzer.MacroExpansionAttachment(expandee, expanded: Tree)) if isWhiteboxMacro(global)(expandee.symbol) && expanded.tpe != null =>
               // If there's a type mismatch, the type checker replaces the tree type with an ErrorType (see TyperErrorGen.issueError)
               val tpe = if (expanded.tpe.isError) typer.typed(expandee).tpe else expanded.tpe
               val s = LiteralTypePattern.replaceAllIn(tpe.toString, _.group(1))
