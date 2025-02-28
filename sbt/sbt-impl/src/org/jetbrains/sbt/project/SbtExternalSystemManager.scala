@@ -136,7 +136,7 @@ object SbtExternalSystemManager {
     result
   }
 
-  private def getVmExecutable(projectJdkName: Option[String], settings: SbtSettings.State, sbtVersion: String): File = {
+  private def getVmExecutable(projectJdkName: Option[String], settings: SbtSettings.State, sbtVersion: SbtVersion): File = {
     val jdkTable = ProjectJdkTable.getInstance()
 
     val customPath = settings.customVMPath
@@ -167,16 +167,15 @@ object SbtExternalSystemManager {
       }
       .orElse {
         //automatically detect JDK if none is defined
-        val sbt = Version(sbtVersion)
         invokeAndWait {
-          val sdk = SbtProcessJdkGuesser.findJdkWithSuitableVersion(jdkTable, sbt)
+          val sdk = SbtProcessJdkGuesser.findJdkWithSuitableVersion(jdkTable, sbtVersion)
           if (sdk.sdk.isEmpty) {
             Log.debug("Preconfigure JDK table for SBT import")
-            SbtProcessJdkGuesser.preconfigureJdkForSbt(jdkTable, sbt)
+            SbtProcessJdkGuesser.preconfigureJdkForSbt(jdkTable, sbtVersion)
           }
         }
 
-        val suitableSdk = SbtProcessJdkGuesser.findJdkWithSuitableVersion(jdkTable, sbt)
+        val suitableSdk = SbtProcessJdkGuesser.findJdkWithSuitableVersion(jdkTable, sbtVersion)
         val autoDetectedSdk = suitableSdk.sdk
           //if no suitable sdj >= 8 found, take any JDK, and hope that sbt import will work
           .orElse(suitableSdk.allSdkSorted.lastOption)

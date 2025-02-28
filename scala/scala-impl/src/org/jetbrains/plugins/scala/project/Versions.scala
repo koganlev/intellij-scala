@@ -97,8 +97,8 @@ object Versions {
       stableVersions.maxOption.map(_.presentation)
     }
 
-    def sbtVersionsForScala3(sbtVersions: Seq[Version]): Seq[Version] = {
-      val minVersion = SbtVersionCapabilities.MinSbtVersionForScala3.value
+    def sbtVersionsForScala3(sbtVersions: Seq[SbtVersion]): Seq[SbtVersion] = {
+      val minVersion = SbtVersionCapabilities.MinSbtVersionForScala3
       sbtVersions.filter(_ >= minVersion)
     }
   }
@@ -213,7 +213,7 @@ object Versions {
   lazy val scala2HardcodedVersions: List[String] = ScalaEntity.hardcodedVersions
 
   @RequiresBackgroundThread
-  def loadSbtVersions(canBeCanceled: Boolean, indicator: ProgressIndicator): Seq[Version] = loadVersionsSorted(Seq(SbtEntity), canBeCanceled, indicator, propagateDownloadExceptions = true)
+  def loadSbtVersions(canBeCanceled: Boolean, indicator: ProgressIndicator): Seq[SbtVersion] = loadVersionsSorted(Seq(SbtEntity), canBeCanceled, indicator, propagateDownloadExceptions = true).map(SbtVersion(_))
   lazy val sbtHardcodedVersions: Seq[String] = SbtEntity.hardcodedVersions
 
   private sealed trait Entity {

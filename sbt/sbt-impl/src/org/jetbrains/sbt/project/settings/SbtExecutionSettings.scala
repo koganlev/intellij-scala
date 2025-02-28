@@ -11,6 +11,10 @@ import org.jetbrains.sbt.project.SbtProjectSystem
 
 import java.io.File
 
+// TODO: add cross-references about some other settings-like entiites
+/**
+ * @inheritdoc
+ */
 class SbtExecutionSettings(val realProjectPath: String,
                            val vmExecutable: File,
                            val vmOptions: Seq[String],
@@ -28,7 +32,7 @@ class SbtExecutionSettings(val realProjectPath: String,
                            val passParentEnvironment: Boolean,
                            val useSeparateCompilerOutputPaths: Boolean,
                            val separateProdTestSources: Boolean,
-                           val sbtVersion: String
+                           val sbtVersion: SbtVersion
                           ) extends ExternalSystemExecutionSettings {
 
   /** If a custom VM executable is configured, return it. If it's not a valid path, warn user. */

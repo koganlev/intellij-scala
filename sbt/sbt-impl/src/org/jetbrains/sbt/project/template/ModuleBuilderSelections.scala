@@ -38,8 +38,8 @@ final class SbtModuleBuilderSelections(
   override def copy(): SbtModuleBuilderSelections =
     new SbtModuleBuilderSelections(sbtVersion, scalaVersion, downloadScalaSdkSources, downloadSbtSources, packagePrefix)
 
-  def updateSbtVersion(versions: Seq[Version]): Unit = {
-    val sbtVersionNew = sbtVersion.orElse(Versions.SBT.initiallySelectedVersion(versions.map(_.presentation)).map(SbtVersion(_)))
+  def updateSbtVersion(versions: Seq[SbtVersion]): Unit = {
+    val sbtVersionNew = sbtVersion.orElse(Versions.SBT.initiallySelectedVersion(versions.map(_.minor)).map(SbtVersion(_)))
     sbtVersion = sbtVersionNew
   }
 }

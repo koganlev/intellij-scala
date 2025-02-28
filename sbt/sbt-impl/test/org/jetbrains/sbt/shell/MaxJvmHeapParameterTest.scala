@@ -1,8 +1,8 @@
 package org.jetbrains.sbt.shell
 
 import com.intellij.openapi.util.io.FileUtil
-import org.jetbrains.sbt.JvmMemorySize
 import org.jetbrains.sbt.project.settings.SbtExecutionSettings
+import org.jetbrains.sbt.{JvmMemorySize, SbtVersion}
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.{Test, TestInfo}
 
@@ -40,7 +40,7 @@ class MaxJvmHeapParameterTest {
       passParentEnvironment = false,
       useSeparateCompilerOutputPaths = false,
       separateProdTestSources = false,
-      sbtVersion = ""
+      sbtVersion = SbtVersion.Latest.Sbt_1
     )
 
     SbtProcessManager.buildVMParameters(settings, workingDir, List.empty)
