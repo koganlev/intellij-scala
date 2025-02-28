@@ -15,7 +15,7 @@ import org.jetbrains.sbt.SbtUtil
  * Project import listener created to detect whether a notification with upgrade configuration action should be displayed.
  * The notification is displayed only once for non-new sbt projects.
  */
-class UpgradeConfigurationImportListener(project: Project) extends ProjectDataImportListener {
+class UpdateConfigurationImportListener(project: Project) extends ProjectDataImportListener {
 
   private var separateProdTestSources: Boolean = _
 
