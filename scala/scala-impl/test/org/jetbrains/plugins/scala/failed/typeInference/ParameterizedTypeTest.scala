@@ -6,22 +6,6 @@ class ParameterizedTypeTest extends ScalaLightCodeInsightFixtureTestCase {
 
   override protected def shouldPass: Boolean = false
 
-  def testSCL9014(): Unit = {
-    val text =
-      """
-        |import scala.util.{Success, Try}
-        |class Foo[A, In <: Try[A]] {
-        |    def takeA(a: A) = a
-        |    def takeIn(in: In) = {
-        |      in match {
-        |        case Success(a) ⇒ takeA(a) // cannot infer type
-        |      }
-        |    }
-        |  }
-      """.stripMargin
-    checkTextHasNoErrors(text)
-  }
-
   def testSCL8031(): Unit = {
     checkTextHasNoErrors(
       """

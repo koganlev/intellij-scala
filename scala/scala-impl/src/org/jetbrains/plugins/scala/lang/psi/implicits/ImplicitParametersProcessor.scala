@@ -43,7 +43,7 @@ private[implicits] final class ImplicitParametersProcessor(
           importsUsed         = state.importsUsed,
           implicitScopeObject = state.implicitScopeObject,
           isExtensionCall     = isDeclaredOrExportedInExtension,
-          exportedIn          = state.exportedIn
+          exportedInfo        = state.exportedInfo
         )
       )
     }

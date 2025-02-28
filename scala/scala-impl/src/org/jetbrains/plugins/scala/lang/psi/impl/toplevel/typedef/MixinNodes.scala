@@ -71,8 +71,9 @@ abstract class MixinNodes[T <: Signature](signatureCollector: SignatureProcessor
 
   def build(andTpe: ScAndType): Map = {
     def collectChildrenNodes(tp: ScType): Seq[Map] = tp match {
-      case ScAndType(lhs, rhs) => collectChildrenNodes(lhs) ++ collectChildrenNodes(rhs)
-      case other               =>
+      case ScAndType(lhs, rhs)  => collectChildrenNodes(lhs) ++ collectChildrenNodes(rhs)
+      case comp: ScCompoundType => Seq(build(comp, None))
+      case other                =>
         extractClassOrUpperBoundClass(other) match {
           case Some((cls, subst)) => Seq(build(cls, withSupers = true, subst = subst))
           case _                  => Seq.empty
@@ -390,19 +391,37 @@ object MixinNodes {
               val oldSig     = oldNode.info.asInstanceOf[TermSignature]
               val oldElement = oldSig.namedElement
 
+              val oldOwner = oldElement.containingClassOfNameContext
+              val newOwner = sig.namedElement.containingClassOfNameContext
+
+              //1  — old wins
+              //-1 — new wins
+              val signatureRelativeWeight =
+                (for {
+                  oldCls <- oldOwner
+                  newCls <- newOwner
+                } yield
+                  if (ScalaPsiUtil.isInheritorDeep(oldCls, newCls))       1
+                  else if (ScalaPsiUtil.isInheritorDeep(newCls, oldCls)) -1
+                  else                                                    0).getOrElse(0)
+
               oldElement match {
                 case e @ (_: PsiMethod | _: ScBindingPattern | _: ScFieldId) =>
-                  //intersect return types of same-signature members
-                  val sigReturnType = sig.intersectedReturnType.getOrElse(returnType(sig.namedElement))
-                  val oldReturnType = oldSig.intersectedReturnType.getOrElse(returnType(e))
+                  if (signatureRelativeWeight == 1)       oldNode
+                  else if (signatureRelativeWeight == -1) node
+                  else {
+                    //None of the signatures win based on linearizaton order, proceed with merging.
+                    val sigReturnType = sig.intersectedReturnType.getOrElse(returnType(sig.namedElement))
+                    val oldReturnType = oldSig.intersectedReturnType.getOrElse(returnType(e))
 
-                  val combinedSubst         = oldSig.substitutor.followed(sig.substitutor)
-                  val intersectedReturnType = ScAndType(oldReturnType, sigReturnType)
+                    val combinedSubst         = oldSig.substitutor.followed(sig.substitutor)
+                    val intersectedReturnType = ScAndType(oldReturnType, sigReturnType)
 
-                  val intersectedSig =
-                    sig.copy(substitutor = combinedSubst, intersectedReturnType = intersectedReturnType.toOption)
+                    val intersectedSig =
+                      sig.copy(substitutor = combinedSubst, intersectedReturnType = intersectedReturnType.toOption)
 
-                  new Node(intersectedSig, fromSuper = true).asInstanceOf[Node[T]]
+                    new Node(intersectedSig, fromSuper = true).asInstanceOf[Node[T]]
+                  }
                 case _ => oldNode
               }
             })

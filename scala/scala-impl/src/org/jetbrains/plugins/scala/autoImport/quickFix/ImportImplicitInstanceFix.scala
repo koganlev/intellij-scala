@@ -14,7 +14,7 @@ import org.jetbrains.plugins.scala.lang.psi.implicits.ImplicitCollector
 import org.jetbrains.plugins.scala.lang.psi.stubs.index.{ImplicitInstanceIndex, ScGivenIndex}
 import org.jetbrains.plugins.scala.lang.psi.stubs.util.ScalaInheritors.withStableInheritorsNames
 import org.jetbrains.plugins.scala.lang.psi.types.api.FunctionType
-import org.jetbrains.plugins.scala.lang.psi.types.{ScCompoundType, ScType}
+import org.jetbrains.plugins.scala.lang.psi.types.{ScAndType, ScCompoundType, ScType}
 import org.jetbrains.plugins.scala.lang.resolve.ScalaResolveResult
 import org.jetbrains.plugins.scala.settings.ScalaApplicationSettings
 import org.jetbrains.plugins.scala.util.CommonQualifiedNames.{AnyFqn, AnyRefFqn, JavaLangObjectFqn}
@@ -117,7 +117,8 @@ object ImportImplicitInstanceFix {
 
     val types = `type` match {
       case ScCompoundType(components, _, _) => components.toSet
-      case _ => Set(`type`)
+      case ScAndType(lhs, rhs)              => Set(lhs, rhs)
+      case _                                => Set(`type`)
     }
 
     for {
