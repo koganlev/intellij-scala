@@ -177,10 +177,7 @@ trait ExternalSourceRootResolution { self: SbtProjectResolver =>
 
       val (mainOwnerProjectsIds, testOwnerProjectsIds) = collectIdsOfSharedSourcesOwners(projects, projectToSourceSet)
 
-      // add some managed sources of the representative project
-      // (see description of #getManagedSourceRootsFromRepresentativeProjectToIncludeAsBaseModelSourceRoots method for the details)
-      val representativeProjectManagedSources = getManagedSourceRootsFromRepresentativeProjectToIncludeAsBaseModelSourceRoots(rootGroup, representativeProject).toSeq
-      val sourceRootsWithType = (rootGroup.sourceRoots ++ representativeProjectManagedSources).map(root => (root, calculateEsSourceType(root)))
+      val sourceRootsWithType = rootGroup.sourceRoots.map(root => (root, calculateEsSourceType(root)))
 
       val allSourceModules = collectSourceModules(projectToSourceSet)
       val representativeProjectModule = projectToSourceSet.get(representativeProject)
@@ -572,12 +569,15 @@ trait ExternalSourceRootResolution { self: SbtProjectResolver =>
   }
 
   /**
+   * NOTE 1: This is a workaround method<br>
+   * NOTE 2: This workaround is not actual when separate main/test source modules are used
+   *
    * The primary use case for this logic is to handle SBT projects with `projectmatrix` sbt plugin.<br>
    * You can inspect `sbt-projectmatrix-with-source-generators` test project as an example.
    *
    * Details:<br>
-   * In sbt build with `projectmatrix` sbt plugin, for a single project multiple subprojects are generated
-   * For example if we define single project {{{
+   * In sbt build with `projectmatrix` sbt plugin, for a single project multiple subprojects are generated.<br>
+   * For example, if we define a single project {{{
    *     val downstream = (projectMatrix in file("downstream"))
    *         .settings(commonSettings(false) *)
    *         .jvmPlatform(scalaVersions = Seq("2.12.17", "2.13.10"))

@@ -4,6 +4,7 @@ package project
 import com.intellij.compiler.CompilerConfiguration
 import com.intellij.compiler.impl.javaCompiler.javac.JavacConfiguration
 import com.intellij.notification.Notification
+import com.intellij.openapi.externalSystem.service.project.manage.{SourceFolderManager, SourceFolderManagerImpl, SourceFolderModelState}
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil
 import com.intellij.openapi.module.{Module, ModuleManager}
 import com.intellij.openapi.project.Project
@@ -11,17 +12,19 @@ import com.intellij.openapi.roots
 import com.intellij.openapi.roots.impl.libraries.LibraryEx
 import com.intellij.openapi.roots.libraries.Library
 import com.intellij.openapi.roots.{CompilerModuleExtension, ContentEntry, LanguageLevelModuleExtensionImpl, LibraryOrderEntry, ModuleRootManager}
-import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.pom.java.LanguageLevel
 import com.intellij.util.{CommonProcessors, PathUtil}
 import org.jetbrains.jps.model.java.{JavaResourceRootType, JavaSourceRootType}
 import org.jetbrains.jps.model.module.JpsModuleSourceRootType
 import org.jetbrains.plugins.scala.compiler.data.CompileOrder
+import org.jetbrains.plugins.scala.extensions.ThrowableExt
 import org.jetbrains.plugins.scala.project.external.{SdkReference, SdkUtils, ShownNotification, ShownNotificationsKey}
 import org.jetbrains.plugins.scala.project.{LibraryExt, ModuleExt, ProjectExt, ScalaLibraryProperties}
+import org.jetbrains.plugins.scala.util.teamcity.TeamcityUtils
 import org.jetbrains.sbt.DslUtils.MatchType
 import org.jetbrains.sbt.project.ProjectStructureDsl._
 import org.jetbrains.sbt.project.ProjectStructureMatcher.AttributeMatchType
+import org.jetbrains.sbt.project.utils.ProjectStructureComparisonContext.AssertionFailStrategy
 import org.jetbrains.sbt.project.utils.{MacroSubstitutor, ProjectStructureComparisonContext, ScalaCliStructureHelper}
 import org.junit.Assert.{assertFalse, assertNotNull, assertTrue, fail}
 import org.junit.{Assert, ComparisonFailure}
@@ -38,7 +41,7 @@ trait ProjectStructureMatcher {
 
   final def assertMatch[T](what: String, expected: Seq[T], actual: Seq[T])
                           (mt: Option[DslUtils.MatchType])
-                          (implicit compareContext: ProjectStructureComparisonContext): Unit = {
+                          (implicit compareContext: ProjectStructureComparisonContext): Unit = compareContext.assertionFailStrategy.run {
     val actualAdopted = if (actual.headOption.exists(_.isInstanceOf[String]))
       compareContext.macroSubstitutor
         .replaceValuesWithMacro(actual.map(_.asInstanceOf[String]), expected.map(_.asInstanceOf[String]))
@@ -68,6 +71,29 @@ trait ProjectStructureMatcher {
 
     expected.foreach(modules)(assertProjectModulesEqual(actual, singleContentRootModules)(_))
     expected.foreach(packagePrefix)(assertPackagePrefixEqual(actual, singleContentRootModules)(_))
+
+    compareContext.assertionFailStrategy match {
+      case collect: AssertionFailStrategy.CollectErrors => 
+        val assertionErrors = collect.getAssertionErrors
+        createSeparateFailedNodesInTestTreeView(assertionErrors)
+
+        // throw the first error as a primary exception to fail the current test
+        assertionErrors.headOption.foreach(throw _)
+      case _ =>
+    }
+  }
+
+  // Uses special service messages in order IntelliJ creates separate test nodes for each assertion error.
+  // It makes it more convenient to explore multiple failures when working with big projects expected structure
+  private def createSeparateFailedNodesInTestTreeView(assertionErrors: Seq[AssertionError]): Unit = {
+    // don't print all errors to avoid spamming too much output in the failed tests
+    val maxErrorsToPrint = 20
+
+    assertionErrors.take(maxErrorsToPrint).zipWithIndex.foreach { case (error, idx) =>
+      val testName = s"error ${idx + 1} / ${assertionErrors.size}"
+      val messageEscaped = TeamcityUtils.escapeTeamcityValue(error.stackTraceText)
+      println(s"##teamcity[testFailed name='$testName' message='$messageEscaped']")
+    }
   }
 
   private implicit def namedImplicit[T <: Named]: HasName[T] =
@@ -132,7 +158,7 @@ trait ProjectStructureMatcher {
     expected.foreach0(compileTestOutputPath)(assertModuleCompileOutputPath(actual, test = true))
 
     lazy val sbtModuleData = SbtUtil.getSbtModuleData(actual).getOrElse {
-      fail(s"Can't get module data for module: $actual (${actual.getModuleFilePath})").asInstanceOf[Nothing]
+      org.junit.Assert.fail(s"Can't get module data for module: $actual (${actual.getModuleFilePath})").asInstanceOf[Nothing]
     }
     expected.foreach(sbtBuildURI)(buildURI => _ => {
       assertEquals(s"SBT build URI (module $actual)", buildURI, sbtModuleData.buildURI.uri)
@@ -212,27 +238,78 @@ trait ProjectStructureMatcher {
     assertMatch(s"Content root of module `${module.getName}`", expectedRoots, actualRoots)(mt)
   }
 
+  /**
+   * When set to true, allows to check all source roots, even if they don't exist on disk.
+   * This only supports relative paths from the project root or absolute paths
+   * TODO: make this true by default and patch all our tests
+   */
+  protected def useNewLogicForSourceFolderComparison = false
+
   private def assertModuleContentFoldersEqual(
     module: Module,
     folderType: JpsModuleSourceRootType[_],
     folderTypeDisplayName: String,
+    //TODO: drop this parameter and patch test data, it seems it's not needed since we introduced code inside getActualSourceRoots
     singleContentRootModules: Boolean
   )(expected: Seq[String])(mt: Option[MatchType])(
     implicit compareContext: ProjectStructureComparisonContext
   ): Unit = {
-    val contentRoots = getContentRoots(module)
-    if (expected.isEmpty) {
-      val sourceFolders = contentRoots.flatMap(_.getSourceFolders(folderType).asScala.toSeq).map(_.getUrl)
-      assertMatchWithIgnoredOrder(s"$folderTypeDisplayName of module '${module.getName}'", Nil, sourceFolders)(mt)
+    if (expected.isEmpty || useNewLogicForSourceFolderComparison) {
+      val sourceFolders = getSourceRootUrls(module, folderType).map(_.stripPrefix("file://"))
+      assertMatchWithIgnoredOrder(s"$folderTypeDisplayName of module '${module.getName}'", expected, sourceFolders)(mt)
     }
     else {
-      if (singleContentRootModules) assertSingleContentRoot(contentRoots, module.getName)
+      val contentRoots = getContentRoots(module)
+      if (singleContentRootModules) {
+        assertSingleContentRoot(contentRoots, module.getName)
+      }
       val contentRootToSourceFolders = contentRoots.map { contentRoot =>
         contentRoot -> contentRoot.getSourceFolders(folderType).asScala.toSeq
       }.toMap
       assertContentRootFoldersEqual(folderTypeDisplayName, module, contentRootToSourceFolders, expected)(mt)
     }
   }
+
+  //noinspection ApiStatus,UnstableApiUsage
+  private def getSourceRootUrls(module: Module, sourceRootType: JpsModuleSourceRootType[_]): Seq[String] = {
+    val sourceRootsFromContentRoots = getSourceRootUrlsFromContentRotos(module, sourceRootType)
+
+    if (useNewLogicForSourceFolderComparison) {
+      val sourceRootsFromManager = getSourceRootUrlsFromSourceFolderManager(module, sourceRootType)
+      // NOTE: we need to merge both results because both are not perfect:
+      // source roots from manager don't contain source roots that are equal to content roots
+      // (for example, dir in `./project` is both content and source root for a `-build` module
+      (sourceRootsFromManager ++ sourceRootsFromContentRoots).distinct
+    }
+    else {
+      sourceRootsFromContentRoots
+    }
+  }
+
+  private def getSourceRootUrlsFromContentRotos(module: Module, sourceRootType: JpsModuleSourceRootType[_]): Seq[String] = {
+    val contentRoots = getContentRoots(module)
+    contentRoots.flatMap(_.getSourceFolders(sourceRootType).asScala.toSeq).map(_.getUrl)
+  }
+
+  private def getSourceRootUrlsFromSourceFolderManager(module: Module, sourceRootType: JpsModuleSourceRootType[_]): Seq[String] = {
+    val sourceFolderManager = SourceFolderManager.getInstance(module.getProject).asInstanceOf[SourceFolderManagerImpl]
+    val sourceFolderModels: Seq[SourceFolderModelState] =
+      sourceFolderManager.getState.getSourceFolders.asScala.toSeq
+    sourceFolderModels
+      .filter { model =>
+        model.getModuleName == module.getName &&
+          model.getType == SourceTypeToString(sourceRootType)
+      }
+      .map(_.getUrl)
+  }
+
+  //reverse of SourceFolderManagerImpl.kt/dictionary mapping
+  private val SourceTypeToString: Map[JpsModuleSourceRootType[_], String] = Map(
+     JavaSourceRootType.SOURCE -> "SOURCE",
+     JavaSourceRootType.TEST_SOURCE -> "TEST_SOURCE",
+     JavaResourceRootType.RESOURCE -> "RESOURCE",
+     JavaResourceRootType.TEST_RESOURCE -> "TEST_RESOURCE",
+  )
 
   private def assertSingleContentRoot(contentRoots: Seq[ContentEntry], moduleName: String)
                                      (implicit compareContext: ProjectStructureComparisonContext): Unit =
@@ -434,7 +511,7 @@ trait ProjectStructureMatcher {
     what: String,
     expected: String,
     actual: String
-  )(implicit compareContext: ProjectStructureComparisonContext): Unit = {
+  )(implicit compareContext: ProjectStructureComparisonContext): Unit = compareContext.assertionFailStrategy.run {
     val actualAdapted = compareContext.macroSubstitutor.replaceValuesWithMacro(actual, expected)
     org.junit.Assert.assertEquals(s"$what mismatch", expected, actualAdapted)
   }
@@ -443,7 +520,7 @@ trait ProjectStructureMatcher {
     what: String,
     expected: T,
     actual: T
-  )(implicit compareContext: ProjectStructureComparisonContext): Unit = {
+  )(implicit compareContext: ProjectStructureComparisonContext): Unit = compareContext.assertionFailStrategy.run {
     val actualAdopted: T = actual match {
       case s: String =>
         compareContext.macroSubstitutor
@@ -466,10 +543,10 @@ trait ProjectStructureMatcher {
                               (implicit nameOfT: HasName[T], nameOfU: HasName[U], compareContext: ProjectStructureComparisonContext): Seq[(T, U)] =
     expected.flatMap(e => actual.find(a => convertIfScalaCli(nameOfU(a)) == nameOfT(e)).map((e, _)))
 
-  protected def assertNoNotificationsShown(myProject: Project, notifications: Seq[Notification] = Nil): Unit = {
+  def assertNoNotificationsShown(myProject: Project, notifications: Seq[Notification] = Nil): Unit = {
     if (notifications.nonEmpty) {
       val notificationsText = notifications.map(notificationMessage).mkString("\n")
-      fail(
+      org.junit.Assert.fail(
         s"""Expected no notifications, but following notifications were shown:
            |$notificationsText""".stripMargin
       )
@@ -480,7 +557,7 @@ trait ProjectStructureMatcher {
     myProject.getUserData(ShownNotificationsKey) match {
       case null =>
       case notifications =>
-        fail(
+        org.junit.Assert.fail(
           s"""Expected no notifications, but following notifications were shown:
              |${notifications.map(notificationMessage).mkString("\n")}""".stripMargin
         )

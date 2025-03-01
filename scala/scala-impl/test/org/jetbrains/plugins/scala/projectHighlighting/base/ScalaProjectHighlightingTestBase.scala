@@ -133,6 +133,8 @@ abstract class ScalaProjectHighlightingTestBase extends ScalaExternalSystemImpor
     }
   }
 
+  protected def importProjectDuringTestSetup: Boolean = true
+
   override def setUp(): Unit = dumpLogsOnException {
     super.setUp()
 
@@ -152,7 +154,7 @@ abstract class ScalaProjectHighlightingTestBase extends ScalaExternalSystemImpor
            |!!! (you can disable caching by passing -Dproject.highlighting.disable.cache=true VM option)
            |!!! """.stripMargin
       )
-    } else {
+    } else if (importProjectDuringTestSetup) {
       importProject(false)
     }
     if (isProjectCachingEnabled) {
