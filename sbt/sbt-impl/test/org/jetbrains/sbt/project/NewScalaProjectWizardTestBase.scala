@@ -9,7 +9,7 @@ import com.intellij.openapi.roots.{LanguageLevelProjectExtension, ProjectRootMan
 import com.intellij.testFramework.IndexingTestUtil
 import org.jetbrains.plugins.scala.SlowTests
 import org.jetbrains.plugins.scala.extensions.inWriteAction
-import org.jetbrains.sbt.project.ProjectStructureMatcher.ProjectComparisonOptions
+import org.jetbrains.sbt.project.utils.ProjectStructureComparisonContext
 import org.junit.Assert
 import org.junit.Assert.assertNotNull
 import org.junit.experimental.categories.Category
@@ -18,8 +18,8 @@ import org.junit.experimental.categories.Category
 abstract class NewScalaProjectWizardTestBase extends NewProjectWizardTestCase
   with ProjectStructureMatcher {
 
-  protected implicit def comparisonOptions: ProjectComparisonOptions =
-    ProjectComparisonOptions.Implicit.default
+  protected implicit def compareContext: ProjectStructureComparisonContext =
+    ProjectStructureComparisonContext.Implicit.default(getProject)
 
   override protected def setUp(): Unit = {
     super.setUp()

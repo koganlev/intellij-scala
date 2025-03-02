@@ -31,11 +31,11 @@ import org.jetbrains.plugins.scala.project.external.{JdkByName, SdkUtils}
 import org.jetbrains.plugins.scala.util.ScalaNotificationGroups
 import org.jetbrains.sbt.SbtUtil._
 import org.jetbrains.sbt.buildinfo.BuildInfo
+import org.jetbrains.sbt.project.SbtExternalSystemManager
 import org.jetbrains.sbt.project.settings.SbtExecutionSettings
 import org.jetbrains.sbt.project.structure.SbtOption._
-import org.jetbrains.sbt.project.{SbtExternalSystemManager, SbtProjectResolver, SbtProjectSystem}
 import org.jetbrains.sbt.shell.SbtProcessManager._
-import org.jetbrains.sbt.{JvmMemorySize, Sbt, SbtBundle, SbtUtil}
+import org.jetbrains.sbt.{JvmMemorySize, Sbt, SbtBundle, SbtUtil, SbtVersion, SbtVersionCapabilities}
 
 import java.io.{File, IOException, OutputStreamWriter, PrintWriter}
 import java.util.concurrent.TimeUnit
@@ -85,19 +85,26 @@ final class SbtProcessManager(project: Project) extends Disposable {
   // TODO add configurable plugins somewhere for users and via API; factor this stuff out
   // this *might* get messy if multiple IDEA projects start messing with the global settings.
   // but we should be fine since it is written before every sbt boot
-  private def getInjectedPluginsCommands(
-    sbtBinVersion: Version,
-    sbtStructurePluginBinVersion: Version
-  ): Seq[String] = {
+  private def getInjectedPluginsCommands(sbtVersion: SbtVersion): Seq[String] = {
+    val sbtBinaryVersion = sbtVersion.binaryVersion
     val sbtStructureVersion = BuildInfo.sbtStructureVersion
     val sbtIdeaShellVersion = BuildInfo.sbtIdeaShellVersion
 
-    sbtBinVersion.presentation match {
-      case "0.12" => Seq.empty // 0.12 doesn't support AutoPlugins
+    val sbtStructurePluginBinVersion = structurePluginBinaryVersion(sbtVersion)
+    // NOTE: sbt-idea-shell plugin is published with `_2.0` suffix instead of the full suffix
+    // even for the unreleased sbt version like 2.0.0-M3
+    val sbtIdeaShellBinVersion =
+      if (sbtBinaryVersion.toString.startsWith("2")) "2.0"
+      else sbtBinaryVersion
+    log.debug(s"sbtBinVersion = $sbtBinaryVersion")
+    log.debug(s"sbtStructurePluginBinVersion = $sbtStructurePluginBinVersion")
+    log.debug(s"sbtIdeaShellBinVersion = $sbtIdeaShellBinVersion")
+
+    sbtBinaryVersion.presentation match {
       case _ =>
         Seq(
           s"""addSbtPlugin("org.jetbrains.scala" % "sbt-structure-extractor" % "$sbtStructureVersion", "$sbtStructurePluginBinVersion")""",
-          s"""addSbtPlugin("org.jetbrains.scala" % "sbt-idea-shell" % "$sbtIdeaShellVersion")""",
+          s"""addSbtPlugin("org.jetbrains.scala" % "sbt-idea-shell" % "$sbtIdeaShellVersion", "$sbtIdeaShellBinVersion")""",
         )
         // SCL-22858 compiler bytecode indices are disabled in sbt shell
         // ++ compilerIndicesPlugin // works for 0.13.5+, for older versions it will be ignored
@@ -106,25 +113,25 @@ final class SbtProcessManager(project: Project) extends Disposable {
 
   private val IdeaRunIdVmOption = "idea.runid"
 
-  private def createShellProcessHandler(): (ColoredProcessHandler, Option[RemoteConnection]) = {
+  private def createShellProcessHandler(): (ColoredProcessHandler, Option[RemoteConnection], SbtVersion) = {
     log.debug("createShellProcessHandler")
     val workingDirPath = getWorkingDirPath(project)
     val workingDir = new File(workingDirPath)
 
     val sbtSettings = getSbtSettings(workingDirPath)
-    lazy val launcher = launcherJar(sbtSettings)
+    lazy val launcher = SbtUtil.getLauncherJar(sbtSettings)
 
     // an id to identify this boot of sbt as being launched from idea, so that any plugins it injects are never ever loaded otherwise
     // use sbtStructureVersion as approximation of compatible versions of IDEA this is allowed to launch with.
     // this avoids failing reloads when multiple sbt instances are booted from IDEA (SCL-12009)
-    val runid = BuildInfo.sbtStructureVersion
+    val runId = BuildInfo.sbtStructureVersion
 
     val sdk = selectSdkOrWarn(sbtSettings)
     val javaParameters: JavaParameters = new JavaParameters
     javaParameters.setJdk(sdk)
     javaParameters.configureByProject(project, 1, sdk)
     javaParameters.setWorkingDirectory(workingDir)
-    javaParameters.setJarPath(launcher.getCanonicalPath)
+    javaParameters.setJarPath(launcher.toCanonicalPath.toString)
 
     val debugConnection = if (sbtSettings.shellDebugMode) Option(addDebugParameters(javaParameters)) else None
 
@@ -138,12 +145,9 @@ final class SbtProcessManager(project: Project) extends Disposable {
       }
     }
 
-    val projectSbtVersion = Version(detectSbtVersion(workingDir, launcher))
-
-    val autoPluginsSupported = projectSbtVersion >= SbtProjectResolver.sinceSbtVersionShell
-    val addPluginCommandSupported = isAddPluginCommandSupported(projectSbtVersion)
+    val projectSbtVersion = detectSbtVersion(workingDir.toPath, launcher)
+    val addPluginCommandSupported = SbtVersionCapabilities.isAddPluginCommandSupported(projectSbtVersion)
     log.debug(s"projectSbtVersion = $projectSbtVersion")
-    log.debug(s"autoPluginsSupported = $autoPluginsSupported")
     log.debug(s"addPluginCommandSupported = $addPluginCommandSupported")
 
     val vmParams = javaParameters.getVMParametersList
@@ -154,9 +158,9 @@ final class SbtProcessManager(project: Project) extends Disposable {
     val allOpts = buildVMParameters(sbtSettings, workingDir, sbtOptsValues)
     vmParams.addAll(allOpts.asJava)
 
-    // don't add runid when using addPluginSbtFile command
+    // don't add runId when using addPluginSbtFile command
     if (!addPluginCommandSupported)
-      vmParams.add(s"-D$IdeaRunIdVmOption=$runid")
+      vmParams.add(s"-D$IdeaRunIdVmOption=$runId")
 
     // For details see: https://youtrack.jetbrains.com/issue/SCL-13293#focus=streamItem-27-3323121.0-0
     if(SystemInfo.isWindows)
@@ -165,44 +169,37 @@ final class SbtProcessManager(project: Project) extends Disposable {
     val commandLine: GeneralCommandLine = javaParameters.toCommandLine
     sbtSettings.getCustomVMExecutableOrWarn(project).foreach(exe => commandLine.setExePath(exe.getAbsolutePath))
 
-    if (autoPluginsSupported) {
-      val sbtBinVersion = binaryVersion(projectSbtVersion)
-      val sbtStructurePluginBinVersion = structurePluginBinaryVersion(projectSbtVersion)
-      log.debug(s"sbtBinVersion = $sbtBinVersion")
-      log.debug(s"sbtBinVersion = $sbtStructurePluginBinVersion")
+    val settingsFile: File =
+      getOrCreateExtraSbtSettingsFile(addPluginCommandSupported, commandLine, projectSbtVersion.binaryVersion)
 
-      val settingsFile: File =
-        getOrCreateExtraSbtSettingsFile(addPluginCommandSupported, commandLine, sbtBinVersion)
+    val injectPluginsSettings = getInjectedPluginsCommands(projectSbtVersion)
+    val settingsAll = pluginResolverSetting +: injectPluginsSettings
+    // caution! writes injected plugin settings to user's global sbt config if addPlugin command is not supported
+    injectSettings(
+      projectSbtVersion,
+      runId,
+      !addPluginCommandSupported,
+      settingsFile,
+      settingsAll
+    )
 
-      // caution! writes injected plugin settings to user's global sbt config if addPlugin command is not supported
-      val injectPluginsSettings = getInjectedPluginsCommands(sbtBinVersion, sbtStructurePluginBinVersion)
-      val settingsAll = pluginResolverSetting +: injectPluginsSettings
-      injectSettings(
-        runid,
-        !addPluginCommandSupported,
-        settingsFile,
-        settingsAll
-      )
-
-      if (addPluginCommandSupported) {
-        val settingsPath = settingsFile.getAbsolutePath
-        commandLine.addParameter("early(addPluginSbtFile=\"\"\"" + settingsPath + "\"\"\")")
-      }
-
-      // SCL-22858 compiler bytecode indices are disabled in sbt shell
-      val commands = "idea-shell"
-
-      commandLine.addParameter(commands)
-      val sbtLauncherArgs = sbtOpts.collect { case a: SbtLauncherOption => a.value }
-      commandLine.addParameters(sbtLauncherArgs.asJava)
+    if (addPluginCommandSupported) {
+      val settingsPath = settingsFile.getAbsolutePath
+      commandLine.addParameter(s"early(addPluginSbtFile=\"\"\"$settingsPath\"\"\")")
     }
+
+    val commands = "idea-shell"
+
+    commandLine.addParameter(commands)
+    val sbtLauncherArgs = sbtOpts.collect { case a: SbtLauncherOption => a.value }
+    commandLine.addParameters(sbtLauncherArgs.asJava)
 
     val pty = createPtyCommandLine(commandLine, sbtSettings.passParentEnvironment, sbtSettings.userSetEnvironment)
     val cpty = new ColoredProcessHandler(pty)
     cpty.setShouldKillProcessSoftly(true)
     patchWindowSize(cpty.getProcess)
 
-    (cpty, debugConnection)
+    (cpty, debugConnection, projectSbtVersion)
   }
 
   private def getOrCreateExtraSbtSettingsFile(
@@ -213,7 +210,7 @@ final class SbtProcessManager(project: Project) extends Disposable {
     if (addPluginCommandSupported)
       FileUtil.createTempFile("idea", Sbt.Extension, true)
     else {
-      val globalPluginsDir = globalPluginsDirectory(sbtBinVersion, commandLine.getParametersList)
+      val globalPluginsDir = globalPluginsDirectory(SbtVersion(sbtBinVersion), commandLine.getParametersList)
       // workaround: --addPluginSbtFile fails if global plugins dir does not exist. https://youtrack.jetbrains.com/issue/SCL-14415
       globalPluginsDir.mkdirs()
       new File(globalPluginsDir, "idea.sbt")
@@ -279,9 +276,6 @@ final class SbtProcessManager(project: Project) extends Disposable {
 
   private def getSbtSettings(dir: String) = SbtExternalSystemManager.executionSettingsFor(project, dir)
 
-  private def launcherJar(sbtSettings: SbtExecutionSettings): File =
-    sbtSettings.customLauncher.getOrElse(getDefaultLauncher)
-
   /**
    * Because the regular GeneralCommandLine process doesn't mesh well with JLine on Windows, use a
    * Pseudo-Terminal based command line
@@ -305,19 +299,26 @@ final class SbtProcessManager(project: Project) extends Disposable {
    * Inject custom settings or plugins into an sbt directory.
    * This seems to be the most straightforward way to add our own sbt settings
    */
-  private def injectSettings(runid: String, guardSettings: Boolean, settingsFile: File, settings: Seq[String]): Unit = {
+  private def injectSettings(
+    sbtVersion: SbtVersion,
+    runId: String,
+    guardSettings: Boolean,
+    settingsFile: File,
+    settings: Seq[String]
+  ): Unit = {
     @NonNls
     val header =
       """// Generated by IntelliJ-IDEA Scala plugin.
         |// Adds settings when starting sbt from IDEA.
         |// Manual changes to this file will be lost.
         |""".stripMargin
-    val settingsString = settings.mkString("scala.collection.Seq(\n",",\n","\n)")
+    val SeqFqn = SbtVersionCapabilities.collectionsSeqClassFqn(sbtVersion)
+    val settingsString = settings.mkString(s"$SeqFqn(\n",",\n","\n)")
 
     // any idea-specific settings should be added conditional on sbt being started from idea
     val guardedSettings =
       if (guardSettings)
-        s"""if (java.lang.System.getProperty("$IdeaRunIdVmOption", "false") == "$runid") $settingsString else scala.collection.Seq.empty"""
+        s"""if (java.lang.System.getProperty("$IdeaRunIdVmOption", "false") == "$runId") $settingsString else $SeqFqn.empty"""
       else settingsString
 
     val content = header + "\n" + guardedSettings
@@ -351,10 +352,10 @@ final class SbtProcessManager(project: Project) extends Disposable {
   }
 
   private def createProcessData(): ProcessData = {
-    val (handler, debugConnection) = createShellProcessHandler()
+    val (handler, debugConnection, sbtVersion) = createShellProcessHandler()
     val title = project.getName
     val runner = new SbtShellRunner(project, title, debugConnection)
-    ProcessData(handler, runner)
+    ProcessData(handler, runner, sbtVersion)
   }
 
   /** Supply a PrintWriter that writes to the current process. */
@@ -371,7 +372,7 @@ final class SbtProcessManager(project: Project) extends Disposable {
   private[shell] def acquireShellProcessHandler(): ColoredProcessHandler = processDataMutex.synchronized {
     log.trace("acquireShellProcessHandler")
     processData match {
-      case Some(data@ProcessData(handler, _)) if isAlive(data) =>
+      case Some(data@ProcessData(handler, _, _)) if isAlive(data) =>
         handler
       case _ =>
         updateProcessData().processHandler
@@ -382,7 +383,7 @@ final class SbtProcessManager(project: Project) extends Disposable {
   def acquireShellRunner(): SbtShellRunner = processDataMutex.synchronized {
     log.trace("processData")
     processData match {
-      case Some(data@ProcessData(_, runner)) if isAlive(data) =>
+      case Some(data@ProcessData(_, runner, _)) if isAlive(data) =>
         runner
       case _ =>
         updateProcessData().runner
@@ -412,7 +413,7 @@ final class SbtProcessManager(project: Project) extends Disposable {
     var timeout = 3L
     val backoff = 3L // Back off for additional 3 seconds before each retry.
 
-    while (!success && tries > 0) {
+    while (!success &&  tries > 0) {
       attemptTermination()
       try {
         process.onExit().get(timeout, TimeUnit.SECONDS)
@@ -432,7 +433,7 @@ final class SbtProcessManager(project: Project) extends Disposable {
   def destroyProcess(): Unit = processDataMutex.synchronized {
     log.debug("destroyProcess")
     processData match {
-      case Some(ProcessData(handler, _)) =>
+      case Some(ProcessData(handler, _, _)) =>
         val runnable: Runnable = () => terminateProcessGracefully(handler.getProcess)
         ProgressManager.getInstance().runProcessWithProgressSynchronously(runnable, SbtBundle.message("sbt.shell.stopping.process"), false, project)
         processData = None
@@ -455,6 +456,9 @@ final class SbtProcessManager(project: Project) extends Disposable {
     // processData.processHandler.getProcess.isAlive // TODO: I am not sure which is the best
     !processData.processHandler.isProcessTerminated
   }
+
+  def sbtVersionUsedDuringProcessStart: Option[SbtVersion] =
+    processData.map(_.sbtVersion)
 }
 
 object SbtProcessManager {
@@ -469,8 +473,14 @@ object SbtProcessManager {
     Option(project.getServiceIfCreated(classOf[SbtProcessManager]))
   }
 
-  private case class ProcessData(processHandler: ColoredProcessHandler,
-                                 runner: SbtShellRunner)
+  /**
+   * @param sbtVersion version of sbt detected when launching the sbt process
+   */
+  private case class ProcessData(
+    processHandler: ColoredProcessHandler,
+    runner: SbtShellRunner,
+    sbtVersion: SbtVersion
+  )
 
   private[shell]
   def buildVMParameters(sbtSettings: SbtExecutionSettings, workingDir: File, sbtOpts: Seq[String]): Seq[String] = {

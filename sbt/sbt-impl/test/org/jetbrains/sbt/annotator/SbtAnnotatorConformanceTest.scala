@@ -2,7 +2,6 @@ package org.jetbrains.sbt
 package annotator
 
 import org.jetbrains.plugins.scala.lang.psi.impl.ScalaPsiElementFactory
-import org.jetbrains.plugins.scala.project.Version
 import org.junit.Assert.assertTrue
 
 abstract class SbtAnnotatorConformanceTestBase extends SbtAnnotatorTestBase {
@@ -38,16 +37,18 @@ abstract class SbtAnnotatorConformanceTestBase extends SbtAnnotatorTestBase {
 }
 
 class SbtAnnotatorConformanceTest_latest_0_13 extends SbtAnnotatorConformanceTestBase with MockSbt_0_13 {
-  override implicit val sbtVersion: Version = Sbt.Latest_0_13
-
   def testSingleSetting(): Unit = testSingleSetting("sbt.internals.DslEntry")
 
   def testSeqSettings(): Unit = testSeqSettings("sbt.internals.DslEntry")
 }
 
-class SbtAnnotatorConformanceTest_latest extends SbtAnnotatorConformanceTestBase with MockSbt_1_0 {
-  override implicit val sbtVersion: Version = Sbt.LatestVersion
+class SbtAnnotatorConformanceTest_latest_1 extends SbtAnnotatorConformanceTestBase with MockSbt_1_0 {
+  def testSingleSetting(): Unit = testSingleSetting("sbt.internal.DslEntry")
 
+  def testSeqSettings(): Unit = testSeqSettings("sbt.internal.DslEntry")
+}
+
+class SbtAnnotatorConformanceTest_latest_2 extends SbtAnnotatorConformanceTestBase with MockSbt_2 {
   def testSingleSetting(): Unit = testSingleSetting("sbt.internal.DslEntry")
 
   def testSeqSettings(): Unit = testSeqSettings("sbt.internal.DslEntry")

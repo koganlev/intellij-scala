@@ -8,6 +8,7 @@ import com.intellij.psi.{JavaPsiFacade, PsiFile, PsiManager}
 import com.intellij.ui.EditorNotificationProvider
 import junit.framework.TestCase.{assertFalse, assertNotNull, assertNull, assertTrue}
 import org.jetbrains.plugins.scala.SlowTests
+import org.jetbrains.plugins.scala.extensions.PathExt
 import org.jetbrains.plugins.scala.util.TestUtils
 import org.junit.experimental.categories.Category
 
@@ -15,7 +16,7 @@ import java.nio.file.Path
 
 @Category(Array(classOf[SlowTests]))
 class SetupScalaHighlightingNotificationProviderTest extends SbtExternalSystemImportingTestLike {
-  override protected def getTestProjectPath: String =
+  override protected def getTestDataProjectPath: String =
     s"${TestUtils.getTestDataPath}/sbt/projects/setupScalaHighlightingNotificationProvider"
 
   override protected def projectJdkLanguageLevel: LanguageLevel = LanguageLevel.JDK_17
@@ -29,9 +30,9 @@ class SetupScalaHighlightingNotificationProviderTest extends SbtExternalSystemIm
   def testSetupScalaHighlighting(): Unit = {
     val notificationProvider = EditorNotificationProvider.EP_NAME.findExtensionOrFail(classOf[SetupScalaHighlightingNotificationProvider], getProject)
 
-    val greeterPath = Path.of(getTestProjectPath, "module1", "src", "main", "java", "Greeter.java")
-    val abstractGreeterPath = Path.of(getTestProjectPath, "module1", "src", "main", "kotlin", "AbstractGreeter.kt")
-    val helloWorldGreeterPath = Path.of(getTestProjectPath, "module2", "src", "main", "scala", "HelloWorldGreeter.scala")
+    val greeterPath = getTestProjectPath / "module1" / "src" / "main" / "java" / "Greeter.java"
+    val abstractGreeterPath = getTestProjectPath / "module1" / "src" / "main" / "kotlin" / "AbstractGreeter.kt"
+    val helloWorldGreeterPath = getTestProjectPath / "module2" / "src" / "main" / "scala" / "HelloWorldGreeter.scala"
 
     val greeterPsiFileBefore = findPsiFile(greeterPath)
     val abstractGreeterPsiFileBefore = findPsiFile(abstractGreeterPath)

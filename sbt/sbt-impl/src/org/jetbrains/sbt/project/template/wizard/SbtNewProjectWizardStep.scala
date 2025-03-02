@@ -2,8 +2,9 @@ package org.jetbrains.sbt.project.template.wizard
 
 import com.intellij.ide.JavaUiBundle
 import com.intellij.ide.projectWizard.ProjectWizardJdkIntent.DetectedJdk
-import com.intellij.ide.projectWizard.{ProjectWizardJdkComboBox, ProjectWizardJdkComboBoxKt}
 import com.intellij.ide.projectWizard.generators.JdkDownloadService
+import com.intellij.ide.projectWizard.{ProjectWizardJdkComboBox, ProjectWizardJdkComboBoxKt}
+import com.intellij.ide.wizard.NewProjectWizardBaseData.getBaseData
 import com.intellij.ide.wizard.{AbstractNewProjectWizardStep, NewProjectWizardStep}
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.observable.properties.{GraphProperty, ObservableProperty, PropertyGraph}
@@ -12,7 +13,6 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.impl.jdkDownloader.JdkDownloadTask
 import com.intellij.openapi.projectRoots.{JavaSdkVersion, Sdk}
 import com.intellij.openapi.roots.ui.configuration.projectRoot.SdkDownloadTask
-import com.intellij.ide.wizard.NewProjectWizardBaseData.getBaseData
 import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.openapi.ui.validation.DialogValidationRequestor
 import com.intellij.ui.components.JBCheckBox
@@ -21,11 +21,11 @@ import com.intellij.ui.dsl.gridLayout.HorizontalAlign
 import com.intellij.util.lang.JavaVersion
 import org.jetbrains.annotations.Nullable
 import org.jetbrains.plugins.scala.extensions._
-import org.jetbrains.plugins.scala.project.{Version, Versions}
+import org.jetbrains.plugins.scala.project.Versions
 import org.jetbrains.plugins.scala.util.AsynchronousVersionsDownloading
-import org.jetbrains.sbt.project.template.wizard.kotlin_interop.KotlinInteropUtils
-import org.jetbrains.sbt.SbtBundle
 import org.jetbrains.sbt.project.template.SComboBox
+import org.jetbrains.sbt.project.template.wizard.kotlin_interop.KotlinInteropUtils
+import org.jetbrains.sbt.{SbtBundle, SbtVersion}
 
 import java.lang
 import java.util.concurrent.atomic.AtomicBoolean
@@ -39,14 +39,14 @@ import scala.collection.immutable.ListSet
 abstract class SbtNewProjectWizardStep(parent: NewProjectWizardStep) extends AbstractNewProjectWizardStep(parent)
   with AsynchronousVersionsDownloading {
 
-  protected val defaultAvailableSbtVersions: ListSet[Version]
+  protected val defaultAvailableSbtVersions: ListSet[SbtVersion]
 
   @inline private def propertyGraph: PropertyGraph = getPropertyGraph
 
   protected val sdkProperty: GraphProperty[Sdk] = propertyGraph.property(null)
   private val sdkDownloadTaskProperty: GraphProperty[SdkDownloadTask] = propertyGraph.property[SdkDownloadTask](null)
 
-  protected lazy val sbtVersionProperty: GraphProperty[Version] = propertyGraph.property(defaultAvailableSbtVersions.head)
+  protected lazy val sbtVersionProperty: GraphProperty[SbtVersion] = propertyGraph.property(defaultAvailableSbtVersions.head)
   protected val downloadSbtSourcesProperty: GraphProperty[lang.Boolean] = propertyGraph.property(java.lang.Boolean.FALSE)
 
   private def sdkDownloadTask: Option[SdkDownloadTask] = Option(sdkDownloadTaskProperty.get())
@@ -55,10 +55,10 @@ abstract class SbtNewProjectWizardStep(parent: NewProjectWizardStep) extends Abs
   protected final val isSbtVersionManuallySelected: AtomicBoolean = new AtomicBoolean(false)
   private val isSbtLoading = new AtomicBoolean(false)
 
-  protected lazy val sbtVersionComboBox: SComboBox[Version] = createSComboBoxWithSearchingListRenderer(defaultAvailableSbtVersions, None, isSbtLoading)
+  protected lazy val sbtVersionComboBox: SComboBox[SbtVersion] = createSComboBoxWithSearchingListRenderer(defaultAvailableSbtVersions, None, isSbtLoading)
 
-  protected def loadSbtVersions(indicator: ProgressIndicator): Seq[Version]
-  protected def setSbtVersion(versions: Seq[Version]): Unit
+  protected def loadSbtVersions(indicator: ProgressIndicator): Seq[SbtVersion]
+  protected def setSbtVersion(versions: Seq[SbtVersion]): Unit
 
   protected val downloadSbtSourcesCheckbox: JBCheckBox = applyTo(new JBCheckBox(SbtBundle.message("sbt.module.step.download.sources")))(
     _.setToolTipText(SbtBundle.message("sbt.download.sbt.sources"))
@@ -133,7 +133,7 @@ abstract class SbtNewProjectWizardStep(parent: NewProjectWizardStep) extends Abs
     val sbtVersion = sbtVersionProperty.get()
     val minimumCompatibleSbt = JdkSbtCompatibilityChecker.getMinimumSbtToJdkCompatibleVersion(javaVersion, sbtVersion)
     minimumCompatibleSbt.map { version =>
-      SbtBundle.message("jdk.sbt.incompatible.versions.message", javaVersion.feature, version.presentation)
+      SbtBundle.message("jdk.sbt.incompatible.versions.message", javaVersion.feature, version.minor)
     }.orNull
   }
 
@@ -145,7 +145,7 @@ abstract class SbtNewProjectWizardStep(parent: NewProjectWizardStep) extends Abs
     val javaVersion = JavaVersion.compose(jdkVersion.getMaxLanguageLevel.feature())
     val lowestIncompatibleJdk = JdkSbtCompatibilityChecker.getLowestIncompatibleJdkForSbt(javaVersion, sbtVersion)
     lowestIncompatibleJdk.map { version =>
-      new ValidationInfo(SbtBundle.message("sbt.incompatible.versions.message", sbtVersion.presentation, version.toFeatureString), sbtVersionComboBox).asWarning()
+      new ValidationInfo(SbtBundle.message("sbt.incompatible.versions.message", sbtVersion.minor, version.toFeatureString), sbtVersionComboBox).asWarning()
     }.orNull
   }
 
@@ -168,7 +168,7 @@ abstract class SbtNewProjectWizardStep(parent: NewProjectWizardStep) extends Abs
   }
 
   protected final def downloadSbtVersions(disposable: Disposable): Unit = {
-    val sbtDownloadVersions: ProgressIndicator => Seq[Version] = indicator => loadSbtVersions(indicator)
+    val sbtDownloadVersions: ProgressIndicator => Seq[SbtVersion] = indicator => loadSbtVersions(indicator)
     downloadVersionsAsynchronously(isSbtLoading, disposable, sbtDownloadVersions, Versions.SBT.toString)(setSbtVersion)
 
     sbtVersionComboBox.addActionListener { _ =>

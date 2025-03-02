@@ -21,10 +21,10 @@ import org.jetbrains.bsp.protocol.BspConnectionConfig
 import org.jetbrains.bsp.settings.BspProjectSettings._
 import org.jetbrains.bsp.{BspBundle, BspJdkUtil, BspUtil}
 import org.jetbrains.plugins.scala.build.IndicatorReporter
-import org.jetbrains.plugins.scala.project.Version
 import org.jetbrains.plugins.scala.project.external.SdkUtils
 import org.jetbrains.sbt.SbtUtil._
 import org.jetbrains.sbt.project.SbtProjectImportProvider
+import org.jetbrains.sbt.{SbtUtil, SbtVersion}
 
 import java.awt.{GridBagConstraints, GridBagLayout}
 import java.nio.file.Path
@@ -149,12 +149,11 @@ object bspConfigSteps {
   }
 
   def workspaceSetupChoices(workspace: Path): List[ConfigSetup] = {
-
     val vfile = LocalFileSystem.getInstance().findFileByIoFile(workspace.toFile)
 
     val sbtChoice = if (SbtProjectImportProvider.canImport(vfile)) {
-      val sbtVersion = Version(detectSbtVersion(workspace.toFile, getDefaultLauncher))
-      if (sbtVersion.major(2) >= Version("1.4")) {
+      val sbtVersion = detectSbtVersion(workspace, SbtUtil.getDefaultLauncher.toPath)
+      if (sbtVersion >= SbtVersion("1.4")) {
         // sbt >= 1.4 : user choose: bloop or sbt
         List(SbtSetup, BloopSbtSetup)
       } else {

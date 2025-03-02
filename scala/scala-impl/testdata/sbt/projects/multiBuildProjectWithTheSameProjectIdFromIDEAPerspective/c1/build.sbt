@@ -1,4 +1,4 @@
-ThisBuild / scalaVersion := "2.13.6"
+ThisBuild / scalaVersion := "2.13.14"
 
 lazy val mod1 = project.in(file("mod1"))
   .settings(name := "ro/t")

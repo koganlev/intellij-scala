@@ -3,11 +3,11 @@ package project
 
 import com.intellij.openapi.externalSystem.model.ExternalSystemException
 import com.intellij.openapi.externalSystem.model.project.{ExternalSystemSourceType, ModuleData}
-import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.openapi.roots.DependencyScope
 import org.jetbrains.plugins.scala.extensions.RichFile
+import org.jetbrains.sbt.project.SbtProjectResolver.ImportContext
 import org.jetbrains.sbt.project.SourceSetType.SourceSetType
-import org.jetbrains.sbt.project.data.{NestedModuleNode, _}
+import org.jetbrains.sbt.project.data._
 import org.jetbrains.sbt.project.sources.SharedSourcesModuleType
 import org.jetbrains.sbt.structure.{Dependencies, ProjectData, ProjectDependencyData}
 import org.jetbrains.sbt.{structure => sbtStructure}
@@ -16,32 +16,36 @@ import java.io.File
 import java.net.URI
 import scala.reflect.ClassTag
 
+/**
+ * This trait contains utility methods responsible for handling for shared sources directories.
+ * Such shared sources are typically "external" relative to the project base directory, hence the name "External"
+ */
 trait ExternalSourceRootResolution { self: SbtProjectResolver =>
 
-  type ModuleDataNodeType = Node[_<:ModuleData]
+  type ModuleDataNodeType = Node[_ <: ModuleData]
 
   protected sealed abstract class ModuleSourceSet(val parent: ModuleDataNodeType)
   protected case class PrentModuleSourceSet(override val parent: ModuleDataNodeType) extends ModuleSourceSet(parent)
   protected case class CompleteModuleSourceSet(override val parent: ModuleDataNodeType, main: SbtSourceSetModuleNode, test: SbtSourceSetModuleNode) extends ModuleSourceSet(parent)
 
   protected def addSharedSourceModules(
+    sharedRoots: Seq[SharedSourceRoot],
     projectToSourceSet: Map[sbtStructure.ProjectData, ModuleSourceSet],
     libraryNodes: Seq[LibraryNode],
     defaultModuleFilesDirectory: String,
     separateProdTestSources: Boolean,
     buildProjectsGroups: Seq[BuildProjectsGroup]
   ): Unit = {
-    val projects = projectToSourceSet.keys.toSeq
-    val sharedRoots = sharedAndExternalRootsIn(projects)
-    val grouped = groupSharedRoots(sharedRoots)
-    val createSourceModule =
+    val grouped: Seq[SharedSourcesGroup] =
+      groupSharedRoots(sharedRoots)
+
+    val createSourceModule: (SharedSourcesGroup, Seq[LibraryNode], String, Seq[BuildProjectsGroup]) => ModuleDataNodeType =
       // note: we know that if separateProdTestSources are enabled, projectToSourceSet values will be of type CompleteModuleSourceSet
       // and if not, values will be of type PrentModuleSourceSet
-      if (separateProdTestSources) {
-        createSourceModuleNode(_, castMapValues[CompleteModuleSourceSet](projectToSourceSet), _, _, _)
-      } else {
-        createSourceModuleNodeLegacy(_, castMapValues[PrentModuleSourceSet](projectToSourceSet), _, _, _)
-      }
+      if (separateProdTestSources)
+        createSharedSourcesModuleNode(_, castMapValues[CompleteModuleSourceSet](projectToSourceSet), _, _, _)
+      else
+        createSharedSourcesModuleNodeLegacy(_, castMapValues[PrentModuleSourceSet](projectToSourceSet), _, _, _)
 
     grouped.map(createSourceModule(_, libraryNodes, defaultModuleFilesDirectory, buildProjectsGroups))
   }
@@ -64,8 +68,11 @@ trait ExternalSourceRootResolution { self: SbtProjectResolver =>
   private def castMapValues[R <: ModuleSourceSet : ClassTag](map: Map[sbtStructure.ProjectData, ModuleSourceSet]): Map[sbtStructure.ProjectData, R] =
     map.collect { case (key, value: R) => key -> value }
 
-  private def createSourceModuleNodeLegacy(
-    rootGroup: RootGroup,
+  /**
+   * @see [[createSharedSourcesModuleNode]]
+   */
+  private def createSharedSourcesModuleNodeLegacy(
+    rootGroup: SharedSourcesGroup,
     projectToModuleNode: Map[sbtStructure.ProjectData, PrentModuleSourceSet],
     libraryNodes: Seq[LibraryNode],
     defaultModuleFilesDirectory: String,
@@ -73,13 +80,13 @@ trait ExternalSourceRootResolution { self: SbtProjectResolver =>
   ): ModuleDataNodeType = {
     val projects = rootGroup.projects
 
-    val sourceModuleNode = {
+    val sharedSourceModuleNode: ModuleDataNodeType = {
       val ownerProjectsIds = projects.map(projectToModuleNode).map(_.parent.getId)
       val representativeProject = representativeProjectIn(projects)
       val representativeProjectModule = projectToModuleNode.get(representativeProject)
 
       val moduleFilesDirectory = representativeProjectModule.map(_.parent.getModuleFileDirectoryPath).getOrElse(defaultModuleFilesDirectory)
-      val (moduleNode, contentRootNode) = createSourceModule(rootGroup, moduleFilesDirectory, ownerProjectsIds)
+      val (moduleNode, contentRootNode) = createSharedSourceModuleSimple(rootGroup, moduleFilesDirectory, ownerProjectsIds)
       //todo: get jdk from a corresponding jvm module ?
       moduleNode.add(ModuleSdkNode.inheritFromProject)
 
@@ -94,7 +101,7 @@ trait ExternalSourceRootResolution { self: SbtProjectResolver =>
 
       //add library dependencies of the representative project
       val libraryDependencies = representativeProjectDependencies.modules
-      moduleNode.addAll(createLibraryDependencies(libraryDependencies.forProduction)(moduleNode, libraryNodes.map(_.data), offset = unmanagedDependencies.size + 1, separateModulesForProdTest = false))
+      moduleNode.addAll(createLibraryDependencies(libraryDependencies.forProduction)(moduleNode, libraryNodes.map(_.data), offset = unmanagedDependencies.size + 1, useSeparateProdTestSources = false))
 
       //add unmanaged jars/libraries dependencies of the representative project
       moduleNode.addAll(unmanagedDependencies)
@@ -124,17 +131,16 @@ trait ExternalSourceRootResolution { self: SbtProjectResolver =>
 
     val dependentModulesThatRequireSharedSourcesModule = getModulesRequiringSharedModuleTransitivelyLegacy(projectToModuleNode, projects)
 
-
-    //add shared sources module as a dependency to platform modules
+    //add the shared sources module as a dependency to platform modules
     val sharedSourceRootProjects = projects.map(projectToModuleNode).map { case PrentModuleSourceSet(module) =>
       (module, DependencyScope.COMPILE)
     }
     val allModulesThatRequireSharedSourcesModule = sharedSourceRootProjects ++ dependentModulesThatRequireSharedSourcesModule
     allModulesThatRequireSharedSourcesModule.foreach { case (ownerModule, dependencyScope) =>
-      addModuleDependencyNode(ownerModule, sourceModuleNode, dependencyScope)
+      addModuleDependencyNode(ownerModule, sharedSourceModuleNode, dependencyScope)
     }
 
-    sourceModuleNode
+    sharedSourceModuleNode
   }
 
   /**
@@ -155,8 +161,11 @@ trait ExternalSourceRootResolution { self: SbtProjectResolver =>
     }
   }
 
-  private def createSourceModuleNode(
-    rootGroup: RootGroup,
+  /**
+   * @see [[createSharedSourcesModuleNodeLegacy]]
+   */
+  private def createSharedSourcesModuleNode(
+    rootGroup: SharedSourcesGroup,
     projectToSourceSet: Map[sbtStructure.ProjectData, CompleteModuleSourceSet],
     libraryNodes: Seq[LibraryNode],
     defaultModuleFilesDirectory: String,
@@ -168,10 +177,7 @@ trait ExternalSourceRootResolution { self: SbtProjectResolver =>
 
       val (mainOwnerProjectsIds, testOwnerProjectsIds) = collectIdsOfSharedSourcesOwners(projects, projectToSourceSet)
 
-      // add some managed sources of the representative project
-      // (see description of #getManagedSourceRootsFromRepresentativeProjectToIncludeAsBaseModelSourceRoots method for the details)
-      val representativeProjectManagedSources = getManagedSourceRootsFromRepresentativeProjectToIncludeAsBaseModelSourceRoots(rootGroup, representativeProject).toSeq
-      val rootsToSourceType = (rootGroup.roots ++ representativeProjectManagedSources).map(root => (root, calculateEsSourceType(root)))
+      val sourceRootsWithType = rootGroup.sourceRoots.map(root => (root, calculateEsSourceType(root)))
 
       val allSourceModules = collectSourceModules(projectToSourceSet)
       val representativeProjectModule = projectToSourceSet.get(representativeProject)
@@ -184,7 +190,7 @@ trait ExternalSourceRootResolution { self: SbtProjectResolver =>
         libraryNodes,
         SourceSetType.MAIN,
         mainOwnerProjectsIds,
-        rootsToSourceType,
+        sourceRootsWithType,
         allSourceModules
       )
       val sharedSourcesTestModule = createSharedSourceSetModule(
@@ -194,7 +200,7 @@ trait ExternalSourceRootResolution { self: SbtProjectResolver =>
         libraryNodes,
         SourceSetType.TEST,
         testOwnerProjectsIds,
-        rootsToSourceType,
+        sourceRootsWithType,
         allSourceModules
       )
       val parentModule = createParentSharedSourcesModule(rootGroup, moduleFilesDirectory)
@@ -382,8 +388,8 @@ trait ExternalSourceRootResolution { self: SbtProjectResolver =>
       nonJvmProjects.head
   }
 
-  private def createSourceModule(
-    group: RootGroup,
+  private def createSharedSourceModuleSimple(
+    group: SharedSourcesGroup,
     moduleFilesDirectory: String,
     ownerProjectsIds: Seq[String]
   ): (ModuleDataNodeType, ContentRootNode) = {
@@ -401,19 +407,23 @@ trait ExternalSourceRootResolution { self: SbtProjectResolver =>
     moduleNode.add(new SharedSourcesOwnersNode(SharedSourcesOwnersData(ownerProjectsIds)))
 
     val contentRootNode = new ContentRootNode(groupBase.path)
-    group.roots.foreach { root =>
+    group.sourceRoots.foreach { root =>
       val esSourceType = calculateEsSourceType(root)
       contentRootNode.storePath(esSourceType, root.directory.path)
     }
 
     moduleNode.add(contentRootNode)
 
-    setupOutputDirectories(moduleNode, contentRootNode)
+    val contentRootData = contentRootNode.data
+    val contentRootPath = contentRootData.getRootPath
+    contentRootData.storePath(ExternalSystemSourceType.EXCLUDED, new File(contentRootPath, "target").getAbsolutePath)
+
+    setupOutputDirectories(moduleNode, contentRootPath, sourceTypeFilter = None)
 
     (moduleNode, contentRootNode)
   }
 
-  private def createParentSharedSourcesModule(group: RootGroup, moduleFilesDirectory: String): ModuleDataNodeType = {
+  private def createParentSharedSourcesModule(group: SharedSourcesGroup, moduleFilesDirectory: String): ModuleDataNodeType = {
     val moduleNode = new NestedModuleNode(
       SharedSourcesModuleType.instance.getId,
       group.name,
@@ -423,7 +433,7 @@ trait ExternalSourceRootResolution { self: SbtProjectResolver =>
     )
     val contentRootNode = new ContentRootNode(group.base.path)
     moduleNode.add(new SbtDisplayModuleNameNode(group.name))
-    contentRootNode.storePath(ExternalSystemSourceType.EXCLUDED, getOrCreateTargetDir(group.base.path, "target").getAbsolutePath)
+    contentRootNode.storePath(ExternalSystemSourceType.EXCLUDED, new File(group.base.path, "target").getAbsolutePath)
     moduleNode.add(contentRootNode)
 
     moduleNode.add(ModuleSdkNode.inheritFromProject)
@@ -432,13 +442,13 @@ trait ExternalSourceRootResolution { self: SbtProjectResolver =>
   }
 
   private def createSharedSourceSetModule(
-    group: RootGroup,
+    group: SharedSourcesGroup,
     moduleFilesDirectory: String,
     representativeProject: ProjectData,
     libraryNodes: Seq[LibraryNode],
     sourceSetName: SourceSetType,
     ownerProjectsIds: Seq[String],
-    rootsToSourceType: Seq[(Root, ExternalSystemSourceType)],
+    sourceRootsWithType: Seq[(SourceRoot, ExternalSystemSourceType)],
     allSourceModules: Seq[ModuleDataNodeType]
   ): Option[SbtSourceSetModuleNode] = {
     val groupPath = group.base.path
@@ -460,27 +470,27 @@ trait ExternalSourceRootResolution { self: SbtProjectResolver =>
       else !sourceType.isTest
 
     // it is not needed to care about excluded because it is not possible to have excluded type see #calculateEsSourceType
-    val roots = rootsToSourceType
+    val sourceRoots = sourceRootsWithType
       .filter { case (_, sourceType) => isApplicableSource(sourceType) }
       .map { case (root, sourceType) => (root.directory.path, sourceType) }
 
-    if (roots.nonEmpty) {
+    if (sourceRoots.nonEmpty) {
       // it is correct to hardcode a root path to src/main or src/test, because the current logic with shared sources
       // allows the creation of shared source only in those directories. See #basePathFromKnownHardcodedDefaultPaths
-      val contentRootNodes = createContentRootNodes(roots, Seq(s"$groupPath/src/$sourceSetName"))
+      val contentRootNodes = createContentRootNodes(
+        sourceRootBaseDirs = Seq(s"$groupPath/src/$sourceSetName"),
+        sourceRoots = sourceRoots,
+      )
       moduleNode.addAll(contentRootNodes)
     } else {
       // when roots are empty, we shouldn't create a shared sources module
       return None
     }
 
-    moduleNode.setInheritProjectCompileOutputPath(false)
-
-    val (relPath, externalSystemSourceType) =
-      if (sourceSetName == SourceSetType.TEST) ("target/test-classes", ExternalSystemSourceType.TEST)
-      else ("target/classes", ExternalSystemSourceType.SOURCE)
-
-    setupOutputDirectoryBasedOnRelPath(moduleNode, groupPath, externalSystemSourceType, relPath)
+    val esSourceType =
+      if (sourceSetName == SourceSetType.TEST) ExternalSystemSourceType.TEST
+      else ExternalSystemSourceType.SOURCE
+    setupOutputDirectories(moduleNode, groupPath, Some(esSourceType))
 
     val scalaSdk = createScalaSdkData(representativeProject.scala)
     moduleNode.add(ModuleSdkNode.inheritFromProject)
@@ -500,7 +510,7 @@ trait ExternalSourceRootResolution { self: SbtProjectResolver =>
     //add library dependencies of the representative project
     val librariesNodeData = libraryNodes.map(_.data)
     val libraryDependencies = getScopedDependencies(representativeProjectDependencies.modules)
-    moduleNode.addAll(createLibraryDependencies(libraryDependencies)(moduleNode, librariesNodeData, offset = unmanagedDependencies.size + 1, separateModulesForProdTest = true))
+    moduleNode.addAll(createLibraryDependencies(libraryDependencies)(moduleNode, librariesNodeData, offset = unmanagedDependencies.size + 1, useSeparateProdTestSources = true))
 
     //add unmanaged jars/libraries dependencies of the representative project
     moduleNode.addAll(unmanagedDependencies)
@@ -512,36 +522,62 @@ trait ExternalSourceRootResolution { self: SbtProjectResolver =>
     Some(moduleNode)
   }
 
+  /**
+   * The method creates content root nodes based on the given source/resource base directories and roots.
+   * It works in 2 stages:
+   *  1. First, it creates a content root for each source root base directory (`sourceRootBaseDirs`)
+   *  1. Then, it creates dedicated content roots for those source/resource roots that are not located inside
+   *     any base directory. This is primarily used by generated sources in external directories,
+   *     like  `.../target/.../src_managed/main`
+   *
+   * @param sourceRootBaseDirs Contains directories which can contain source/resource roots.<br>
+   *                           Examples:
+   *                             - `.../src/main` (can contain scala, scala-3, resources)
+   *                             - `.../src/test`
+   * @param sourceRoots        Contains concrete directories that serve as source/resource roots.<br>
+   *                           Examples:
+   *                             - `.../src/main/scala`
+   *                             - `.../src/main/scala-3`
+   *                             - `.../src/main/resources`
+   *                             - `.../target/.../src_managed/main`
+   */
   protected def createContentRootNodes(
-    roots: Seq[(String, ExternalSystemSourceType)],
-    rootPaths: Seq[String]
+    sourceRootBaseDirs: Seq[String],
+    sourceRoots: Seq[(String, ExternalSystemSourceType)],
   ): Seq[ContentRootNode] = {
-    val contentRootNodes = rootPaths.distinct.map(path => new ContentRootNode(path))
-    roots.foldLeft(contentRootNodes) { case (nodes, (root, sourceType)) =>
-      val rootFile = new File(root)
-      val suitableContentRootNode = nodes.find { node =>
-        val dataRootFile = new File(node.data.getRootPath)
-        rootFile.isUnder(dataRootFile, strict = false)
-      }
+    val contentRootsForSourceBaseDirs = sourceRootBaseDirs.distinct.map(new ContentRootNode(_))
+    sourceRoots.foldLeft(contentRootsForSourceBaseDirs) { case (contentRootNodes, (sourceRootPath, sourceType)) =>
+      val suitableContentRootNode = findContentRootContainingPath(contentRootNodes, sourceRootPath)
       suitableContentRootNode match {
         case Some(contentRootNode) =>
-          contentRootNode.storePath(sourceType, root)
-          nodes
+          contentRootNode.storePath(sourceType, sourceRootPath)
+          contentRootNodes
         case None =>
-          val node = new ContentRootNode(root)
-          node.storePath(sourceType, root)
-          nodes :+ node
+          val node = new ContentRootNode(sourceRootPath)
+          node.storePath(sourceType, sourceRootPath)
+          contentRootNodes :+ node
       }
     }
   }
 
+  private def findContentRootContainingPath(contentRoots: Seq[ContentRootNode], path: String): Option[ContentRootNode] = {
+    val dir = new File(path)
+    contentRoots.find { contentRoot =>
+      val contentRootDir = new File(contentRoot.data.getRootPath)
+      dir.isUnder(contentRootDir, strict = false)
+    }
+  }
+
   /**
+   * NOTE 1: This is a workaround method<br>
+   * NOTE 2: This workaround is not actual when separate main/test source modules are used
+   *
    * The primary use case for this logic is to handle SBT projects with `projectmatrix` sbt plugin.<br>
    * You can inspect `sbt-projectmatrix-with-source-generators` test project as an example.
    *
    * Details:<br>
-   * In sbt build with `projectmatrix` sbt plugin, for a single project multiple subprojects are generated
-   * For example if we define single project {{{
+   * In sbt build with `projectmatrix` sbt plugin, for a single project multiple subprojects are generated.<br>
+   * For example, if we define a single project {{{
    *     val downstream = (projectMatrix in file("downstream"))
    *         .settings(commonSettings(false) *)
    *         .jvmPlatform(scalaVersions = Seq("2.12.17", "2.13.10"))
@@ -562,114 +598,183 @@ trait ExternalSourceRootResolution { self: SbtProjectResolver =>
    * In case some logic is not clear, try to comment it out and run project structure/highlighting tests
    */
   private def getManagedSourceRootsFromRepresentativeProjectToIncludeAsBaseModelSourceRoots(
-    rootGroup: RootGroup,
+    rootGroup: SharedSourcesGroup,
     representativeProject: ProjectData
-  ): Set[Root] = {
+  ): Set[SourceRoot] = {
     val rootGroupBase = rootGroup.base
     val representativeProjectBase = representativeProject.base
 
-    val sourceRootsFromRepresentative: Seq[Root] = sourceRootsIn(representativeProject)
+    val sourceRootsFromRepresentative: Seq[SourceRoot] = sourceRootsIn(representativeProject)
     sourceRootsFromRepresentative
       .filter(_.managed)
       .toSet
       //ensure that source roots are not already listed in root group roots to avoid duplicates
-      .diff(rootGroup.roots.toSet)
+      .diff(rootGroup.sourceRoots.toSet)
       //ensure that source roots are in the content root of base module
       .filter(_.directory.isUnder(rootGroupBase))
       //get those source roots which are outside representative project content root
       .filterNot(_.directory.isUnder(representativeProjectBase))
   }
 
-  //target directory are expected by jps compiler:
-  //if they are missing all sources are marked dirty and there is no incremental compilation
-  private def setupOutputDirectories(moduleNode: ModuleDataNodeType, contentRootNode: ContentRootNode): Unit = {
-    val contentRootData = contentRootNode.data
-    val contentRoot = contentRootData.getRootPath
-    contentRootData.storePath(ExternalSystemSourceType.EXCLUDED, getOrCreateTargetDir(contentRoot, "target").getAbsolutePath)
-
+  /**
+   * JPS compiler expects target directories:<br>
+   * if they are missing, all sources are marked dirty, and there is no incremental compilation<br>
+   * (SCL-16698)
+   *
+   * UPD: it seems like we don't have to actually create the directory and pollute the file system,
+   * JPS just needs the output path to be registered
+   *
+   * @param sourceTypeFilter when set, only directories for that source type will be created
+   * @see [[com.intellij.compiler.impl.CompileDriver.validateOutputs]]
+   */
+  private def setupOutputDirectories(
+    moduleNode: ModuleDataNodeType,
+    contentRoot: String,
+    sourceTypeFilter: Option[ExternalSystemSourceType]
+  ): Unit = {
     moduleNode.setInheritProjectCompileOutputPath(false)
 
-    Seq((ExternalSystemSourceType.SOURCE, "target/classes"), (ExternalSystemSourceType.TEST, "target/test-classes")).foreach { case (sourceType, relPath) =>
-        setupOutputDirectoryBasedOnRelPath(moduleNode, contentRoot, sourceType, relPath)
+    val dirs = Seq(
+      (ExternalSystemSourceType.SOURCE, "target/classes"),
+      (ExternalSystemSourceType.TEST, "target/test-classes")
+    )
+    val dirsFiltered = sourceTypeFilter match {
+      case Some(st) => dirs.filter(_._1 == st)
+      case None => dirs
+    }
+    dirsFiltered.foreach { case (sourceType, relPath) =>
+      moduleNode.setCompileOutputPath(sourceType, new File(contentRoot, relPath).getAbsolutePath)
     }
   }
 
-  private def setupOutputDirectoryBasedOnRelPath(
-    moduleNode: ModuleDataNodeType,
-    basePath: String,
-    sourceType: ExternalSystemSourceType,
-    relPath: String
-  ): Unit =
-    moduleNode.setCompileOutputPath(sourceType, getOrCreateTargetDir(basePath, relPath).getAbsolutePath)
-
-  private def getOrCreateTargetDir(root: String, relPath: String): File = {
-    val file = new File(root, relPath)
-
-    if (!file.exists()) {
-      FileUtilRt.createDirectory(file)
-    }
-
-    file
-  }
-
-  private def calculateEsSourceType(root: Root): ExternalSystemSourceType =
+  private def calculateEsSourceType(root: SourceRoot): ExternalSystemSourceType =
     ExternalSystemSourceType.from(
-      root.scope == Root.Scope.Test,
+      root.scope == SourceRoot.Scope.Test,
       root.managed,
-      root.kind == Root.Kind.Resources,
+      root.kind == SourceRoot.Kind.Resources,
       false
     )
 
-  private def sharedAndExternalRootsIn(projects: Seq[sbtStructure.ProjectData]): Seq[SharedRoot] = {
-    val projectRoots = projects.flatMap(project => sourceRootsIn(project).map(ProjectRoot(project,_)))
+  /**
+   * @return list of shared source roots which meet these criteria:
+   *         - the roots are located outside base paths of all sbt projects
+   *         - the roots are used in more than one project (that's why it's called "shared")
+   *
+   * @note It's somehow similar to `org.jetbrains.bsp.project.importing.BspResolverLogic.sharedSourceEntries`
+   *       (analog for the BSP external system)
+   */
+  protected def sharedAndExternalRootsIn(projects: Seq[sbtStructure.ProjectData])
+                                        (implicit context: ImportContext): Seq[SharedSourceRoot] = {
+    val projectRootsExternal: Seq[ProjectSourceRoot] =
+      getProjectSourceRootsExternalToAllProjects(projects)
 
-    // TODO return the message about omitted directories
-    val internalSourceDirectories = projectRoots.filter(_.isInternal).map(_.root.directory)
+    /**
+     * ==When separate main/test sources mode is disabled==
+     * We always treat external directory as shared because
+     * we don't create source/content roots for such directories in IntelliJ modules corresponding to the project that
+     * uses this root (see `SbtProjectResolver#validSourceRootPathsIn`)
+     *
+     * ==When separate main/test sources mode is enabled==
+     * We treat the external root as "shared" in one of these cases:
+     *  1. The directory is actually used in more than 1 projects
+     *  1. The directory is a known/standard sbt location for shared sources (SCL-12520)
+     *
+     * Handle the default "shared" directory defined in `sbtcrossproject.CrossType.Full`.<br>
+     * By default, in "Full" mode, the directory has this structure: {{{
+     *   .
+     *   ├── js
+     *   ├── jvm
+     *   ├── native
+     *   └── shared
+     *       └──src/main/scala
+     *       └──src/main/scala2
+     *       └──src/test/resources
+     * }}}
+     */
+    def shouldTreatExternalDirectoryShared(sourceRoot: SourceRoot, projects: Set[ProjectData]): Boolean = {
+      if (context.useSeparateProdTestSources) {
+        // primarily for SCL-12520
+        // TODO: also handle sbtcrossproject.CrossType.Pure.
+        //  But for that we should ideally import the value of during structure extraction
+        //  sbtcrossproject.CrossPlugin.autoImport$#crossProjectCrossType
+        //  (only when sbt-crossproject sbt plugin is enable in the build)
+        val FullCrossTypeSharedSourcesLocation = "shared"
+        projects.size > 1 || sourceRoot.basePathGuessed.exists(_.name == FullCrossTypeSharedSourcesLocation)
+      }
+      else
+        true
+    }
 
-    projectRoots
-      .filter(it => it.isExternal && !internalSourceDirectories.contains(it.root.directory))
-      .groupBy(_.root)
-      .view.mapValues(_.map(_.project).toSet).toMap
-      .map(p => SharedRoot(p._1, p._2.toSeq))
+    val sharedSourceRootsToProjects: Map[SourceRoot, Set[ProjectData]] =
+      projectRootsExternal
+        .groupBy(_.sourceRoot)
+        .view.mapValues(_.map(_.project).toSet)
+        .filter { case (sourceRoot, projects) =>
+          shouldTreatExternalDirectoryShared(sourceRoot, projects)
+        }
+        .toMap
+
+    sharedSourceRootsToProjects
+      .map(p => SharedSourceRoot(p._1, p._2.toSeq))
       .toSeq
   }
 
-  private def groupSharedRoots(roots: Seq[SharedRoot]): Seq[RootGroup] = {
+  private def getProjectSourceRootsExternalToAllProjects(projects: Seq[sbtStructure.ProjectData]): Seq[ProjectSourceRoot] = {
+    val projectSourceRoots: Seq[ProjectSourceRoot] =
+      projects.flatMap(project => sourceRootsIn(project).map(ProjectSourceRoot(project,_)))
+
+    val (projectRootsInternal, projectRootsExternal) =
+      projectSourceRoots.partition(_.isInternal)
+
+    // TODO return the message about omitted directories
+    val sourceRootsInternal: Set[File] =
+      projectRootsInternal.map(_.sourceRoot.directory).toSet
+
+    projectRootsExternal.filter { externalProjectRoot =>
+      !sourceRootsInternal.contains(externalProjectRoot.sourceRoot.directory)
+    }
+  }
+
+  private def groupSharedRoots(sharedSourceRoots: Seq[SharedSourceRoot]): Seq[SharedSourcesGroup] = {
     val nameProvider = new SharedSourceRootNameProvider()
 
     // TODO consider base/projects correspondence
-    val rootsGroupedByBase = roots.groupBy(_.root.basePathFromKnownHardcodedDefaultPaths)
+    val rootsGroupedByBase = sharedSourceRoots.groupBy(_.sourceRoot.basePathGuessed)
     rootsGroupedByBase.toList.collect {
       //NOTE: ignore roots with empty base to avoid dangling "shared-sources" module
       case (Some(base), sharedRoots) =>
         val name = nameProvider.nameFor(base)
         val projects = sharedRoots.flatMap(_.projects).distinct
-        RootGroup(name, sharedRoots.map(_.root), projects)
+        SharedSourcesGroup(name, sharedRoots.map(_.sourceRoot), projects)
     }
   }
 
-  private def sourceRootsIn(project: sbtStructure.ProjectData): Seq[Root] = {
+  private def sourceRootsIn(project: sbtStructure.ProjectData): Seq[SourceRoot] = {
     val relevantScopes = Set("compile", "test", "it")
 
     val relevantConfigurations = project.configurations.filter(it => relevantScopes.contains(it.id))
 
     relevantConfigurations.flatMap { configuration =>
-      def createRoot(kind: Root.Kind)(directory: sbtStructure.DirectoryData): Root = {
-        val scope = if (configuration.id == "compile") Root.Scope.Compile else Root.Scope.Test
-        Root(scope, kind, directory.file.canonicalFile, directory.managed)
+      def createRoot(kind: SourceRoot.Kind)(directory: sbtStructure.DirectoryData): SourceRoot = {
+        val scope = if (configuration.id == "compile") SourceRoot.Scope.Compile else SourceRoot.Scope.Test
+        SourceRoot(scope, kind, directory.file.canonicalFile, directory.managed)
       }
 
-      val sourceRoots = configuration.sources.map(createRoot(Root.Kind.Sources))
-      val resourceRoots = configuration.resources.map(createRoot(Root.Kind.Resources))
+      val sourceRoots = configuration.sources.map(createRoot(SourceRoot.Kind.Sources))
+      val resourceRoots = configuration.resources.map(createRoot(SourceRoot.Kind.Resources))
       sourceRoots ++ resourceRoots
     }
   }
 
   /**
-   * This class is designed to group projects from single SBT build.
-   * Note, SBT single sbt build can consists from multiple other builds using `ProjectRef`
+   * Represents a group of projects associated with a specific sbt build.
+   * Note, a single sbt build can "consist of"/"refer to" multiple other builds using `ProjectRef`
    *
-   * @param buildUri can point to a directory ot a github repository
+   * @param buildUri                    The URI representing the build this group is associated with.
+   *                                    It can point to a directory or a GitHub repository
+   * @param rootProject                 the root project of the build
+   * @param projects                    a list of projects in the build
+   * @param rootProjectModuleNameUnique a unique name for the root project's module
    */
   protected case class BuildProjectsGroup(
     buildUri: URI,
@@ -678,46 +783,103 @@ trait ExternalSourceRootResolution { self: SbtProjectResolver =>
     rootProjectModuleNameUnique: String,
   )
 
-  private case class RootGroup(name: String, roots: Seq[Root], projects: Seq[sbtStructure.ProjectData]) {
-    lazy val base: File = commonBase(roots)
+  /**
+   * Represents data required to create shared sources IntelliJ module
+   *
+   * @param name        shared sources module name
+   * @param sourceRoots list of source roots which will be added to the shared sources module
+   * @param projects    list of projects that should depend on the shared sources module
+   */
+  private case class SharedSourcesGroup(
+    name: String,
+    sourceRoots: Seq[SourceRoot],
+    projects: Seq[sbtStructure.ProjectData]
+  ) {
+    lazy val base: File = commonBase(sourceRoots)
 
-    private def commonBase(roots: Seq[Root]): File = {
+    /**
+     * Returns the common base directory for the roots.<br>
+     * Example 1 {{{
+     *   input:
+     *     ./project1/shared/src/main/scala
+     *     ./project1/shared/src/test/scala
+     *     ./project1/shared/src/main/resources
+     *     ./project1/shared/src/test/resources
+     *   output:
+     *     ./project1/shared/
+     * }}}
+     *
+     * Example 2 {{{
+     *   input:
+     *     ./project1/shared/custom/dir/main/scala
+     *     ./project1/shared/custom/dir/test/scala
+     *     ./project1/shared/custom/dir/main/resources
+     *     ./project1/shared/custom/dir/test/resources
+     *   output:
+     *     ./project1/shared/custom/dir
+     * }}}
+     */
+    private def commonBase(roots: Seq[SourceRoot]): File = {
       import scala.jdk.CollectionConverters._
       val paths = roots.map { root =>
-        root.basePathFromKnownHardcodedDefaultPaths.getOrElse(root.directory)
+        root.basePathGuessed.getOrElse(root.directory)
           .getCanonicalFile.toPath.normalize
       }
 
       paths.foldLeft(paths.head) { case (common, it) =>
         common.iterator().asScala.zip(it.iterator().asScala)
-            .takeWhile { case (c,p) => c==p}
-            .map(_._1)
-            .foldLeft(paths.head.getRoot) { case (base,child) => base.resolve(child)}
+          .takeWhile { case (c, p) => c == p }
+          .map(_._1)
+          .foldLeft(paths.head.getRoot) { case (base, child) => base.resolve(child) }
       }.toFile
     }
   }
 
-  private case class SharedRoot(root: Root, projects: Seq[sbtStructure.ProjectData])
+  //TODO: move these private utility classes to to a companion object/utility object
+  // these classes don't have to be inner and hold extra "outer" reference
+  /**
+   * Represents a source root used in multiple projects
+   *
+   * @param sourceRoot source root (e.g. ~ `myProject/js/src/main/java`
+   * @param projects   list of projects in which the `sourceRoot` is used
+   */
+  protected case class SharedSourceRoot(sourceRoot: SourceRoot, projects: Seq[sbtStructure.ProjectData])
 
-  private case class ProjectRoot(project: sbtStructure.ProjectData, root: Root) {
-    def isInternal: Boolean = !isExternal
-
-    def isExternal: Boolean = root.directory.isOutsideOf(project.base)
+  /**
+   * Represents a source root corresponding to some sbt project
+   */
+  private case class ProjectSourceRoot(project: sbtStructure.ProjectData, sourceRoot: SourceRoot) {
+    /**
+     * @return true if the source root is located inside the current project base directory<br>
+     *         false otherwise (the source root can be in some external shared sources root)
+     */
+    def isInternal: Boolean = !sourceRoot.directory.isOutsideOf(project.base)
   }
 
-  private case class Root(
-    scope: Root.Scope,
-    kind: Root.Kind,
+  protected case class SourceRoot(
+    scope: SourceRoot.Scope,
+    kind: SourceRoot.Kind,
     directory: File,
     managed: Boolean
   ) {
-    lazy val basePathFromKnownHardcodedDefaultPaths: Option[File] = Root.DefaultPaths.collectFirst {
+    /**
+     * In case the source root is located in some "well-known"/"standard" location like "src/main"
+     * this field will contain the path to the parent of that location.<br>
+     * Example: {{{
+     *   directory : .../p1/shared/src/main/scala-2
+     *   result    : Some(.../p1/shared/)
+     *
+     *   directory : .../p1/shared/custom/dir/scala-2
+     *   result    : None
+     * }}}
+     */
+    lazy val basePathGuessed: Option[File] = SourceRoot.DefaultPaths.collectFirst {
       //Example directory: /c/example-project/downstream/src/test/java (check if it parent ends with `src/test`)
       case paths if directory.parent.exists(_.endsWith(paths: _*)) => directory << (paths.length + 1)
     }
   }
 
-  private object Root {
+  protected object SourceRoot {
     private val DefaultPaths = Seq(
       Seq("src", "main"),
       Seq("src", "test"),

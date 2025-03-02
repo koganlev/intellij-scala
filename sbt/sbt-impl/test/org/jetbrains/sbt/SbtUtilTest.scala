@@ -2,8 +2,6 @@ package org.jetbrains.sbt
 
 import com.intellij.execution.configurations.ParametersList
 import org.jetbrains.plugins.scala.extensions.RichFile
-import org.jetbrains.plugins.scala.project.Version
-import org.jetbrains.sbt.SbtUtil._
 import org.junit.Assert._
 import org.junit.Test
 
@@ -11,14 +9,15 @@ import java.io.File
 
 class SbtUtilTest {
 
-  val v0120: Version = Version("0.12.0")
-  val v0130: Version = Version("0.13.0")
-  val v01317: Version = Version("0.13.17")
-  val v100: Version = Version("1.0.0")
-  val v112: Version = Version("1.1.2")
-  val v200: Version = Version("2.0.0")
-  val v223: Version = Version("2.2.3")
+  val v0120: SbtVersion = SbtVersion("0.12.0")
+  val v0130: SbtVersion = SbtVersion("0.13.0")
+  val v01317: SbtVersion = SbtVersion("0.13.17")
+  val v100: SbtVersion = SbtVersion("1.0.0")
+  val v112: SbtVersion = SbtVersion("1.1.2")
+  val v200: SbtVersion = SbtVersion("2.0.0")
+  val v223: SbtVersion = SbtVersion("2.2.3")
 
+  import SbtUtil.defaultGlobalBase
   val globalBase012: File = defaultGlobalBase / "0.12"
   val globalBase013: File = defaultGlobalBase / "0.13"
   val globalBase10: File = defaultGlobalBase / "1.0"
@@ -26,6 +25,7 @@ class SbtUtilTest {
 
   @Test
   def testDefaultGlobalBase(): Unit = {
+    import SbtUtil.globalBase
     assertEquals(globalBase012, globalBase(v0120))
     assertEquals(globalBase013, globalBase(v0130))
     assertEquals(globalBase013, globalBase(v01317))
@@ -37,6 +37,7 @@ class SbtUtilTest {
 
   @Test
   def testDefaultGlobalPluginsDirectory(): Unit = {
+    import SbtUtil.globalPluginsDirectory
     assertEquals(globalBase012 / "plugins", globalPluginsDirectory(v0120))
     assertEquals(globalBase013 / "plugins", globalPluginsDirectory(v0130))
     assertEquals(globalBase013 / "plugins", globalPluginsDirectory(v01317))
@@ -51,6 +52,7 @@ class SbtUtilTest {
     val params = new ParametersList()
     params.addProperty("sbt.global.base", "hockensnock")
 
+    import SbtUtil.globalPluginsDirectory
     val dir = globalPluginsDirectory(v0120, params)
     assertEquals(new File("hockensnock/plugins"), dir)
   }
@@ -59,6 +61,7 @@ class SbtUtilTest {
   def testCustomGlobalPluginsWithEmptyPluginsParam(): Unit = {
     val params = new ParametersList()
 
+    import SbtUtil.globalPluginsDirectory
     val expected1 = globalPluginsDirectory(v0120)
     val actual1 = globalPluginsDirectory(v0120, params)
     assertEquals(expected1, actual1)
@@ -73,7 +76,7 @@ class SbtUtilTest {
     val params = new ParametersList()
     params.addProperty("sbt.global.plugins", "snickenfland")
 
-    val dir = globalPluginsDirectory(v0120, params)
+    val dir = SbtUtil.globalPluginsDirectory(v0120, params)
     assertEquals(new File("snickenfland"), dir)
   }
 
@@ -82,25 +85,29 @@ class SbtUtilTest {
     val params = new ParametersList()
     params.addProperty("sbt.global.base", "hockensnock")
     params.add("-Dsbt.global.plugins=tocklewick")
-    val dir = globalPluginsDirectory(v0120, params)
+
+    val dir = SbtUtil.globalPluginsDirectory(v0120, params)
     assertEquals(new File("tocklewick"), dir)
   }
 
   @Test
-  def testLatestCompatibleVersion(): Unit = {
-    assertEquals(Sbt.Latest_0_13,latestCompatibleVersion(v0130))
-    assertEquals(Sbt.Latest_0_13,latestCompatibleVersion(v01317))
-    assertEquals(Sbt.Latest_1_0,latestCompatibleVersion(v100))
-    assertEquals(Sbt.Latest_1_0,latestCompatibleVersion(v112))
-    assertEquals(Sbt.Latest_1_0,latestCompatibleVersion(Sbt.Latest_1_0))
-    assertEquals(Version("1.9001.1"),latestCompatibleVersion(Version("1.9001.1")))
+  def testUpgradeSbtVersionToTheLatestCompatible(): Unit = {
+    import org.jetbrains.sbt.SbtVersion.upgradeSbtVersionToTheLatestCompatible
 
-    // when this breaks, update latestCompatibleVersion method and this test
-    assertEquals(Sbt.Latest_1_0,latestCompatibleVersion(Sbt.LatestVersion))
+    assertEquals(SbtVersion.Latest.Sbt_0_13, upgradeSbtVersionToTheLatestCompatible(v0130))
+    assertEquals(SbtVersion.Latest.Sbt_0_13, upgradeSbtVersionToTheLatestCompatible(v01317))
+    assertEquals(SbtVersion.Latest.Sbt_1, upgradeSbtVersionToTheLatestCompatible(v100))
+    assertEquals(SbtVersion.Latest.Sbt_1, upgradeSbtVersionToTheLatestCompatible(v112))
+    assertEquals(SbtVersion.Latest.Sbt_1, upgradeSbtVersionToTheLatestCompatible(SbtVersion.Latest.Sbt_1))
+    assertEquals(SbtVersion.Latest.Sbt_LatestIncludingUnreleased, upgradeSbtVersionToTheLatestCompatible(SbtVersion.Latest.Sbt_LatestIncludingUnreleased))
+
+    assertEquals(SbtVersion("1.9001.1"), upgradeSbtVersionToTheLatestCompatible(SbtVersion("1.9001.1")))
+    assertEquals(SbtVersion("2.0.0-M3"), upgradeSbtVersionToTheLatestCompatible(SbtVersion("2.0.0-M3")))
+    assertEquals(SbtVersion("2.0.0"), upgradeSbtVersionToTheLatestCompatible(SbtVersion("2.0.0")))
   }
 
   @Test
-  def testAreQuotesClosedCorrectly():Unit = {
+  def testAreQuotesClosedCorrectly(): Unit = {
     val inputs = Seq(
       """ "sb's'b" """, """ "sb'sb" #aaaa """,
       """ 'sb"sb''#fdfdfd' """, """ 'sb"sb'"b #" c """,
@@ -113,8 +120,18 @@ class SbtUtilTest {
       None, None, None, None, None,
       Some(""" 'sb"sb"b'"""), Some("")
     )
-    inputs.zip(outputs).foreach { case(input, output) =>
+    inputs.zip(outputs).foreach { case (input, output) =>
       assertEquals(output, SbtUtil.removeCommentedOutPartsAndCheckQuotes(input))
+    }
+  }
+
+  @Test
+  def testGetSbtStructureJar(): Unit = {
+    val all = SbtVersion.Latest.AllSbt1 ++ SbtVersion.Latest.AllSbt2
+    val allMinor = all.flatMap(_.generateAllMinorVersions).map(SbtVersion(_))
+    allMinor.foreach { version =>
+      val maybeFile = SbtUtil.getSbtStructureJar(version)
+      assertTrue(s"Can't detect sbt-structure.jar for $version", maybeFile.isDefined)
     }
   }
 }

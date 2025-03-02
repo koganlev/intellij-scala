@@ -37,7 +37,8 @@ class SbtExecutionAware extends ExternalSystemExecutionAware {
     val settings = SbtSettings.getInstance(project)
     val projectSettings = settings.getLinkedProjectSettings(externalProjectPath)
     //NOTE: if the custom VM path is set in the sbt setting, then the import can happen no matter if any JDK is being downloaded
-    if (projectSettings == null || settings.customVMEnabled) return
+    if (projectSettings == null || settings.customVMPath != null)
+      return
 
     // TODO
     //  1. If a project SDK or the JDK specified in the project settings is being downloaded, this execution-aware

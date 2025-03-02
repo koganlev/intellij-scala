@@ -19,7 +19,7 @@ import org.junit.experimental.categories.Category
 @Category(Array(classOf[SlowTests]))
 class ScalaFilePasteProviderInSbtProjectTest extends SbtExternalSystemImportingTestLike {
 
-  override protected def getTestProjectPath: String =
+  override protected def getTestDataProjectPath: String =
     s"scala/conversion/testdata/sbt_projects_for_paste/${getTestName(true)}"
 
   override protected def copyTestProjectToTemporaryDir: Boolean = true

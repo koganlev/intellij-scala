@@ -41,7 +41,9 @@ class ScalaVersionTest extends TestCase {
     assertTrue(ScalaVersion.fromString("2.13.13").get == ScalaVersion.fromString("2.13.13").get)
     assertTrue(ScalaVersion.fromString("2.13.14-RC1").get > ScalaVersion.fromString("2.13.13").get)
     assertTrue(ScalaVersion.fromString("2.13.13-RC1").get < ScalaVersion.fromString("2.13.13").get)
-    assertTrue(ScalaVersion.fromString("2.13.13-bin-db-2-fd41f6b").get > ScalaVersion.fromString("2.13.13").get)
 
+    // Note, this is not a hard requirement at the moment.
+    // It's just how any suffixes are treated in org.jetbrains.plugins.scala.project.Version
+    assertTrue(ScalaVersion.fromString("2.13.13-bin-db-2-fd41f6b").get < ScalaVersion.fromString("2.13.13").get)
   }
 }

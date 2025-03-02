@@ -13,23 +13,24 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ui.configuration.ProjectStructureConfigurable
 import com.intellij.openapi.roots.ui.configuration.projectRoot.{LibrariesContainer, LibrariesContainerFactory}
 import com.intellij.openapi.ui.ValidationInfo
-import com.intellij.ui.{DocumentAdapter, UIBundle}
 import com.intellij.ui.components.JBTextField
 import com.intellij.ui.dsl.builder._
 import com.intellij.ui.dsl.gridLayout.HorizontalAlign
 import com.intellij.ui.layout.ValidationInfoBuilder
-import kotlin.Unit.{INSTANCE => KUnit}
+import com.intellij.ui.{DocumentAdapter, UIBundle}
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.plugins.scala.extensions.{ObjectExt, ToNullSafe}
 import org.jetbrains.plugins.scala.isUnitTestMode
-import org.jetbrains.plugins.scala.project.{Version, Versions}
+import org.jetbrains.plugins.scala.project.Versions
 import org.jetbrains.plugins.scala.project.template.{PackagePrefixStepLike, ScalaSDKStepLike}
 import org.jetbrains.plugins.scala.util.ui.extensions.JComboBoxOps
+import org.jetbrains.sbt.SbtVersion
 import org.jetbrains.sbt.project.template.wizard.{SbtNewProjectWizardStep, ScalaNewProjectWizardMultiStep, ScalaVersionStepLike}
 import org.jetbrains.sbt.project.template.{SbtModuleBuilder, SbtModuleBuilderSelections}
 
 import java.util.concurrent.atomic.AtomicReference
 import javax.swing.JLabel
+import kotlin.Unit.{INSTANCE => KUnit}
 import scala.annotation.nowarn
 import scala.collection.immutable.ListSet
 
@@ -42,8 +43,8 @@ final class SbtScalaNewProjectWizardStep(parent: ScalaNewProjectWizardMultiStep)
     with PackagePrefixStepLike
     with ScalaVersionStepLike {
 
-  private val availableSbtVersions: AtomicReference[Option[Seq[Version]]] = new AtomicReference(None)
-  private val availableSbtVersionsForScala3: AtomicReference[Option[Seq[Version]]] = new AtomicReference(None)
+  private val availableSbtVersions: AtomicReference[Option[Seq[SbtVersion]]] = new AtomicReference(None)
+  private val availableSbtVersionsForScala3: AtomicReference[Option[Seq[SbtVersion]]] = new AtomicReference(None)
 
   override protected val librariesContainer: LibrariesContainer =
     LibrariesContainerFactory.createContainer(parent.getContext.getProject)
@@ -61,15 +62,15 @@ final class SbtScalaNewProjectWizardStep(parent: ScalaNewProjectWizardMultiStep)
   @TestOnly override private[project] def setAddSampleCode(value: java.lang.Boolean): Unit = addSampleCodeProperty.set(value)
 
   @TestOnly override def setScalaVersion(version: String): Unit = scalaVersionComboBox.setSelectedItemEnsuring(version)
-  @TestOnly override private[project] def setSbtVersion(version: String): Unit = sbtVersionComboBox.setSelectedItemEnsuring(Version(version))
+  @TestOnly override private[project] def setSbtVersion(version: String): Unit = sbtVersionComboBox.setSelectedItemEnsuring(SbtVersion(version))
   @TestOnly override private[project] def setPackagePrefix(prefix: String): Unit = packagePrefixTextField.setText(prefix)
 
   private def getModuleName: String = moduleNameProperty.get()
 
   override protected val selections: SbtModuleBuilderSelections = SbtModuleBuilderSelections.default
 
-  override protected val defaultAvailableSbtVersions: ListSet[Version] = ListSet(Versions.SBT.allHardcodedVersions: _*)
-  private lazy val defaultAvailableSbtVersionsForScala3: Seq[Version] = Versions.SBT.sbtVersionsForScala3(defaultAvailableSbtVersions.toSeq)
+  override protected val defaultAvailableSbtVersions: ListSet[SbtVersion] = ListSet(Versions.SBT.allHardcodedVersions.map(SbtVersion(_)): _*)
+  private lazy val defaultAvailableSbtVersionsForScala3: Seq[SbtVersion] = Versions.SBT.sbtVersionsForScala3(defaultAvailableSbtVersions.toSeq)
 
   locally {
     moduleNameProperty.dependsOn(parent.getNameProperty: ObservableProperty[String], (() => parent.getName): kotlin.jvm.functions.Function0[_ <: String])
@@ -146,14 +147,14 @@ final class SbtScalaNewProjectWizardStep(parent: ScalaNewProjectWizardMultiStep)
     initSelectionsAndUi(getContext.getDisposable)
   }
 
-  override def setSbtVersion(versions: Seq[Version]): Unit = {
+  override def setSbtVersion(versions: Seq[SbtVersion]): Unit = {
     availableSbtVersions.set(versions.toOption)
     availableSbtVersionsForScala3.set(Versions.SBT.sbtVersionsForScala3(versions).toOption)
     updateSelectionsAndElementsModelForSbt(versions)
   }
 
-  override def loadSbtVersions(indicator: ProgressIndicator): Seq[Version] =
-    Versions.SBT.loadVersionsWithProgress(indicator)
+  override def loadSbtVersions(indicator: ProgressIndicator): Seq[SbtVersion] =
+    Versions.SBT.loadVersionsWithProgress(indicator).map(SbtVersion(_))
 
   /**
    * Initializes selections and UI elements only once
@@ -173,7 +174,7 @@ final class SbtScalaNewProjectWizardStep(parent: ScalaNewProjectWizardMultiStep)
     initUiElementsListeners()
   }
 
-  private def updateSelectionsAndElementsModelForSbt(sbtVersions: Seq[Version]): Unit = {
+  private def updateSelectionsAndElementsModelForSbt(sbtVersions: Seq[SbtVersion]): Unit = {
     if (!isSbtVersionManuallySelected.get()) {
       selections.sbtVersion = None
       selections.updateSbtVersion(sbtVersions)

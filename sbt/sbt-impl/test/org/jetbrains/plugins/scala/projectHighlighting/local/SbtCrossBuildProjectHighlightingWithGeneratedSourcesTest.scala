@@ -5,7 +5,7 @@ import com.intellij.psi.PsiFile
 import org.jetbrains.plugins.scala.projectHighlighting.base.SbtProjectHighlightingLocalProjectsTestBase
 import org.jetbrains.plugins.scala.projectHighlighting.reporter.HighlightingProgressReporter
 import org.jetbrains.sbt.project.ProjectStructureMatcher
-import org.jetbrains.sbt.project.ProjectStructureMatcher.ProjectComparisonOptions
+import org.jetbrains.sbt.project.utils.ProjectStructureComparisonContext
 
 class SbtCrossBuildProjectHighlightingWithGeneratedSourcesTest extends SbtProjectHighlightingLocalProjectsTestBase {
 
@@ -160,7 +160,8 @@ class SbtCrossBuildProjectHighlightingWithGeneratedSourcesTest extends SbtProjec
       override protected def defaultAssertMatch: ProjectStructureMatcher.AttributeMatchType =
         ProjectStructureMatcher.AttributeMatchType.Exact
     }
-    implicit val comparisonOptions: ProjectComparisonOptions = ProjectComparisonOptions(strictCheckForBuildModules = true)
-    matcher.assertProjectsEqual(expectedProject, getProject)(comparisonOptions)
+    val compareContext = ProjectStructureComparisonContext.Implicit.default(getProject)
+      .withOptions(_.copy(strictCheckForBuildModules = true))
+    matcher.assertProjectsEqual(expectedProject, getProject)(compareContext)
   }
 }

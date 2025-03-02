@@ -6,11 +6,10 @@ import org.jetbrains.bsp.BspBundle
 import org.jetbrains.bsp.buildinfo.BuildInfo
 import org.jetbrains.plugins.scala.build.{BuildMessages, BuildReporter}
 import org.jetbrains.plugins.scala.extensions.invokeAndWait
-import org.jetbrains.plugins.scala.project.Version
-import org.jetbrains.sbt.SbtUtil.{detectSbtVersion, getDefaultLauncher, sbtVersionParam, upgradedSbtVersion}
+import org.jetbrains.sbt.SbtUtil.{detectSbtVersion, getDefaultLauncher, sbtVersionParam}
 import org.jetbrains.sbt.project.SbtExternalSystemManager
 import org.jetbrains.sbt.project.structure.SbtStructureDump
-import org.jetbrains.sbt.{Sbt, SbtUtil}
+import org.jetbrains.sbt.{Sbt, SbtUtil, SbtVersion}
 
 import java.nio.file.Path
 import scala.util.Try
@@ -43,8 +42,8 @@ object BloopPreImporter {
     )
     val sbtCommands = "bloopInstall"
 
-    val projectSbtVersion = Version(detectSbtVersion(baseDir.toFile, getDefaultLauncher))
-    val sbtVersion = upgradedSbtVersion(projectSbtVersion)
+    val projectSbtVersion = detectSbtVersion(baseDir, SbtUtil.getDefaultLauncher.toPath)
+    val sbtVersion = SbtVersion.upgradeSbtVersionToTheLatestCompatible(projectSbtVersion)
     val upgradeParam =
       if (sbtVersion > projectSbtVersion)
         List(sbtVersionParam(sbtVersion))

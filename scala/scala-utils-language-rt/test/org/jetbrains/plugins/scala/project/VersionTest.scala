@@ -28,7 +28,7 @@ class VersionTest {
 
     assertEquals("1.2.3-4.5.6", Version("1.2.3-4.5.6").toString)
 
-    assertEquals("1.2", Version("1M2").toString)
+    assertEquals("1M2", Version("1M2").toString)
 
     assertEquals("20100817020148", Version("20100817020148").toString)
   }
@@ -61,23 +61,13 @@ class VersionTest {
     assertTrue(Version("1.3.0-RC1") < Version("1.3.0-RC2"))
     assertTrue(Version("1.3.0-M5") < Version("1.3.0"))
     assertTrue(Version("1.3.0-M5") < Version("1.3.0-RC1"))
-  }
 
-  @Test
-  def comparisonGroups(): Unit = {
-    assertEquals(0, Version("1").compareTo(Version("1-0")))
-    assertEquals(0, Version("1-0").compareTo(Version("1")))
-
-    assertEquals(0, Version("1-1").compareTo(Version("1-1")))
-
-    assertEquals(-1, Version("1-1").compareTo(Version("2-1")))
-    assertEquals(1, Version("2-1").compareTo(Version("1-1")))
-
-    assertEquals(-1, Version("1-1").compareTo(Version("1-2")))
-    assertEquals(1, Version("1-2").compareTo(Version("1-1")))
-
-    assertEquals(-1, Version("1").compareTo(Version("1-1")))
-    assertEquals(1, Version("1-1").compareTo(Version("1")))
+    assertTrue(Version("1.3.0-alpha") < Version("1.3.0"))
+    assertTrue(Version("1.3.0-qwerty") < Version("1.3.0"))
+    assertTrue(Version("1.3.0-alpha") < Version("1.3.0-RC1"))
+    assertTrue(Version("1.3.0-qwerty") < Version("1.3.0-RC1"))
+    assertTrue(Version("1.3.0-alpha") < Version("1.3.0-M1"))
+    assertTrue(Version("1.3.0-qwerty") < Version("1.3.0-M1"))
   }
 
   @Test

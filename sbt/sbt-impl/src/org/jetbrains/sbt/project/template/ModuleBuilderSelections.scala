@@ -1,6 +1,7 @@
 package org.jetbrains.sbt.project.template
 
 import org.jetbrains.plugins.scala.project.{Version, Versions}
+import org.jetbrains.sbt.SbtVersion
 
 class ScalaModuleBuilderSelections(
   var scalaVersion: Option[String],
@@ -8,18 +9,17 @@ class ScalaModuleBuilderSelections(
 ) {
 
   /**
-   * For now we show latest Scala 2 version in the dropdown list.<br>
-   * If the user wants to select some other version we need to show that there are Scala 3 versions above the the selected version.<br>
-   * By default combo box will show the selected element at the top and it's not clear that there are other versions above it.
+   * For now, we show the latest Scala 2 version in the dropdown list.<br>
+   * If the user wants to select some other version, we need to show that there are Scala 3 versions above the selected version.<br>
+   * By default, the combo box will show the selected element at the top, and it's not clear that there are other versions above it.
    *
    * @see [[org.jetbrains.plugins.scala.project.Versions.Scala.initiallySelectedVersion]]
    */
   var scrollScalaVersionDropdownToTheTop = false
 
   def updateScalaVersion(versions: Seq[String]): Unit = {
-    val version = scalaVersion.getOrElse(Versions.Scala.initiallySelectedVersion(versions))
-
-    scalaVersion = Some(version)
+    val scalaVersionNew = scalaVersion.orElse(Versions.Scala.initiallySelectedVersion(versions))
+    scalaVersion = scalaVersionNew
     scrollScalaVersionDropdownToTheTop = scalaVersion.isEmpty
   }
 
@@ -28,7 +28,7 @@ class ScalaModuleBuilderSelections(
 }
 
 final class SbtModuleBuilderSelections(
-  var sbtVersion: Option[Version],
+  var sbtVersion: Option[SbtVersion],
   _scalaVersion: Option[String],
   _downloadScalaSdkSources: Boolean,
   var downloadSbtSources: Boolean,
@@ -38,9 +38,9 @@ final class SbtModuleBuilderSelections(
   override def copy(): SbtModuleBuilderSelections =
     new SbtModuleBuilderSelections(sbtVersion, scalaVersion, downloadScalaSdkSources, downloadSbtSources, packagePrefix)
 
-  def updateSbtVersion(versions: Seq[Version]): Unit = {
-    val version = sbtVersion.getOrElse(Version(Versions.SBT.initiallySelectedVersion(versions.map(_.presentation))))
-    sbtVersion = Some(version)
+  def updateSbtVersion(versions: Seq[SbtVersion]): Unit = {
+    val sbtVersionNew = sbtVersion.orElse(Versions.SBT.initiallySelectedVersion(versions.map(_.minor)).map(SbtVersion(_)))
+    sbtVersion = sbtVersionNew
   }
 }
 

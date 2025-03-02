@@ -6,6 +6,7 @@ import coursier.util.Artifact
 import coursier.{Classifier, Fetch, Module, ModuleName, Organization, Repositories, moduleNameString, organizationString, util}
 import sbt.*
 import sbt.Keys.baseDirectory
+import sbt.librarymanagement.CrossVersion
 
 import java.io.File
 import java.net.URI
@@ -13,25 +14,26 @@ import java.nio.file.{Path, Paths}
 import scala.annotation.nowarn
 
 /**
-  * Download artifacts from Maven and map them into a local repository, so that sbt can resolve artifacts locally without depending on online resolvers.
-  */
+ * Download artifacts from Maven and map them into a local repository, so that sbt can resolve artifacts locally without depending on online resolvers.
+ */
 object LocalRepoPackager extends AutoPlugin {
 
   val localRepoDependencies = settingKey[Seq[Dependency]]("dependencies to be downloaded into local repo")
-  val localRepoUpdate = taskKey[Seq[(Path,Path)]]("create or update local repo")
+  val localRepoUpdate = taskKey[Seq[(Path, Path)]]("create or update local repo")
 
   override def projectSettings: Seq[Def.Setting[?]] = Seq(
     localRepoUpdate := updateLocalRepo(
       localRepoDependencies.value,
-      (ThisBuild/baseDirectory).value.toPath / "project" / "resources")
+      (ThisBuild / baseDirectory).value.toPath / "project" / "resources")
   )
 
   /**
    * Create or update a local repository at `localRepoRoot` with given `dependencies`
    * and return the set of path it comprises.
+   *
    * @return path mappings (file path -> local repo relative location)
    */
-  def updateLocalRepo(dependencies: Seq[Dependency], resourceDir: Path): Seq[(Path,Path)] = {
+  def updateLocalRepo(dependencies: Seq[Dependency], resourceDir: Path): Seq[(Path, Path)] = {
 
     @nowarn("cat=deprecation")
     val depsWithExclusions = dependencies
@@ -52,7 +54,7 @@ object LocalRepoPackager extends AutoPlugin {
       .withMainArtifacts()
       .addExtraArtifacts { dpas =>
         // hack to get poms, signatures and checksums as "artifacts"
-        dpas.flatMap { case (_,_,art) =>
+        dpas.flatMap { case (_, _, art) =>
           val meta = art.extra.get("metadata").toSeq
             .flatMap(a => List(a) ++ artifactExtra(a))
           meta ++ artifactExtra(art)
@@ -96,27 +98,41 @@ object LocalRepoPackager extends AutoPlugin {
 
     val res: Seq[Path] = for {
       artifact <- artifact.toSeq
-      root     <- repositoryRoots(fetch, artifact)
+      root <- repositoryRoots(fetch, artifact)
     } yield root.relativize(artifact)
     res.head
   }
 
+  // Q: this method logic looks very similar to sbt.Defaults.sbtPluginExtra. Can we somehow reuse it?
   def sbtDep(org: String, moduleName: String, version: String, sbtVersion: String): Dependency = {
-    val scalaVersion = sbtVersion match {
-      case "0.13" => "2.10"
-      case x if x.startsWith("1.") => "2.12"
-      case _ => throw new IllegalArgumentException(s"unsupported sbt version: $sbtVersion")
-    }
+    val scalaBinVer = scalaBinaryVersionForSbtVersion(sbtVersion)
+    val module = sbtCrossModule(ModuleID(org, moduleName, version), sbtVersion, scalaBinVer)
+    Dependency(module, version)
+  }
 
-    val mod = Module(
-      Organization(org),
-      ModuleName(moduleName),
-      attributes = Map(
-        "scalaVersion" -> scalaVersion,
-        "sbtVersion" -> sbtVersion
-      )
+  // NOTE: I couldn't find a similar utility method in sbt (at least in sbt 1.10.7)
+  // There is sbt.PluginCross.scalaVersionFromSbtBinaryVersion, but it's not updated for sbt 2.0 and is private
+  private def scalaBinaryVersionForSbtVersion(sbtVersion: String): String =
+    if (sbtVersion == "0.13") "2.10"
+    else if (sbtVersion.startsWith("1.")) "2.12"
+    else if (sbtVersion.startsWith("2.")) "3"
+    else throw new IllegalArgumentException(s"unsupported sbt version: $sbtVersion")
+
+  private def sbtCrossModule(
+    moduleId: ModuleID,
+    sbtVersion: String,
+    scalaVersion: String,
+  ): coursier.Module = {
+    val moduleName = moduleId.name
+    val moduleIdNew = Defaults.sbtPluginExtra(moduleId, sbtVersion, scalaVersion)
+    val moduleNameNew = CrossVersion(moduleIdNew.crossVersion, sbtVersion, scalaVersion).fold(moduleName)(_(moduleName))
+    // stripping prefix like in `lmcoursier.FromSbt`
+    val attributesForCoursier = moduleIdNew.extraAttributes.map { case (k, v) => k.stripPrefix("e:") -> v }
+    Module(
+      Organization(moduleId.organization),
+      ModuleName(moduleNameNew),
+      attributesForCoursier
     )
-    Dependency(mod, version)
   }
 
   private def repositoryRoots(fetch: Fetch[coursier.util.Task], artifact: Path): Seq[Path] = {

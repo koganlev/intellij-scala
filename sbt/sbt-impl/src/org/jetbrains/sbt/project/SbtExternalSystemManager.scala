@@ -13,6 +13,7 @@ import com.intellij.openapi.projectRoots.{JavaSdk, JavaSdkType, JdkUtil, Project
 import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.util.{Pair, SystemInfo}
 import com.intellij.util.Function
+import org.apache.commons.lang3.StringUtils
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.jps.model.java.JdkVersionDetector
 import org.jetbrains.plugins.scala.extensions.{RichFile, invokeAndWait}
@@ -81,8 +82,8 @@ object SbtExternalSystemManager {
     val linkedProjectSettings = settings.getLinkedProjectSettings(path)
     val projectSettings = Option(linkedProjectSettings).getOrElse(SbtProjectSettings.default)
 
-    val customLauncher = settingsState.customLauncherEnabled.option(settingsState.customLauncherPath).map(_.toFile)
-    val customSbtStructureFile = settingsState.customSbtStructurePath.nonEmpty.option(settingsState.customSbtStructurePath.toFile)
+    val customLauncher = Option(settingsState.customLauncherPath).map(_.toFile)
+    val customSbtStructureFile = Option(settingsState.customSbtStructurePath).filterNot(StringUtils.isBlank).map(_.toFile)
 
     val realProjectPath = Option(projectSettings.getExternalProjectPath).getOrElse(path)
 
@@ -91,7 +92,7 @@ object SbtExternalSystemManager {
       val file = new File(realProjectPath)
       if (file.isDirectory) file else file.getParentFile
     }
-    val sbtVersion = detectSbtVersion(projectRoot, sbtLauncher)
+    val sbtVersion = detectSbtVersion(projectRoot.toPath, sbtLauncher.toPath)
 
     val projectJdkName = bootstrapJdk(project, projectSettings)
     val vmExecutable = getVmExecutable(projectJdkName, settingsState, sbtVersion)
@@ -135,12 +136,12 @@ object SbtExternalSystemManager {
     result
   }
 
-  private def getVmExecutable(projectJdkName: Option[String], settings: SbtSettings.State, sbtVersion: String): File = {
+  private def getVmExecutable(projectJdkName: Option[String], settings: SbtSettings.State, sbtVersion: SbtVersion): File = {
     val jdkTable = ProjectJdkTable.getInstance()
 
     val customPath = settings.customVMPath
     val customVmExecutable =
-      if (settings.customVMEnabled && JdkUtil.checkForJre(customPath)) {
+      if (customPath != null && JdkUtil.checkForJre(customPath)) {
         Log.debug(s"Using Java from custom VM path: $customPath")
 
         @NonNls val javaExe = if (SystemInfo.isWindows) "java.exe" else "java"
@@ -166,16 +167,15 @@ object SbtExternalSystemManager {
       }
       .orElse {
         //automatically detect JDK if none is defined
-        val sbt = Version(sbtVersion)
         invokeAndWait {
-          val sdk = SbtProcessJdkGuesser.findJdkWithSuitableVersion(jdkTable, sbt)
+          val sdk = SbtProcessJdkGuesser.findJdkWithSuitableVersion(jdkTable, sbtVersion)
           if (sdk.sdk.isEmpty) {
             Log.debug("Preconfigure JDK table for SBT import")
-            SbtProcessJdkGuesser.preconfigureJdkForSbt(jdkTable, sbt)
+            SbtProcessJdkGuesser.preconfigureJdkForSbt(jdkTable, sbtVersion)
           }
         }
 
-        val suitableSdk = SbtProcessJdkGuesser.findJdkWithSuitableVersion(jdkTable, sbt)
+        val suitableSdk = SbtProcessJdkGuesser.findJdkWithSuitableVersion(jdkTable, sbtVersion)
         val autoDetectedSdk = suitableSdk.sdk
           //if no suitable sdj >= 8 found, take any JDK, and hope that sbt import will work
           .orElse(suitableSdk.allSdkSorted.lastOption)
@@ -200,14 +200,13 @@ object SbtExternalSystemManager {
   ): Seq[String] = {
     @NonNls val userOptions = settings.vmParameters.split("\\s+").toSeq.filter(_.nonEmpty)
 
-    @NonNls val maxHeapSizeString = settings.maximumHeapSize.trim
+    @NonNls val maxHeapSizeString = settings.maximumHeapSize
     @NonNls val maxHeapOptions =
-      if (maxHeapSizeString.nonEmpty) {
+      if (maxHeapSizeString != null) {
         val maxHeapSize =
-          JvmMemorySize.parse(maxHeapSizeString + "M")
-            .orElse(JvmMemorySize.parse(maxHeapSizeString))
+          JvmMemorySize.parse(s"${maxHeapSizeString}M")
             .map(_.toString)
-            .getOrElse(maxHeapSizeString + "M")
+            .getOrElse(s"${maxHeapSizeString}M")
 
         Seq(s"-Xmx$maxHeapSize")
       } else Seq.empty
@@ -236,7 +235,7 @@ object SbtExternalSystemManager {
   }
 
 
-  /** @param select Allow only options that pass this filter on option name */
+  /** @param select Allow only options that pass this filter on the option name */
   private def proxyOptions(select: String => Boolean): Seq[String] = {
     val optionsMap = SbtUtil.getStaticProxyConfigurationJvmOptions
     optionsMap.toSeq.collect { case (name,value) if select(name) => s"-D$name=$value" }

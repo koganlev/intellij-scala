@@ -15,16 +15,16 @@ import com.intellij.openapi.roots.impl.libraries.LibraryEx
 import com.intellij.openapi.roots.{LanguageLevelProjectExtension, ProjectRootManager}
 import com.intellij.util.lang.JavaVersion
 import org.jetbrains.plugins.scala.compiler.data.IncrementalityType
+import org.jetbrains.plugins.scala.project._
 import org.jetbrains.plugins.scala.project.external._
 import org.jetbrains.plugins.scala.project.settings.ScalaCompilerConfiguration
 import org.jetbrains.sbt.project.settings.SbtProjectSettings
 import org.jetbrains.sbt.project.sources.SharedSourcesModuleType
+import org.jetbrains.sbt.project.template.wizard.JdkSbtCompatibilityChecker
 import org.jetbrains.sbt.settings.SbtSettings
 
 import java.util
 import scala.jdk.CollectionConverters.CollectionHasAsScala
-import org.jetbrains.plugins.scala.project._
-import org.jetbrains.sbt.project.template.wizard.JdkSbtCompatibilityChecker
 
 class SbtProjectDataService extends ScalaAbstractProjectDataService[SbtProjectData, Project](SbtProjectData.Key) {
 
@@ -84,9 +84,9 @@ class SbtProjectDataService extends ScalaAbstractProjectDataService[SbtProjectDa
     val jdk2 = jdk1.orElse(existingJdk)
     val jdk3 = jdk2.orElse {
       SdkUtils.findMostRecentJdkConfiguredInIde { sdk =>
-        val sbt = Version(data.sbtVersion)
+        val sbtVersion = SbtVersion(data.sbtVersion)
         val sdkVersion = JavaVersion.parse(sdk.getVersionString)
-        JdkSbtCompatibilityChecker.isSbtAndJdkVersionCompatible(sdkVersion, sbt, strict = true)
+        JdkSbtCompatibilityChecker.isSbtAndJdkVersionCompatible(sdkVersion, sbtVersion, strict = true)
       }
     }
     val jdk4 = jdk3.orElse(SdkUtils.mostRecentRegisteredJdk)

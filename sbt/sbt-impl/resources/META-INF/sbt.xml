@@ -20,6 +20,9 @@
 
         <listener topic="com.intellij.openapi.roots.ModuleRootListener"
                   class="org.jetbrains.sbt.project.SbtProjectImportStateModuleRootListener"/>
+
+        <listener topic="com.intellij.openapi.project.DumbService$DumbModeListener"
+                  class="org.jetbrains.sbt.project.LegacySbtVersionNotifications$MyDumbModeListener"/>
     </projectListeners>
 
     <extensions defaultExtensionNs="com.intellij">
@@ -89,6 +92,7 @@
         <externalSystemSettingsListener implementation="org.jetbrains.sbt.project.ShowSbtShellAfterCreatingNewProject"/>
 
         <notificationGroup id="sbt.configuration.migration" displayType="STICKY_BALLOON" bundle="messages.SbtBundle" key="sbt.configuration.upgrade.id"/>
+        <notificationGroup id="sbt.legacy.version.detected" displayType="STICKY_BALLOON" bundle="messages.SbtBundle" key="sbt.notification.group.id.legacy.version.detected"/>
 
         <psi.referenceContributor language="sbt" implementation="org.jetbrains.sbt.language.references.SbtReferenceContributor" order="first"/>
 
@@ -174,6 +178,7 @@
         <editorNotificationProvider implementation="org.jetbrains.sbt.project.SetupScalaHighlightingNotificationProvider"/>
 
         <postStartupActivity implementation="org.jetbrains.sbt.project.SbtProjectManagerListener" />
+        <postStartupActivity implementation="org.jetbrains.sbt.project.LegacySbtVersionNotifications$MyProjectActivity"/>"
     </extensions>
 
     <actions>

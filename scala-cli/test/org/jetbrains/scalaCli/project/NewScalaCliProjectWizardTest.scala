@@ -10,11 +10,11 @@ import com.intellij.testFramework.JUnit38AssumeSupportRunner
 import org.jetbrains.bsp.BSP
 import org.jetbrains.bsp.protocol.BspCommunicationService
 import org.jetbrains.plugins.scala.extensions.inWriteAction
-import org.jetbrains.sbt.project.{ExactMatch, NewScalaProjectWizardTestBase, ProjectStructureTestUtils}
 import org.jetbrains.sbt.project.ProjectStructureDsl._
-import org.jetbrains.sbt.project.ProjectStructureMatcher.ProjectComparisonOptions
 import org.jetbrains.sbt.project.template.wizard.buildSystem.BuildSystemScalaNewProjectWizardData.scalaBuildSystemData
 import org.jetbrains.sbt.project.template.wizard.buildSystem.ScalaNewProjectWizardData.scalaData
+import org.jetbrains.sbt.project.utils.ProjectComparisonOptions
+import org.jetbrains.sbt.project.{ExactMatch, NewScalaProjectWizardTestBase, ProjectStructureTestUtils}
 import org.junit.Assume
 import org.junit.runner.RunWith
 
@@ -77,8 +77,8 @@ class NewScalaCliProjectWizardTest extends NewScalaProjectWizardTestBase with Ex
   }
 
   def testCreateSimpleProjectScala2(): Unit = {
-    val scalaLibraries = ProjectStructureTestUtils.expectedScalaLibraryWithScalaSdk(useEnv = false)("2.13.6", BSP.ProjectSystemId)
-    runSimpleCreateSbtProjectTest("2.13.6", scalaLibraries)
+    val scalaLibraries = ProjectStructureTestUtils.expectedScalaLibraryWithScalaSdk(useEnv = false)("2.13.14", BSP.ProjectSystemId)
+    runSimpleCreateSbtProjectTest("2.13.14", scalaLibraries)
   }
 
   //TODO #SCL-23031
@@ -87,8 +87,7 @@ class NewScalaCliProjectWizardTest extends NewScalaProjectWizardTestBase with Ex
 
   def testCreateSimpleProjectScala3(): Unit = {
     val scalaVersion = "3.0.2"
-    val scalaLibraries =
-      ProjectStructureTestUtils.expectedScalaLibrary(useEnv = false)("2.13.6", BSP.ProjectSystemId) +: ProjectStructureTestUtils.expectedScalaLibraryWithScalaSdk(useEnv = false)(scalaVersion,  BSP.ProjectSystemId)
+    val scalaLibraries = ProjectStructureTestUtils.expectedScalaLibraryWithScalaSdk(useEnv = false)(scalaVersion, BSP.ProjectSystemId)
     runSimpleCreateSbtProjectTest(scalaVersion, scalaLibraries)
   }
 
@@ -127,8 +126,8 @@ class NewScalaCliProjectWizardTest extends NewScalaProjectWizardTestBase with Ex
       scalaData(step).setScalaVersion(scalaVersion)
     }
 
-    implicit val comparisonOptions: ProjectComparisonOptions = ProjectComparisonOptions(projectName)
-    useProject(project, false, assertProjectsEqual(expectedProject, _: Project))
+    val compareContextNew = compareContext.withOptions(ProjectComparisonOptions(projectName))
+    useProject(project, false, assertProjectsEqual(expectedProject, _: Project)(compareContextNew))
   }
 
   private def installScalaCli(): Unit = {

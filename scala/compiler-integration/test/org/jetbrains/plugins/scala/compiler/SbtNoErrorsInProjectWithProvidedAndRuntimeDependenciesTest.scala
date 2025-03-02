@@ -22,7 +22,7 @@ final class SbtNoErrorsInProjectWithProvidedAndRuntimeDependenciesTest
 
   protected var codeInsightFixture: CodeInsightTestFixture = _
 
-  override protected def getTestProjectPath: String =
+  override protected def getTestDataProjectPath: String =
     s"${TestUtils.getTestDataPath}/sbt/compilation/projects/${getTestName(true)}"
 
   override def setUp(): Unit = {

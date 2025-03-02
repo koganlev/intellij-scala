@@ -14,14 +14,14 @@ import org.jetbrains.annotations.{Nls, NonNls, Nullable}
 import org.jetbrains.plugins.scala.build.BuildMessages.EventId
 import org.jetbrains.plugins.scala.build.{BuildMessages, BuildReporter, ExternalSystemNotificationReporter}
 import org.jetbrains.plugins.scala.extensions.LoggerExt
-import org.jetbrains.sbt.SbtUtil._
+import org.jetbrains.sbt.SbtUtil.normalizePath
 import org.jetbrains.sbt.actions.GenerateManagedSourcesReporter
 import org.jetbrains.sbt.project.SbtProjectResolver.ImportCancelledException
 import org.jetbrains.sbt.project.structure.SbtOption._
 import org.jetbrains.sbt.project.structure.SbtStructureDump._
 import org.jetbrains.sbt.shell.SbtShellCommunication
 import org.jetbrains.sbt.shell.SbtShellCommunication._
-import org.jetbrains.sbt.{SbtBundle, SbtUtil}
+import org.jetbrains.sbt.{SbtBundle, SbtUtil, SbtVersion, SbtVersionCapabilities}
 
 import java.io.{BufferedWriter, File, OutputStreamWriter, PrintWriter}
 import java.nio.charset.Charset
@@ -48,69 +48,88 @@ class SbtStructureDump {
 
   def cancel(): Unit = cancellationFlag.set(true)
 
-  def dumpFromShell(project: Project,
-                    structureFilePath: String,
-                    options: Seq[String],
-                    reporter: BuildReporter,
-                    preferScala2: Boolean,
-                   ): Future[BuildMessages] = {
-
+  def dumpFromShell(
+    project: Project,
+    sbtVersion: SbtVersion,
+    structureFilePath: String,
+    options: Seq[String],
+    reporter: BuildReporter,
+    preferScala2: Boolean,
+  ): Future[BuildMessages] = {
     reporter.start()
 
-    val shell = SbtShellCommunication.forProject(project)
-
-    val optString = makeOptionsStringLiteral(options)
-    val setCmd = s"""set _root_.org.jetbrains.sbt.StructureKeys.sbtStructureOptions in Global := $optString"""
+    val optionsString = makeOptionsStringLiteral(options)
+    val setStructureOptionsCmd = s"""set ${scopedSbtSetting("_root_.org.jetbrains.sbt.StructureKeys.sbtStructureOptions", "Global", sbtVersion)} := $optionsString"""
+    val dumpStructureToCommand = s"${SbtUtil.sbtStructureGlobalCommand("dumpStructureTo", sbtVersion)} $structureFilePath"
 
     // SCL-22858 compiler bytecode indices are disabled in sbt shell
     val ideaPortSetting = ""
 
-    val cmd = s";reload; $setCmd ;${if (preferScala2) "preferScala2;" else ""}*/*:dumpStructureTo $structureFilePath; session clear-all $ideaPortSetting"
+    val maybePreferScala2Command = if (preferScala2) "preferScala2" else ""
+    val sbtCommand = buildSbtCompositeCommand(Seq(
+      "reload",
+      setStructureOptionsCmd,
+      maybePreferScala2Command,
+      dumpStructureToCommand,
+      s"session clear-all $ideaPortSetting"
+    ))
 
+    val shell = SbtShellCommunication.forProject(project)
     val aggregator = shellMessageAggregator(EventId(s"dump:${UUID.randomUUID()}"), shell, reporter)
-
-    shell.command(cmd, BuildMessages.empty, aggregator)
+    shell.command(sbtCommand, BuildMessages.empty, aggregator)
   }
 
-  def dumpFromProcess(directory: File,
-                      structureFilePath: String,
-                      options: Seq[String],
-                      vmExecutable: File,
-                      vmOptions: Seq[String],
-                      sbtOptions: Seq[String],
-                      environment: Map[String, String],
-                      sbtLauncher: File,
-                      sbtStructureJar: File,
-                      preferScala2: Boolean,
-                      passParentEnvironment: Boolean
-                     )
-                     (implicit reporter: BuildReporter)
-  : Try[BuildMessages] = {
-
+  def dumpFromProcess(
+    directory: File,
+    structureFilePath: String,
+    options: Seq[String],
+    vmExecutable: File,
+    vmOptions: Seq[String],
+    sbtOptions: Seq[String],
+    environment: Map[String, String],
+    sbtLauncher: File,
+    sbtStructureJar: File,
+    preferScala2: Boolean,
+    passParentEnvironment: Boolean,
+  )(implicit reporter: BuildReporter): Try[BuildMessages] = {
     val optString = makeOptionsStringLiteral(options)
+
+    val sbtVersion = SbtUtil.detectSbtVersion(directory.toPath, sbtLauncher.toPath)
+
+    val SeqFqn = SbtVersionCapabilities.collectionsSeqClassFqn(sbtVersion)
     val setCommands = Seq(
       """historyPath := None""",
       s"""shellPrompt := { _ => "" }""",
-      s"""SettingKey[_root_.scala.Option[_root_.sbt.File]]("sbtStructureOutputFile") in _root_.sbt.Global := _root_.scala.Some(_root_.sbt.file("$structureFilePath"))""",
-      s"""SettingKey[_root_.java.lang.String]("sbtStructureOptions") in _root_.sbt.Global := $optString"""
-    ).mkString("set _root_.scala.collection.Seq(", ",", ")")
+      s"""${scopedSbtSetting("""SettingKey[_root_.scala.Option[_root_.sbt.File]]("sbtStructureOutputFile")""", "_root_.sbt.Global", sbtVersion)} := _root_.scala.Some(_root_.sbt.file("$structureFilePath"))""",
+      s"""${scopedSbtSetting("""SettingKey[_root_.java.lang.String]("sbtStructureOptions")""", "_root_.sbt.Global", sbtVersion)} := $optString""",
+    ).mkString(s"set $SeqFqn(", ",", ")")
 
-    val sbtCommands = (
-      Seq(
-        setCommands,
-        s"""apply -cp "${normalizePath(sbtStructureJar)}" "org.jetbrains.sbt.CreateTasks" "sbt.jetbrains.LogDownloadArtifacts""""
-      ) :++
-        (if (preferScala2) Seq("preferScala2") else Seq.empty) :+
-        s"*/*:dumpStructure"
-      ).mkString(";", ";", "")
+    val maybePreferScala2Command = if (preferScala2) "preferScala2" else ""
+    val applyStateTransformersCommand = s"""apply -cp "${SbtUtil.normalizePath(sbtStructureJar)}" "org.jetbrains.sbt.CreateTasks" "sbt.jetbrains.LogDownloadArtifacts""""
 
+    val sbtCommandsString = buildSbtCompositeCommand(Seq(
+      setCommands,
+      applyStateTransformersCommand,
+      maybePreferScala2Command,
+      SbtUtil.sbtStructureGlobalCommand("dumpStructure", sbtVersion)
+    ))
 
     runSbt(
-      directory, vmExecutable, vmOptions, environment,
-      sbtLauncher, sbtOptions, Seq.empty, sbtCommands,
-      SbtBundle.message("sbt.extracting.project.structure.from.sbt"), passParentEnvironment
+      directory,
+      vmExecutable,
+      vmOptions,
+      environment,
+      sbtLauncher,
+      sbtOptions,
+      sbtLauncherArgs = Seq.empty,
+      sbtCommandsString,
+      SbtBundle.message("sbt.extracting.project.structure.from.sbt"),
+      passParentEnvironment
     )(indicator = null)
   }
+
+  private def buildSbtCompositeCommand(commands: Seq[String]): String =
+    commands.filter(_.nonEmpty).mkString(";", ";", "")
 
   private def makeOptionsStringLiteral(options: Seq[String]): String =
     options.mkString("\"", ", ", "\"")
@@ -151,20 +170,22 @@ class SbtStructureDump {
   }
 
   /** Run sbt with some sbt commands. */
-  def runSbt(directory: File,
-             vmExecutable: File,
-             vmOptions: Seq[String],
-             environment0: Map[String, String],
-             sbtLauncher: File,
-             sbtOptions: Seq[String],
-             sbtLauncherArgs: Seq[String],
-             @NonNls sbtCommands: String,
-             @Nls reportMessage: String,
-             passParentEnvironment: Boolean
-            )
-            (@Nullable indicator: ProgressIndicator)
-            (implicit reporter: BuildReporter)
-  : Try[BuildMessages] = {
+  def runSbt(
+    directory: File,
+    vmExecutable: File,
+    vmOptions: Seq[String],
+    environment0: Map[String, String],
+    sbtLauncher: File,
+    sbtOptions: Seq[String],
+    sbtLauncherArgs: Seq[String],
+    @NonNls sbtCommands: String,
+    @Nls reportMessage: String,
+    passParentEnvironment: Boolean
+  )(
+    @Nullable indicator: ProgressIndicator
+  )(
+    implicit reporter: BuildReporter
+  ): Try[BuildMessages] = {
 
     val environment = if (ApplicationManager.getApplication.isUnitTestMode && SystemInfo.isWindows) {
       val extraEnvs = defaultCoursierDirectoriesAsEnvVariables()
@@ -307,7 +328,7 @@ class SbtStructureDump {
 
     val processListener: (OutputType, String) => Unit = (typ, line) => {
       if (collectProcessOutput) {
-        processOutputBuilder.append(s"[${typ.getClass.getSimpleName}] $line")
+        processOutputBuilder.append(s"[${typ.name}] $line")
         if (!line.endsWith("\n")) {
           processOutputBuilder.append('\n')
         }
@@ -453,4 +474,12 @@ object SbtStructureDump {
 
   private val WARN_PREFIX = "[warn]"
   private val ERROR_PREFIX = "[error]"
+
+  private def scopedSbtSetting(setting: String, scope: String, sbtVersion: SbtVersion): String = {
+    val supportsSlashSyntax = SbtVersionCapabilities.isSlashSyntaxSupported(sbtVersion)
+    if (supportsSlashSyntax)
+      s"($scope / $setting)"
+    else
+      s"$setting in $scope"
+  }
 }

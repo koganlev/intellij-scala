@@ -60,6 +60,7 @@ lazy val scalaCommunity: sbt.Project =
       scalaMetaImpl % "test->test;compile->compile",
       structureView % "test->test;compile->compile",
       sbtImpl % "test->test;compile->compile",
+      sbtProjectImportingTests % "test->test",
       compilerIntegration % "test->test;compile->compile",
       debugger % "test->test;compile->compile",
       testingSupport % "test->test;compile->compile",
@@ -134,12 +135,10 @@ lazy val sbtApi =
         "sbtStructureVersion" -> Versions.sbtStructureVersion,
         "sbtIdeaShellVersion" -> Versions.sbtIdeaShellVersion,
         "sbtIdeaCompilerIndicesVersion" -> Versions.compilerIndicesVersion,
-        "sbtLatest_0_13" -> Versions.Sbt.latest_0_13,
-        "sbtLatest_1_0" -> Versions.Sbt.latest_1_0,
-        "sbtLatestVersion" -> Versions.sbtVersion,
-        "sbtStructurePath_0_13" -> relativeJarPath(sbtDep("org.jetbrains.scala", "sbt-structure-extractor", Versions.sbtStructureVersion, "0.13")),
-        "sbtStructurePath_1_2" -> relativeJarPath(sbtDep("org.jetbrains.scala", "sbt-structure-extractor", Versions.sbtStructureVersion, "1.2")),
-        "sbtStructurePath_1_3" -> relativeJarPath(sbtDep("org.jetbrains.scala", "sbt-structure-extractor", Versions.sbtStructureVersion, "1.3"))
+        "sbtStructurePath_0_13" -> relativeJarPath(Dependencies.structureExtractor_0_13),
+        "sbtStructurePath_1_0" -> relativeJarPath(Dependencies.structureExtractor_1_0),
+        "sbtStructurePath_1_3" -> relativeJarPath(Dependencies.structureExtractor_1_3),
+        "sbtStructurePath_2_0" -> relativeJarPath(Dependencies.structureExtractor_2_0),
       ),
       buildInfoOptions += BuildInfoOption.ConstantValue
     )
@@ -436,9 +435,20 @@ lazy val scalaLanguageUtilsRt: sbt.Project =
 
 lazy val sbtImpl =
   newProject("sbt-impl", file("sbt/sbt-impl"))
-    .dependsOn(sbtApi, scalaImpl % "test->test;compile->compile")
+    .dependsOn(
+      sbtApi,
+      scalaImpl % "test->test;compile->compile",
+    )
     .settings(
       intellijPlugins += "org.jetbrains.idea.maven".toPlugin
+    )
+
+lazy val sbtProjectImportingTests =
+  newProject("sbt-project-importing-tests", file("sbt/sbt-project-importing-tests"))
+    .dependsOn(
+      sbtImpl % "compile->compile;test->test",
+      // this dependency is added primarily use CompileServerLauncher from sbt importing test (to shut it down)
+      compilerIntegration
     )
 
 lazy val compilerIntegration =
@@ -908,12 +918,14 @@ lazy val runtimeDependencies = project.in(file("target/tools/runtime-dependencie
       binaryDep("org.scala-sbt.rt", "java9-rt-export", Versions.java9rtExportVersion) -> "java9-rt-export/java9-rt-export.jar",
     ),
     localRepoDependencies := List(
-      sbtDep("org.jetbrains.scala", "sbt-structure-extractor", Versions.sbtStructureVersion, Versions.Sbt.binary_0_13),
-      sbtDep("org.jetbrains.scala", "sbt-structure-extractor", Versions.sbtStructureVersion, Versions.Sbt.structure_extractor_binary_1_2),
-      sbtDep("org.jetbrains.scala", "sbt-structure-extractor", Versions.sbtStructureVersion, Versions.Sbt.structure_extractor_binary_1_3),
+      Dependencies.structureExtractor_0_13,
+      Dependencies.structureExtractor_1_0,
+      Dependencies.structureExtractor_1_3,
+      Dependencies.structureExtractor_2_0,
 
       sbtDep("org.jetbrains.scala", "sbt-idea-shell", Versions.sbtIdeaShellVersion, Versions.Sbt.binary_0_13),
-      sbtDep("org.jetbrains.scala", "sbt-idea-shell", Versions.sbtIdeaShellVersion, Versions.Sbt.binary_1_0)
+      sbtDep("org.jetbrains.scala", "sbt-idea-shell", Versions.sbtIdeaShellVersion, Versions.Sbt.binary_1_0),
+      sbtDep("org.jetbrains.scala", "sbt-idea-shell", Versions.sbtIdeaShellVersion, Versions.Sbt.binary_2_0),
 
       // SCL-22858 compiler bytecode indices are disabled in sbt shell
       // sbtDep("org.jetbrains.scala", "sbt-idea-compiler-indices", Versions.compilerIndicesVersion, Versions.Sbt.binary_0_13),

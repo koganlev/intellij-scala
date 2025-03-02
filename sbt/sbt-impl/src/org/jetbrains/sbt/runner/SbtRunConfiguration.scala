@@ -148,7 +148,10 @@ class SbtCommandLineState(val processedCommands: String, val configuration: SbtR
     params.setEnv(environmentVariables)
 
     val sbtSystemSettings = SbtSettings.getInstance(project).getState
-    if (sbtSystemSettings.customLauncherEnabled) {
+
+    // One of these checks might be redundant.
+    // Why do we need the customLauncherEnabled at all?
+    if (sbtSystemSettings.customLauncherPath != null) {
       params.getClassPath.add(sbtSystemSettings.customLauncherPath)
       params.setMainClass(determineMainClass(sbtSystemSettings.customLauncherPath))
     } else {

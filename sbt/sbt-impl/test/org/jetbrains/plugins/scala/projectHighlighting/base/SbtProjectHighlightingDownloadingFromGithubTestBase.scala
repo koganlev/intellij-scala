@@ -21,7 +21,7 @@ abstract class SbtProjectHighlightingDownloadingFromGithubTestBase extends SbtPr
 
   private def downloadAndExtractProject(): Unit = {
     val outputZipFile = new File(outputZipFileName)
-    val projectDir = new File(getTestProjectPath)
+    val projectDir = getTestProjectDir
 
     reporter.notify(s"Project output zip file: $outputZipFile")
     reporter.notify(s"Project directory: $projectDir")

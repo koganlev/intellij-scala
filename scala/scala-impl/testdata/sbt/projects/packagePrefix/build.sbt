@@ -1,4 +1,4 @@
-ThisBuild / scalaVersion := "2.13.6"
+ThisBuild / scalaVersion := "2.13.14"
 
 lazy val packagePrefix = project.in(file("."))
   .settings(

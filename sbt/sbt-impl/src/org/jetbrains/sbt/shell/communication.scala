@@ -241,6 +241,7 @@ private[shell] class SbtShellReadyListener(
 
 private[shell] object SbtProcessUtil {
 
+  // Should be the same as in `org.jetbrains.sbt.constants.IDEA_PROMPT_MARKER`
   private val IDEA_PROMPT_MARKER = "[IJ]"
 
   // the prompt marker is inserted by the sbt-idea-shell plugin

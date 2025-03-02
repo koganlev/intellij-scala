@@ -1,3 +1,5 @@
+import LocalRepoPackager.sbtDep
+import coursier.core.Dependency
 import org.jetbrains.sbtidea.IntelliJPlatform.IdeaCommunity
 import org.jetbrains.sbtidea.download.BuildInfo
 import org.jetbrains.sbtidea.download.idea.IntellijVersionUtils
@@ -7,10 +9,10 @@ object Versions {
   val scalaVersion: String = "2.13.16"
   val scala3Version: String = "3.3.5"
 
-  // ATTENTION: when updating sbtVersion also update versions in MockSbt_1_0
+  // ATTENTION: when updating `sbtVersion` also update it in `org.jetbrains.sbt.SbtVersion.Latest`
   // NOTE: sbt-launch / bloop-launcher won't be fetched on refresh.
   // run runtimeDependencies/update manually
-  val sbtVersion: String = Sbt.latest
+  val sbtVersion: String = "1.10.7"
   val bloopVersion = "1.5.6"
   val zincVersion = "1.10.7"
 
@@ -41,8 +43,8 @@ object Versions {
   val junitInterfaceVersion: String = "0.13.3"
 
   val bspVersion = "2.1.0-M3"
-  val sbtStructureVersion: String = "2025.1.1"
-  val sbtIdeaShellVersion: String = "2021.1.0"
+  val sbtStructureVersion: String = "2025.1.5"
+  val sbtIdeaShellVersion: String = "2025.1.4"
   val compilerIndicesVersion = "1.0.16"
 
   val java9rtExportVersion: String = "0.1.0"
@@ -62,18 +64,15 @@ object Versions {
   object Sbt {
     val binary_0_13 = "0.13"
     val binary_1_0 = "1.0" // 1.0 is the binary version of sbt 1.x series
+    val binary_2_0 = "2.0"
 
     //sbt-structure-extractor is cross-published in a non-standard way,
-    //against multiple 1.x versions so it uses an exact binary version 1.x.
+    //against multiple 1.x versions, so it uses an exact binary version 1.x.
     //Versions 1.0-1.2 use 1.2, versions 1.3 and above use 1.3
-    val structure_extractor_binary_1_2 = "1.2"
+    val structure_extractor_binary_0_13 = "0.13"
+    val structure_extractor_binary_1_0 = "1.0"
     val structure_extractor_binary_1_3 = "1.3"
-
-    val latest_0_13 = "0.13.18"
-    val latest_1_0 = "1.10.7"
-    val latest: String = latest_1_0
-    // ATTENTION: after adding sbt major version, also update:
-    // buildInfoKeys, Sbt.scala and SbtUtil.latestCompatibleVersion
+    val structure_extractor_binary_2_0 = "2.0"
   }
 }
 
@@ -97,6 +96,11 @@ object Dependencies {
   // NOTE: current latest version is in https://github.com/unkarjedy/scalatest-finders.git repository
 
   val jetbrainsAnnotations: ModuleID = "org.jetbrains" % "annotations" % "24.1.0"
+
+  val structureExtractor_0_13: Dependency = sbtDep("org.jetbrains.scala", "sbt-structure-extractor", Versions.sbtStructureVersion, Versions.Sbt.structure_extractor_binary_0_13)
+  val structureExtractor_1_0: Dependency = sbtDep("org.jetbrains.scala", "sbt-structure-extractor", Versions.sbtStructureVersion, Versions.Sbt.structure_extractor_binary_1_0)
+  val structureExtractor_1_3: Dependency = sbtDep("org.jetbrains.scala", "sbt-structure-extractor", Versions.sbtStructureVersion, Versions.Sbt.structure_extractor_binary_1_3)
+  val structureExtractor_2_0: Dependency = sbtDep("org.jetbrains.scala", "sbt-structure-extractor", Versions.sbtStructureVersion, Versions.Sbt.structure_extractor_binary_2_0)
 
   /**
    * NOTE: JUnit 4 dependency is already available via intellij main jars.
