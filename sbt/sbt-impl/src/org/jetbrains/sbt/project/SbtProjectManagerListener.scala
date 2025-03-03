@@ -5,7 +5,7 @@ import com.intellij.openapi.externalSystem.service.execution.ProgressExecutionMo
 import com.intellij.openapi.externalSystem.util.ExternalSystemUtil
 import com.intellij.openapi.project.Project
 import org.jetbrains.plugins.scala.extensions.invokeLater
-import org.jetbrains.plugins.scala.project.ProjectExt
+import org.jetbrains.sbt.project.settings.ShouldUpdateRunConfigurations
 import org.jetbrains.plugins.scala.startup.ProjectActivity
 import org.jetbrains.sbt.project.settings.SbtProjectSettings
 
@@ -18,6 +18,11 @@ private final class SbtProjectManagerListener extends ProjectActivity {
         // The converterVersion will be updated by SbtProjectDataService on a successful refresh.
         settings.converterVersion = SbtProjectSettings.ConverterVersion // TODO Remove (don't trigger another refresh in any case)
       }
+    }
+
+    val shouldNotificationBeingShown = ShouldUpdateRunConfigurations.getInstance(project)
+    if (shouldNotificationBeingShown.shouldUpdate) {
+      UpdateConfigurationImportListener.update(shouldNotificationBeingShown.isDowngrading, project)
     }
   }
 }

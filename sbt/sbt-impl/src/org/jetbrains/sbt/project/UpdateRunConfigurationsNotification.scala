@@ -6,6 +6,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.registry.Registry
 import org.jetbrains.annotations.Nullable
 import org.jetbrains.sbt.SbtBundle
+import org.jetbrains.sbt.project.settings.ShouldUpdateRunConfigurations
 
 import java.util
 import scala.jdk.CollectionConverters.SeqHasAsJava
@@ -19,7 +20,9 @@ class UpdateRunConfigurationsNotification(
 
   override def getActions: util.List[AnAction] = {
     val updateAction = createUpdateAction
-    val ignoreAction = NotificationAction.createSimpleExpiring(SbtBundle.message("sbt.configuration.migration.notification.ignore.text"), () => ())
+    val ignoreAction = NotificationAction.createSimpleExpiring(SbtBundle.message("sbt.configuration.migration.notification.ignore.text"), () => {
+      ShouldUpdateRunConfigurations.disableConfigurationUpdate(project)
+    })
     List(updateAction, ignoreAction).asJava
   }
 
@@ -27,6 +30,8 @@ class UpdateRunConfigurationsNotification(
 
   private def createUpdateAction: AnAction =
     NotificationAction.create(SbtBundle.message("sbt.migrate.configurations.text"), (_: AnActionEvent, notification: Notification) => {
+      ShouldUpdateRunConfigurations.disableConfigurationUpdate(project)
+
       val areAllConfigurationsUpdated = SbtMigrateConfigurationsAction.updateRunConfigurations(project, isDowngradingFromSeparateMainTestModules)
       if (areAllConfigurationsUpdated || !isSuggestion) {
         // This will remove the notification completely (closing the balloon and removing it from the tool window)
@@ -41,8 +46,12 @@ class UpdateRunConfigurationsNotification(
 
 object UpdateRunConfigurationsNotification {
 
-  def closeAllExistingSuggestions(@Nullable project: Project): Unit = {
-    val allNotifications = NotificationsManager.getNotificationsManager.getNotificationsOfType(classOf[UpdateRunConfigurationsNotification], project)
-    allNotifications.filter(_.isSuggestionType).foreach(_.expire)
-  }
+  def closeAllExistingSuggestions(@Nullable project: Project): Unit =
+    getAllUpdateConfigurationsNotifications(project).filter(_.isSuggestionType).foreach(_.expire)
+
+  def closeAllExistingNotifications(@Nullable project: Project): Unit =
+    getAllUpdateConfigurationsNotifications(project).foreach(_.expire)
+
+  private def getAllUpdateConfigurationsNotifications(project: Project): Seq[UpdateRunConfigurationsNotification] =
+    NotificationsManager.getNotificationsManager.getNotificationsOfType(classOf[UpdateRunConfigurationsNotification], project).toSeq
 }
