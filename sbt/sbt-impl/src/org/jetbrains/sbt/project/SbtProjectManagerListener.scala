@@ -20,9 +20,9 @@ private final class SbtProjectManagerListener extends ProjectActivity {
       }
     }
 
-    val shouldNotificationBeingShown = ShouldUpdateRunConfigurations.getInstance(project)
-    if (shouldNotificationBeingShown.shouldUpdate) {
-      UpdateConfigurationImportListener.update(shouldNotificationBeingShown.isDowngrading, project)
+    val shouldUpdateRunConfigurations = ShouldUpdateRunConfigurations.getInstance(project)
+    if (shouldUpdateRunConfigurations.shouldUpdate) {
+      UpdateConfigurationImportListener.update(shouldUpdateRunConfigurations.isDowngrading, project)
     }
   }
 }
