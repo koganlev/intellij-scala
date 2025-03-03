@@ -84,14 +84,19 @@ private object CompilerPlugin {
   def isWhiteboxMacro(global: Global)(symbol: global.Symbol): Boolean = {
     import global._
 
+    // See scala.tools.nsc.typechecker.Macros.MacroImplBinding
     symbol.annotations.exists { annotation =>
-      annotation.tpe.toString == "scala.reflect.macros.internal.macroImpl" && (annotation.args match {
-        case List(Apply(_, args)) => args.exists {
+      annotation.tpe.toString == "scala.reflect.macros.internal.macroImpl" && {
+        val args = annotation.args match {
+          case List(Apply(_, args)) => args
+          case List(TypeApply(Apply(_, args), _)) => args
+          case _ => List.empty
+        }
+        args.exists {
           case Assign(Literal(Constant("isBlackbox")), Literal(Constant(false))) => true
           case _ => false
         }
-        case _ => false
-      })
+      }
     }
   }
 }

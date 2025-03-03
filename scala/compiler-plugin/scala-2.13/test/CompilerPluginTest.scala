@@ -60,6 +60,16 @@ class CompilerPluginTest {
     usage("val v1 = Macros.id(1); val v2 = Macros.id(2)"))(
     info("Macros.id(1)", tpe("1")), info("Macros.id(2)", tpe("2")))
 
+  // Type parameter
+
+  @Test def typeParameter(): Unit = assertMessagesAre(
+    """object Macros {
+      |  def id_impl[A](c: scala.reflect.macros.whitebox.Context)(x: c.Expr[A]): c.Expr[Any] = x
+      |  def id[A](x: A): Any = macro id_impl[A]
+      |}""".stripMargin,
+    usage("val v = Macros.id(123)"))(
+    info("Macros.id(123)", tpe("123")))
+
   // Complex
 
   @Test def complexMacro(): Unit = assertMessagesAre(
