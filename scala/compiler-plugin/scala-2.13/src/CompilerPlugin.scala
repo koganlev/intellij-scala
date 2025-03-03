@@ -39,7 +39,7 @@ class CompilerPlugin(val global: Global) extends Plugin {
       private val transformer = new Transformer() {
         override def transform(tree: Tree): Tree = {
           tree.attachments.get[analyzer.MacroExpansionAttachment] match {
-            case Some(analyzer.MacroExpansionAttachment(expandee, expanded: Tree)) if isWhiteboxMacro(global)(expandee.symbol) =>
+            case Some(analyzer.MacroExpansionAttachment(expandee, expanded: Tree)) if isWhiteboxMacro(global)(expandee.symbol) && expanded.tpe != null =>
               // If there's a type mismatch, the type checker replaces the tree type with an ErrorType (see TyperErrorGen.issueError)
               val tpe = if (expanded.tpe.isError) typer.typed(expandee).tpe else expanded.tpe
               val s = LiteralTypePattern.replaceAllIn(tpe.toString, _.group(1))
@@ -84,14 +84,19 @@ private object CompilerPlugin {
   def isWhiteboxMacro(global: Global)(symbol: global.Symbol): Boolean = {
     import global._
 
+    // See scala.tools.nsc.typechecker.Macros.MacroImplBinding
     symbol.annotations.exists { annotation =>
-      annotation.tpe.toString == "scala.reflect.macros.internal.macroImpl" && (annotation.args match {
-        case List(Apply(_, args)) => args.exists {
+      annotation.tpe.toString == "scala.reflect.macros.internal.macroImpl" && {
+        val args = annotation.args match {
+          case List(Apply(_, args)) => args
+          case List(TypeApply(Apply(_, args), _)) => args
+          case _ => List.empty
+        }
+        args.exists {
           case Assign(Literal(Constant("isBlackbox")), Literal(Constant(false))) => true
           case _ => false
         }
-        case _ => false
-      })
+      }
     }
   }
 }

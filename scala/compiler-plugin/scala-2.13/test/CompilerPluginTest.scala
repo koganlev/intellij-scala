@@ -60,6 +60,30 @@ class CompilerPluginTest {
     usage("val v1 = Macros.id(1); val v2 = Macros.id(2)"))(
     info("Macros.id(1)", tpe("1")), info("Macros.id(2)", tpe("2")))
 
+  // Type parameter
+
+  @Test def typeParameter(): Unit = assertMessagesAre(
+    """object Macros {
+      |  def id_impl[A](c: scala.reflect.macros.whitebox.Context)(x: c.Expr[A]): c.Expr[Any] = x
+      |  def id[A](x: A): Any = macro id_impl[A]
+      |}""".stripMargin,
+    usage("val v = Macros.id(123)"))(
+    info("Macros.id(123)", tpe("123")))
+
+  // Complex
+
+  @Test def complexMacro(): Unit = assertMessagesAre(
+    s"""object Macros {
+      |  def stringOrFile_impl(c: scala.reflect.macros.whitebox.Context)(x: c.Expr[Int]): c.Expr[Any] = {
+      |    import c.universe._
+      |    val Literal(Constant(value: Int)) = x.tree
+      |    if (value == 1) reify(new String()) else reify(new java.io.File(""))
+      |  }
+      |  def stringOrFile(x: Int): Any = macro stringOrFile_impl
+      |}""".stripMargin,
+    usage("val v = Macros.stringOrFile(1)"))(
+    info("Macros.stringOrFile(1)", tpe("String")))
+
   // Blackbox macro
 
   @Test def blackboxMacro(): Unit = assertMessagesAre(
@@ -88,6 +112,9 @@ class CompilerPluginTest {
     usage("val v: String = Macros.id(123)"))(
     error("", "type mismatch;\n found   : Int(123)\n required: String"), info("Macros.id(123)", tpe("123")))
 
+  @Test def typeInferenceError(): Unit = assertMessagesAre(Id,
+    usage("val v = Macros.id(unknown)"))(
+    error("unknown", "not found: value unknown"))
 }
 
 private object CompilerPluginTest {

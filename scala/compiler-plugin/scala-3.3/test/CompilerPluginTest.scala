@@ -52,6 +52,15 @@ class CompilerPluginTest {
     "val _ = id(1); val _ = id(2)")(
     info("id(1)", tpe("1")), info("id(2)", tpe("2")))
 
+  // Complex
+
+  @Test def complexMethod(): Unit = assertMessagesAre(
+    """transparent inline def stringOrFile(x: Int): Any =
+      |  if (x == 1) new String()
+      |  else new java.io.File("")
+      |val _ = stringOrFile(1)""".stripMargin)(
+    info("stringOrFile(1)", tpe("_root_.java.lang.String")))
+
   // Non-transparent method
 
   @Test def nontransparent(): Unit = assertMessagesAre("inline def id(x: Any): Any = x",
@@ -75,6 +84,10 @@ class CompilerPluginTest {
   @Test def typeMismatchError(): Unit = assertMessagesAre(Id,
     "val _: String = id(123)")(
     error("id(123)", "Found:    (123 : Int)\nRequired: String"), info("id(123)", tpe("123")))
+
+  @Test def typeInferenceError(): Unit = assertMessagesAre(Id,
+    "val _ = id(unknown)")(
+    error("unknown", "Not found: unknown"))
 }
 
 private object CompilerPluginTest {
