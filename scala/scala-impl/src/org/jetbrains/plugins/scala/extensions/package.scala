@@ -1254,6 +1254,7 @@ package object extensions {
     /**
       * Second match branch is for Java only.
       */
+    @Nullable
     def name: String = {
       named match {
         case nd: ScNamedElement => nd.name
@@ -1426,6 +1427,8 @@ package object extensions {
 
   import scala.language.implicitConversions
 
+  //TODO: remove these shit implicit conversions?
+  // but need to be safe, first let's check the usages
   implicit def toIdeaFunction[A, B](f: Function[A, B]): com.intellij.util.Function[A, B] = (param: A) => f(param)
 
   implicit def toProcessor[T](action: T => Boolean): Processor[T] = (t: T) => action(t)

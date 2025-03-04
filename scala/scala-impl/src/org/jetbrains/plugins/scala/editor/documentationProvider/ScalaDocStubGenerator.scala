@@ -43,10 +43,10 @@ object ScalaDocStubGenerator {
     def processProbablyJavaDocCommentWithOwner(owner: PsiDocCommentOwner): Unit = {
       owner.getDocComment match {
         case scalaComment: ScDocComment =>
-          for (docTag <- scalaComment.findTagsByName(Set(PARAM_TAG, TYPE_PARAM_TAG).contains _))
+          for (docTag <- scalaComment.findTagsByName(TagNames.ParamOrTParamSet.contains _))
             docTag.name match {
-              case PARAM_TAG      => registerInheritedParam(inheritedParams, docTag)
-              case TYPE_PARAM_TAG => registerInheritedParam(inheritedTParams, docTag)
+              case TagNames.Param => registerInheritedParam(inheritedParams, docTag)
+              case TagNames.TypeParam => registerInheritedParam(inheritedTParams, docTag)
             }
         case javaComment: PsiDocComment =>
           for (paramTag <- javaComment.findTagsByName("param")) {
@@ -74,7 +74,7 @@ object ScalaDocStubGenerator {
           val paramText = inheritedParams(param.name).getText
           appendParamText(buffer, paramText)
         } else {
-          buffer.append(leadingAsterisks).append(PARAM_TAG).append(" ").append(param.name).append("\n")
+          buffer.append(leadingAsterisks).append("@").append(TagNames.Param).append(" ").append(param.name).append("\n")
         }
 
     def processTypeParams(owner: ScTypeParametersOwner): Unit =
@@ -84,9 +84,9 @@ object ScalaDocStubGenerator {
           appendParamText(buffer, paramText)
         } else if (inheritedTParams.contains("<" + tparam + ">")) {
           val paramTag = inheritedTParams("<" + tparam.name + ">")
-          val descriptionText =
-            paramTag.getText.substring(paramTag.getValueElement.getTextOffset + paramTag.getValueElement.getTextLength)
-          val parameterName = paramTag.getValueElement.getText
+          val valueElement = paramTag.getValueElement
+          val descriptionText = paramTag.getText.substring(valueElement.getTextOffset + valueElement.getTextLength)
+          val parameterName = valueElement.getText
 
           buffer
             .append(leadingAsterisks)
@@ -96,7 +96,7 @@ object ScalaDocStubGenerator {
             .append(" ")
             .append(descriptionText.substring(0, descriptionText.lastIndexOf("\n") + 1))
         } else {
-          buffer.append(leadingAsterisks).append(TYPE_PARAM_TAG).append(" ").append(tparam.name).append("\n")
+          buffer.append(leadingAsterisks).append("@").append(TagNames.TypeParam).append(" ").append(tparam.name).append("\n")
         }
 
     commentOwner match {
@@ -115,7 +115,6 @@ object ScalaDocStubGenerator {
           if (needReturnTag) {
             var inherRetTag: PsiDocTag = null
             parent.getDocComment match {
-              case scComment: ScDocComment => inherRetTag = scComment.findTagByName("@return")
               case comment: PsiDocComment  => inherRetTag = comment.findTagByName("return")
               case _                       =>
             }
@@ -129,7 +128,7 @@ object ScalaDocStubGenerator {
         processTypeParams(function)
 
         for (annotation <- function.annotations if annotation.annotationExpr.getText.startsWith("throws")) {
-          buffer.append(leadingAsterisks).append(MyScaladocParsing.THROWS_TAG).append(" ")
+          buffer.append(leadingAsterisks).append("@").append(TagNames.Throws).append(" ")
           for {
             arg <- annotation.constructorInvocation.args
             headExpr <- arg.exprs.headOption
@@ -149,7 +148,7 @@ object ScalaDocStubGenerator {
         if (returnTag != null) {
           buffer.append(leadingAsterisks).append(returnTag)
         } else if (needReturnTag) {
-          buffer.append(leadingAsterisks).append(MyScaladocParsing.RETURN_TAG).append(" \n")
+          buffer.append(leadingAsterisks).append("@").append(TagNames.Return).append(" \n")
         }
       case scType: ScTypeAlias =>
         val parents = ScalaPsiUtil.superTypeMembers(scType)

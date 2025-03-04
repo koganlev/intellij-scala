@@ -4,11 +4,11 @@ import com.intellij.codeInspection._
 import com.intellij.openapi.progress.ProgressIndicatorProvider
 import com.intellij.psi.{PsiElement, PsiElementVisitor}
 import org.jetbrains.annotations.Nls
-import org.jetbrains.plugins.scala.incremental.Highlighting._
 import org.jetbrains.plugins.scala.ScalaBundle
 import org.jetbrains.plugins.scala.codeInspection.ScalaInspectionBundle
 import org.jetbrains.plugins.scala.codeInspection.scaladoc.ScalaDocUnknownParameterInspection._
 import org.jetbrains.plugins.scala.extensions.{IterableOnceExt, PsiNamedElementExt}
+import org.jetbrains.plugins.scala.incremental.Highlighting._
 import org.jetbrains.plugins.scala.lang.psi.api.ScalaElementVisitor
 import org.jetbrains.plugins.scala.lang.psi.api.statements.{ScEnumCase, ScEnumCases, ScParameterOwner, ScTypeAlias}
 import org.jetbrains.plugins.scala.lang.psi.api.toplevel.ScTypeParametersOwner
@@ -117,10 +117,10 @@ object ScalaDocUnknownParameterInspection {
   }
 
   private def findParamAndTypeParamTags(docComment: ScDocComment): (Seq[ScDocTag], Seq[ScDocTag]) = {
-    val tagsAll = docComment.findTagsByName(MyScaladocParsing.ParamOrTParamTags.contains _).toSeq.filterByType[ScDocTag]
-    tagsAll.partition(_.name == MyScaladocParsing.PARAM_TAG)
+    val tagsAll = docComment.findTagsByName(MyScaladocParsing.TagNames.ParamOrTParamSet.contains _).toSeq.filterByType[ScDocTag]
+    tagsAll.partition(_.name == MyScaladocParsing.TagNames.Param)
   }
 
   private def findTypeParamTags(docComment: ScDocComment): Seq[ScDocTag] =
-    docComment.findTagsByName(MyScaladocParsing.TYPE_PARAM_TAG).toSeq.filterByType[ScDocTag]
+    docComment.findTagsByName(MyScaladocParsing.TagNames.TypeParam).toSeq.filterByType[ScDocTag]
 }

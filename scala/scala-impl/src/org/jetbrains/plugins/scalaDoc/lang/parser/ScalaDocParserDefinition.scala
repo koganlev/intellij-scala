@@ -13,7 +13,7 @@ import org.jetbrains.plugins.scala.extensions.{ObjectExt, PsiNamedElementExt}
 import org.jetbrains.plugins.scala.lang.scaladoc.lexer.docsyntax.ScalaDocSyntaxElementType
 import org.jetbrains.plugins.scala.lang.scaladoc.lexer.{ScalaDocLexer, ScalaDocTokenType}
 import org.jetbrains.plugins.scala.lang.scaladoc.parser.ScalaDocElementTypes
-import org.jetbrains.plugins.scala.lang.scaladoc.parser.parsing.MyScaladocParsing
+import org.jetbrains.plugins.scala.lang.scaladoc.parser.parsing.MyScaladocParsing.TagNames
 import org.jetbrains.plugins.scala.lang.scaladoc.psi.api.{ScDocComment, ScDocInlinedTag, ScDocTag}
 import org.jetbrains.plugins.scala.lang.scaladoc.psi.impl._
 import org.jetbrains.plugins.scalaDoc.lang.parser.ScalaDocParserDefinition.isInsideJavaLinkTag
@@ -92,7 +92,7 @@ object ScalaDocParserDefinition {
       parent = parent.getTreeParent
 
     parent != null && (parent.getPsi match {
-      case tag: ScDocTag => tag.name == MyScaladocParsing.THROWS_TAG
+      case tag: ScDocTag => tag.name == TagNames.Throws
       case _             => false
     })
   }
@@ -105,8 +105,9 @@ object ScalaDocParserDefinition {
 
     parent != null && (parent.getPsi match {
       case inlineTag: ScDocInlinedTag =>
-        val name = "@" + inlineTag.name
-        name == MyScaladocParsing.JAVA_LINK_TAG || name == MyScaladocParsing.JAVA_LINK_PLAIN_TAG
+        val tagName = inlineTag.name
+        tagName == TagNames.JavaLink ||
+          tagName == TagNames.JavaLinkPlain
       case _             => false
     })
   }

@@ -65,7 +65,7 @@ private class ScalaDocContentWithSectionsGenerator(
 
   def generateForParam(buffer: StringBuilder, param: ScParameter): Unit =
     comment.tags
-      .find(tag => tag.name == MyScaladocParsing.PARAM_TAG && tag.getValueElement.textMatches(param.name))
+      .find(tag => tag.name == MyScaladocParsing.TagNames.Param && tag.getValueElement.textMatches(param.name))
       .foreach { tag =>
         buffer.append(DocumentationMarkup.SECTIONS_START)
         newContentGenerator.appendTagDescriptionText(buffer, tag)
@@ -106,7 +106,7 @@ private class ScalaDocContentWithSectionsGenerator(
       newContentGenerator.appendDescriptionParts(buffer, descriptionParts)
     }
 
-    tags.find(_.name == MyScaladocParsing.INHERITDOC_TAG) match {
+    tags.find(_.name == MyScaladocParsing.TagNames.Inheritdoc) match {
       case Some(inheritDocTag) =>
         ensureContentStartAdded()
         val added = addInheritedDocText(buffer, hasOwnDescription)
@@ -136,7 +136,7 @@ private class ScalaDocContentWithSectionsGenerator(
     val sectionsBuilder = ArraySeq.newBuilder[Section]
 
     sectionsBuilder ++=
-      prepareSimpleSections(tags, MyScaladocParsing.DEPRECATED_TAG, ScalaEditorBundle.message("scaladoc.section.deprecated"))
+      prepareSimpleSections(tags, MyScaladocParsing.TagNames.Deprecated, ScalaEditorBundle.message("scaladoc.section.deprecated"))
 
     val paramsSection     = prepareParamsSection(tags)
     val typeParamsSection = prepareTypeParamsSection(tags)
@@ -150,10 +150,10 @@ private class ScalaDocContentWithSectionsGenerator(
       throwsSection
 
     sectionsBuilder ++=
-      prepareSimpleSections(tags, MyScaladocParsing.NOTE_TAG, ScalaEditorBundle.message("scaladoc.section.note")) ++=
-      prepareSimpleSections(tags, MyScaladocParsing.EXAMPLE_TAG, ScalaEditorBundle.message("scaladoc.section.example")) ++=
-      prepareSimpleSections(tags, MyScaladocParsing.SEE_TAG, ScalaEditorBundle.message("scaladoc.section.see.also")) ++=
-      prepareSimpleSections(tags, MyScaladocParsing.SINCE_TAG, ScalaEditorBundle.message("scaladoc.section.since"))
+      prepareSimpleSections(tags, MyScaladocParsing.TagNames.Note, ScalaEditorBundle.message("scaladoc.section.note")) ++=
+      prepareSimpleSections(tags, MyScaladocParsing.TagNames.Example, ScalaEditorBundle.message("scaladoc.section.example")) ++=
+      prepareSimpleSections(tags, MyScaladocParsing.TagNames.See, ScalaEditorBundle.message("scaladoc.section.see.also")) ++=
+      prepareSimpleSections(tags, MyScaladocParsing.TagNames.Since, ScalaEditorBundle.message("scaladoc.section.since"))
 
     // trying to be consistent with Java
     // search for "rendered" parameter usage in com.intellij.codeInsight.javadoc.JavaDocInfoGenerator
@@ -167,12 +167,12 @@ private class ScalaDocContentWithSectionsGenerator(
     // generateTypeParametersSection(buffer, aClass, rendered);
     if (rendered) {
       sectionsBuilder ++=
-        prepareSimpleSections(tags, MyScaladocParsing.AUTHOR_TAG, ScalaEditorBundle.message("scaladoc.section.author")) ++=
-        prepareSimpleSections(tags, MyScaladocParsing.VERSION_TAG, ScalaEditorBundle.message("scaladoc.section.version"))
+        prepareSimpleSections(tags, MyScaladocParsing.TagNames.Author, ScalaEditorBundle.message("scaladoc.section.author")) ++=
+        prepareSimpleSections(tags, MyScaladocParsing.TagNames.Version, ScalaEditorBundle.message("scaladoc.section.version"))
     }
 
     sectionsBuilder ++=
-      prepareSimpleSections(tags, MyScaladocParsing.TODO_TAG, ScalaEditorBundle.message("scaladoc.section.todo"))
+      prepareSimpleSections(tags, MyScaladocParsing.TagNames.Todo, ScalaEditorBundle.message("scaladoc.section.todo"))
 
     sectionsBuilder.result()
   }
@@ -188,7 +188,7 @@ private class ScalaDocContentWithSectionsGenerator(
   }
 
   private def prepareParamsSection(tags: Seq[ScDocTag]): Option[Section] = {
-    val paramTags = tags.filter(_.name == MyScaladocParsing.PARAM_TAG)
+    val paramTags = tags.filter(_.name == MyScaladocParsing.TagNames.Param)
     val paramTagsInfo = paramTags.flatMap(parameterInfo)
     if (paramTagsInfo.nonEmpty) {
       val content = parameterInfosText(paramTagsInfo)
@@ -197,7 +197,7 @@ private class ScalaDocContentWithSectionsGenerator(
   }
 
   private def prepareTypeParamsSection(tags: Seq[ScDocTag]): Option[Section] = {
-    val typeParamTags = tags.filter(_.name == MyScaladocParsing.TYPE_PARAM_TAG)
+    val typeParamTags = tags.filter(_.name == MyScaladocParsing.TagNames.TypeParam)
     val typeParamTagsInfo = typeParamTags.flatMap(parameterInfo)
     if (typeParamTagsInfo.nonEmpty) {
       val content = parameterInfosText(typeParamTagsInfo)
@@ -207,12 +207,12 @@ private class ScalaDocContentWithSectionsGenerator(
 
   private def prepareReturnsSection(tags: Seq[ScDocTag]): Option[Section] = {
     // TODO: if there is inherited doc, get return description from there
-    val returnTag = tags.find(_.name == MyScaladocParsing.RETURN_TAG)
+    val returnTag = tags.find(_.name == MyScaladocParsing.TagNames.Return)
     returnTag.map(newContentGenerator.tagDescriptionText).map(Section(ScalaEditorBundle.message("section.title.returns"), _))
   }
 
   private def prepareThrowsSection(tags: Seq[ScDocTag]): Option[Section] = {
-    val throwTags      = tags.filter(_.name == MyScaladocParsing.THROWS_TAG)
+    val throwTags      = tags.filter(_.name == MyScaladocParsing.TagNames.Throws)
     val throwTagsInfos = throwTags.flatMap(throwsInfo)
     if (throwTagsInfos.nonEmpty) {
       val content = parameterInfosText(throwTagsInfos)

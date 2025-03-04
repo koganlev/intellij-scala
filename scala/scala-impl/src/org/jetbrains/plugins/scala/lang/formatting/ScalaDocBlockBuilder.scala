@@ -10,6 +10,7 @@ import org.jetbrains.plugins.scala.lang.formatting.ScalaDocBlockBuilderUtils._
 import org.jetbrains.plugins.scala.lang.formatting.settings.ScalaCodeStyleSettings
 import org.jetbrains.plugins.scala.lang.scaladoc.lexer.ScalaDocTokenType
 import org.jetbrains.plugins.scala.lang.scaladoc.parser.ScalaDocElementTypes
+import org.jetbrains.plugins.scala.lang.scaladoc.parser.parsing.MyScaladocParsing.TagNames
 import org.jetbrains.plugins.scala.lang.scaladoc.psi.api.{ScDocComment, ScDocListItem, ScDocTag}
 
 import java.util
@@ -177,7 +178,7 @@ private class ScalaDocBlockBuilder(
         alignmentFromParentContext.getOrElse(Alignment.createAlignment(true))
       }
 
-      val tagName = parent.getPsi.asInstanceOf[ScDocTag].getNameElement.getText
+      val tagName = parent.getPsi.asInstanceOf[ScDocTag].name
       children.foreach { child =>
         subBlocks.add(getDocTagChildBlock(tagName, child, tagContentAlignment))
       }
@@ -212,10 +213,11 @@ private class ScalaDocBlockBuilder(
             null
           case _ =>
             val alignTagContent = tagName match {
-              case "@param" | "@tparam" => ss.SD_ALIGN_PARAMETERS_COMMENTS
-              case "@return"            => ss.SD_ALIGN_RETURN_COMMENTS
-              case "@throws"            => ss.SD_ALIGN_EXCEPTION_COMMENTS
-              case _                    => ss.SD_ALIGN_OTHER_TAGS_COMMENTS
+              case TagNames.Param     => ss.SD_ALIGN_PARAMETERS_COMMENTS
+              case TagNames.TypeParam => ss.SD_ALIGN_PARAMETERS_COMMENTS
+              case TagNames.Return    => ss.SD_ALIGN_RETURN_COMMENTS
+              case TagNames.Throws    => ss.SD_ALIGN_EXCEPTION_COMMENTS
+              case _                  => ss.SD_ALIGN_OTHER_TAGS_COMMENTS
             }
             if (alignTagContent) tagContentAlignment else null
         }

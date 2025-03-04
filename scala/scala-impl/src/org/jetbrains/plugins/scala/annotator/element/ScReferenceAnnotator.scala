@@ -185,7 +185,7 @@ object ScReferenceAnnotator extends ElementAnnotator[ScReference] {
             case _: ScImportSelector if resolve.length > 0 =>
               () //skip
             case tag: ScDocTag =>
-              if (MyScaladocParsing.ParamOrTParamTags.contains(tag.name)) {
+              if (MyScaladocParsing.TagNames.ParamOrTParamSet.contains(tag.name)) {
                 //skip, references to parameters in ScalaDoc tags are handled in [[org.jetbrains.plugins.scala.codeInspection.scaladoc.ScalaDocReferenceInspection]]
               }
               else {
@@ -312,7 +312,7 @@ object ScReferenceAnnotator extends ElementAnnotator[ScReference] {
         case (p: ScPattern) & (_: ScConstructorPattern | _: ScInfixPattern) =>
           val errorWithRefName: String => String = ScalaBundle.message("cannot.resolve.unapply.method", _)
           if (addCreateApplyOrUnapplyFix(errorWithRefName, td => new CreateUnapplyQuickFix(td, p))) return
-        case scalaDocTag: ScDocTag if scalaDocTag.getName == MyScaladocParsing.THROWS_TAG =>
+        case scalaDocTag: ScDocTag if scalaDocTag.name == MyScaladocParsing.TagNames.Throws =>
           return //see SCL-9490
         case _ =>
       }
