@@ -1,6 +1,6 @@
 package org.jetbrains.plugins.scala.worksheet.ammonite
 
-import com.intellij.execution.process.{OSProcessHandler, ProcessAdapter, ProcessEvent}
+import com.intellij.execution.process.{OSProcessHandler, ProcessEvent, ProcessListener}
 import com.intellij.openapi.util.Key
 import com.intellij.util.PathUtil
 import org.jetbrains.plugins.scala.extensions.PathExt
@@ -53,7 +53,7 @@ private object SbtUtils {
       }
     }
 
-  private abstract class SBTProcessListener extends ProcessAdapter {
+  private abstract class SBTProcessListener extends ProcessListener {
 
     private val buffer = mutable.ArrayBuffer.empty[String]
 

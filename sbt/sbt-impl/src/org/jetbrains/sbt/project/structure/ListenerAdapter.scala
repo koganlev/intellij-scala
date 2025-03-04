@@ -1,10 +1,10 @@
 package org.jetbrains.sbt
 package project.structure
 
-import com.intellij.execution.process.{ProcessAdapter, ProcessEvent, ProcessOutputTypes}
+import com.intellij.execution.process.{ProcessEvent, ProcessListener, ProcessOutputTypes}
 import com.intellij.openapi.util.Key
 
-class ListenerAdapter(listener: (OutputType, String) => Unit) extends ProcessAdapter {
+class ListenerAdapter(listener: (OutputType, String) => Unit) extends ProcessListener {
   override def onTextAvailable(event: ProcessEvent, outputType: Key[_]): Unit = {
     val textType = outputType match {
       case ProcessOutputTypes.STDOUT => Some(OutputType.StdOut)

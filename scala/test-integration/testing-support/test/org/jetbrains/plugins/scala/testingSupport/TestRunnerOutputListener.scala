@@ -1,7 +1,7 @@
 package org.jetbrains.plugins.scala
 package testingSupport
 
-import com.intellij.execution.process.{ProcessAdapter, ProcessEvent}
+import com.intellij.execution.process.{ProcessEvent, ProcessListener}
 import com.intellij.openapi.util.Key
 import com.intellij.util.containers.ContainerUtil
 
@@ -9,7 +9,7 @@ import scala.collection.mutable
 import scala.jdk.CollectionConverters.ListHasAsScala
 
 final class TestRunnerOutputListener(printProcessOutputToConsole: Boolean)
-  extends ProcessAdapter
+  extends ProcessListener
     with TestOutputMarkers {
 
   private val _output: mutable.Buffer[(String, Key[_])] =

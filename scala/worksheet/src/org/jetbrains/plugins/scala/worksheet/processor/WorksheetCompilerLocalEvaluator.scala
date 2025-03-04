@@ -3,7 +3,7 @@ package worksheet.processor
 
 import com.intellij.execution.CantRunException
 import com.intellij.execution.configurations.JavaParameters
-import com.intellij.execution.process.{OSProcessHandler, ProcessAdapter, ProcessEvent, ProcessTerminatedListener}
+import com.intellij.execution.process.{OSProcessHandler, ProcessEvent, ProcessListener, ProcessTerminatedListener}
 import com.intellij.execution.ui.ConsoleViewContentType
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.projectRoots.{JavaSdkType, JdkUtil}
@@ -34,7 +34,7 @@ private object WorksheetCompilerLocalEvaluator {
         val processHandler = createOSProcessHandler(params)
 
         WorksheetFileHook.updateStoppableProcess(file, Some(() => processHandler.destroyProcess()))
-        processHandler.addProcessListener(new ProcessAdapter {
+        processHandler.addProcessListener(new ProcessListener {
           override def processTerminated(event: ProcessEvent): Unit =
             WorksheetFileHook.updateStoppableProcess(file, None)
         })
@@ -111,8 +111,8 @@ private object WorksheetCompilerLocalEvaluator {
     processHandler
   }
 
-  private def processListener(callback: EvaluationCallback, worksheetPrinter: WorksheetEditorPrinter): ProcessAdapter =
-    new ProcessAdapter {
+  private def processListener(callback: EvaluationCallback, worksheetPrinter: WorksheetEditorPrinter): ProcessListener =
+    new ProcessListener {
       override def onTextAvailable(event: ProcessEvent, outputType: Key[_]): Unit = {
         val isStdOutput = ConsoleViewContentType.getConsoleViewType(outputType) == ConsoleViewContentType.NORMAL_OUTPUT
         if (isStdOutput) {

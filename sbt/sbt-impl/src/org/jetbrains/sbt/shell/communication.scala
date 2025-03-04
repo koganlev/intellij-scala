@@ -1,6 +1,6 @@
 package org.jetbrains.sbt.shell
 
-import com.intellij.execution.process.{AnsiEscapeDecoder, OSProcessHandler, ProcessAdapter, ProcessEvent}
+import com.intellij.execution.process.{AnsiEscapeDecoder, OSProcessHandler, ProcessEvent, ProcessListener}
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.Project
@@ -264,7 +264,7 @@ private[shell] object SbtProcessUtil {
 /**
   * Pieces lines back together from parts of colored lines.
   */
-abstract class LineListener extends ProcessAdapter with AnsiEscapeDecoder.ColoredTextAcceptor {
+abstract class LineListener extends ProcessListener with AnsiEscapeDecoder.ColoredTextAcceptor {
   protected val log: Logger = Logger.getInstance(getClass)
 
   def onLine(line: String): Unit

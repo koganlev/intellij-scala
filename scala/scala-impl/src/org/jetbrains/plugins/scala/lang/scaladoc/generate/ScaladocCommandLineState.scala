@@ -4,7 +4,7 @@ import com.intellij.analysis.AnalysisScope
 import com.intellij.execution.ExecutionException
 import com.intellij.execution.configurations._
 import com.intellij.execution.filters.TextConsoleBuilderFactory
-import com.intellij.execution.process.{OSProcessHandler, ProcessAdapter, ProcessEvent}
+import com.intellij.execution.process.{OSProcessHandler, ProcessEvent, ProcessListener}
 import com.intellij.execution.runners.ExecutionEnvironment
 import com.intellij.ide.BrowserUtil
 import com.intellij.openapi.module.{Module, ModuleManager}
@@ -66,7 +66,7 @@ class ScaladocCommandLineState(env: ExecutionEnvironment, project: Project)
     val handler: OSProcessHandler =
       JavaCommandLineStateUtil.startProcess(createCommandLine)
     if (showInBrowser) {
-      handler.addProcessListener(new ProcessAdapter {
+      handler.addProcessListener(new ProcessListener {
         override def processTerminated(event: ProcessEvent): Unit = {
           val url = Paths.get(outputDir, "index.html")
           if (Files.exists(url) && event.getExitCode == 0) {

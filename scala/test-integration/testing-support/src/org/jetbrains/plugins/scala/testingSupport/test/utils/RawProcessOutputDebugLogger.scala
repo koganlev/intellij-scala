@@ -1,12 +1,12 @@
 package org.jetbrains.plugins.scala.testingSupport.test.utils
 
-import com.intellij.execution.process.{ProcessAdapter, ProcessEvent, ProcessHandler}
+import com.intellij.execution.process.{ProcessEvent, ProcessHandler, ProcessListener}
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.registry.Registry
 import org.jetbrains.plugins.scala.testingSupport.test.utils.RawProcessOutputDebugLogger.Log
 
-final class RawProcessOutputDebugLogger extends ProcessAdapter {
+final class RawProcessOutputDebugLogger extends ProcessListener {
 
   override def onTextAvailable(event: ProcessEvent, outputType: Key[_]): Unit = {
     val eventText = event.getText

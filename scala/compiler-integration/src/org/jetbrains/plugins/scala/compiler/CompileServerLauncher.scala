@@ -3,7 +3,7 @@ package org.jetbrains.plugins.scala.compiler
 import com.intellij.compiler.server.impl.BuildProcessClasspathManager
 import com.intellij.compiler.server.{BuildManagerListener, BuildProcessParametersProvider}
 import com.intellij.execution.configurations.GeneralCommandLine
-import com.intellij.execution.process.{ProcessAdapter, ProcessEvent}
+import com.intellij.execution.process.{ProcessEvent, ProcessListener}
 import com.intellij.notification.{Notification, NotificationListener, NotificationType, Notifications}
 import com.intellij.openapi.application.{ApplicationManager, PathManagerEx}
 import com.intellij.openapi.diagnostic.Logger
@@ -262,7 +262,7 @@ object CompileServerLauncher {
             CompileServerManager.init(project)
             project.getMessageBus.syncPublisher(CompileServerManager.ServerStatusTopic).onServerStatus(true)
             watcher.startNotify()
-            watcher.addProcessListener(new ProcessAdapter {
+            watcher.addProcessListener(new ProcessListener {
               override def processTerminated(event: ProcessEvent): Unit = {
                 // CS can terminate if we close IDEA and the project will be disposed already
                 if (!project.isDisposed) {

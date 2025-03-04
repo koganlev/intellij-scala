@@ -19,7 +19,7 @@ private final class ProcessWatcher(project: Project, process: Process, commandLi
 
   addProcessListener(MyProcessListener)
 
-  def addProcessListener(listener: ProcessAdapter): Unit =
+  def addProcessListener(listener: ProcessListener): Unit =
     processHandler.addProcessListener(listener)
 
   def startNotify(): Unit = {
@@ -44,7 +44,7 @@ private final class ProcessWatcher(project: Project, process: Process, commandLi
   private var _terminatedByIdleTimeout = false
   def isTerminatedByIdleTimeout: Boolean = _terminatedByIdleTimeout
 
-  private object MyProcessListener extends ProcessAdapter {
+  private object MyProcessListener extends ProcessListener {
     override def onTextAvailable(event: ProcessEvent, outputType: Key[_]): Unit = {
       val text = event.getText
 
