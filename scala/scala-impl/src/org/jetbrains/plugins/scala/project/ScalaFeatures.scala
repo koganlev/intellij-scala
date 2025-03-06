@@ -260,6 +260,14 @@ object ScalaFeatures {
   val `-Xsource:3 in 2.12.15 or 2.13.7`: SerializableScalaFeatures = `-Xsource:3 in 2.12.14 or 2.13.6`
     .copy(ScalaVersion.Latest.Scala_2_13.withMinor(7))
 
+  /**
+   * A proxy for [[onlyByVersion]].
+   * The only difference is the return type.
+   *
+   * [[SerializableScalaFeatures]] is a value class that is visible as [[Int]] from Java/Kotlin.
+   * Therefore, a less specific [[ScalaFeatures]] is used as a return type
+   */
+  def onlyByVersionJvmCompatible(version: ScalaVersion): ScalaFeatures = onlyByVersion(version)
 
   def onlyByVersion(version: ScalaVersion): SerializableScalaFeatures =
     ScalaFeatures(
