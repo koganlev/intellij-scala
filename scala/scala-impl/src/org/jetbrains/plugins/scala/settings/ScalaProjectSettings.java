@@ -18,6 +18,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 import org.jetbrains.plugins.scala.ScalaBundle;
 import org.jetbrains.plugins.scala.ScalaLanguage;
+import org.jetbrains.plugins.scala.project.SyntheticModule;
 
 import java.io.File;
 import java.util.Arrays;
@@ -475,7 +476,8 @@ public class ScalaProjectSettings implements PersistentStateComponent<ScalaProje
   @NotNull
   public String getBasePackageFor(@NotNull Module module) {
     if (INHERIT_BASE_PACKAGES) {
-      return Arrays.stream(ModuleRootManager.getInstance(module).getContentEntries())
+      var searchModule = module instanceof SyntheticModule synthetic ? synthetic.underlying() : module;
+      return Arrays.stream(ModuleRootManager.getInstance(searchModule).getContentEntries())
               .flatMap(it -> Arrays.stream(it.getSourceFolders()))
               .map(SourceFolder::getPackagePrefix)
               .filter(it -> !it.isEmpty())

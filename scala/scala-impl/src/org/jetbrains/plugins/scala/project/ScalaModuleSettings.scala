@@ -199,8 +199,12 @@ private object ScalaModuleSettings {
       forSbtBuildModule(module)
     }
     else {
+      val moduleForLibrarySearch = module match {
+        case synthetic: SyntheticModule => synthetic.underlying
+        case m => m
+      }
       val processor: FindProcessor[libraries.Library] = _.isScalaSdk
-      OrderEnumerator.orderEntries(module)
+      OrderEnumerator.orderEntries(moduleForLibrarySearch)
         .librariesOnly
         .forEachLibrary(processor)
       val scalaSdk = processor.getFoundValue.asInstanceOf[LibraryEx]

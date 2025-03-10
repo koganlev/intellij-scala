@@ -134,6 +134,7 @@ class WorksheetCompiler(
     } catch {
       case NonFatal(ex) =>
         callback(toError(ex))
+        ex.printStackTrace()
     }
   } catch {
     case NonFatal(ex) =>

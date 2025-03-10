@@ -14,11 +14,11 @@ import org.jetbrains.plugins.scala.console.configuration.ScalaSdkJLineFixer
 import org.jetbrains.plugins.scala.console.configuration.ScalaSdkJLineFixer.JlineResolveResult
 import org.jetbrains.plugins.scala.extensions.LoggerExt
 import org.jetbrains.plugins.scala.lang.psi.api.ScFile
-import org.jetbrains.plugins.scala.project.ModuleExt
 import org.jetbrains.plugins.scala.project.settings.ScalaCompilerSettings
+import org.jetbrains.plugins.scala.project.{ModuleExt, SyntheticModule}
 import org.jetbrains.plugins.scala.util.ScalaPluginJars
 import org.jetbrains.plugins.scala.worksheet.WorksheetUtils
-import org.jetbrains.plugins.scala.worksheet.actions.{WorksheetFileHook, WorksheetSyntheticModule}
+import org.jetbrains.plugins.scala.worksheet.actions.WorksheetFileHook
 import org.jetbrains.plugins.scala.worksheet.bsp.BspWorksheetCompilerExtension
 import org.jetbrains.plugins.scala.worksheet.server.RemoteServerConnector._
 import org.jetbrains.plugins.scala.worksheet.settings.WorksheetFileSettings
@@ -150,19 +150,19 @@ final class RemoteServerConnector(
   }
 
   private def outputDirs: Seq[Path] = {
-    def isTestModule(module: Module): Boolean = {
-      val cpModule = module match {
-        case s: WorksheetSyntheticModule => s.cpModule
-        case m => m
-      }
-      cpModule.isTest
+    def workspaceModelModule(module: Module): Module = module match {
+      case synthetic: SyntheticModule => synthetic.underlying
+      case m => m
     }
 
-    val modules = ModuleRootManager.getInstance(module).getDependencies :+ module
+    def isTestModule(module: Module): Boolean = workspaceModelModule(module).isTest
+
+    val realModule = workspaceModelModule(module)
+    val modules = ModuleRootManager.getInstance(realModule).getDependencies ++ Seq(realModule, module)
     val separateModulesForProdTest = SbtUtil.isBuiltWithSeparateModulesForProdTest(project)
     val paths = modules.map { module =>
       val isTest = separateModulesForProdTest && isTestModule(module)
-      CompilerPaths.getModuleOutputPath(module, isTest)
+      CompilerPaths.getModuleOutputPath(workspaceModelModule(module), isTest)
     }
 
     paths.map(Path.of(_)).toSeq

@@ -29,7 +29,7 @@ import org.jetbrains.plugins.scala.build.CompilerEventReporter
 import org.jetbrains.plugins.scala.compiler.{CompileServerLauncher, CompilerIntegrationBundle}
 import org.jetbrains.plugins.scala.extensions._
 import org.jetbrains.plugins.scala.lang.psi.api.ScalaFile
-import org.jetbrains.plugins.scala.project.{ModuleExt, ScalaLanguageLevel}
+import org.jetbrains.plugins.scala.project.{ModuleExt, ScalaLanguageLevel, SyntheticModule}
 import org.jetbrains.plugins.scala.settings.{ScalaHighlightingMode, ScalaProjectSettings}
 import org.jetbrains.plugins.scala.util.{CanonicalPath, DocumentVersion}
 
