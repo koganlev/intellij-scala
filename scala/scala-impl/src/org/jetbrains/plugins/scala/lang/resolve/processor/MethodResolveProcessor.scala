@@ -14,7 +14,7 @@ import org.jetbrains.plugins.scala.lang.psi.api.toplevel.{ScTypeParametersOwner,
 import org.jetbrains.plugins.scala.lang.psi.impl.ScPackageImpl
 import org.jetbrains.plugins.scala.lang.psi.impl.ScalaPsiElementFactory.createExpressionFromText
 import org.jetbrains.plugins.scala.lang.psi.impl.toplevel.synthetic.ScSyntheticFunction
-import org.jetbrains.plugins.scala.lang.psi.types.Compatibility.{ConformanceExtResult, Expression}
+import org.jetbrains.plugins.scala.lang.psi.types.Compatibility.{ApplicabilityCheckResult, Expression}
 import org.jetbrains.plugins.scala.lang.psi.types._
 import org.jetbrains.plugins.scala.lang.psi.types.api._
 import org.jetbrains.plugins.scala.lang.psi.types.api.designator.{ScDesignatorType, ScProjectionType}
@@ -178,7 +178,7 @@ object MethodResolveProcessor {
     expectedOption:         () => Option[ScType],
     isUnderscore:           Boolean,
     isShapeResolve:         Boolean
-  ): ConformanceExtResult = {
+  ): ApplicabilityCheckResult = {
 
     implicit val ctx: ProjectContext = c.element
     implicit val context: Context = Context(place)
@@ -224,10 +224,10 @@ object MethodResolveProcessor {
       case _               => Seq.empty
     })
 
-    def addExpectedTypeProblems(): ConformanceExtResult = {
+    def addExpectedTypeProblems(): ApplicabilityCheckResult = {
       if (expectedOption().isEmpty) {
         val problemsSeq = problems.result()
-        return ConformanceExtResult(problemsSeq)
+        return ApplicabilityCheckResult(problemsSeq)
       }
 
       val expected = expectedOption().get
@@ -256,15 +256,15 @@ object MethodResolveProcessor {
         problems += ExpectedTypeMismatch
       }
 
-      ConformanceExtResult(problems.result(), conformance.constraints)
+      ApplicabilityCheckResult(problems.result(), conformance.constraints)
     }
 
-    def checkFunction(fun: PsiNamedElement, isPolymorphic: Boolean): ConformanceExtResult = {
-      def default(): ConformanceExtResult = {
+    def checkFunction(fun: PsiNamedElement, isPolymorphic: Boolean): ApplicabilityCheckResult = {
+      def default(): ApplicabilityCheckResult = {
         fun match {
           case fun: ScFunction if fun.paramClauses.clauses.isEmpty ||
             fun.paramClauses.clauses.head.parameters.isEmpty ||
-            isUnderscore => ConformanceExtResult(problems.result())
+            isUnderscore => ApplicabilityCheckResult(problems.result())
           case fun: ScFun if fun.paramClauses == Seq() || fun.paramClauses == Seq(Seq()) || isUnderscore =>
             addExpectedTypeProblems()
           case method: PsiMethod if method.parameters.isEmpty ||
@@ -285,7 +285,7 @@ object MethodResolveProcessor {
         case t => t
       }
 
-      def checkEtaExpandedReference(fun: PsiNamedElement, pt: ScType): ConformanceExtResult = {
+      def checkEtaExpandedReference(fun: PsiNamedElement, pt: ScType): ApplicabilityCheckResult = {
         val maybeMethodType = fun match {
           case m: PsiMethod => m.methodTypeProvider(ref.elementScope).polymorphicType().toOption
           case fun: ScFun   => fun.polymorphicType().toOption
@@ -316,8 +316,8 @@ object MethodResolveProcessor {
           ).getOrElse(ConstraintsResult.Left)
 
         constraints match {
-          case ConstraintsResult.Left => ConformanceExtResult(Seq(ExpectedTypeMismatch))
-          case cs: ConstraintSystem   => ConformanceExtResult(problems.result(), cs)
+          case ConstraintsResult.Left => ApplicabilityCheckResult(Seq(ExpectedTypeMismatch))
+          case cs: ConstraintSystem   => ApplicabilityCheckResult(problems.result(), cs)
         }
       }
 
@@ -349,7 +349,7 @@ object MethodResolveProcessor {
 
     def checkSimpleApplication(
       typeParams: Seq[PsiTypeParameter]
-    ): ConformanceExtResult = {
+    ): ApplicabilityCheckResult = {
       //if we are processing constructor proxies, take class type parameters into account
       val typeParamsWithCls = element match {
         case Constructor.ofClass(cls) => typeParams ++ cls.getTypeParameters.toSeq
@@ -416,13 +416,13 @@ object MethodResolveProcessor {
         } else {
           problems += DoesNotTakeParameters
         }
-        ConformanceExtResult(problems.result())
-      case _: PsiClass    => ConformanceExtResult(problems.result())
-      case _: ScTypeAlias => ConformanceExtResult(problems.result())
+        ApplicabilityCheckResult(problems.result())
+      case _: PsiClass    => ApplicabilityCheckResult(problems.result())
+      case _: ScTypeAlias => ApplicabilityCheckResult(problems.result())
       //Implicit Application
       case f: ScMethodLike if hasMalformedSignature(f) =>
         problems += MalformedDefinition(f.name)
-        ConformanceExtResult(problems.result())
+        ApplicabilityCheckResult(problems.result())
       case fun: ScFunction if (typeArgElements.isEmpty ||
         typeArgElements.length == fun.typeParameters.length) && fun.paramClauses.clauses.length == 1 &&
         fun.paramClauses.clauses.head.isImplicit && //@TODO: multiple using clauses ???

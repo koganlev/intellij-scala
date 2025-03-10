@@ -82,7 +82,7 @@ object ScConstructorInvocationAnnotator extends ElementAnnotator[ScConstructorIn
           .followed(ScSubstitutor.bind(params)(UndefinedType(_)))
           .followed(r.substitutor)
 
-        val res = Compatibility.checkConstructorConformance(
+        val res = Compatibility.checkConstructorApplicability(
           constrInvocation,
           substitutor,
           constrInvocation.arguments,

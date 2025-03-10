@@ -176,7 +176,7 @@ class ScConstructorInvocationImpl(node: ASTNode)
                 param => Parameter(mySubst(param.paramType), param.isRepeated, param.index)
               )
 
-              val extRes = Compatibility.checkConformanceExt(undefParams, paramsByClauses.map(_._1), checkWithImplicits = false, isShapesResolve = false)
+              val extRes = Compatibility.checkMethodApplicability(undefParams, paramsByClauses.map(_._1), withImplicits = false, shapesOnly = false)
               val maybeSubstitutor = extRes.constraints match {
                 case ConstraintSystem(substitutor) => Some(substitutor)
                 case _ => None

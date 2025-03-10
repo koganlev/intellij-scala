@@ -154,10 +154,10 @@ abstract class MethodInvocationImpl(node: ASTNode) extends ScExpressionImplBase(
   private def tuplizyCase(
     expressions:        Seq[Expression],
     maybeResolveResult: Option[ScalaResolveResult],
-  )(function:           Seq[Expression] => (ScType, ConformanceExtResult)
+  )(function:           Seq[Expression] => (ScType, ApplicabilityCheckResult)
   ): RegularCase = {
     def asRegularCase(expressions: Seq[Expression]): RegularCase = {
-      val (tp, ConformanceExtResult(problems, _, _, matched)) = function(expressions)
+      val (tp, ApplicabilityCheckResult(problems, _, _, matched)) = function(expressions)
       RegularCase(tp, maybeResolveResult, problems, matched)
     }
 
@@ -256,7 +256,7 @@ abstract class MethodInvocationImpl(node: ASTNode) extends ScExpressionImplBase(
 
     maybeTuple.map {
       case (returnType, parameters, maybePolymorphicType) =>
-        val function: Seq[Expression] => (ScType, ConformanceExtResult) = maybePolymorphicType match {
+        val function: Seq[Expression] => (ScType, ApplicabilityCheckResult) = maybePolymorphicType match {
           case Some(polymorphicType) =>
             val canThrowSCE = useExpectedType && this.expectedType().isDefined /* optimization to avoid except */
 
@@ -274,11 +274,11 @@ abstract class MethodInvocationImpl(node: ASTNode) extends ScExpressionImplBase(
             )
           case _ =>
             (expressions: Seq[Expression]) => {
-              val conformanceResult = checkConformanceExt(
+              val conformanceResult = checkMethodApplicability(
                 parameters,
                 expressions,
-                checkWithImplicits = true,
-                isShapesResolve    = false
+                withImplicits = true,
+                shapesOnly    = false
               )
 
               (returnType, conformanceResult)

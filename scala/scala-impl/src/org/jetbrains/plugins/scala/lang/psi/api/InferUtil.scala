@@ -16,7 +16,7 @@ import org.jetbrains.plugins.scala.lang.psi.impl.ScalaPsiElementFactory
 import org.jetbrains.plugins.scala.lang.psi.implicits.ImplicitCollector.ImplicitState
 import org.jetbrains.plugins.scala.lang.psi.implicits.{DivergenceChecker, ImplicitCollector}
 import org.jetbrains.plugins.scala.lang.psi.light.LightContextFunctionParameter
-import org.jetbrains.plugins.scala.lang.psi.types.Compatibility.{ConformanceExtResult, Expression}
+import org.jetbrains.plugins.scala.lang.psi.types.Compatibility.{ApplicabilityCheckResult, Expression}
 import org.jetbrains.plugins.scala.lang.psi.types.ConstraintSystem.SubstitutionBounds
 import org.jetbrains.plugins.scala.lang.psi.types._
 import org.jetbrains.plugins.scala.lang.psi.types.api._
@@ -635,7 +635,7 @@ object InferUtil {
     canThrowSCE:              Boolean = false,
     filterTypeParams:         Boolean = true,
     paramSubst:               Option[ScSubstitutor] = None
-  ): (ScTypePolymorphicType, ConformanceExtResult) = {
+  ): (ScTypePolymorphicType, ApplicabilityCheckResult) = {
     implicit val projectContext: ProjectContext = retType.projectContext
 
     val typeParamIds = typeParams.map(_.typeParamId).toSet
@@ -660,12 +660,12 @@ object InferUtil {
         )
     )
 
-    val conformanceResult @ ConformanceExtResult(problems, constraints, _, _) =
-      Compatibility.checkConformanceExt(
+    val conformanceResult @ ApplicabilityCheckResult(problems, constraints, _, _) =
+      Compatibility.checkMethodApplicability(
         paramsWithUndefTypes,
         exprs,
-        checkWithImplicits = true,
-        isShapesResolve    = false
+        withImplicits = true,
+        shapesOnly    = false
       )
 
     val tpe = if (problems.isEmpty) {
