@@ -61,12 +61,17 @@ class ScReferenceExpressionImpl(node: ASTNode) extends ScReferenceImpl(node) wit
     maybeAssignmentResult match {
       case Some(value) =>
         value.resolveAssignment.toArray
-      case None => cachedWithRecursionGuard("multiResolveScala", this, ScalaResolveResult.EMPTY_ARRAY, BlockModificationTracker(this), Tuple1(incomplete)) {
-        val result = new ReferenceExpressionResolver().resolve(this, shapesOnly = false, incomplete)
-
-        Tracing.resolve(this, result)
-
-        result
+      case None =>
+        cachedWithRecursionGuard(
+          "multiResolveScala",
+          this,
+          ScalaResolveResult.EMPTY_ARRAY,
+          BlockModificationTracker(this),
+          Tuple1(incomplete)
+        ) {
+          val result = new ReferenceExpressionResolver().resolve(this, shapesOnly = false, incomplete)
+          Tracing.resolve(this, result)
+          result
       }
     }
   }
@@ -86,7 +91,7 @@ class ScReferenceExpressionImpl(node: ASTNode) extends ScReferenceImpl(node) wit
   }
 
   override def doResolve(processor: BaseProcessor, accessibilityCheck: Boolean = true): Array[ScalaResolveResult] =
-    new ReferenceExpressionResolver().doResolve(this, processor, accessibilityCheck)
+    new ReferenceExpressionResolver().doResolve(this, processor)
 
   override def bindToElement(element: PsiElement): PsiElement = bindToElement(element, None)
 
@@ -309,7 +314,7 @@ class ScReferenceExpressionImpl(node: ASTNode) extends ScReferenceImpl(node) wit
     found
   }
 
-  protected def convertBindToType(bind: ScalaResolveResult): TypeResult = {
+  private def convertBindToType(bind: ScalaResolveResult): TypeResult = {
     val srr = bind match {
       case ScalaResolveResult.ApplyMethodInnerResolve(inner) => inner
       case _                                                 => bind
@@ -436,12 +441,11 @@ class ScReferenceExpressionImpl(node: ASTNode) extends ScReferenceImpl(node) wit
         }
         computeType.tryWrapIntoSeqType
       case ScalaResolveResult(obj: ScObject, _) =>
-        def tail = {
+        def tail =
           fromType match {
             case Some(tp) => ScProjectionType(tp, obj)
-            case _ => ScalaType.designator(obj)
+            case _        => ScalaType.designator(obj)
           }
-        }
         //hack to add Eta expansion for case classes
         if (obj.isSyntheticObject) {
           ScalaPsiUtil.getCompanionModule(obj) match {
@@ -462,7 +466,7 @@ class ScReferenceExpressionImpl(node: ASTNode) extends ScReferenceImpl(node) wit
             case _ => tail
           }
         } else tail
-      case r@ScalaResolveResult(f: ScFieldId, s) =>
+      case r @ ScalaResolveResult(f: ScFieldId, s) =>
         val result = r.intersectedReturnType.asTypeResult.orElse(f.`type`())
 
         result.map { tp =>

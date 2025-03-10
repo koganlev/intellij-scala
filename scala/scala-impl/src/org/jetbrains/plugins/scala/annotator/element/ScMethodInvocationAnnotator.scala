@@ -53,8 +53,7 @@ object ScMethodInvocationAnnotator extends ElementAnnotator[MethodInvocation] {
 
     val missed = for (MissedValueParameter(p) <- problems) yield p.name + ": " + p.paramType.presentableText
 
-
-    if(missed.nonEmpty) {
+    if (missed.nonEmpty) {
       val message = ScalaBundle.message("annotator.error.unspecified.value.parameters", missed.mkString(", "))
       holder.createErrorAnnotation(missingArgumentsRange(call), message)
     }
@@ -126,7 +125,6 @@ object ScMethodInvocationAnnotator extends ElementAnnotator[MethodInvocation] {
         holder.createErrorAnnotation(assignment.leftExpression, ScalaBundle.message("annotator.error.parameter.specified.multiple.times"))
       case ExpectedTypeMismatch => // it will be reported later
       case DefaultTypeParameterMismatch(_, _) => //it will be reported later
-
       case AmbiguousImplicitParameters(_) =>
       case MissedParametersClause(_) =>
       case DoesNotTakeTypeParameters =>

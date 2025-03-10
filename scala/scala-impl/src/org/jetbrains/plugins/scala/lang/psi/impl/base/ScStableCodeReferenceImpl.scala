@@ -446,7 +446,7 @@ class ScStableCodeReferenceImpl(node: ASTNode) extends ScReferenceImpl(node) wit
         for (ttype <- thisQ.`type`()) processor.processType(ttype, this)
         processor.candidates
       case Some(superQ: ScSuperReference) =>
-        ResolveUtils.processSuperReference(superQ, processor, this).candidates
+        ResolveUtils.processSuperReference(superQ, processor, this)
       case Some(qual) =>
         assert(assertion = false, s"Weird qualifier: ${qual.getClass}")
         processor.candidates

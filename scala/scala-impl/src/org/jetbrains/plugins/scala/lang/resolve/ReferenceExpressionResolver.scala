@@ -41,10 +41,10 @@ import scala.language.implicitConversions
 class ReferenceExpressionResolver(implicit projectContext: ProjectContext) {
 
   private case class ContextInfo(
-    arguments: Option[Seq[Expression]],
+    arguments:    Option[Seq[Expression]],
     expectedType: () => Option[ScType],
     isUnderscore: Boolean,
-    invokedExpr: Option[ScExpression]
+    invokedExpr:  Option[ScExpression]
   )
 
   private def argumentsOf(ref: PsiElement): Seq[Expression] = {
@@ -134,8 +134,8 @@ class ReferenceExpressionResolver(implicit projectContext: ProjectContext) {
 
   def resolve(reference: ScReferenceExpression, shapesOnly: Boolean, incomplete: Boolean): Array[ScalaResolveResult] = {
     val resolveWithName = this.resolveWithName(_: String, reference, shapesOnly, incomplete)
-    val refName = reference.refName
-    val context = reference.getContext
+    val refName         = reference.refName
+    val context         = reference.getContext
 
     val name = context match {
       case ScPrefixExpr(`reference`, _) => s"unary_$refName"
@@ -153,15 +153,20 @@ class ReferenceExpressionResolver(implicit projectContext: ProjectContext) {
     resolveWithName(name)
   }
 
-  private def resolveWithName(name: String, reference: ScReferenceExpression, shapesOnly: Boolean, incomplete: Boolean): Array[ScalaResolveResult] = {
-    val context = reference.getContext
+  private def inMethodCallContext(reference: ScReferenceExpression): Boolean =
+    reference.getContext match {
+      case gen: ScGenericCall    if gen.referencedExpr == reference => true
+      case inv: MethodInvocation if inv.getInvokedExpr == reference => true
+      case _                                                        => false
+    }
 
-    def inMethodCallContext: Boolean =
-      context match {
-        case _: ScGenericCall                                         => true
-        case inv: MethodInvocation if inv.getInvokedExpr == reference => true
-        case _                                                        => false
-      }
+  private def resolveWithName(
+    name:       String,
+    reference:  ScReferenceExpression,
+    shapesOnly: Boolean,
+    incomplete: Boolean
+  ): Array[ScalaResolveResult] = {
+    val context = reference.getContext
 
     val info = getContextInfo(reference, reference)
 
@@ -175,7 +180,6 @@ class ReferenceExpressionResolver(implicit projectContext: ProjectContext) {
     val typeArgs           = getTypeArgs(reference)
 
     def processor(
-      smartProcessor: Boolean,
       name:           String                    = name,
       kinds:          Set[ResolveTargets.Value] = kindsForRef(reference, reference, incomplete)
     ): MethodResolveProcessor =
@@ -190,21 +194,7 @@ class ReferenceExpressionResolver(implicit projectContext: ProjectContext) {
         info.isUnderscore,
         isShapeResolve = shapesOnly,
         enableTupling  = true
-      ) {
-        override def candidatesS: Set[ScalaResolveResult] =
-          if (!smartProcessor) super.candidatesS
-          else {
-            val shapeResolve = reference.shapeResolve
-            val iterator     = shapeResolve.iterator
-            while (iterator.hasNext) {
-              levelSet.add(iterator.next())
-            }
-            val sc = super.candidatesS
-            sc
-          }
-      }
-
-    def smartResolve(): Array[ScalaResolveResult] = processor(smartProcessor = true).candidates
+      )
 
     def resolveConstructorProxies(srrs: Array[ScalaResolveResult]): Array[ScalaResolveResult] = {
       def tryResolveSpecificProxies: Array[ScalaResolveResult] =
@@ -212,7 +202,7 @@ class ReferenceExpressionResolver(implicit projectContext: ProjectContext) {
         else srrs.head.element match {
           case obj: ScObject if obj.allFunctionsByName(CommonNames.Apply).isEmpty =>
             val cls  = obj.baseCompanion
-            val proc = processor(smartProcessor = false, kinds = Set(ResolveTargets.CLASS))
+            val proc = processor(kinds = Set(ResolveTargets.CLASS))
             cls.foreach(proc.execute(_, ScalaResolveState.withImportsUsed(srrs.head.importsUsed)))
             val proxies = proc.candidates
 
@@ -221,7 +211,7 @@ class ReferenceExpressionResolver(implicit projectContext: ProjectContext) {
           case _ => srrs
         }
 
-      if (!inMethodCallContext)             srrs
+      if (!inMethodCallContext(reference))  srrs
       else if (!reference.isInScala3Module) srrs
       else if (srrs.isEmpty) {
         val isExplicitApplyReference = name == CommonNames.Apply
@@ -232,7 +222,7 @@ class ReferenceExpressionResolver(implicit projectContext: ProjectContext) {
           case _ => reference
         }
 
-        val proc    = processor(smartProcessor = false, name = amendedRef.refName, kinds = Set(ResolveTargets.CLASS))
+        val proc    = processor(name = amendedRef.refName, kinds = Set(ResolveTargets.CLASS))
         val proxies = doResolve(amendedRef, proc)
 
         if (proxies.nonEmpty && (amendedRef ne reference)) {
@@ -249,86 +239,25 @@ class ReferenceExpressionResolver(implicit projectContext: ProjectContext) {
       } else tryResolveSpecificProxies
     }
 
-    def fallbackResolve(found: Array[ScalaResolveResult]): Array[ScalaResolveResult] = {
-      val maybeExplicitApplyRef =
-        if (reference.refName != CommonNames.Apply
-          && inMethodCallContext
-          && found.length == 1
-          && !reference.startsWithToken(ScalaTokenTypes.tUNDER) //
-        ) {
-          val srr                   = found.head
-          val hasParams             = srr.elementHasParameters
-          val hasTypeParams         = srr.elementHasTypeParameters
-          val hasArgs               = info.arguments.nonEmpty
-          val hasMismatchedTypeArgs = !hasTypeParams && typeArgs.nonEmpty
-
-          if (!hasParams || srr.name == CommonNames.Apply) {
-            if (hasMismatchedTypeArgs) {
-              // the case when type arguments belong to apply method
-              // foo[A](10) -> foo.apply[A](1)
-              createRef(reference.getContext, s"${reference.getText}.apply").toOption
-            } else if (hasArgs) {
-              // the case when potential type arguments belong to the initial method invocation
-              // foo[A](10) -> foo[A].apply(10)
-              val invokedExpr = info.invokedExpr.getOrElse(reference)
-              createRef(invokedExpr.getContext, s"(${invokedExpr.getText}).apply").toOption
-            }
-            else None
-          } else None
-        } else None
-
-      maybeExplicitApplyRef match {
-        case Some(applyRef) =>
-          val resolvedWithApplyRef = resolveWithName(CommonNames.Apply, applyRef, shapesOnly, incomplete)
-
-          if (resolvedWithApplyRef.isEmpty) {
-            val withConversions = doResolve(reference, processor(smartProcessor = false), tryThisQualifier = true)
-            if (withConversions.isEmpty) found
-            else                         withConversions
-          } else {
-            val prevSrr  = found.head
-            val innerSrr = prevSrr.innerResolveResult.getOrElse(prevSrr)
-            val res = resolvedWithApplyRef.map { actualSrr =>
-              actualSrr.copy(
-                innerResolveResult = innerSrr.toOption,
-                parentElement      = innerSrr.element.toOption
-              )
-            }
-            res
-          }
-        case None =>
-          doResolve(reference, processor(smartProcessor = false), tryThisQualifier = true)
-      }
-    }
-
-    def assignmentResolve() = {
-      val assignProcessor = new MethodResolveProcessor(
-        reference,
-        reference.refName.init,
-        List(argumentsOf(reference)),
-        Nil,
-        prevInfoTypeParams,
-        isShapeResolve = shapesOnly,
-        enableTupling = true)
+    def assignmentResolve(): Array[ScalaResolveResult] = {
+      val assignProcessor =
+        new MethodResolveProcessor(
+          reference,
+          reference.refName.init,
+          List(argumentsOf(reference)),
+          Nil,
+          prevInfoTypeParams,
+          isShapeResolve = shapesOnly,
+          enableTupling  = true
+        )
 
       doResolve(reference, assignProcessor)
         .map(_.copy(isAssignment = true))
     }
 
     val result = {
-      val initialResolve =
-        if (shapesOnly) doResolve(reference, processor(smartProcessor = false))
-        else            smartResolve()
-
-      val withProxies = resolveConstructorProxies(initialResolve)
-
-      def isApplicable(srr: ScalaResolveResult): Boolean =
-        srr.isApplicable() ||
-          // resolve constructors (for Universal Apply) even if the arguments are not applicable
-          srr.element.asOptionOf[PsiMethod].exists(_.isConstructor)
-
-      if (withProxies.exists(isApplicable)) withProxies
-      else                                  fallbackResolve(withProxies)
+      val initialResolve = doResolve(reference, processor())
+      resolveConstructorProxies(initialResolve)
     }
 
     val resolveAssignment: Boolean =
@@ -345,12 +274,13 @@ class ReferenceExpressionResolver(implicit projectContext: ProjectContext) {
 
   def doResolve(
     ref:                ScReferenceExpression,
-    processor:          BaseProcessor,
+    proc:               BaseProcessor,
     accessibilityCheck: Boolean = true,
-    tryThisQualifier:   Boolean = false
+    tryThisQualifier:   Boolean = true
   ): Array[ScalaResolveResult] = {
+    val info = getContextInfo(ref, ref)
 
-    def resolveUnqualified(processor: BaseProcessor): BaseProcessor =
+    def resolveUnqualified(processor: BaseProcessor): Array[ScalaResolveResult] =
       ref.getContext match {
         case ScSugarCallExpr(operand, operation, _) if ref == operation =>
           processQualifier(operand, processor)
@@ -358,7 +288,7 @@ class ReferenceExpressionResolver(implicit projectContext: ProjectContext) {
           processQualifier(lhs, processor)
         case _ =>
           resolveUnqualifiedExpression(processor)
-          processor
+          processor.candidates
       }
 
     def resolveUnqualifiedExpression(processor: BaseProcessor): Unit = {
@@ -429,8 +359,8 @@ class ReferenceExpressionResolver(implicit projectContext: ProjectContext) {
     }
 
     def processMethodAssignment(
-      args: ScArgumentExprList,
-      call: MethodInvocation,
+      args:      ScArgumentExprList,
+      call:      MethodInvocation,
       processor: BaseProcessor
     ): Unit =
       args.callReference.foreach { reference =>
@@ -664,7 +594,7 @@ class ReferenceExpressionResolver(implicit projectContext: ProjectContext) {
       }
     }
 
-    def processQualifier(qualifier: ScExpression, processor: BaseProcessor): BaseProcessor = {
+    def processQualifier(qualifier: ScExpression, processor: BaseProcessor): Array[ScalaResolveResult] = {
       ProgressManager.checkCanceled()
 
       qualifier.getNonValueType() match {
@@ -672,18 +602,18 @@ class ReferenceExpressionResolver(implicit projectContext: ProjectContext) {
           !internal.is[ScMethodType, UndefinedType] /* optimization */ =>
           val substed = tpt.abstractOrLowerTypeSubstitutor(internal)
           processType(substed, qualifier, processor)
-          if (processor.candidates.nonEmpty) return processor
+          if (processor.candidates.nonEmpty) return processor.candidates
         case _ =>
       }
 
       //if it's ordinary case
       qualifier.`type`().toOption match {
         case Some(tp) => processType(tp, qualifier, processor)
-        case _ => processor
+        case _        => processor.candidates
       }
     }
 
-    def processType(aType: ScType, qualifier: ScExpression, processor: BaseProcessor): BaseProcessor = {
+    def processType(aType: ScType, qualifier: ScExpression, processor: BaseProcessor): Array[ScalaResolveResult] = {
       val shape = processor match {
         case m: MethodResolveProcessor => m.isShapeResolve
         case _                         => false
@@ -713,11 +643,11 @@ class ReferenceExpressionResolver(implicit projectContext: ProjectContext) {
       }
       processor.processType(aType, qualifier, state.withSubstitutor(matchSubst))
 
-      val candidates = processor.candidatesS
+      val candidates = processor.candidates
 
       aType match {
-        case d: ScDesignatorType if d.isStatic => return processor
-        case ScDesignatorType(_: PsiPackage)   => return processor
+        case d: ScDesignatorType if d.isStatic => return candidates
+        case ScDesignatorType(_: PsiPackage)   => return candidates
         case _                                 =>
       }
 
@@ -726,28 +656,83 @@ class ReferenceExpressionResolver(implicit projectContext: ProjectContext) {
         case _                       => false
       }
 
-      val noApplicableCandidates =
-        candidates.isEmpty ||
-          (!shape && candidates.forall(!_.isApplicable()))
+      def noApplicableCandidates(cands: Array[ScalaResolveResult]) =
+        cands.isEmpty ||
+          (!shape && cands.forall(!_.isApplicable()))
 
-      if (noApplicableCandidates || withImplicitConversion) {
-        ImplicitConversionResolveResult.processImplicitConversionsAndExtensions(
-          targetNameFor(processor),
-          ref,
-          processor,
-          noImplicitsForArgs = candidates.nonEmpty,
-          forCompletion = processor.is[CompletionProcessor]
-        )(_.withImports.withImplicitType.withType)(qualifier)
+      def fallbackApplyResolve(found: Array[ScalaResolveResult]): Array[ScalaResolveResult] = {
+        val maybeExplicitApplyRef =
+          if (ref.refName != CommonNames.Apply
+            && inMethodCallContext(ref)
+            && found.length == 1
+            && !ref.startsWithToken(ScalaTokenTypes.tUNDER)
+          ) {
+            val srr                   = found.head
+            val hasParams             = srr.elementHasParameters
+            val hasTypeParams         = srr.elementHasTypeParameters
+            val hasArgs               = info.arguments.nonEmpty
+            val hasMismatchedTypeArgs = !hasTypeParams && getTypeArgs(ref).nonEmpty
 
+            if (!hasParams || srr.name == CommonNames.Apply) {
+              if (hasMismatchedTypeArgs) {
+                // the case when type arguments belong to apply method
+                // foo[A](10) -> foo.apply[A](1)
+                createRef(ref.getContext, s"${ref.getText}.apply").toOption
+              } else if (hasArgs) {
+                // the case when potential type arguments belong to the initial method invocation
+                // foo[A](10) -> foo[A].apply(10)
+                val invokedExpr = info.invokedExpr.getOrElse(ref)
+                createRef(invokedExpr.getContext, s"(${invokedExpr.getText}).apply").toOption
+              }
+              else None
+            } else None
+          } else None
 
-        (processor, processor.candidates) match {
-          case (methodProcessor: MethodResolveProcessor, Array()) if conformsToDynamic(fromType, ref.resolveScope) =>
-            val dynamicProcessor = dynamicResolveProcessor(ref, qualifier, methodProcessor)
-            dynamicProcessor.processType(fromType, qualifier, state)
-            dynamicProcessor
-          case _ => processor
+        maybeExplicitApplyRef match {
+          case Some(applyRef) =>
+            val resolvedWithApplyRef =
+              if (shape) applyRef.shapeResolve
+              else       applyRef.multiResolveScala(false)
+
+            if (resolvedWithApplyRef.isEmpty) found
+            else {
+              val prevSrr  = found.head
+              val innerSrr = prevSrr.innerResolveResult.getOrElse(prevSrr)
+
+              val res = resolvedWithApplyRef.map { actualSrr =>
+                actualSrr.copy(
+                  innerResolveResult = innerSrr.toOption,
+                  parentElement      = innerSrr.element.toOption
+                )
+              }
+              res
+            }
+          case None => found
         }
-      } else processor
+      }
+
+      if (noApplicableCandidates(candidates)) {
+        val fallbackResolve = fallbackApplyResolve(candidates)
+
+        if (noApplicableCandidates(fallbackResolve) || withImplicitConversion) {
+
+          ImplicitConversionResolveResult.processImplicitConversionsAndExtensions(
+            targetNameFor(processor),
+            ref,
+            processor,
+            noImplicitsForArgs = candidates.nonEmpty,
+            forCompletion      = processor.is[CompletionProcessor]
+          )(_.withImports.withImplicitType.withType)(qualifier)
+
+          (processor, processor.candidates) match {
+            case (methodProcessor: MethodResolveProcessor, Array()) if conformsToDynamic(fromType, ref.resolveScope) =>
+              val dynamicProcessor = dynamicResolveProcessor(ref, qualifier, methodProcessor)
+              dynamicProcessor.processType(fromType, qualifier, state)
+              dynamicProcessor.candidates
+            case (_, cands) => cands
+          }
+        } else fallbackResolve
+      } else candidates
     }
 
     def targetNameFor(processor: BaseProcessor): Option[String] = processor match {
@@ -763,24 +748,33 @@ class ReferenceExpressionResolver(implicit projectContext: ProjectContext) {
       case _ => Some(ref.refName)
     }
 
-    if (!accessibilityCheck) processor.doNotCheckAccessibility()
+    if (!accessibilityCheck) proc.doNotCheckAccessibility()
 
-    val actualProcessor = ref.qualifier match {
-      case None => resolveUnqualified(processor)
+    var res = ref.qualifier match {
+      case None => resolveUnqualified(proc)
       case Some(superQ: ScSuperReference) =>
-        ResolveUtils.processSuperReference(superQ, processor, ref)
-        processor
-      case Some(q) => processQualifier(q, processor)
+        ResolveUtils.processSuperReference(superQ, proc, ref)
+      case Some(q) => processQualifier(q, proc)
     }
 
-    var res = actualProcessor.candidates
     if (accessibilityCheck && res.isEmpty) {
-      res = doResolve(ref, processor, accessibilityCheck = false)
+      res = doResolve(ref, proc, accessibilityCheck = false)
     }
 
-    if (res.nonEmpty && res.forall(!_.isValidResult) && ref.qualifier.isEmpty && tryThisQualifier) {
+    val isInfixOp = ref.getContext match {
+      case inf: ScInfixExpr => inf.operation == ref
+      case _                => false
+    }
+
+    if (
+      res.nonEmpty &&
+        res.forall(!_.isValidResult) &&
+        ref.qualifier.isEmpty &&
+        tryThisQualifier &&
+        !isInfixOp
+    ) {
       val thisExpr = createRef(ref.getContext, s"this.${ref.getText}")
-      res = doResolve(thisExpr, processor, accessibilityCheck)
+      res = doResolve(thisExpr, proc, accessibilityCheck, tryThisQualifier = false)
     }
 
     res

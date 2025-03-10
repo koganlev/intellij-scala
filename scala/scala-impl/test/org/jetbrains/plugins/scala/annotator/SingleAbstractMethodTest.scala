@@ -1109,6 +1109,10 @@ abstract class SingleAbstractMethodTest_Since_2_11_experimental extends SingleAb
     checkCodeHasNoErrors(code, javaCode)
   }
 
+
+  // This test is not testing, what we think it does.
+  // Actual overload selected is the one with a single parameter (auto-tupled)
+  // T := (String, String => Int)
   def testOverload(): Unit = {
     val code =
       """
@@ -1606,7 +1610,7 @@ abstract class SingleAbstractMethodTest_Since_2_13 extends SingleAbstractMethodT
         //
         Error("f1()", "Expression of type Unit doesn't conform to expected type Runnable") ::
         Error("f2()", "Expression of type () => Unit doesn't conform to expected type Runnable") ::
-        Error("()", "f3 does not take parameters") ::
+        Error("()", "'Unit' does not take parameters") ::
         Error("f4()", "Expression of type Unit doesn't conform to expected type Runnable") ::
         Error("f5()", "Expression of type Unit doesn't conform to expected type Runnable") ::
         Nil =>
@@ -1629,7 +1633,7 @@ abstract class SingleAbstractMethodTest_Since_2_13 extends SingleAbstractMethodT
         //
         Error("f1()", "Expression of type Unit doesn't conform to expected type SRunnable") ::
         Error("f2()", "Expression of type () => Unit doesn't conform to expected type SRunnable") ::
-        Error("()", "f3 does not take parameters") ::
+        Error("()", "'Unit' does not take parameters") ::
         Error("f4()", "Expression of type Unit doesn't conform to expected type SRunnable") ::
         Error("f5()", "Expression of type Unit doesn't conform to expected type SRunnable") ::
         Nil =>

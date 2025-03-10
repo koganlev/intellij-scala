@@ -1,10 +1,8 @@
 package org.jetbrains.plugins.scala.lang.psi.impl.expr
 
-import com.intellij.psi.PsiTypeParameterListOwner
 import org.jetbrains.plugins.scala.lang.psi.api.base.types.ScTypeElement
 import org.jetbrains.plugins.scala.lang.psi.api.expr.{MethodInvocation, ScAssignment, ScExpression, ScGenericCall}
 import org.jetbrains.plugins.scala.lang.psi.api.statements.ScFunction.CommonNames
-import org.jetbrains.plugins.scala.lang.psi.api.toplevel.ScTypeParametersOwner
 import org.jetbrains.plugins.scala.lang.psi.impl.ScalaPsiElementFactory.createExpressionFromText
 import org.jetbrains.plugins.scala.lang.psi.implicits.ImplicitConversionResolveResult
 import org.jetbrains.plugins.scala.lang.psi.types.ScType
@@ -26,56 +24,27 @@ case class ApplyOrUpdateInvocation(
   isUpdate:          Boolean
 ) {
 
-  private val shapeResolveProcessor: MethodResolveProcessor =
-    new MethodResolveProcessor(
+  def collectCandidates(isShape: Boolean, withImplicits: Boolean = true): Array[ScalaResolveResult] = {
+    val nameArgForDynamic = Option.when(isDynamic)(CommonNames.Apply)
+
+    val proc = new MethodResolveProcessor(
       baseExpr,
       methodName,
       argClauses,
       typeArgs,
       curriedTypeParams,
       expectedOption    = expectedType,
-      isShapeResolve    = true,
+      isShapeResolve    = isShape,
       enableTupling     = true,
-      nameArgForDynamic = Option.when(isDynamic)(CommonNames.Apply)
+      nameArgForDynamic = nameArgForDynamic
     )
 
-  def collectCandidates(isShape: Boolean, withImplicits: Boolean = true): Array[ScalaResolveResult] = {
-    val nameArgForDynamic = Option.when(isDynamic)(CommonNames.Apply)
-
-    def processor(runWithShapeResolveProc: MethodResolveProcessor => Set[ScalaResolveResult]) =
-      new MethodResolveProcessor(
-        baseExpr,
-        methodName,
-        argClauses,
-        typeArgs,
-        curriedTypeParams,
-        expectedOption    = expectedType,
-        isShapeResolve    = isShape,
-        enableTupling     = true,
-        nameArgForDynamic = nameArgForDynamic
-      ) {
-        override def candidatesS: Set[ScalaResolveResult] = {
-          val shapeResolve = runWithShapeResolveProc(shapeResolveProcessor)
-
-          if (isShape) shapeResolve
-          else {
-            val iterator = shapeResolve.iterator
-
-            while (iterator.hasNext) {
-              levelSet.add(iterator.next())
-            }
-
-            super.candidatesS
-          }
-        }
-      }
-
-    val simpleCandidates = processor(candidatesFromType(_, targetType)).candidatesS
+    val simpleCandidates = candidatesFromType(proc, targetType)
 
     val candidates =
       if (simpleCandidates.forall(!_.isApplicable()) && withImplicits) {
         val noImplicitsForArgs = simpleCandidates.nonEmpty
-        processor(candidatesWithConversion(_, noImplicitsForArgs)).candidatesS
+        candidatesWithConversion(proc, noImplicitsForArgs)
       } else simpleCandidates
 
     candidates.toArray
@@ -84,7 +53,7 @@ case class ApplyOrUpdateInvocation(
   private def candidatesWithConversion(
     processor:          MethodResolveProcessor,
     noImplicitsForArgs: Boolean
-  ) = {
+  ): Set[ScalaResolveResult] = {
     processor.resetPrecedence()
 
     ImplicitConversionResolveResult.processImplicitConversionsAndExtensions(

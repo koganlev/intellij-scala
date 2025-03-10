@@ -55,11 +55,11 @@ object Compatibility {
      *
      */
     def getTypeAfterImplicitConversion(
-      checkImplicits: Boolean,
-      isShape: Boolean,
-      expectedOption: Option[ScType],
+      checkImplicits:  Boolean,
+      isShape:         Boolean,
+      expectedOption:  Option[ScType],
       ignoreBaseTypes: Boolean = false,
-      fromUnderscore: Boolean = false
+      fromUnderscore:  Boolean = false
     ): ExpressionTypeResult
   }
 
@@ -242,29 +242,29 @@ object Compatibility {
     ).orElse(expr.elementScope.scalaSeqType)
 
   def checkConformance(
-    parameters: Seq[Parameter],
-    args: Seq[Expression],
+    parameters:          Seq[Parameter],
+    args:                Seq[Expression],
     checkWithImplicits: Boolean
   ): ConstraintsResult = {
     val r = checkMethodApplicability(
       parameters,
       args,
       checkWithImplicits,
-      shapesOnly = false
+      shapesOnly   = false
     )
 
     if (r.problems.nonEmpty) ConstraintsResult.Left
-    else r.constraints
+    else                     r.constraints
   }
 
   private def clashedAssignmentsIn(args: Seq[Expression]): Seq[ScAssignment] = {
-    val assignements =
+    val assignments =
       for (Expression(assignment@ScAssignment.Named(name)) <- args)
         yield (name, assignment)
 
-    val names = assignements.map(_._1)
+    val names = assignments.map(_._1)
     val clashedNames = names.diff(names.distinct)
-    assignements.filter(p => clashedNames.contains(p._1)).map(_._2)
+    assignments.filter(p => clashedNames.contains(p._1)).map(_._2)
   }
 
   case class ApplicabilityCheckResult(
@@ -283,7 +283,7 @@ object Compatibility {
   }
 
   private def collectSimpleProblems(
-    args: Seq[Expression],
+    args:       Seq[Expression],
     parameters: Seq[Parameter]
   ): Seq[ApplicabilityProblem] = {
     val problems = Seq.newBuilder[ApplicabilityProblem]
@@ -314,14 +314,14 @@ object Compatibility {
    * @param shapesOnly    When true, only calculate shapeTypes of argument expressions
    */
   def checkMethodApplicability(
-    parameters: Seq[Parameter],
-    args: Seq[Expression],
+    parameters:    Seq[Parameter],
+    args:          Seq[Expression],
     withImplicits: Boolean,
-    shapesOnly: Boolean
+    shapesOnly:    Boolean,
   ): ApplicabilityCheckResult = {
     ProgressManager.checkCanceled()
     var constraintAccumulator = ConstraintSystem.empty
-    val clashedAssignments = clashedAssignmentsIn(args)
+    val clashedAssignments    = clashedAssignmentsIn(args)
 
     if (clashedAssignments.nonEmpty) {
       val problems = clashedAssignments.map(ParameterSpecifiedMultipleTimes)
@@ -330,7 +330,7 @@ object Compatibility {
 
     //optimization:
     val hasRepeated = parameters.exists(_.isRepeated)
-    val maxParams = if (hasRepeated) scala.Int.MaxValue else parameters.length
+    val maxParams   = if (hasRepeated) scala.Int.MaxValue else parameters.length
 
     val excess = args.length - maxParams
 
@@ -349,11 +349,11 @@ object Compatibility {
       return ApplicabilityCheckResult(Seq.empty, constraintAccumulator)
     }
 
-    var parameterIndex = 0
-    var namedMode = false //todo: optimization, when namedMode enabled, args.length <= parameters.length
-    val used = new Array[Boolean](parameters.length)
-    var problems = List.empty[ApplicabilityProblem]
-    val matched = Seq.newBuilder[(Parameter, ScExpression, ScType)]
+    var parameterIndex       = 0
+    var namedMode            = false //todo: optimization, when namedMode enabled, args.length <= parameters.length
+    val used                 = new Array[Boolean](parameters.length)
+    var problems             = List.empty[ApplicabilityProblem]
+    val matched              = Seq.newBuilder[(Parameter, ScExpression, ScType)]
     var defaultParameterUsed = false
 
     def processParamConformance(
@@ -363,7 +363,7 @@ object Compatibility {
     ): List[ApplicabilityProblem] = {
       val typeResult =
         arg.getTypeAfterImplicitConversion(
-          withImplicits, shapesOnly, Option(pt)
+          withImplicits, shapesOnly, Option(param.expectedType)
         ).tr
 
       typeResult.toOption match {
@@ -387,10 +387,11 @@ object Compatibility {
         List(PositionalAfterNamedArgument(arg.scExpressionOrNull))
       } else {
         val idx = used.indexOf(false)
+
         used(idx) = true
-        val param = parameters(idx)
+
+        val param        = parameters(idx)
         val expectedType = param.paramType
-        //@TODO: param.expectedType???
 
         processParamConformance(param, expectedType, arg)
       }
@@ -409,7 +410,7 @@ object Compatibility {
 
               if (!param.isRepeated) problems ::= ExpansionForNonRepeatedParameter(expr)
 
-              val expectedType = ScParameterizedType(stpe, Seq(param.paramType))
+              val expectedType         = ScParameterizedType(stpe, Seq(param.paramType))
               val typeMismatchProblems = processParamConformance(param, expectedType, expr)
 
               if (typeMismatchProblems.nonEmpty)
@@ -592,7 +593,7 @@ object Compatibility {
 
     def checkParameterListConformance(
       parameters: Seq[Parameter],
-      arguments: Seq[Expression]
+      arguments:  Seq[Expression]
     ): ApplicabilityCheckResult =
       checkMethodApplicability(parameters, arguments, withImplicits, shapesOnly)
 
@@ -704,7 +705,7 @@ object Compatibility {
                 params,
                 args,
                 withImplicits = true,
-                shapesOnly    = false
+                shapesOnly    = false,
               ) match {
                 case res if eligibleForAutoTupling && res.problems.nonEmpty =>
                   // try autotupling. If the conformance check succeeds without problems we use that result
@@ -715,7 +716,7 @@ object Compatibility {
                         params,
                         _,
                         withImplicits = true,
-                        shapesOnly    = true
+                        shapesOnly    = false,
                       )
                     )
                     .filter(_.problems.isEmpty)

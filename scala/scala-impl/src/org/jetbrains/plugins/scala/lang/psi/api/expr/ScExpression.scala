@@ -161,27 +161,28 @@ trait ScExpression extends ScBlockStatement
         this.scalaLanguageLevelOrDefault >= Scala_2_11 &&
           ScalaPsiUtil.isJavaReflectPolymorphicSignature(this)
 
-      val result = if (isShape) ExpressionTypeResult(Right(shape(this).getOrElse(Nothing)))
-      else {
-        val expected = expectedOption.orElse(this.expectedType(fromUnderscore = fromUnderscore))
-        val tr = this.getTypeWithoutImplicits(ignoreBaseTypes, fromUnderscore)
+      val result =
+        if (isShape) ExpressionTypeResult(Right(shape(this).getOrElse(Nothing)))
+        else {
+          val expected = expectedOption.orElse(this.expectedType(fromUnderscore = fromUnderscore))
+          val tr       = this.getTypeWithoutImplicits(ignoreBaseTypes, fromUnderscore)
 
-        (expected, tr.toOption) match {
-          case (Some(expType), Some(tp))
-            if checkImplicits && !tp.conformsIn(this, expType) => //do not try implicit conversions for shape check or already correct type
+          (expected, tr.toOption) match {
+            case (Some(expType), Some(tp))
+              if checkImplicits && !tp.conformsIn(this, expType) => //do not try implicit conversions for shape check or already correct type
 
-            // isSAMEnabled is checked in tryAdaptTypeToSAM, but we can cut it right here
-            val adapted =
-              if (this.isSAMEnabled) this.tryAdaptTypeToSAM(tp, expType, fromUnderscore, checkImplicits)
-              else                   None
+              // isSAMEnabled is checked in tryAdaptTypeToSAM, but we can cut it right here
+              val adapted =
+                if (this.isSAMEnabled) this.tryAdaptTypeToSAM(tp, expType, fromUnderscore, checkImplicits)
+                else                   None
 
-            adapted.getOrElse(
-              if (isJavaReflectPolymorphic) ExpressionTypeResult(Right(expType))
-              else this.updateTypeWithImplicitConversion(tp, expType)
-            )
-          case _ => ExpressionTypeResult(tr)
+              adapted.getOrElse(
+                if (isJavaReflectPolymorphic) ExpressionTypeResult(Right(expType))
+                else this.updateTypeWithImplicitConversion(tp, expType)
+              )
+            case _ => ExpressionTypeResult(tr)
+          }
         }
-      }
 
       Tracing.inference(this, result)
 

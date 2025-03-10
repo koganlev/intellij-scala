@@ -269,18 +269,12 @@ object ScalaPsiUtil {
     stripTypeArgs: Boolean,
     withImplicits: Boolean
   ): Array[ScalaResolveResult] = {
-    def methodCallApplyResolver(mc: MethodInvocation): ApplyOrUpdateInvocation =
-      ApplyOrUpdateInvocation(mc, tp, isDynamic = isDynamic, stripTypeArgs = stripTypeArgs)
-
     val applyResolver =
       call match {
-        case mc: MethodInvocation => methodCallApplyResolver(mc).toOption
+        case mc: MethodInvocation =>
+          ApplyOrUpdateInvocation(mc, tp, isDynamic = isDynamic, stripTypeArgs = stripTypeArgs).toOption
         case gc: ScGenericCall    =>
-          gc.getContext match {
-            case mc: MethodInvocation => methodCallApplyResolver(mc).toOption
-            case _                    =>
-              ApplyOrUpdateInvocation(gc, tp, isDynamic = isDynamic, stripTypeArgs = stripTypeArgs).toOption
-          }
+          ApplyOrUpdateInvocation(gc, tp, isDynamic = isDynamic, stripTypeArgs = stripTypeArgs).toOption
         case _ => None
       }
 

@@ -70,17 +70,23 @@ object ScConstructorInvocationAnnotator extends ElementAnnotator[ScConstructorIn
     }
 
     resolved match {
-      case Seq(r) if !r.isAccessible => holder.createErrorAnnotation(argsElementsTextRange(constrInvocation), ScalaBundle.message("annotator.error.no.constructor.accessible"))
-      case Seq(r@ScConstructorResolveResult(constr)) if constr.effectiveParameterClauses.length > 1 && !isConstructorMalformed(r) =>
+      case Seq(r) if !r.isAccessible =>
+        holder.createErrorAnnotation(
+          argsElementsTextRange(constrInvocation),
+          ScalaBundle.message("annotator.error.no.constructor.accessible")
+        )
+      case Seq(r @ ScConstructorResolveResult(constr))
+        if constr.effectiveParameterClauses.length > 1 && !isConstructorMalformed(r) =>
         // if there is only one well-formed, resolved, scala constructor with multiple parameter clauses,
         // check all of these clauses
         implicit val ctx: ProjectContext = constr
 
-        val params = constr.getClassTypeParameters.map(_.typeParameters).getOrElse(Seq.empty)
+        val params   = constr.getClassTypeParameters.map(_.typeParameters).getOrElse(Seq.empty)
         val typeArgs = constrInvocation.typeArgList.map(_.typeArgs).getOrElse(Seq.empty)
-        val substitutor = ScSubstitutor.bind(params, typeArgs)(_.calcType)
-          .followed(ScSubstitutor.bind(params)(UndefinedType(_)))
-          .followed(r.substitutor)
+
+        val typeArgsSubst  = ScSubstitutor.bind(params, typeArgs)(_.calcType)
+        val undefinedSubst = ScSubstitutor.bind(params)(UndefinedType(_))
+        val substitutor    = typeArgsSubst.followed(undefinedSubst).followed(r.substitutor)
 
         val res = Compatibility.checkConstructorApplicability(
           constrInvocation,
@@ -100,7 +106,7 @@ object ScConstructorInvocationAnnotator extends ElementAnnotator[ScConstructorIn
   }
 
 
-  def isJavaEnumExtendedByScalaEnum(target: PsiNamedElement, invocation: ConstructorInvocationLike): Boolean =
+  private def isJavaEnumExtendedByScalaEnum(target: PsiNamedElement, invocation: ConstructorInvocationLike): Boolean =
     invocation.asOptionOf[ScConstructorInvocation].flatMap(_.templateDefinitionContext).exists(_.is[ScEnum]) && {
       val cls = PsiTreeUtil.getContextOfType(target, classOf[PsiClass], false)
       cls != null && cls.qualifiedName == "java.lang.Enum"
@@ -206,7 +212,11 @@ object ScConstructorInvocationAnnotator extends ElementAnnotator[ScConstructorIn
     }
   }
 
-  def parameterToArgClause(p: Parameter, constr: ScMethodLike, argClauses: Seq[ScArgumentExprList]): Option[ScArgumentExprList] = {
+  private def parameterToArgClause(
+    p:          Parameter,
+    constr:     ScMethodLike,
+    argClauses: Seq[ScArgumentExprList]
+  ): Option[ScArgumentExprList] =
     p.psiParam.flatMap { param =>
       // look into every parameter list and find param
       val idx = constr.parameterList.clauses.indexWhere( clause =>
@@ -214,12 +224,11 @@ object ScConstructorInvocationAnnotator extends ElementAnnotator[ScConstructorIn
       )
       argClauses.lift(idx)
     }
-  }
 
   def isConstructorMalformed(r: ScalaResolveResult): Boolean =
     r.problems.exists { case MalformedDefinition(_) => true; case _ => false }
 
-  def argsElementsTextRange(constrInvocation: ConstructorInvocationLike): TextRange = constrInvocation.arguments match {
+  private def argsElementsTextRange(constrInvocation: ConstructorInvocationLike): TextRange = constrInvocation.arguments match {
     case head +: tail => tail.foldLeft(head.getTextRange)(_ union _.getTextRange)
     case _ => constrInvocation.getTextRange
   }

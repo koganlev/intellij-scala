@@ -143,10 +143,20 @@ object ImplicitConversionResolveResult {
     val functionType          = FunctionType(Any(place.getProject), Seq(expressionType))
     val expandedFunctionType  = FunctionType(expressionType, arguments(processor, noImplicitsForArgs))
 
-    def checkImplicits(noApplicability: Boolean = false, withoutImplicitsForArgs: Boolean = noImplicitsForArgs): Seq[ScalaResolveResult] = {
-      val data = refName.map {
-        ExtensionConversionData(place, ref, _, processor, noApplicability, withoutImplicitsForArgs)
-      }
+    def checkImplicits(
+      noApplicability:         Boolean = false,
+      withoutImplicitsForArgs: Boolean = noImplicitsForArgs
+    ): Seq[ScalaResolveResult] = {
+      val data = refName.map(
+        ExtensionConversionData(
+          place,
+          ref,
+          _,
+          processor,
+          noApplicability,
+          withoutImplicitsForArgs
+        )
+      )
 
       new ImplicitCollector(
         place,
@@ -182,16 +192,21 @@ object ImplicitConversionResolveResult {
       .map(_.tryExtractDesignatorSingleton)
       .toOption
 
-  private[this] def arguments(processor: BaseProcessor,
-                              noImplicitsForArgs: Boolean) = processor match {
-    case methodProcessor: MethodResolveProcessor if noImplicitsForArgs =>
-      for {
-        expressions <- methodProcessor.argumentClauses
-        expression <- expressions
-        typeResult = expression.getTypeAfterImplicitConversion(checkImplicits = false, isShape = methodProcessor.isShapeResolve, None).tr
-      } yield typeResult.getOrAny
-    case _ => Seq.empty
-  }
+  private[this] def arguments(processor: BaseProcessor, noImplicitsForArgs: Boolean) =
+    processor match {
+      case methodProcessor: MethodResolveProcessor if noImplicitsForArgs =>
+        for {
+          expressions <- methodProcessor.argumentClauses
+          expression  <- expressions
+          typeResult   =
+            expression.getTypeAfterImplicitConversion(
+              checkImplicits = false,
+              isShape        = methodProcessor.isShapeResolve,
+              None
+            ).tr
+        } yield typeResult.getOrAny
+      case _ => Seq.empty
+    }
 
 }
 

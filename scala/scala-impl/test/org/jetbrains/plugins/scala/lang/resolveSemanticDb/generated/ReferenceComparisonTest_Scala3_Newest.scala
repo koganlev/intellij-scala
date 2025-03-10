@@ -292,7 +292,7 @@ class ReferenceComparisonTest_Scala3_Newest extends ReferenceComparisonTestBase(
   def test_first_class_patterns(): Unit = doTest("first-class-patterns", true)
   def test_flatten(): Unit = doTest("flatten", true)
   def test_flow(): Unit = doTest("flow", true)
-  def test_folds(): Unit = doTest("folds", false) // #extension
+  def test_folds(): Unit = doTest("folds", true) // #extension
   def test_Foo(): Unit = doTest("Foo", true)
   def test_freezeBounds(): Unit = doTest("freezeBounds", true)
   def test_FromString_typeparam(): Unit = doTest("FromString-typeparam", false)
@@ -895,8 +895,8 @@ class ReferenceComparisonTest_Scala3_Newest extends ReferenceComparisonTestBase(
   def test_i7413(): Unit = doTest("i7413", true) // #extension
   def test_i7414(): Unit = doTest("i7414", true)
   def test_i7421(): Unit = doTest("i7421", true)
-  def test_i7424(): Unit = doTest("i7424", false) // #enum
-  def test_i7424b(): Unit = doTest("i7424b", false) // #enum
+  def test_i7424(): Unit = doTest("i7424", true) // #enum
+  def test_i7424b(): Unit = doTest("i7424b", true) // #enum
   def test_i7424c(): Unit = doTest("i7424c", true) // #enum
   def test_i7428(): Unit = doTest("i7428", true) // #enum
   def test_i7445a(): Unit = doTest("i7445a", true)
@@ -927,7 +927,7 @@ class ReferenceComparisonTest_Scala3_Newest extends ReferenceComparisonTestBase(
   def test_i7757(): Unit = doTest("i7757", true)
   def test_i7778b(): Unit = doTest("i7778b", true)
   def test_i7790(): Unit = doTest("i7790", true)
-  def test_i7793(): Unit = doTest("i7793", false)
+  def test_i7793(): Unit = doTest("i7793", true)
   def test_i7807(): Unit = doTest("i7807", false) // #intersectionType, #matchType
   def test_i7809(): Unit = doTest("i7809", true)
   def test_i7819(): Unit = doTest("i7819", true)
@@ -1798,7 +1798,7 @@ class ReferenceComparisonTest_Scala3_Newest extends ReferenceComparisonTestBase(
   def test_i20136b(): Unit = doTest("i20136b", true) // #matchType
   def test_i20154(): Unit = doTest("i20154", true) // #opaque, #intersectionType, #unionType
   def test_i20166(): Unit = doTest("i20166", true) // #matchType
-  def test_i20176(): Unit = doTest("i20176", false)
+  def test_i20176(): Unit = doTest("i20176", true)
   def test_i20184(): Unit = doTest("i20184", true)
   def test_i20187(): Unit = doTest("i20187", false) // #enum
   def test_i20206(): Unit = doTest("i20206", false)

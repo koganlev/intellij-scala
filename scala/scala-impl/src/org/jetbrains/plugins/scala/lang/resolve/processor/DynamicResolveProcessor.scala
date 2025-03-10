@@ -16,9 +16,9 @@ import scala.annotation.tailrec
 object DynamicResolveProcessor {
 
   val APPLY_DYNAMIC_NAMED = "applyDynamicNamed"
-  val APPLY_DYNAMIC = "applyDynamic"
-  val SELECT_DYNAMIC = "selectDynamic"
-  val UPDATE_DYNAMIC = "updateDynamic"
+  val APPLY_DYNAMIC       = "applyDynamic"
+  val SELECT_DYNAMIC      = "selectDynamic"
+  val UPDATE_DYNAMIC      = "updateDynamic"
 
   def getDynamicNameForMethodInvocation(expressions: Iterable[ScExpression]): String = {
     val qualifiers = expressions.collect {
@@ -53,10 +53,11 @@ object DynamicResolveProcessor {
   def isApplyDynamicNamed(r: ScalaResolveResult): Boolean =
     r.isDynamic && r.name == APPLY_DYNAMIC_NAMED
 
-  def dynamicResolveProcessor(ref: ScReferenceExpression,
-                              qualifier: ScExpression,
-                              fromProcessor: BaseProcessor): MethodResolveProcessor = {
-
+  def dynamicResolveProcessor(
+    ref:           ScReferenceExpression,
+    qualifier:     ScExpression,
+    fromProcessor: BaseProcessor
+  ): MethodResolveProcessor = {
     def isSameOrApply(invoked: ScExpression, target: ScExpression): Boolean =
       invoked == target || ref.refName == CommonNames.Apply
 
@@ -84,15 +85,31 @@ object DynamicResolveProcessor {
 
     fromProcessor match {
       case processor: MethodResolveProcessor =>
-        new MethodResolveProcessor(qualifier, name, List(List(emptyStringExpression), expressionsOrContext.getOrElse(Seq.empty)),
-          processor.typeArgElements, processor.prevTypeInfo, processor.kinds, processor.expectedOption,
-          processor.isUnderscore, processor.isShapeResolve, processor.constructorResolve, processor.noImplicitsForArgs,
-          processor.enableTupling, processor.selfConstructorResolve, nameArgForDynamic = Some(ref.refName))
-      case _ =>
-        new MethodResolveProcessor(qualifier, name,
+        new MethodResolveProcessor(
+          qualifier,
+          name,
           List(List(emptyStringExpression), expressionsOrContext.getOrElse(Seq.empty)),
-          Seq.empty, Seq.empty,
-          nameArgForDynamic = Some(ref.refName))
+          processor.typeArgElements,
+          processor.prevTypeInfo,
+          processor.kinds,
+          processor.expectedOption,
+          processor.isUnderscore,
+          processor.isShapeResolve,
+          processor.constructorResolve,
+          processor.noImplicitsForArgs,
+          processor.enableTupling,
+          processor.selfConstructorResolve,
+          nameArgForDynamic = Some(ref.refName)
+        )
+      case _ =>
+        new MethodResolveProcessor(
+          qualifier,
+          name,
+          List(List(emptyStringExpression), expressionsOrContext.getOrElse(Seq.empty)),
+          Seq.empty,
+          Seq.empty,
+          nameArgForDynamic = Some(ref.refName)
+        )
     }
   }
 
@@ -106,6 +123,5 @@ object DynamicResolveProcessor {
   implicit class ScTypeForDynamicProcessorEx(private val tp: ScType) extends AnyVal {
     def updateTypeOfDynamicCall(isDynamic: Boolean): ScType = if (isDynamic) getDynamicReturn(tp) else tp
   }
-
 }
 

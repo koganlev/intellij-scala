@@ -10,11 +10,24 @@ import org.jetbrains.plugins.scala.lang.psi.types.recursiveUpdate.ScSubstitutor
 import org.jetbrains.plugins.scala.lang.resolve.ScalaResolveState.ResolveStateExt
 import org.jetbrains.plugins.scala.lang.resolve.{ResolveTargets, ScalaResolveResult}
 
-class ConstructorResolveProcessor(constr: PsiElement, refName: String, args: List[Seq[Expression]],
-                                  typeArgs: Seq[ScTypeElement], kinds: Set[ResolveTargets.Value],
-                                  shapeResolve: Boolean, allConstructors: Boolean)
-  extends MethodResolveProcessor(constr, refName, args, typeArgs, Seq.empty, kinds,
-    isShapeResolve = shapeResolve, enableTupling = true) {
+class ConstructorResolveProcessor(
+  constr:          PsiElement,
+  refName:         String,
+  args:            List[Seq[Expression]],
+  typeArgs:        Seq[ScTypeElement],
+  kinds:           Set[ResolveTargets.Value],
+  shapeResolve:    Boolean,
+  allConstructors: Boolean
+) extends MethodResolveProcessor(
+  constr,
+  refName,
+  args,
+  typeArgs,
+  Seq.empty,
+  kinds,
+  isShapeResolve = shapeResolve,
+  enableTupling = true
+) {
 
   override protected def execute(namedElement: PsiNamedElement)
                                 (implicit state: ResolveState): Boolean = {
@@ -85,20 +98,21 @@ class ConstructorResolveProcessor(constr: PsiElement, refName: String, args: Lis
   }
 
   override def candidatesS: Set[ScalaResolveResult] = {
-    def updateResult(result: ScalaResolveResult) = new ScalaResolveResult(
-      result.getActualElement,
+    def updateResult(result: ScalaResolveResult): ScalaResolveResult =
+      new ScalaResolveResult(
+        result.getActualElement,
         result.substitutor,
         result.importsUsed,
-        fromType = result.fromType,
-      isAccessible = result.isAccessible
-    )
+        fromType     = result.fromType,
+        isAccessible = result.isAccessible
+      )
 
     val candidates = super.candidatesS
     candidates.toSeq match {
       case _ if allConstructors => candidates
-      case Seq() => Set.empty
-      case Seq(result) => Set(result)
-      case _ => candidates.map(updateResult)
+      case Seq()                => Set.empty
+      case Seq(result)          => Set(result)
+      case _                    => candidates.map(updateResult)
     }
   }
 }

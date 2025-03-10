@@ -4,6 +4,7 @@ import com.intellij.lang.ASTNode
 import com.intellij.psi.PsiMethod
 import org.jetbrains.plugins.scala.ScalaBundle
 import org.jetbrains.plugins.scala.caches.{ModTracker, cached}
+import org.jetbrains.plugins.scala.extensions.ObjectExt
 import org.jetbrains.plugins.scala.externalLibraries.kindProjector.KindProjectorUtil.kindProjectorPolymorphicLambdaType
 import org.jetbrains.plugins.scala.externalLibraries.kindProjector.PolymorphicLambda
 import org.jetbrains.plugins.scala.lang.psi.api.expr._
@@ -18,25 +19,54 @@ import org.jetbrains.plugins.scala.lang.resolve.ScalaResolveResult
 import org.jetbrains.plugins.scala.lang.resolve.processor.DynamicResolveProcessor.ScTypeForDynamicProcessorEx
 
 class ScGenericCallImpl(node: ASTNode) extends ScExpressionImplBase(node) with ScGenericCall {
+
+  //This is a little bit tricky, since `foo[A](b)` can be either
+  //1. `foo.apply[A](b)` or 2. `foo.apply[A].apply(b)` and to resolve apply method correctly,
+  //we must provide resolve processor with a correct set of args.
+  //Since 1. is probably the more common scenario, let's first try to resolve with args,
+  //and if it fails try 2.
   private def processApplyOrUpdateMethod(tp: ScType, shapesOnly: Boolean): ScType = {
+    def workWithApplyCandidates(candidates: Array[ScalaResolveResult]): Option[ScType] = candidates match {
+      case Array(srr @ ScalaResolveResult(fun: PsiMethod, s: ScSubstitutor)) =>
+        fun
+          .methodTypeProvider(elementScope)
+          .polymorphicType(s)
+          .updateTypeOfDynamicCall(srr.isDynamic)
+          .toOption
+      case _ => None
+  }
+
+    val applyResolveContext = getContext match {
+      case inv: MethodInvocation => inv
+      case _                     => this
+    }
+
     val applyCandidates = this.resolveApplyOrUpdateMethod(
-      this,
+      applyResolveContext,
       tp,
       shapesOnly    = shapesOnly,
       stripTypeArgs = false,
       withImplicits = true
     )
 
-    applyCandidates match {
-      case Array(srr @ ScalaResolveResult(fun: PsiMethod, s: ScSubstitutor)) =>
-        fun
-          .methodTypeProvider(elementScope)
-          .polymorphicType(s)
-          .updateTypeOfDynamicCall(srr.isDynamic)
-      case _ =>
-        Nothing
+    workWithApplyCandidates(applyCandidates) match {
+      case Some(tp) => tp
+      case None =>
+        if (applyResolveContext.is[MethodInvocation]) {
+          val applyCandidatesWithoutArgs =
+            this.resolveApplyOrUpdateMethod(
+              this,
+              tp,
+              shapesOnly    = shapesOnly,
+              stripTypeArgs = false,
+              withImplicits = true
+            )
+
+          workWithApplyCandidates(applyCandidatesWithoutArgs).getOrElse(Nothing)
+        } else Nothing
     }
   }
+
 
   private def substPolymorphicType: ScType => ScType = {
     case ScTypePolymorphicType(internal, tps) =>

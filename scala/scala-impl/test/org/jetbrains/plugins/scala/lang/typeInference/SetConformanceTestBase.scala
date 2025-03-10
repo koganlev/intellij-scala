@@ -24,12 +24,10 @@ abstract class SetConformanceTestBase
        |}
        |//true
     """.stripMargin,
-    """Error({
-      |    case (m, (t1, _)) => m += (t1 -> {
+    """Error(t1 -> {
       |      val s = m.getOrElse(t1, mutable.LinkedHashSet.empty)
       |      s
-      |    })
-      |  },Type mismatch, expected: (mutable.LinkedHashMap[Int, Set[Int]], (Int, Int)) => mutable.LinkedHashMap[Int, Set[Int]], actual: (mutable.LinkedHashMap[Int, Set[Int]], (Int, Int)) => Any)""".stripMargin
+      |    },Type mismatch, expected: (Int, Set[Int]), actual: (Int, Set[_ <: Int]))""".stripMargin
   )
 
   //TODO: replace with "checkTextHasNoErrors" when SCL-13432 is fixed

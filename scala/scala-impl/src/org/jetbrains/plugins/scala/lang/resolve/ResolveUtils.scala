@@ -347,20 +347,31 @@ object ResolveUtils {
     }
   }
 
-  def processSuperReference(superRef: ScSuperReference, processor : BaseProcessor, place : ScalaPsiElement): BaseProcessor = {
-    if (superRef.isHardCoded) {
+  def processSuperReference(
+    superRef:  ScSuperReference,
+    processor: BaseProcessor,
+    place:     ScalaPsiElement
+  ): Array[ScalaResolveResult] = {
+    if (superRef.isHardCoded)
       superRef.drvTemplate.foreach(c => processor.processType(ScThisType(c), place))
-    } else {
+    else {
       superRef.staticSuper match {
         case Some(t) => processor.processType(t, place)
-        case None => superRef.drvTemplate match {
+        case None    => superRef.drvTemplate match {
           case Some(c) =>
-            TypeDefinitionMembers.processSuperDeclarations(c, processor, ScalaResolveState.withSubstitutor(ScSubstitutor.empty), null, place)
+            TypeDefinitionMembers.processSuperDeclarations(
+              c,
+              processor,
+              ScalaResolveState.withSubstitutor(ScSubstitutor.empty),
+              null,
+              place
+            )
           case None =>
         }
       }
     }
-    processor
+
+    processor.candidates
   }
 
   private def isInheritorOrSame(tp: ScType, cl: PsiClass): Boolean = tp match {

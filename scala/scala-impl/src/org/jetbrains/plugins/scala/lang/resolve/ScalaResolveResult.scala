@@ -100,12 +100,6 @@ class ScalaResolveResult(
     if (withExpectedType) problems.isEmpty
     else                  problems.forall(_ == ExpectedTypeMismatch)
 
-//  def isApplicableInternal(withExpectedType: Boolean): Boolean =
-//    innerResolveResult match {
-//      case Some(r) => r.isApplicable(withExpectedType)
-//      case None    => isApplicable(withExpectedType)
-//    }
-
   /**
    * If this element (function definition) was resolved, while processing export statements
    * inside an extension body, return said extension. This is important, because any attempt

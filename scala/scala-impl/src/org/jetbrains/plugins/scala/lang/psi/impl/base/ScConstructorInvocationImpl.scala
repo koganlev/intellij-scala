@@ -176,7 +176,14 @@ class ScConstructorInvocationImpl(node: ASTNode)
                 param => Parameter(mySubst(param.paramType), param.isRepeated, param.index)
               )
 
-              val extRes = Compatibility.checkMethodApplicability(undefParams, paramsByClauses.map(_._1), withImplicits = false, shapesOnly = false)
+              val extRes =
+                Compatibility.checkMethodApplicability(
+                  undefParams,
+                  paramsByClauses.map(_._1),
+                  withImplicits = false,
+                  shapesOnly    = false
+                )
+
               val maybeSubstitutor = extRes.constraints match {
                 case ConstraintSystem(substitutor) => Some(substitutor)
                 case _ => None
@@ -194,16 +201,26 @@ class ScConstructorInvocationImpl(node: ASTNode)
     def processSimple(s: ScSimpleTypeElement): Array[TypeResult] = {
       s.reference match {
         case Some(ref) =>
-          val builder = mutable.ArrayBuilder.make[TypeResult]
-          val resolve = if (isShape) ref.shapeResolveConstr else ref.resolveAllConstructors
+          val builder      = mutable.ArrayBuilder.make[TypeResult]
+          val resolve      = if (isShape) ref.shapeResolveConstr else ref.resolveAllConstructors
+
           resolve.foreach {
-            case r@ScalaResolveResult(constr: PsiMethod, subst) =>
+            case r @ ScalaResolveResult(constr: PsiMethod, subst) =>
               builder += workWithResolveResult(constr, r, subst, s, ref)
             case ScalaResolveResult(clazz: PsiClass, subst) if !clazz.is[ScTemplateDefinition] && clazz.isAnnotationType =>
               val params = clazz.getMethods.iterator.flatMap {
                 case p: PsiAnnotationMethod =>
                   val paramType = subst(p.getReturnType.toScType())
-                  Seq(Parameter(p.name, None, paramType, paramType, p.getDefaultValue != null, isRepeated = false, isByName = false))
+
+                  Seq(
+                    Parameter(
+                      p.name,
+                      None,
+                      paramType,
+                      paramType,
+                      p.getDefaultValue != null
+                    )
+                  )
                 case _ => Seq.empty
               }
               builder += Right(ScMethodType(ScDesignatorType(clazz), params.toSeq, isImplicit = false))

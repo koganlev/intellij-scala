@@ -12,7 +12,6 @@ import org.jetbrains.plugins.scala.lang.psi.api.statements.params.TypeParamIdOwn
 import org.jetbrains.plugins.scala.lang.psi.api.toplevel.typedef.{ScMember, ScObject, ScTemplateDefinition, ScTypeDefinition}
 import org.jetbrains.plugins.scala.lang.psi.api.toplevel.{ScTypeParametersOwner, ScTypedDefinition}
 import org.jetbrains.plugins.scala.lang.psi.impl.ScPackageImpl
-import org.jetbrains.plugins.scala.lang.psi.impl.ScalaPsiElementFactory.createExpressionFromText
 import org.jetbrains.plugins.scala.lang.psi.impl.toplevel.synthetic.ScSyntheticFunction
 import org.jetbrains.plugins.scala.lang.psi.types.Compatibility.{ApplicabilityCheckResult, Expression}
 import org.jetbrains.plugins.scala.lang.psi.types._
@@ -28,47 +27,50 @@ import org.jetbrains.plugins.scala.lang.resolve.{ResolveTargets, ScalaResolveRes
 import org.jetbrains.plugins.scala.project.{ProjectContext, ProjectPsiElementExt}
 import org.jetbrains.plugins.scala.util.SAMUtil
 
-class MethodResolveProcessor(override val ref: PsiElement,
-                             val refName: String,
-                             var argumentClauses: List[Seq[Expression]],
-                             val typeArgElements: Seq[ScTypeElement],
-                             val prevTypeInfo: Seq[TypeParameter],
-                             kinds: Set[ResolveTargets.Value] = StdKinds.methodRef,
-                             val expectedOption: () => Option[ScType] = () => None,
-                             val isUnderscore: Boolean = false,
-                             var isShapeResolve: Boolean = false,
-                             val constructorResolve: Boolean = false,
-                             val enableTupling: Boolean = false,
-                             var noImplicitsForArgs: Boolean = false,
-                             val selfConstructorResolve: Boolean = false,
-                             val nameArgForDynamic: Option[String] = None)
-  extends ResolveProcessor(kinds, ref, refName) {
+class MethodResolveProcessor (
+  override val ref:           PsiElement,
+  val refName:                String,
+  var argumentClauses:        List[Seq[Expression]],
+  val typeArgElements:        Seq[ScTypeElement],
+  val prevTypeInfo:           Seq[TypeParameter],
+  override val kinds:         Set[ResolveTargets.Value] = StdKinds.methodRef,
+  val expectedOption:         () => Option[ScType]      = () => None,
+  val isUnderscore:           Boolean                   = false,
+  var isShapeResolve:         Boolean                   = false,
+  val constructorResolve:     Boolean                   = false,
+  val enableTupling:          Boolean                   = false,
+  var noImplicitsForArgs:     Boolean                   = false,
+  val selfConstructorResolve: Boolean                   = false,
+  val nameArgForDynamic:      Option[String]            = None
+) extends ResolveProcessor(kinds, ref, refName) {
 
   def isDynamic: Boolean = nameArgForDynamic.nonEmpty
+
+  private def useScala3OverloadingRules: Boolean = ref.isInScala3File
 
   override protected def execute(namedElement: PsiNamedElement)
                                 (implicit state: ResolveState): Boolean = {
 
-    def implFunction: Option[ScalaResolveResult] = state.implicitConversion
-
-    def implType: Option[ScType] = state.implicitType
-
-    def isNamedParameter: Boolean = state.isNamedParameter
-    def fromType: Option[ScType] = state.fromType
+    def implFunction: Option[ScalaResolveResult]             = state.implicitConversion
+    def implType: Option[ScType]                             = state.implicitType
+    def isNamedParameter: Boolean                            = state.isNamedParameter
+    def fromType: Option[ScType]                             = state.fromType
     def unresolvedTypeParameters: Option[Seq[TypeParameter]] = state.unresolvedTypeParams
-    def renamed: Option[String] = state.renamed
-    def forwardReference: Boolean = state.isForwardRef
-    def extensionMethod: Boolean = state.isExtensionMethod
-    def extensionContext: Option[ScExtension] = state.extensionContext
-    def intersectedReturnType: Option[ScType] = state.intersectedReturnType
-    def importsUsed = state.importsUsed
-    def exportedInfo = state.exportedInfo
+    def renamed: Option[String]                              = state.renamed
+    def forwardReference: Boolean                            = state.isForwardRef
+    def extensionMethod: Boolean                             = state.isExtensionMethod
+    def extensionContext: Option[ScExtension]                = state.extensionContext
+    def intersectedReturnType: Option[ScType]                = state.intersectedReturnType
+    def importsUsed                                          = state.importsUsed
+    def exportedInfo                                         = state.exportedInfo
 
     if (nameMatches(namedElement) || constructorResolve) {
       val accessible = isNamedParameter || isAccessible(namedElement, ref)
       if (accessibility && !accessible) return true
 
-      val s = state.substitutorWithThisType(namedElement.findContextOfType(classOf[PsiClass]).orNull)
+      val s =
+        state.substitutorWithThisType(namedElement.findContextOfType(classOf[PsiClass]).orNull)
+
       val resultBuilder: PsiNamedElement => ScalaResolveResult = e =>
         new ScalaResolveResult(
           e,
@@ -125,44 +127,24 @@ class MethodResolveProcessor(override val ref: PsiElement,
     true
   }
 
-  override def candidatesS: Set[ScalaResolveResult] = {
+  override def candidatesS: Set[ScalaResolveResult] =
     if (isDynamic) {
-      collectCandidates(super.candidatesS.map(_.copy(nameArgForDynamic = nameArgForDynamic))).filter(_.isApplicable())
+      collectCandidates(
+        super.candidatesS.collect {
+          case srr if srr.isApplicable() => srr.copy(nameArgForDynamic = nameArgForDynamic)
+        }
+      )
     } else {
       val superCandidates = super.candidatesS
-      val res = collectCandidates(superCandidates)
-      res
+      collectCandidates(superCandidates)
     }
-  }
 
-  private def collectCandidates(input: Set[ScalaResolveResult]): Set[ScalaResolveResult] = {
-    if (input.isEmpty) return input
-    if (!isShapeResolve && enableTupling && argumentClauses.nonEmpty) {
-      isShapeResolve = true
-      val cand1 = MethodResolveProcessor.candidates(this, input)
-      if (!isDynamic && (cand1.isEmpty || cand1.forall(_.tuplingUsed))) {
-        //tupling ok
-        isShapeResolve = false
-        val oldArg = argumentClauses
-        val tpl = ScalaPsiUtil.tupled(argumentClauses.head, ref)
-        if (tpl.isEmpty) {
-          return MethodResolveProcessor.candidates(this, input)
-        }
-        argumentClauses = tpl.toList
-        val res = MethodResolveProcessor.candidates(this, input)
-        argumentClauses = oldArg
-        if (res.forall(!_.isApplicable())) {
-          return MethodResolveProcessor.candidates(this, input)
-        }
-        res.map(r => r.copy(tuplingUsed = true))
-      } else {
-        isShapeResolve = false
-        MethodResolveProcessor.candidates(this, input)
-      }
-    } else {
-      MethodResolveProcessor.candidates(this, input)
+  private def collectCandidates(input: Set[ScalaResolveResult]): Set[ScalaResolveResult] =
+    if (input.isEmpty) input
+    else {
+      val cands = MethodResolveProcessor.candidates(this, input)
+      cands
     }
-  }
 }
 
 object MethodResolveProcessor {
@@ -173,11 +155,11 @@ object MethodResolveProcessor {
     ref:                    PsiElement,
     argumentClauses:        List[Seq[Expression]],
     typeArgElements:        Seq[ScTypeElement],
-    selfConstructorResolve: Boolean,
     prevTypeInfo:           Seq[TypeParameter],
     expectedOption:         () => Option[ScType],
+    selfConstructorResolve: Boolean,
     isUnderscore:           Boolean,
-    isShapeResolve:         Boolean
+    shapesOnly:             Boolean
   ): ApplicabilityCheckResult = {
 
     implicit val ctx: ProjectContext = c.element
@@ -210,10 +192,11 @@ object MethodResolveProcessor {
       )
     }
 
-    val unresovledTps = c.unresolvedTypeParameters.getOrElse(Seq.empty)
+//    val unresolvedTps = c.unresolvedTypeParameters.getOrElse(Seq.empty)
 
     val substitutor =
-      tempSubstitutor.followed(ScSubstitutor.bind(prevTypeInfo ++ unresovledTps)(UndefinedType(_)))
+      tempSubstitutor.followed(ScSubstitutor.bind(prevTypeInfo)(UndefinedType(_)))
+//      tempSubstitutor.followed(ScSubstitutor.bind(prevTypeInfo ++ unresolvedTps)(UndefinedType(_)))
 
     val typeParameters: Seq[TypeParameter] = prevTypeInfo ++ (element match {
       case ScalaConstructor(cons) => cons.getConstructorTypeParameters.map(TypeParameter(_))
@@ -316,7 +299,7 @@ object MethodResolveProcessor {
           ).getOrElse(ConstraintsResult.Left)
 
         constraints match {
-          case ConstraintsResult.Left => ApplicabilityCheckResult(Seq(ExpectedTypeMismatch))
+          case ConstraintsResult.Left => ApplicabilityCheckResult(ExpectedTypeMismatch)
           case cs: ConstraintSystem   => ApplicabilityCheckResult(problems.result(), cs)
         }
       }
@@ -356,12 +339,13 @@ object MethodResolveProcessor {
         case fun: ScFunction          =>
           if (c.isExtensionCall) typeParams
           else                   fun.typeParametersWithExtension(c.exportedInExtension)
-        case _                        => typeParams
+        case _ => typeParams
       }
 
       val typeArgCount         = typeArgElements.length
       val typeParamCount       = typeParamsWithCls.length
       val isAliasedConstructor = c.parentElement.exists(_.is[ScTypeAliasDefinition])
+
       if (!isAliasedConstructor && typeArgCount > 0 && typeArgCount != typeParamCount) {
         if (typeParamCount == 0) problems += DoesNotTakeTypeParameters
         else if (typeParamCount < typeArgCount)
@@ -373,10 +357,7 @@ object MethodResolveProcessor {
 
         addExpectedTypeProblems()
       } else {
-        val args                 =
-          if (c.nameArgForDynamic.nonEmpty) List(Seq(createExpressionFromText("\"\"", ref)))
-          else                              argumentClauses.headOption.toList
-
+        val args                 = argumentClauses.headOption.toList
         val expectedTypeProblems = addExpectedTypeProblems()
 
         val expectedTypeSubst =
@@ -391,7 +372,7 @@ object MethodResolveProcessor {
             substitutorWithExpected,
             args,
             checkWithImplicits,
-            isShapeResolve,
+            shapesOnly,
             ref
           )
 
@@ -570,32 +551,34 @@ object MethodResolveProcessor {
     }
 
     //remove default parameters alternatives (in Scala 2 only)
-    if (filtered.size > 1 && !isShapeResolve && !ref.isInScala3File)
+    if (filtered.size > 1 && !isShapeResolve && !useScala3OverloadingRules)
       filtered = filtered.filterNot(_.defaultParameterUsed)
 
-    if (isShapeResolve) {
-      if (filtered.isEmpty) {
-        if (enableTupling && !useExpectedType) {
-          val filteredWithAutoTupling = input.filter {
-              _.element match {
-                case fun: ScFun if fun.paramClauses.nonEmpty =>
-                  fun.paramClauses.head.length == 1
-                case fun: ScFunction if fun.paramClauses.clauses.nonEmpty =>
-                  fun.paramClauses.clauses.head.parameters.length == 1
-                case p: ScPrimaryConstructor if p.parameterList.clauses.nonEmpty =>
-                  p.parameterList.clauses.head.parameters.length == 1
-                case m: PsiMethod => m.parameters.length == 1
-                case _            => false
-              }
-          }.map(r => r.copy(tuplingUsed = true))
+    if (filtered.isEmpty &&
+      !useExpectedType &&
+      enableTupling &&
+      argumentClauses.nonEmpty
+    ) {
+      //As as last resort try auto-tupling
+      val argsTupled = ScalaPsiUtil.tupled(argumentClauses.head, ref)
+      if (argsTupled.nonEmpty) {
+        val oldArgs     = argumentClauses
+        argumentClauses = argsTupled.toList
 
-          if (filteredWithAutoTupling.nonEmpty) return filteredWithAutoTupling
-        }
-      } else return filtered
+        val candsWithTupledArgs =
+          checkResultsApplicability(
+            proc,
+            input,
+            checkWithImplicits = true,
+            useExpectedType    = false
+          ).map(_.copy(tuplingUsed = true))
+
+        filtered        = candsWithTupledArgs.filter(_.isApplicable())
+        argumentClauses = oldArgs
+      }
     }
 
-    if (filtered.isEmpty && mapped.isEmpty) input.map(r => r.copy(notCheckedResolveResult = true))
-    else if (filtered.isEmpty) {
+    if (filtered.isEmpty) {
       if (useExpectedType) {
         val withoutExpectedType = candidates(proc, input, useExpectedType = false)
 
@@ -609,7 +592,7 @@ object MethodResolveProcessor {
         if (argumentClauses.isEmpty) 0
         else                         argumentClauses.head.length
 
-      if (filtered.size == 1) filtered
+      if (filtered.size == 1 || isShapeResolve) filtered
       else
         MostSpecificUtil(ref, len).mostSpecificForResolveResult(filtered) match {
           case Some(r) => Set(r)
@@ -621,36 +604,34 @@ object MethodResolveProcessor {
   private def expandApplyOrUpdateMethod(
     r:    ScalaResolveResult,
     proc: MethodResolveProcessor
-  ): Set[(ScalaResolveResult, Boolean)] = {
+  ): Set[(ScalaResolveResult, Seq[TypeParameter])] = {
     import proc._
 
-    def invocationInfo(e: PsiNamedElement): (ScSubstitutor, Boolean) = e match {
+    def invocationInfo(e: PsiNamedElement): (ScSubstitutor, Seq[TypeParameter]) = e match {
       case owner: ScTypeParametersOwner if owner.typeParameters.nonEmpty =>
         val tparams = owner.typeParameters.map(TypeParameter(_))
-
-        val subst =
-          if (typeArgElements.nonEmpty && tparams.length == typeArgElements.length)
-            ScSubstitutor.bind(tparams, typeArgElements)(_.calcType)
-          else ScSubstitutor.empty
-
-        (r.substitutor.followed(subst), true)
+        val subst   = ScSubstitutor.bind(tparams, typeArgElements)(_.calcType)
+        (r.substitutor.followed(subst), tparams)
       case owner: PsiTypeParameterListOwner if owner.getTypeParameters.length > 0 =>
         val tparams = owner.getTypeParameters.instantiate
-
-        val subst =
-          if (typeArgElements.nonEmpty && tparams.length == typeArgElements.length)
-            ScSubstitutor.bind(tparams, typeArgElements)(_.calcType)
-          else ScSubstitutor.empty
-
-        (r.substitutor.followed(subst), true)
-      case _ => (r.substitutor, false)
+        val subst   = ScSubstitutor.bind(tparams, typeArgElements)(_.calcType)
+        (r.substitutor.followed(subst), tparams)
+      case _ => (r.substitutor, Seq.empty)
     }
 
-    def applyOrUpdateMethodsFor(tp: ScType): Set[(ScalaResolveResult, Boolean)] = {
-      val (substitutor, cleanTypeArguments) = invocationInfo(r.element)
-      val call = ref.getContext.asOptionOf[ScExpression].toArray
+    def applyOrUpdateMethodsFor(tp: ScType): Set[(ScalaResolveResult, Seq[TypeParameter])] = {
+      val (substitutor, tparams) = invocationInfo(r.element)
+      val cleanTypeArguments = tparams.nonEmpty
 
-      val applyCandidates = call.flatMap(e =>
+      val callContext = ref.getContext match {
+        case inv: MethodInvocation => inv.toOption
+        case gen: ScGenericCall =>
+          if (argumentClauses.nonEmpty) gen.getContext.asOptionOf[MethodInvocation]
+          else                          gen.toOption
+        case _ => None
+      }
+
+      val applyCandidates = callContext.toArray.flatMap(e =>
         e.resolveApplyOrUpdateMethod(
           e,
           substitutor(tp),
@@ -661,7 +642,7 @@ object MethodResolveProcessor {
       )
 
       if (applyCandidates.isEmpty)
-        Set((r, false))
+        Set((r, Seq.empty))
       else
         applyCandidates.view.collect {
           case rr if !accessibility || isAccessible(rr.element, ref) =>
@@ -669,21 +650,12 @@ object MethodResolveProcessor {
               innerResolveResult = Option(r),
               parentElement      = r.element.toOption,
               importsUsed        = r.importsUsed,
-            ), cleanTypeArguments)
+            ), tparams)
         }.toSet
     }
 
-    if (r.name == CommonNames.Apply) {
-      //This is the case when previous shapeResolve has already extracted an apply method
-      //we still need to calculate if type args are relevant or not.
-      r.innerResolveResult match {
-        case None           => Set((r, false))
-        case Some(innerSrr) =>
-          val (_, cleanTypeArgs) = invocationInfo(innerSrr.element)
-          Set((r, cleanTypeArgs))
-      }
-    } else if (argumentClauses.isEmpty && typeArgElements.isEmpty)
-      Set((r, false))
+    if (argumentClauses.isEmpty && typeArgElements.isEmpty || r.name == CommonNames.Apply)
+      Set((r, Seq.empty))
     else {
       val hasParams          = r.elementHasParameters
       val mismatchedTypeArgs = !r.elementHasTypeParameters && typeArgElements.nonEmpty
@@ -693,7 +665,7 @@ object MethodResolveProcessor {
           if (!hasParams && (argumentClauses.nonEmpty || mismatchedTypeArgs))
             applyOrUpdateMethodsFor(synthetic.polymorphicType())
           else
-            Set((r, false))
+            Set((r, Seq.empty))
         case f: PsiMethod =>
           if (!hasParams && (argumentClauses.nonEmpty || mismatchedTypeArgs))
             applyOrUpdateMethodsFor(
@@ -701,7 +673,7 @@ object MethodResolveProcessor {
                .polymorphicType(dropExtensionClauses = r.isExtensionCall)
             )
           else
-            Set((r, false))
+            Set((r, Seq.empty))
         case b: ScTypedDefinition =>
           val tpe =
             if (b.isStable)
@@ -714,7 +686,7 @@ object MethodResolveProcessor {
           tpe.map(applyOrUpdateMethodsFor).getOrElse(Set.empty)
         case b: PsiField => // See SCL-3055
           applyOrUpdateMethodsFor(b.getType.toScType())
-        case _ => Set((r, false))
+        case _ => Set((r, Seq.empty))
       }
     }
   }
@@ -727,45 +699,83 @@ object MethodResolveProcessor {
   ): Set[ScalaResolveResult] = {
     import proc._
 
-    val expanded = input.flatMap(expandApplyOrUpdateMethod(_, proc))
-    val builder  = Set.newBuilder[ScalaResolveResult]
-    val iterator = expanded.iterator
+    val expanded     = input.flatMap(expandApplyOrUpdateMethod(_, proc))
+    val isOverloaded = input.size > 1
 
-    //problemsFor make all the work, wrapping it in scala collection API adds 9 unnecessary methods to the stacktrace
-    while (iterator.hasNext) {
-      val (r, undefineTypeParams) = iterator.next()
-      val typeArgElems =
-        if (undefineTypeParams) Seq.empty
-        else                    typeArgElements
+    def processAlternatives(
+      alternatives: Set[(ScalaResolveResult, Seq[TypeParameter])],
+      shapesOnly:   Boolean
+    ): Set[(ScalaResolveResult, Seq[TypeParameter])] = {
+      val resultBuilder = Set.newBuilder[(ScalaResolveResult, Seq[TypeParameter])]
+      val iterator      = alternatives.iterator
 
-      val conformanceResult = problemsFor(
-        getPlace,
-        r,
-        checkWithImplicits,
-        ref,
-        argumentClauses,
-        typeArgElems,
-        selfConstructorResolve,
-        prevTypeInfo,
-        if (useExpectedType) expectedOption else () => None,
-        isUnderscore,
-        isShapeResolve
-      )
+      while (iterator.hasNext) {
+        val (r, initialResolveTypeParams) = iterator.next()
 
-      val result = r.copy(
-        problems             = conformanceResult.problems,
-        defaultParameterUsed = conformanceResult.defaultParameterUsed,
-        resultUndef          = Option(conformanceResult.constraints)
-      )
+        val (actualTypeArgs, curriedTypeParams) =
+          if (initialResolveTypeParams.nonEmpty && typeArgElements.nonEmpty) {
+            //initial resolve (before apply/update method expansion) has type parameters =>
+            //typeArgElements belong to it and not to apply/update method
+            (Seq.empty, Seq.empty)
+          } else if (typeArgElements.isEmpty) {
+            //empty typeArgsElements => any type parameters initial resolve might have had
+            //should be propagated to apply/update method
+            (Seq.empty, initialResolveTypeParams)
+          } else {
+            //no type params on initial resolve => typeArgElements belong to apply/update
+            (typeArgElements, Seq.empty)
+          }
 
-      builder += result
+        val conformanceResult = problemsFor(
+          getPlace,
+          r,
+          checkWithImplicits,
+          ref,
+          argumentClauses,
+          actualTypeArgs,
+          prevTypeInfo ++ curriedTypeParams,
+          if (useExpectedType) expectedOption else () => None,
+          selfConstructorResolve = selfConstructorResolve,
+          isUnderscore           = isUnderscore,
+          shapesOnly             = shapesOnly
+        )
+
+        val result = r.copy(
+          problems             = conformanceResult.problems,
+          defaultParameterUsed = conformanceResult.defaultParameterUsed,
+          resultUndef          = Option(conformanceResult.constraints)
+        )
+
+        resultBuilder += result -> initialResolveTypeParams
+      }
+
+      resultBuilder.result()
     }
 
-    builder.result()
+    val preselected =
+      if (isOverloaded) {
+        val shapeResolved = processAlternatives(expanded, shapesOnly = true)
+
+        val applicableToShape =
+          shapeResolved.filter {
+            case (srr, _) => srr.isApplicable(withExpectedType = true)
+          }
+
+        if (applicableToShape.isEmpty) expanded
+        else                           applicableToShape
+      } else expanded
+
+    if (proc.isShapeResolve)
+      preselected.map(_._1)
+    else
+      processAlternatives(preselected, shapesOnly = false).map(_._1)
   }
 
-  //Signature has repeated param, which is not the last one
-  private def hasMalformedSignature(ml: ScMethodLike) = ml.parameterList.clauses.exists {
-    _.parameters.dropRight(1).exists(_.isRepeatedParameter)
-  }
+  /**
+   * @return True, if `method` has repeated parameters
+   */
+  private def hasMalformedSignature(method: ScMethodLike) =
+    method.parameterList.clauses.exists {
+      _.parameters.dropRight(1).exists(_.isRepeatedParameter)
+    }
 }

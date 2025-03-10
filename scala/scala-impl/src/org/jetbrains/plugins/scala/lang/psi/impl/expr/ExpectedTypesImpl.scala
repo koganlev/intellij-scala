@@ -577,7 +577,10 @@ class ExpectedTypesImpl extends ExpectedTypes {
     stripTypeArgs:   Boolean                  = false
   ): Option[ParameterType] = {
 
-    def fromMethodTypeParams(params: Seq[Parameter], subst: ScSubstitutor = ScSubstitutor.empty): Option[ParameterType] = {
+    def fromMethodTypeParams(
+      params: Seq[Parameter],
+      subst:  ScSubstitutor = ScSubstitutor.empty
+    ): Option[ParameterType] = {
       val newParams =
         if (subst.isEmpty) params
         else
@@ -595,15 +598,15 @@ class ExpectedTypesImpl extends ExpectedTypes {
         newParams.head.paramType.removeAbstracts match {
           case TupleType(args) =>
             paramTypeFromExpr(expr, paramsFromTuple(args), idx, isDynamicNamed)
-          case _ => None
+          case _ => Option(Any(expr), None)
         }
       } else paramTypeFromExpr(expr, newParams, idx, isDynamicNamed)
     }
 
     //returns properly substituted method type of `apply` method invocation and whether it's apply dynamic named
     def tryApplyMethod(
-      internalType:  ScType,
-      typeParams:    Seq[TypeParameter]
+      internalType: ScType,
+      typeParams:   Seq[TypeParameter]
     ): Option[(TypeResult, Boolean)] = {
       val applySrr = call.map(c =>
         c.resolveApplyOrUpdateMethod(

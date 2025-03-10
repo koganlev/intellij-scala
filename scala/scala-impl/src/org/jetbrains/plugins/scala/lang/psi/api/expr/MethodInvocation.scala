@@ -42,10 +42,17 @@ trait MethodInvocation extends ScExpression with ScalaPsiElement {
   def getEffectiveInvokedExpr: ScExpression = getInvokedExpr
 
   /**
-    * Seq of application problems like type mismatch.
-    *
-    * @return seq of application problems
-    */
+   * Seq of application problems like type mismatch.
+   *
+   * @return seq of application problems
+   *
+   *
+   * 20.03.2025 Andrei Sugak: This is a very weird, borderline unusable method,
+   *                          it contains some artificial errors (e.g. MissedValuedParameter for
+   *                          implicit parameters, see: t7591/Demo.scala .max call) and misses
+   *                          some existing ones (e.g. TypeMismatch in ApplyDynamicWrongSignature.scala)
+   *                          In need of a rewrite.
+   */
   def applicationProblems: Seq[ApplicabilityProblem] = Seq.empty
 
   /**

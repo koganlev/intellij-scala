@@ -1,7 +1,7 @@
 package org.jetbrains.plugins.scala.lang.psi.impl.expr
 
 import com.intellij.lang.ASTNode
-import com.intellij.psi.{PsiMethod, PsiTypeParameterListOwner}
+import com.intellij.psi.PsiMethod
 import org.jetbrains.plugins.scala.caches.{BlockModificationTracker, cachedWithRecursionGuard}
 import org.jetbrains.plugins.scala.extensions._
 import org.jetbrains.plugins.scala.lang.macros.evaluator.{MacroContext, MacroInvocationContext, ScalaMacroEvaluator}
@@ -11,7 +11,6 @@ import org.jetbrains.plugins.scala.lang.psi.api.expr.ScExpression.ExpressionType
 import org.jetbrains.plugins.scala.lang.psi.api.expr._
 import org.jetbrains.plugins.scala.lang.psi.api.statements.ScFunction.CommonNames
 import org.jetbrains.plugins.scala.lang.psi.api.statements.{ScEnumClassCase, ScFun, ScFunction, ScFunctionDefinition}
-import org.jetbrains.plugins.scala.lang.psi.api.toplevel.ScTypeParametersOwner
 import org.jetbrains.plugins.scala.lang.psi.api.toplevel.imports.usages.ImportUsed
 import org.jetbrains.plugins.scala.lang.psi.api.toplevel.typedef.{ScTemplateDefinition, ScTypeDefinition}
 import org.jetbrains.plugins.scala.lang.psi.types.Compatibility._
@@ -73,13 +72,19 @@ abstract class MethodInvocationImpl(node: ASTNode) extends ScExpressionImplBase(
   }
 
   //noinspection ScalaExtractStringToBundle
-  private def innerTypeExt: InvocationData = cachedWithRecursionGuard("innerTypeExt", this, FailureCase(Failure("Recursive innerTypeExt"), Seq.empty): InvocationData, BlockModificationTracker(this)) {
-    try {
-      tryToGetInnerTypeExt(useExpectedType = true)
-    } catch {
-      case _: SafeCheckException => tryToGetInnerTypeExt(useExpectedType = false)
+  private def innerTypeExt: InvocationData =
+    cachedWithRecursionGuard(
+      "innerTypeExt",
+      this,
+      FailureCase(Failure("Recursive innerTypeExt"), Seq.empty): InvocationData,
+      BlockModificationTracker(this)
+    ) {
+      try {
+        tryToGetInnerTypeExt(useExpectedType = true)
+      } catch {
+        case _: SafeCheckException => tryToGetInnerTypeExt(useExpectedType = false)
+      }
     }
-  }
 
   //this method works for ScInfixExpression and ScMethodCall
   private def tryToGetInnerTypeExt(implicit useExpectedType: Boolean): InvocationData = {
@@ -116,7 +121,7 @@ abstract class MethodInvocationImpl(node: ASTNode) extends ScExpressionImplBase(
                     ApplyOrUpdateInvocation.innerSrrHasTypeParameters(srr) ||
                       srr.elementHasTypeParameters
                   }
-                case _                  => true
+                case _ => true
               }
 
             val applyOrUpdateCands = this.resolveApplyOrUpdateMethod(
@@ -413,7 +418,7 @@ object MethodInvocationImpl {
   private case class RegularCase(
     inferredType:        ScType,
     override val target: Option[ScalaResolveResult],
-    problems:            Seq[ApplicabilityProblem] = Seq.empty,
+    problems:            Seq[ApplicabilityProblem]              = Seq.empty,
     matched:             Seq[(Parameter, ScExpression, ScType)] = Seq.empty
   ) extends InvocationData {
 
