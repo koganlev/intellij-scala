@@ -90,10 +90,10 @@ object Dependencies {
   val sbtStructureCore: ModuleID = "org.jetbrains.scala" %% "sbt-structure-core" % sbtStructureVersion
   val evoInflector: ModuleID = "org.atteo" % "evo-inflector" % "1.3"
   val directories: ModuleID = "dev.dirs" % "directories" % "26"
-  val apacheCommonsText: ModuleID = "org.apache.commons" % "commons-text" % "1.11.0"
+  val apacheCommonsText: ModuleID = "org.apache.commons" % "commons-text" % "1.13.0"
   // NOTE: current latest version is in https://github.com/unkarjedy/scalatest-finders.git repository
 
-  val jetbrainsAnnotations: ModuleID = "org.jetbrains" % "annotations" % "24.1.0"
+  val jetbrainsAnnotations: ModuleID = "org.jetbrains" % "annotations" % "26.0.2"
 
   val structureExtractor_0_13: Dependency = sbtDep("org.jetbrains.scala", "sbt-structure-extractor", Versions.sbtStructureVersion, Versions.Sbt.structure_extractor_binary_0_13)
   val structureExtractor_1_0: Dependency = sbtDep("org.jetbrains.scala", "sbt-structure-extractor", Versions.sbtStructureVersion, Versions.Sbt.structure_extractor_binary_1_0)
@@ -119,18 +119,14 @@ object Dependencies {
 
   val jupiterParams: String => ModuleID = (version: String) =>"org.junit.jupiter" % "junit-jupiter-params" % version
 
-  val ivy2: ModuleID = "org.apache.ivy" % "ivy" % "2.5.2"
+  val ivy2: ModuleID = "org.apache.ivy" % "ivy" % "2.5.3"
 
   // Transitive dependencies of scalastyle. The versions are deliberately outdated, to keep compatibility with scalastyle.
   val scalaParserCombinators: ModuleID = "org.scala-lang.modules" %% "scala-parser-combinators" % "1.1.2"
   val scalaCollectionCompat: ModuleID = "org.scala-lang.modules" %% "scala-collection-compat" % "2.5.0"
   val scalastyle: ModuleID = "com.beautiful-scala" %% "scalastyle" % "1.5.1"
 
-  // "io.get-coursier" % "interface" is a large jar (over 3 megabytes) that is packaged as a whole application.
-  // It shades and packages all of its transitive dependencies in the jar, including the Scala library.
-  // "scalafmt-dynamic" uses "interface" to resolve and download new versions of scalafmt using Coursier, as the user
-  // updates their ".scalafmt.conf" configuration file. In the Scala Plugin for IntelliJ IDEA, we have our own
-  // resolution and download mechanism based on ivy. We do not need a dependency on Coursier interface.
+  // We exclude "coursier interface" because we depend on an up-to-date version below.
   val scalafmtDynamic = "org.scalameta" %% "scalafmt-dynamic" % "3.7.17" exclude("io.get-coursier", "interface")
   val scalaMetaCore: ModuleID = "org.scalameta" %% "scalameta" % "4.5.13" excludeAll(
     ExclusionRule(organization = "com.thesamet.scalapb"),
@@ -206,7 +202,7 @@ object Dependencies {
     kotlinxDocumentStoreMvStore,
   )
 
-  val coursierApi = "io.get-coursier" % "interface" % "1.0.19" excludeAll ExclusionRule(organization = "org.slf4j")
+  val coursierApi = "io.get-coursier" % "interface" % "1.0.28" excludeAll ExclusionRule(organization = "org.slf4j")
 }
 
 object DependencyGroups {
