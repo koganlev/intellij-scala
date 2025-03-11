@@ -93,7 +93,7 @@ object Dependencies {
   val apacheCommonsText: ModuleID = "org.apache.commons" % "commons-text" % "1.13.0"
   // NOTE: current latest version is in https://github.com/unkarjedy/scalatest-finders.git repository
 
-  val jetbrainsAnnotations: ModuleID = "org.jetbrains" % "annotations" % "24.1.0"
+  val jetbrainsAnnotations: ModuleID = "org.jetbrains" % "annotations" % "26.0.2"
 
   val structureExtractor_0_13: Dependency = sbtDep("org.jetbrains.scala", "sbt-structure-extractor", Versions.sbtStructureVersion, Versions.Sbt.structure_extractor_binary_0_13)
   val structureExtractor_1_0: Dependency = sbtDep("org.jetbrains.scala", "sbt-structure-extractor", Versions.sbtStructureVersion, Versions.Sbt.structure_extractor_binary_1_0)
