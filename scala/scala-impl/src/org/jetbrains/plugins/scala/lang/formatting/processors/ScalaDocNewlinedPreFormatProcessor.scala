@@ -5,15 +5,15 @@ import com.intellij.openapi.util.TextRange
 import com.intellij.psi.impl.source.codeStyle.PreFormatProcessor
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.{PsiElement, PsiErrorElement}
-import org.jetbrains.annotations.NonNls
 import org.jetbrains.plugins.scala.ScalaLanguage
-import org.jetbrains.plugins.scala.extensions.{ElementType, IteratorExt, PsiElementExt, inWriteAction}
+import org.jetbrains.plugins.scala.extensions.{ElementType, PsiElementExt, PsiNamedElementExt, inWriteAction}
 import org.jetbrains.plugins.scala.lang.formatting.ScalaFormatterUtil.isDocWhiteSpace
 import org.jetbrains.plugins.scala.lang.formatting.settings.ScalaCodeStyleSettings
 import org.jetbrains.plugins.scala.lang.psi.api.ScalaElementVisitor
 import org.jetbrains.plugins.scala.lang.psi.impl.ScalaPsiElementFactory.{createScalaDocLeadingAsterisk, createScalaDocWhiteSpaceWithNewLine}
 import org.jetbrains.plugins.scala.lang.scaladoc.lexer.ScalaDocTokenType
 import org.jetbrains.plugins.scala.lang.scaladoc.parser.ScalaDocElementTypes
+import org.jetbrains.plugins.scala.lang.scaladoc.parser.parsing.MyScaladocParsing.TagNames
 import org.jetbrains.plugins.scala.lang.scaladoc.psi.api.{ScDocComment, ScDocList, ScDocParagraph, ScDocTag}
 import org.jetbrains.plugins.scala.project.ProjectContext
 
@@ -213,22 +213,15 @@ object ScalaDocNewlinedPreFormatProcessor {
   private def isNewLine(element: PsiElement): Boolean =
     isDocWhiteSpace(element) && element.textContains('\n')
 
-  // TODO: mote to PSI
-  private def getTagName(element: ScDocTag): Option[String] =
-    Option(element.getNameElement).filter(isTagName).map(_.getText)
-
-  private def isTagName(element: PsiElement): Boolean =
-    element.getNode.getElementType == ScalaDocTokenType.DOC_TAG_NAME
-
   private def isTag(element: PsiElement): Boolean =
     element.getNode.getElementType == ScalaDocElementTypes.DOC_TAG
 
-  private def isNamedTag(element: PsiElement, @NonNls names: String*): Boolean = element match {
-    case tag: ScDocTag => getTagName(tag).exists(names.contains)
+  private def isNamedTag(element: PsiElement, names: Set[String]): Boolean = element match {
+    case tag: ScDocTag => Option(tag.name).exists(names.contains)
     case _ => false
   }
 
-  private def isParamTag(element: PsiElement): Boolean = isNamedTag(element, "@param", "@tparam")
+  private def isParamTag(element: PsiElement): Boolean = isNamedTag(element, TagNames.ParamOrTParamSet)
 
-  private def isReturnTag(element: PsiElement): Boolean = isNamedTag(element, "@return")
+  private def isReturnTag(element: PsiElement): Boolean = isNamedTag(element, Set(TagNames.Return))
 }

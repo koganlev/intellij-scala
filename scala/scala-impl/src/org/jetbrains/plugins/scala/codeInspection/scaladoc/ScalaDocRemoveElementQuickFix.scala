@@ -8,7 +8,7 @@ import org.jetbrains.plugins.scala.lang.scaladoc.psi.api.ScDocTag
 
 class ScalaDocRemoveElementQuickFix(tag: ScDocTag)
   extends AbstractFixOnPsiElement(
-    ScalaBundle.message("remove.generic", s"${tag.name} ${Option(tag.getValueElement).map(_.getText).getOrElse("")}".trim),
+    ScalaBundle.message("remove.generic", s"@${tag.name} ${Option(tag.getValueElement).map(_.getText).getOrElse("")}".trim),
     tag
   ) {
 

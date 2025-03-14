@@ -20,6 +20,7 @@ import org.jetbrains.plugins.scala.lang.psi.api.statements.{ScFunctionDefinition
 import org.jetbrains.plugins.scala.lang.psi.api.toplevel.ScNamedElement
 import org.jetbrains.plugins.scala.lang.psi.api.toplevel.typedef.{ScClass, ScDocCommentOwner, ScTrait}
 import org.jetbrains.plugins.scala.lang.psi.impl.ScalaPsiElementFactory.createScalaDocCommentFromText
+import org.jetbrains.plugins.scala.lang.scaladoc.parser.parsing.MyScaladocParsing.TagNames
 import org.jetbrains.plugins.scala.lang.scaladoc.psi.api.ScDocComment
 import org.jetbrains.plugins.scala.util.IndentUtil
 
@@ -90,11 +91,15 @@ class CreateScalaDocStubAction extends AnAction(
       val firstAnchor = if (tags.nonEmpty) tags(tags.length - 1) else oldComment.getLastChild.getPrevSibling
 
       (groupNames zip paramMaps).foldLeft(firstAnchor.getTextRange.getEndOffset) {
-        case (anchor, (name, paramMap)) => paramMap.foldLeft(anchor) {
+        case (anchor, (tagName, paramMap)) => paramMap.foldLeft(anchor) {
           case (currentAnchor, param) =>
+            val paramName = param._2.getName
+            val alreadyHasAsterisk = psiDocument.getText(new TextRange(currentAnchor - 1, currentAnchor)) == "*"
             val newTagText =
-              if (psiDocument.getText(new TextRange(currentAnchor - 1, currentAnchor)) == "*") s"$name ${param._2.getName} \n"
-              else s"* $name ${param._2.getName} \n"
+              if (alreadyHasAsterisk)
+                s"@$tagName $paramName \n"
+              else
+                s"* @$tagName $paramName \n"
             psiDocument.insertString(currentAnchor, newTagText)
             currentAnchor + newTagText.length
         }
@@ -107,10 +112,13 @@ class CreateScalaDocStubAction extends AnAction(
         inWriteAction {
           docOwner match {
             case fun: ScFunctionDefinition =>
-              processParams(List("@param", "@tparam"), List(fun.parameters, fun.typeParameters))
-            case clazz: ScClass => processParams(List("@param", "@tparam"), List(clazz.parameters, clazz.typeParameters))
-            case trt: ScTrait => processParams(List("@tparam"), List(trt.typeParameters))
-            case alias: ScTypeAlias => processParams(List("@tparam"), List(alias.typeParameters))
+              processParams(TagNames.ParamOrTParamSet.toList, List(fun.parameters, fun.typeParameters))
+            case clazz: ScClass =>
+              processParams(TagNames.ParamOrTParamSet.toList, List(clazz.parameters, clazz.typeParameters))
+            case trt: ScTrait =>
+              processParams(List(TagNames.TypeParam), List(trt.typeParameters))
+            case alias: ScTypeAlias =>
+              processParams(List(TagNames.TypeParam), List(alias.typeParameters))
             case _ =>
           }
 

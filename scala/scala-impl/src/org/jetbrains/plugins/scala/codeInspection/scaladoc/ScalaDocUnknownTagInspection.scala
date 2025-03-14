@@ -6,6 +6,7 @@ import com.intellij.psi.PsiElementVisitor
 import org.jetbrains.plugins.scala.incremental.Highlighting._
 import org.jetbrains.plugins.scala.ScalaBundle
 import org.jetbrains.plugins.scala.codeInspection.{AbstractFixOnPsiElement, ScalaInspectionBundle}
+import org.jetbrains.plugins.scala.extensions.PsiNamedElementExt
 import org.jetbrains.plugins.scala.lang.psi.api.ScalaElementVisitor
 import org.jetbrains.plugins.scala.lang.scaladoc.lexer.ScalaDocTokenType
 import org.jetbrains.plugins.scala.lang.scaladoc.parser.parsing.MyScaladocParsing
@@ -16,18 +17,19 @@ final class ScalaDocUnknownTagInspection extends LocalInspectionTool with DumbAw
 
   override def buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): PsiElementVisitor = {
     new ScalaElementVisitor {
-      override def visitTag(s: ScDocTag): Unit = {
-        if (!s.isVisible) return
+      override def visitTag(tag: ScDocTag): Unit = {
+        if (!tag.isVisible) return
 
-        val tagNameElement = s.getNameElement
+        val tagNameElement = tag.getNameElement
         assert(tagNameElement != null)
         assert(tagNameElement.getNode.getElementType == ScalaDocTokenType.DOC_TAG_NAME)
 
-        if (!MyScaladocParsing.allTags.contains(tagNameElement.getText)) {
+        val tagName = tag.name
+        if (!MyScaladocParsing.TagNames.AllTagNames.contains(tagName)) {
           holder.registerProblem(holder.getManager.createProblemDescriptor(tagNameElement, getDisplayName, true,
-            ProblemHighlightType.GENERIC_ERROR_OR_WARNING, isOnTheFly, new ScalaDocDeleteUnknownTagInspection(s)))
+            ProblemHighlightType.GENERIC_ERROR_OR_WARNING, isOnTheFly, new ScalaDocDeleteUnknownTagInspection(tag)))
         } else {
-          val condition = MyScaladocParsing.tagsWithParameters.contains(tagNameElement.getText) &&
+          val condition = MyScaladocParsing.TagNames.TagNamesWithParameters.contains(tagName) &&
             (tagNameElement.getNextSibling.getNextSibling == null ||
               tagNameElement.getNextSibling.getNextSibling.getNode.getElementType != ScalaDocTokenType.DOC_TAG_VALUE_TOKEN)
           if (condition) {

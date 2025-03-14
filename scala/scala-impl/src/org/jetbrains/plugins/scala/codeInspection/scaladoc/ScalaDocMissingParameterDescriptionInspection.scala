@@ -4,10 +4,10 @@ import com.intellij.codeInspection.{LocalInspectionTool, ProblemHighlightType, P
 import com.intellij.openapi.project.DumbAware
 import com.intellij.psi.PsiElementVisitor
 import com.intellij.psi.tree.TokenSet
-import org.jetbrains.plugins.scala.incremental.Highlighting._
 import org.jetbrains.plugins.scala.codeInspection.ScalaInspectionBundle
 import org.jetbrains.plugins.scala.codeInspection.scaladoc.ScalaDocMissingParameterDescriptionInspection._
 import org.jetbrains.plugins.scala.extensions._
+import org.jetbrains.plugins.scala.incremental.Highlighting._
 import org.jetbrains.plugins.scala.lang.psi.api.ScalaElementVisitor
 import org.jetbrains.plugins.scala.lang.scaladoc.lexer.ScalaDocTokenType
 import org.jetbrains.plugins.scala.lang.scaladoc.psi.api.ScDocTag
@@ -20,7 +20,7 @@ final class ScalaDocMissingParameterDescriptionInspection extends LocalInspectio
       override def visitTag(tag: ScDocTag): Unit = {
         if (!tag.isVisible) return
 
-        if (!TagsWithValueElement.contains(tag.name))
+        if (!TagNamesWithValueElement.contains(tag.name))
           return
 
         val valueElement = tag.getValueElement
@@ -44,6 +44,10 @@ object ScalaDocMissingParameterDescriptionInspection {
 
   import org.jetbrains.plugins.scala.lang.scaladoc.parser.parsing.MyScaladocParsing._
 
-  private val TagsWithValueElement = Set(PARAM_TAG, THROWS_TAG, TYPE_PARAM_TAG)
+  private val TagNamesWithValueElement = Set(
+    TagNames.Param,
+    TagNames.Throws,
+    TagNames.TypeParam,
+  )
   private val NonDataTokens = TokenSet.create(ScalaDocTokenType.DOC_WHITESPACE, ScalaDocTokenType.DOC_COMMENT_LEADING_ASTERISKS)
 }

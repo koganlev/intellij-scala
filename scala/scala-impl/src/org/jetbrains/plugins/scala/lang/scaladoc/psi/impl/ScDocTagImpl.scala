@@ -9,7 +9,7 @@ import org.jetbrains.plugins.scala.lang.psi.impl.ScalaPsiElementImpl
 import org.jetbrains.plugins.scala.lang.scaladoc.lexer.ScalaDocTokenType
 import org.jetbrains.plugins.scala.lang.scaladoc.psi.api.ScDocTag
 
-class ScDocTagImpl(node: ASTNode) extends ScalaPsiElementImpl(node) with ScDocTag{
+class ScDocTagImpl(node: ASTNode) extends ScalaPsiElementImpl(node) with ScDocTag {
   override def toString: String = "DocTag"
 
   override protected def acceptScala(visitor: ScalaElementVisitor): Unit = {
@@ -28,11 +28,13 @@ class ScDocTagImpl(node: ASTNode) extends ScalaPsiElementImpl(node) with ScDocTa
 
   override def getValueElement: PsiDocTagValue = findChildByClass(classOf[PsiDocTagValue])
   
-  override def getName: String =
-    if (getNameElement != null)
-      getNameElement.getText
+  override def getName: String = {
+    val nameElement = getNameElement
+    if (nameElement != null)
+      getNameElement.getText.stripPrefix("@")
     else
       null
+  }
 
   override def setName(name: String): PsiElement = {
     val tagNameNode = findChildByType[PsiElement](ScalaDocTokenType.DOC_TAG_NAME)

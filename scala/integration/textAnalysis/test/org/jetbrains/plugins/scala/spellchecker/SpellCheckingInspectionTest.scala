@@ -120,4 +120,25 @@ class SpellCheckingInspectionTest extends ScalaInspectionTestBase {
        |)
        |""".stripMargin
   )
+
+  def testDontIgnoreScalaDocTag(): Unit = checkTextHasError(
+    s"""/**
+      | * @note ${START}Mispeled$END ${START}Texxt$END
+      | */
+      |""".stripMargin
+  )
+
+  def testIgnoreScalaDocTag_See(): Unit = checkTextHasNoErrors(
+    """/**
+      | * @see Mispeled Texxt [[Mispeled Texxt]]
+      | */
+      |""".stripMargin
+  )
+
+  def testIgnoreScalaDocTag_Author(): Unit = checkTextHasNoErrors(
+    """/**
+      | * @author Mispeled Texxt
+      | */
+      |""".stripMargin
+  )
 }

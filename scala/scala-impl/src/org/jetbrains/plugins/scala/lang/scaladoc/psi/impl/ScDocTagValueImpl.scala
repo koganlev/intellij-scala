@@ -16,7 +16,7 @@ import org.jetbrains.plugins.scala.lang.psi.impl.expr.ScReferenceImpl
 import org.jetbrains.plugins.scala.lang.refactoring.ScalaNamesValidator.isIdentifier
 import org.jetbrains.plugins.scala.lang.resolve.processor.{BaseProcessor, CompletionProcessor, ResolveProcessor}
 import org.jetbrains.plugins.scala.lang.resolve.{ResolveTargets, ScalaResolveResult}
-import org.jetbrains.plugins.scala.lang.scaladoc.parser.parsing.MyScaladocParsing.{PARAM_TAG, TYPE_PARAM_TAG}
+import org.jetbrains.plugins.scala.lang.scaladoc.parser.parsing.MyScaladocParsing.TagNames
 import org.jetbrains.plugins.scala.lang.scaladoc.psi.api.{ScDocComment, ScDocReference, ScDocTag, ScDocTagValue}
 
 final class ScDocTagValueImpl(node: ASTNode)
@@ -95,15 +95,11 @@ final class ScDocTagValueImpl(node: ASTNode)
   override def isSoft: Boolean = !isParamTag
 
   private def parentTagName: String =
-    getParent.asOptionOf[ScDocTag].flatMap(_.getName.toOption).getOrElse("")
+    getParent.asOptionOf[ScDocTag].flatMap(_.name.toOption).getOrElse("")
 
-  private def isParamTag: Boolean = parentTagName match {
-    case PARAM_TAG | TYPE_PARAM_TAG => true
-    case _ => false
-  }
+  private def isParamTag: Boolean = TagNames.ParamOrTParamSet.contains(parentTagName)
 
   private def getParametersScalaDocOwnerParametersOfMyTagKind(excludeAlreadyMentioned: Boolean): Seq[ScNamedElement] = {
-    val parentTagType = parentTagName
     val scalaDocComment = PsiTreeUtil.getParentOfType(this, classOf[ScDocComment])
 
     if (scalaDocComment == null || !isParamTag)
@@ -120,10 +116,10 @@ final class ScDocTagValueImpl(node: ASTNode)
         }
       case owner => owner
     }
-    val scalaDocOwnerParameters = (parentTagType, scalaDocOwner) match {
-      case (PARAM_TAG, paramsOwner: ScParameterOwner) =>
+    val scalaDocOwnerParameters = (parentTagName, scalaDocOwner) match {
+      case (TagNames.Param, paramsOwner: ScParameterOwner) =>
         paramsOwner.parameters
-      case (TYPE_PARAM_TAG, typeParamsOwner: ScTypeParametersOwner) =>
+      case (TagNames.TypeParam, typeParamsOwner: ScTypeParametersOwner) =>
         typeParamsOwner.typeParameters
       case _ =>
         Nil

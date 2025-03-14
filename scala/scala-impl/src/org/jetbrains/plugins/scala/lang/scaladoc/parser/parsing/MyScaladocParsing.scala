@@ -21,7 +21,7 @@ import org.jetbrains.plugins.scala.lang.scaladoc.parser.parsing.MyScaladocParsin
 import org.jetbrains.plugins.scala.util.IndentUtil
 
 import java.util
-import scala.collection.immutable.HashMap
+import scala.collection.immutable.{HashMap, ListSet}
 
 /**
  * @see [[scala.tools.nsc.ast.DocComments]]
@@ -467,8 +467,8 @@ class MyScaladocParsing(private val builder: PsiBuilder,
     else
       return false
 
-    val tagName = builder.getTokenText
-    assert(builder.getTokenType == DOC_TAG_NAME, s"$tagName  ${builder.getTokenType}  ${builder.getCurrentOffset}")
+    val tagText = builder.getTokenText
+    assert(tagText != null && builder.getTokenType == DOC_TAG_NAME, s"$tagText  ${builder.getTokenType}  ${builder.getCurrentOffset}")
 
     if (!isEndOfComment)
       builder.advanceLexer()
@@ -476,8 +476,9 @@ class MyScaladocParsing(private val builder: PsiBuilder,
       scaladocError(builder, ScalaBundle.message("scaladoc.parsing.unexpected.end.of.tag.body"))
 
     scaladocError(builder, ScalaBundle.message("scaladoc.parsing.inline.tag"))
+    val tagName = tagText.substring(1) //drop @
     tagName match {
-      case JAVA_LINK_TAG | JAVA_LINK_PLAIN_TAG =>
+      case TagNames.JavaLink | TagNames.JavaLinkPlain =>
         if (!isEndOfComment && builder.getTokenType == ScalaDocTokenType.DOC_WHITESPACE)
           builder.advanceLexer()
 
@@ -513,8 +514,8 @@ class MyScaladocParsing(private val builder: PsiBuilder,
     if (builder.getTokenType == DOC_WHITESPACE)
       builder.advanceLexer()
 
-    val tagName = builder.getTokenText
-    assert(builder.getTokenType == DOC_TAG_NAME, s"$tagName  ${builder.getTokenType}  ${builder.getCurrentOffset}")
+    val tagText = builder.getTokenText
+    assert(builder.getTokenType == DOC_TAG_NAME, s"$tagText  ${builder.getTokenType}  ${builder.getCurrentOffset}")
 
     // eat doc tag name
     if (!isEndOfComment)
@@ -522,22 +523,23 @@ class MyScaladocParsing(private val builder: PsiBuilder,
     else
       scaladocError(builder, ScalaBundle.message("scaladoc.parsing.unexpected.end.of.tag.body"))
 
+    val tagName = tagText.substring(1) //drop @
     tagName match {
-      case THROWS_TAG =>
+      case TagNames.Throws =>
         consumeWhiteSpaces()
         val psiBuilder = mkScalaPsiBuilder(builder, isScala3 = false)
         StableId(DOC_TAG_VALUE_TOKEN, forImport = true)(psiBuilder)
-      case PARAM_TAG | TYPE_PARAM_TAG | DEFINE_TAG =>
+      case TagNames.Param | TagNames.TypeParam | TagNames.Define =>
         if (builder.lookAhead(DOC_WHITESPACE, DOC_TAG_VALUE_TOKEN)) {
           builder.advanceLexer() // ate space
           parseTagValue()
         } else {
           scaladocError(builder, ScalaBundle.message("scaladoc.parsing.missing.tag.param"))
         }
-
-      case tag if allTags.contains(tag) => //do nothing
+      case _ if TagNames.AllTagNames.contains(tagName) => //do nothing
       case _ =>
-        scaladocError(builder, ScalaBundle.message("scaladoc.parsing.unknown.tag", tagName))
+        //Q: do we really need to generate a parser error?
+        scaladocError(builder, ScalaBundle.message("scaladoc.parsing.unknown.tag", tagText))
     }
 
     parseDescription()
@@ -552,32 +554,71 @@ class MyScaladocParsing(private val builder: PsiBuilder,
 }
 
 object MyScaladocParsing {
-  val PARAM_TAG = "@param"
-  val TYPE_PARAM_TAG = "@tparam"
-  val RETURN_TAG = "@return"
-  val THROWS_TAG = "@throws"
+  //noinspection SpellCheckingInspection
+  object TagNames {
+    val Param = "param"
+    val TypeParam = "tparam"
+    val Return = "return"
+    val Throws = "throws"
 
-  val SEE_TAG = "@see"
-  val AUTHOR_TAG = "@author"
-  val NOTE_TAG = "@note"
-  val SINCE_TAG = "@since"
-  val DEFINE_TAG = "@define"
-  val VERSION_TAG = "@version"
-  val TODO_TAG = "@todo"
-  val USECASE_TAG = "@usecase"
-  val EXAMPLE_TAG = "@example"
-  val DEPRECATED_TAG = "@deprecated"
-  val MIGRATION_TAG = "@migration"
-  val INHERITDOC_TAG = "@inheritdoc"
+    val See = "see"
+    val Author = "author"
+    val Note = "note"
+    val Since = "since"
+    val Define = "define"
+    val Version = "version"
+    val Todo = "todo"
+    val Usecase = "usecase"
+    val Example = "example"
+    val Deprecated = "deprecated"
+    val Migration = "migration"
+    val Inheritdoc = "inheritdoc"
 
-  val GROUP_TAG = "@group"
-  val GROUP_NAME_TAG = "@groupname"
-  val GROUP_DESC_TAG = "@groupdesc"
-  val GROUP_PRIO_TAG = "@groupprio"
-  val CONSTRUCTOR_TAG = "@constructor"
+    val Group = "group"
+    val GroupName = "groupname"
+    val GroupDesc = "groupdesc"
+    val GroupPrio = "groupprio"
+    val Constructor = "constructor"
 
-  val JAVA_LINK_TAG = "@link"
-  val JAVA_LINK_PLAIN_TAG = "@linkplain"
+    val JavaLink = "link"
+    val JavaLinkPlain = "linkplain"
+
+    val AllTagNames: Set[String] = Set(
+      Param,
+      TypeParam,
+      Throws,
+      See,
+      Author,
+      Note,
+      Return,
+      Since,
+      Define,
+      Version,
+      Todo,
+      Usecase,
+      Example,
+      Deprecated,
+      Migration,
+      Group,
+      GroupName,
+      GroupDesc,
+      GroupPrio,
+      Constructor,
+      Inheritdoc,
+    )
+
+    val TagNamesWithParameters: Set[String] = Set(
+      Define,
+      Param,
+      TypeParam,
+      Throws,
+    )
+
+    val ParamOrTParamSet: ListSet[String] = ListSet(
+      "param",
+      "tparam",
+    )
+  }
 
   val escapeSequencesForWiki: Map[String, String] = HashMap[String, String](
     "`" -> "&#96;",
@@ -588,20 +629,6 @@ object MyScaladocParsing {
     ",," -> "&#44;&#44;",
     "[[" -> "&#91;&#91;",
     "=" -> "&#61;"
-  )
-
-  val allTags = Set(
-    PARAM_TAG, TYPE_PARAM_TAG, THROWS_TAG, SEE_TAG, AUTHOR_TAG, NOTE_TAG, RETURN_TAG, SINCE_TAG,
-    DEFINE_TAG, VERSION_TAG, TODO_TAG, USECASE_TAG, EXAMPLE_TAG, DEPRECATED_TAG, MIGRATION_TAG, GROUP_TAG,
-    GROUP_NAME_TAG, GROUP_DESC_TAG, GROUP_PRIO_TAG, CONSTRUCTOR_TAG, INHERITDOC_TAG
-  )
-  val tagsWithParameters = Set(
-    DEFINE_TAG, PARAM_TAG, TYPE_PARAM_TAG, THROWS_TAG
-  )
-
-  val ParamOrTParamTags: Set[String] = Set(
-    PARAM_TAG,
-    TYPE_PARAM_TAG,
   )
 
   private val nonDataTokens: TokenSet = TokenSet.create(
