@@ -2,7 +2,8 @@ package org.jetbrains.plugins.scala.build
 
 import com.intellij.build.events.MessageEvent.Kind
 import com.intellij.build.events._
-import com.intellij.build.events.impl.AbstractBuildEvent
+import com.intellij.build.events.impl.{AbstractBuildEvent, BuildIssueEventImpl}
+import com.intellij.build.issue.BuildIssue
 import com.intellij.build.{FilePosition, SyncViewManager}
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.externalSystem.model.task.event.{Failure => ExternalSystemFailure, FailureResult => ExternalSystemFailureResult, SkippedResult => ExternalSystemSkippedResult, SuccessResult => ExternalSystemSuccessResult, _}
@@ -78,6 +79,9 @@ class ExternalSystemNotificationReporter(workingDir: String,
   override def warning(message: String, position: Option[FilePosition], details: String): Unit =
     onEvent(message, Kind.WARNING, position, details)
 
+  override def warning(issue: BuildIssue): Unit =
+    onEvent(issue, Kind.WARNING)
+
   override def warning(message: String, position: Option[FilePosition], details: String, navigatable: Option[Navigatable]): Unit =
     onEvent(message, Kind.WARNING, position, details, navigatable = navigatable)
 
@@ -99,6 +103,11 @@ class ExternalSystemNotificationReporter(workingDir: String,
       manager.onEvent(taskId, event)
     }
   }
+
+  private def onEvent(issue: BuildIssue, kind: Kind): Unit =
+    viewManager.foreach { manager =>
+      manager.onEvent(taskId, new BuildIssueEventImpl(taskId, issue, kind))
+    }
 
   override def log(message: String): Unit =
     log(message, isStdOut = true)

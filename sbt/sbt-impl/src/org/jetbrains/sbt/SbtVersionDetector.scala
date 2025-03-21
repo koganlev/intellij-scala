@@ -3,6 +3,7 @@ package org.jetbrains.sbt
 import com.intellij.openapi.project.Project
 import org.jetbrains.plugins.scala.extensions.PathExt
 import org.jetbrains.sbt.project.SbtExternalSystemManager
+import org.jetbrains.sbt.project.settings.SbtExecutionSettings
 
 import java.io.BufferedInputStream
 import java.nio.file.{FileSystems, Files, Path}
@@ -11,8 +12,17 @@ import scala.util.Using
 
 object SbtVersionDetector {
 
+  def detectSbtVersion(project: Project, externalProjectPath: String): SbtVersion = {
+    val settings = SbtExternalSystemManager.executionSettingsFor(project, externalProjectPath)
+    detectSbtVersion(settings)
+  }
+
   def detectSbtVersion(project: Project): SbtVersion = {
     val settings = SbtExternalSystemManager.executionSettingsFor(project)
+    detectSbtVersion(settings)
+  }
+
+  private def detectSbtVersion(settings: SbtExecutionSettings): SbtVersion = {
     val projectBaseDir = Path.of(settings.realProjectPath)
     val launcher = SbtUtil.getLauncherJar(settings)
     detectSbtVersion(projectBaseDir, launcher)

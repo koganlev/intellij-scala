@@ -2,7 +2,8 @@ package org.jetbrains.plugins.scala.build
 
 import com.intellij.build._
 import com.intellij.build.events._
- import com.intellij.pom.Navigatable
+import com.intellij.build.issue.BuildIssue
+import com.intellij.pom.Navigatable
 import org.jetbrains.annotations.{Nls, NotNull}
 import org.jetbrains.plugins.scala.build.BuildMessages.EventId
 
@@ -27,6 +28,8 @@ trait BuildReporter {
 
   /** Show warning message with details. */
   def warning(@Nls message: String, position: Option[FilePosition], @Nls details: String): Unit = ()
+
+  def warning(issue: BuildIssue): Unit = ()
 
   def warning(@Nls message: String, position: Option[FilePosition], @Nls details: String, navigatable: Option[Navigatable]): Unit = ()
 
