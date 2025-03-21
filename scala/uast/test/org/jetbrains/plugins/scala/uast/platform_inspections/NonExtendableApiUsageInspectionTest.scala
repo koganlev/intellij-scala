@@ -1,7 +1,7 @@
 package org.jetbrains.plugins.scala.uast.platform_inspections
 
 import com.intellij.codeInsight.daemon.impl.HighlightInfo
-import com.intellij.codeInspection.{LocalInspectionTool, NonExtendableApiUsageInspection}
+import com.intellij.codeInspection.{LocalInspectionTool, NonExtendableApiInspection}
 import com.intellij.openapi.roots.{ModifiableRootModel, ModuleRootModificationUtil}
 import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.vfs.VirtualFileManager
@@ -15,14 +15,14 @@ import java.nio.file.Path
 import java.util
 
 /**
- * Test UAST-based inspection from platform: [[com.intellij.codeInspection.NonExtendableApiUsageInspection]]
+ * Test UAST-based inspection from platform: [[com.intellij.codeInspection.NonExtendableApiInspection]]
  *
  * Some parts copied from com.intellij.codeInspection.tests.kotlin.NonExtendableApiUsageInspectionTest
  */
 class NonExtendableApiUsageInspectionTest extends ScalaInspectionTestBase {
 
   protected override val classOfInspection: Class[_ <: LocalInspectionTool] =
-    classOf[NonExtendableApiUsageInspection]
+    classOf[NonExtendableApiInspection]
 
   override protected val description: String = ""
 
