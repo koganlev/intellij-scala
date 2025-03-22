@@ -1905,7 +1905,7 @@ class ReferenceComparisonTest_Scala3_LTS extends ReferenceComparisonTestBase(org
   def test_outdent_dot(): Unit = doTest("outdent-dot", true)
   def test_overloaddefault(): Unit = doTest("overloaddefault", true)
   def test_overloaded(): Unit = doTest("overloaded", false)
-  def test_overloaded_ho_fun(): Unit = doTest("overloaded_ho_fun", false)
+  def test_overloaded_ho_fun(): Unit = doTest("overloaded_ho_fun", true)
   def test_overloadedAccess(): Unit = doTest("overloadedAccess", true)
   def test_override(): Unit = doTest("override", true)
   def test_override_via_self(): Unit = doTest("override-via-self", true)

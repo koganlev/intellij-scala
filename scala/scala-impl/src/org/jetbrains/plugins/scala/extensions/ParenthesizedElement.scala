@@ -68,17 +68,17 @@ object ParenthesizedElement {
       * without changing the semantics of the AST.
       */
     def isParenthesisNeeded: Boolean = parenthesized match {
-        case expr@ScParenthesisedExpr(inner)                               => ScalaPsiUtil.needParentheses(expr, inner)
-        case _ if parenthesized.innerElement.isEmpty                       => true
-        case ScParenthesizedElement(inner) if containsSomethingElse(inner) => true
-        case InfixTypeInPattern()                                          => true
-        case _ if isFunctionTupleParameter                                 => true
-        case SameKindParentAndInner(parent, inner)                         => !parenthesesRedundant(parent, inner)
-        case ChildOf(_: ScConstructorInvocation | _: ScTemplateParents)    => true
-        case _ if isIndivisibleRepeatedParamType(parenthesized)            => true
-        case NeededParenthesisAroundFunctionalType()                       => true
-        case _                                                             => false
-      }
+      case expr@ScParenthesisedExpr(inner)                               => ScalaPsiUtil.needParentheses(expr, inner)
+      case _ if parenthesized.innerElement.isEmpty                       => true
+      case ScParenthesizedElement(inner) if containsSomethingElse(inner) => true
+      case InfixTypeInPattern()                                          => true
+      case _ if isFunctionTupleParameter                                 => true
+      case SameKindParentAndInner(parent, inner)                         => !parenthesesRedundant(parent, inner)
+      case ChildOf(_: ScConstructorInvocation | _: ScTemplateParents)    => true
+      case _ if isIndivisibleRepeatedParamType(parenthesized)            => true
+      case NeededParenthesisAroundFunctionalType()                       => true
+      case _                                                             => false
+    }
 
     def isFunctionTypeSingleParam: Boolean = parenthesized match {
       case SameKindParentAndInner(ScFunctionalTypeElement(`parenthesized`, _), _) => true

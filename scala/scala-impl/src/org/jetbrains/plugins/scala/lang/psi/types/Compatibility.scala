@@ -126,10 +126,10 @@ object Compatibility {
     implicit def elementScope: ElementScope = ElementScope(place)
 
     final def tryAdaptTypeToSAM(
-      tp: ScType,
-      pt: ScType,
+      tp:             ScType,
+      pt:             ScType,
       fromUnderscore: Boolean,
-      checkResolve: Boolean = true,
+      checkResolve:   Boolean = true,
       checkImplicits: Boolean = false
     ): Option[ExpressionTypeResult] = {
       def expectedResult(subst: ScSubstitutor): ScExpression.ExpressionTypeResult =
@@ -153,7 +153,7 @@ object Compatibility {
         tp match {
           case FunctionType(retTpe, params) if place.isSAMEnabled =>
             SAMUtil.toSAMType(pt, place) match {
-              case Some(methodType@FunctionType(ptRetTpe, _)) =>
+              case Some(methodType @ FunctionType(ptRetTpe, _)) =>
                 val maybeSubst = conformanceSubst(tp, methodType)
 
                 maybeSubst match {
@@ -268,10 +268,10 @@ object Compatibility {
   }
 
   case class ApplicabilityCheckResult(
-    problems: Seq[ApplicabilityProblem],
-    constraints: ConstraintSystem,
+    problems:             Seq[ApplicabilityProblem],
+    constraints:          ConstraintSystem,
     defaultParameterUsed: Boolean = false,
-    matched: Seq[(Parameter, ScExpression, ScType)] = Seq.empty
+    matched:              Seq[(Parameter, ScExpression, ScType)] = Seq.empty
   )
 
   object ApplicabilityCheckResult {
@@ -370,12 +370,12 @@ object Compatibility {
         case None => Nil
         case Some(exprType) =>
           val conforms = exprType.conforms(pt, ConstraintSystem.empty, checkWeak = true)
+          matched.addOne(param, arg.scExpressionOrNull, exprType)
 
           conforms match {
             case ConstraintsResult.Left =>
               List(TypeMismatch(arg.scExpressionOrNull, pt))
             case cs: ConstraintSystem =>
-              matched.addOne(param, arg.scExpressionOrNull, exprType)
               constraintAccumulator += cs
               List.empty
           }

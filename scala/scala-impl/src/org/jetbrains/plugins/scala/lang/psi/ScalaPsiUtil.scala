@@ -917,11 +917,17 @@ object ScalaPsiUtil {
       else {
         parent.operation.bind() match {
           case Some(resolveResult) =>
-            val startInParent: Int = from.getStartOffsetInParent
-            val endInParent: Int = startInParent + from.getTextLength
-            val parentText = parent.getText
-            val modifiedParentText = parentText.substring(0, startInParent) + from.getText + parentText.substring(endInParent)
-            val modifiedParent = createExpressionWithContextFromText(modifiedParentText, parent.getContext)
+            val fromLength         = from.getTextLength
+            val startInParent      = from.getStartOffsetInParent
+            val endInParent        = startInParent + fromLength
+            val parentText         = parent.getText
+
+            val modifiedParentText =
+              parentText.substring(0, startInParent) +
+                from.getText.substring(1, fromLength - 1) +
+                parentText.substring(endInParent)
+
+            val modifiedParent     = createExpressionWithContextFromText(modifiedParentText, parent.getContext)
             modifiedParent match {
               case ScInfixExpr(_, newOper, _: ScTuple) =>
                 newOper.bind() match {
@@ -1001,7 +1007,7 @@ object ScalaPsiUtil {
         case _ if expr.textMatches("_") => false
         case (_: ScTuple | _: ScNamedTuple | _: ScBlock | _: ScXmlExpr, _) => false
         case (infix: ScInfixExpr, call: ScMethodCall) if infix.left == from && call.args.isColonArgs => true
-        case (infix: ScInfixExpr, _: ScTuple) => tupleInInfixNeedParentheses(infix, from)
+        case (infix: ScInfixExpr, nested @ ScParenthesisedExpr(_: ScTuple)) => tupleInInfixNeedParentheses(infix, nested)
         case (_: ScSugarCallExpr |
               _: ScReferenceExpression |
               _: ScTypedExpression, elem: PsiElement)

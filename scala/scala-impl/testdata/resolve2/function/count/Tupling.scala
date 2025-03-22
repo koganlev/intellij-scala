@@ -22,5 +22,5 @@ object Tupling {
   def joo(x: (Int, String)) = 1
   def joo(x: Int, y: Int) = 2
 
-  /* resolved: false */joo(1, "")
+  /* line : 23, applicable: false */joo(1, "")
 }

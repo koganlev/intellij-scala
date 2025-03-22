@@ -11,6 +11,7 @@ import org.jetbrains.plugins.scala.lang.psi.api.base.patterns.{ScCaseClause, ScC
 import org.jetbrains.plugins.scala.lang.psi.api.base.types.{ScSequenceArg, ScTupleTypeElement, ScTypeElement}
 import org.jetbrains.plugins.scala.lang.psi.api.expr.ExpectedTypes._
 import org.jetbrains.plugins.scala.lang.psi.api.expr._
+import org.jetbrains.plugins.scala.lang.psi.api.statements.ScFunction.CommonNames
 import org.jetbrains.plugins.scala.lang.psi.api.statements._
 import org.jetbrains.plugins.scala.lang.psi.api.statements.params.{ScClassParameter, ScParameter}
 import org.jetbrains.plugins.scala.lang.psi.api.toplevel.typedef.ScMember
@@ -261,13 +262,19 @@ class ExpectedTypesImpl extends ExpectedTypes {
     def mapResolves(resolves: Array[ScalaResolveResult], types: Array[TypeResult]): Array[(TypeResult, Boolean, Boolean)] =
       resolves.zip(types).map {
         case (r, tp) =>
+          val actualType = r match {
+            case ScalaResolveResult(fun: ScFunction, s: ScSubstitutor) if fun.name == CommonNames.Apply =>
+              Right(fun.polymorphicType(s))
+            case _ => tp
+          }
+
           val isPolymorphic = r.element match {
             case tpo: ScTypeParametersOwner     => tpo.typeParameters.nonEmpty
             case tpo: PsiTypeParameterListOwner => tpo.getTypeParameters.nonEmpty
             case _                              => false
           }
 
-          (tp, isPolymorphic, isApplyDynamicNamed(r))
+          (actualType, isPolymorphic, isApplyDynamicNamed(r))
       }
 
     def argIndex(argExprs: Seq[ScExpression]) =
@@ -301,17 +308,17 @@ class ExpectedTypesImpl extends ExpectedTypes {
 
       val updatedWithExpected =
         resolvedTypes.map {
-          case (r, isPolymorphic, isDynamicNamed) =>
-            (r.map(invocation.updateAccordingToExpectedType), isPolymorphic, isDynamicNamed)
+          case (tpe, isPolymorphic, isDynamicNamed) =>
+            (tpe.map(invocation.updateAccordingToExpectedType), isPolymorphic, isDynamicNamed)
         }
 
       updatedWithExpected
         .filterNot(_._1.exists(_.equiv(Nothing)))
         .flatMap {
-          case (r, isPolymorphic, isDynamicNamed) =>
+          case (tpe, isPolymorphic, isDynamicNamed) =>
             computeExpectedParamType(
               expr,
-              r,
+              tpe,
               argExprs,
               argIndex(argExprs),
               Option(invocation),
@@ -605,8 +612,7 @@ class ExpectedTypesImpl extends ExpectedTypes {
 
     //returns properly substituted method type of `apply` method invocation and whether it's apply dynamic named
     def tryApplyMethod(
-      internalType: ScType,
-      typeParams:   Seq[TypeParameter]
+      internalType: ScType
     ): Option[(TypeResult, Boolean)] = {
       val applySrr = call.map(c =>
         c.resolveApplyOrUpdateMethod(
@@ -620,15 +626,7 @@ class ExpectedTypesImpl extends ExpectedTypes {
 
       applySrr.collect {
         case Array(srr @ ScalaResolveResult(fun: ScFunction, s)) =>
-          val polyType =
-            fun.polymorphicType(s) match {
-              case ScTypePolymorphicType(internal, params) =>
-                ScTypePolymorphicType(internal, params ++ typeParams)
-              case anotherType if typeParams.nonEmpty =>
-                ScTypePolymorphicType(anotherType, typeParams)
-              case anotherType => anotherType
-            }
-
+          val polyType        = fun.polymorphicType(s)
           val applyMethodType = polyType.updateTypeOfDynamicCall(srr.isDynamic)
 
           val updatedMethodCall =
@@ -650,12 +648,7 @@ class ExpectedTypesImpl extends ExpectedTypes {
         }
         fromMethodTypeParams(params, t.argsProtoTypeSubst(unwrappedPt))
       case Right(anotherType) if !forApply =>
-        val (internalType, typeParams) = anotherType match {
-          case ScTypePolymorphicType(internal, tps) => (internal, tps)
-          case t                                    => (t, Seq.empty)
-        }
-
-        tryApplyMethod(internalType, typeParams) match {
+        tryApplyMethod(anotherType) match {
           case Some((applyInvokedType, isApplyDynamicNamed)) =>
             computeExpectedParamType(
               expr,
@@ -704,7 +697,7 @@ class ExpectedTypesImpl extends ExpectedTypes {
       case TupleType(comps) if comps.length == 2 =>
         val actualArg = (comps(1), te.map {
           case t: ScTupleTypeElement if t.components.length == 2 => t.components(1)
-          case t => t
+          case t                                                 => t
         })
         actualArg
       case _ => (tp, te)

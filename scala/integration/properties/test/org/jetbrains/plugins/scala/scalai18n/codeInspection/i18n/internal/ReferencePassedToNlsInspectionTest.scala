@@ -1,7 +1,7 @@
 package org.jetbrains.plugins.scala.scalai18n.codeInspection.i18n.internal
 
 import com.intellij.codeInspection.LocalInspectionTool
-import org.jetbrains.plugins.scala.codeInspection.{ScalaAnnotatorQuickFixTestBase, ScalaInspectionTestBase}
+import org.jetbrains.plugins.scala.codeInspection.ScalaInspectionTestBase
 
 class ReferencePassedToNlsInspectionTest extends ScalaInspectionTestBase {
   override protected val classOfInspection: Class[_ <: LocalInspectionTool] =
@@ -127,9 +127,9 @@ class ReferencePassedToNlsInspectionTest extends ScalaInspectionTestBase {
   def test_recursion_neg(): Unit =
     checkTextHasError(
       s"""
-         |def ref = {
+         |def ref: String = {
          |  if ("blub" == null) "blub"
-         |  else ref
+         |  else                ref
          |}
          |toNls(${START}ref$END)
          |""".stripMargin)

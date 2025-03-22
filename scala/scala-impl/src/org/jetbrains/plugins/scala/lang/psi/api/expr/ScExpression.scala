@@ -144,11 +144,11 @@ trait ScExpression extends ScBlockStatement
   }
 
   override def getTypeAfterImplicitConversion(
-    checkImplicits: Boolean = true,
-    isShape: Boolean = false,
-    expectedOption: Option[ScType] = None,
-    ignoreBaseTypes: Boolean = false,
-    fromUnderscore: Boolean = false
+    checkImplicits:  Boolean        = true,
+    isShape:         Boolean        = false,
+    expectedOption:  Option[ScType] = None,
+    ignoreBaseTypes: Boolean        = false,
+    fromUnderscore:  Boolean        = false
   ): ExpressionTypeResult =
     cachedWithRecursionGuard(
       "ScExpression.getTypeAfterImplicitConversion",
@@ -161,28 +161,34 @@ trait ScExpression extends ScBlockStatement
         this.scalaLanguageLevelOrDefault >= Scala_2_11 &&
           ScalaPsiUtil.isJavaReflectPolymorphicSignature(this)
 
-      val result =
-        if (isShape) ExpressionTypeResult(Right(shape(this).getOrElse(Nothing)))
-        else {
-          val expected = expectedOption.orElse(this.expectedType(fromUnderscore = fromUnderscore))
-          val tr       = this.getTypeWithoutImplicits(ignoreBaseTypes, fromUnderscore)
+      val initialType =
+        if (isShape)
+          Right(shape(this).getOrElse(Nothing))
+        else
+          this.getTypeWithoutImplicits(ignoreBaseTypes, fromUnderscore)
 
-          (expected, tr.toOption) match {
-            case (Some(expType), Some(tp))
-              if checkImplicits && !tp.conformsIn(this, expType) => //do not try implicit conversions for shape check or already correct type
 
-              // isSAMEnabled is checked in tryAdaptTypeToSAM, but we can cut it right here
-              val adapted =
-                if (this.isSAMEnabled) this.tryAdaptTypeToSAM(tp, expType, fromUnderscore, checkImplicits)
-                else                   None
+      val result = {
+        val expected = expectedOption.orElse(this.expectedType(fromUnderscore = fromUnderscore))
 
-              adapted.getOrElse(
-                if (isJavaReflectPolymorphic) ExpressionTypeResult(Right(expType))
-                else this.updateTypeWithImplicitConversion(tp, expType)
-              )
-            case _ => ExpressionTypeResult(tr)
-          }
+        (expected, initialType.toOption) match {
+          case (Some(expType), Some(tp))
+            if !tp.conformsIn(this, expType) =>
+            //do not try implicit conversions for shape check or already correct type
+
+            // isSAMEnabled is checked in tryAdaptTypeToSAM, but we can cut it right here
+            val adapted =
+              if (this.isSAMEnabled) this.tryAdaptTypeToSAM(tp, expType, fromUnderscore, checkImplicits)
+              else                   None
+
+            adapted.getOrElse(
+              if (isJavaReflectPolymorphic)        ExpressionTypeResult(Right(expType))
+              else if (!checkImplicits || isShape) ExpressionTypeResult(initialType)
+              else                                 this.updateTypeWithImplicitConversion(tp, expType)
+            )
+          case _ => ExpressionTypeResult(initialType)
         }
+      }
 
       Tracing.inference(this, result)
 
@@ -297,22 +303,29 @@ object ScExpression {
     def getTypeWithoutImplicits(
       ignoreBaseType: Boolean = false,
       fromUnderscore: Boolean = false
-    ): TypeResult = cachedWithRecursionGuard("getTypeWithoutImplicits", expr, Failure(NlsString.force("Recursive getTypeWithoutImplicits")), BlockModificationTracker(expr), (ignoreBaseType, fromUnderscore)) {
-      ProgressManager.checkCanceled()
+    ): TypeResult =
+      cachedWithRecursionGuard(
+        "getTypeWithoutImplicits",
+        expr,
+        Failure(NlsString.force("Recursive getTypeWithoutImplicits")),
+        BlockModificationTracker(expr),
+        (ignoreBaseType, fromUnderscore)
+      ) {
+        ProgressManager.checkCanceled()
 
-      CompilerType(expr) match {
-        case Some(s) =>
-          val settings = ScalaProjectSettings.getInstance(expr.getProject)
-          if (settings.isCompilerHighlightingScala3 && settings.isUseCompilerTypes) {
-            Right(ScalaPsiElementFactory.createTypeFromText(s, expr, null).get)
-          } else {
-            CompilerType(expr) = None
+        CompilerType(expr) match {
+          case Some(s) =>
+            val settings = ScalaProjectSettings.getInstance(expr.getProject)
+            if (settings.isCompilerHighlightingScala3 && settings.isUseCompilerTypes) {
+              Right(ScalaPsiElementFactory.createTypeFromText(s, expr, null).get)
+            } else {
+              CompilerType(expr) = None
+              getTypeWithoutImplicits0(ignoreBaseType, fromUnderscore)
+            }
+          case None =>
             getTypeWithoutImplicits0(ignoreBaseType, fromUnderscore)
-          }
-        case None =>
-          getTypeWithoutImplicits0(ignoreBaseType, fromUnderscore)
+        }
       }
-    }
 
     private def getTypeWithoutImplicits0(ignoreBaseType: Boolean, fromUnderscore: Boolean): TypeResult = {
       expr match {

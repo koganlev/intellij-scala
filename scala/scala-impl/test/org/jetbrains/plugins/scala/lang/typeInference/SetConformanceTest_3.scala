@@ -5,6 +5,25 @@ import org.jetbrains.plugins.scala.ScalaVersion
 class SetConformanceTest_3 extends SetConformanceTestBase {
   override protected def supportedIn(version: ScalaVersion): Boolean = version == ScalaVersion.Latest.Scala_3
 
+  override def testSCL4941(): Unit = checkErrorsText(
+    s"""import scala.collection._
+       |
+       |def f(collect: Iterable[Int]): Unit = {
+       |  collect.zipWithIndex.foldLeft(mutable.LinkedHashMap.empty[Int, Set[Int]]) {
+       |    case (m, (t1, _)) => m += (t1 -> {
+       |      val s = m.getOrElse(t1, mutable.LinkedHashSet.empty)
+       |      s
+       |    })
+       |  }
+       |}
+       |//true
+    """.stripMargin,
+    """Error(t1 -> {
+      |      val s = m.getOrElse(t1, mutable.LinkedHashSet.empty)
+      |      s
+      |    },Type mismatch, expected: (Int, Set[Int]), actual: (Int, Set[? <: Int]))""".stripMargin
+  )
+
   def testSCL11139(): Unit = checkTextHasNoErrors(
     s"""
        |import scala.reflect.Manifest

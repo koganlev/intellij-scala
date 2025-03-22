@@ -1,4 +1,4 @@
 def f(a: Int) = {}
 def f(a: String, b: Int) = {}
 
-println(/* resolved: false */ f(""))
+println(/* line: 1, applicable: false */ f(""))
