@@ -27,7 +27,6 @@ import org.jetbrains.plugins.scala.extensions.PathExt
 
 import java.nio.file.Path
 import java.util.concurrent.atomic.AtomicReference
-import scala.annotation.nowarn
 import scala.concurrent.Future
 import scala.concurrent.duration._
 import scala.jdk.CollectionConverters._
@@ -129,7 +128,6 @@ class BspCommunication private[protocol](base: Path, config: BspServerConfig) ex
 
     //can't call async version `confirmLoadingUntrustedProjectAsync` from Scala (or Java)
     //because it uses Kotlin coroutines
-    @nowarn("cat=deprecation")
     val confirmed = ExternalSystemTrustedProjectDialog.confirmLoadingUntrustedProject(project, systemId)
     if (confirmed) {
       ExternalSystemUtil.refreshProjects(new ImportSpecBuilder(project, systemId))

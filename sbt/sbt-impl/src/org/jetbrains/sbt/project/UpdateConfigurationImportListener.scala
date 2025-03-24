@@ -1,15 +1,15 @@
 package org.jetbrains.sbt.project
 
-import com.intellij.ide.impl.TrustedProjects
+import com.intellij.ide.trustedProjects.TrustedProjects
 import com.intellij.openapi.externalSystem.model.ExternalSystemDataKeys
 import com.intellij.openapi.externalSystem.service.project.manage.ProjectDataImportListener
 import com.intellij.openapi.project.Project
 import org.jetbrains.plugins.scala.extensions.invokeWhenSmart
 import org.jetbrains.plugins.scala.project.settings.ScalaCompilerConfiguration
 import org.jetbrains.plugins.scala.settings.ScalaProjectSettings
+import org.jetbrains.sbt.SbtUtil
 import org.jetbrains.sbt.project.MigrateConfigurationsDialogWrapper.ModuleConfigurationExt
 import org.jetbrains.sbt.project.SbtMigrateConfigurationsAction.{ModuleConfiguration, ModuleHeuristicResult, getConfigurationToHeuristicResult}
-import org.jetbrains.sbt.SbtUtil
 import org.jetbrains.sbt.project.settings.ShouldUpdateRunConfigurations
 
 
@@ -25,7 +25,7 @@ class UpdateConfigurationImportListener(project: Project) extends ProjectDataImp
     separateProdTestSources = getSeparateProdTestSourcesValue
 
   override def onImportFinished(projectPath: String): Unit = {
-    val isTrustedProject = TrustedProjects.isTrusted(project)
+    val isTrustedProject = TrustedProjects.isProjectTrusted(project)
     if (!(SbtUtil.isSbtProject(project) && isTrustedProject)) return
 
     val newSeparateProdTestSourcesValue = getSeparateProdTestSourcesValue

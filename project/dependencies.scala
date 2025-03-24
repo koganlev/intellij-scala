@@ -16,7 +16,10 @@ object Versions {
   val bloopVersion = "1.5.6"
   val zincVersion = "1.10.8"
 
-  // ATTENTION: check the comment in `Common.newProjectWithKotlin` when updating this version
+  /**
+   * ATTENTION: check the comment in [[Common.newProjectWithKotlin]] when updating this version.
+   *            update `since-build` in plugin.xml if there are binary incompatible changes after update
+   */
   val intellijVersion = "252.5795"
 
   def isNightlyIntellijVersion: Boolean = intellijVersion.count(_ == '.') == 1
