@@ -7,11 +7,11 @@ import com.intellij.debugger.{PositionManager, SourcePosition}
 import com.intellij.openapi.project.Project
 import com.intellij.xdebugger.XDebuggerTestUtil
 import junit.framework.TestCase.assertNotNull
-import kotlin.coroutines.Continuation
-import kotlinx.coroutines.{BuildersKt, Dispatchers}
 import org.jetbrains.plugins.scala.ScalaVersion
 import org.jetbrains.plugins.scala.extensions.{PsiNamedElementExt, inReadAction}
 
+import kotlin.coroutines.Continuation
+import kotlinx.coroutines.{BuildersKt, CoroutineScope, Dispatchers}
 import scala.jdk.CollectionConverters._
 
 abstract class ScalaSourcePositionProviderTestBase extends ScalaDebuggerTestCase {
@@ -106,7 +106,8 @@ abstract class ScalaSourcePositionProviderTestBase extends ScalaDebuggerTestCase
         DebuggerManagerThreadImplKt.withDebugContext(
           context.getSuspendContext,
           PrioritizedTask.Priority.LOW,
-          SourcePositionProvider.getSourcePosition(descriptor, project, context, _: Continuation[_ >: SourcePosition]),
+          (_: CoroutineScope, cont: Continuation[_ >: SourcePosition]) =>
+            SourcePositionProvider.getSourcePosition(descriptor, project, context, cont),
           continuation
         )
     )
