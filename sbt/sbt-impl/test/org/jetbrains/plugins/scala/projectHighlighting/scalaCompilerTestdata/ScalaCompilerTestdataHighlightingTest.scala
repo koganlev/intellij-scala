@@ -5,8 +5,7 @@ import com.intellij.testFramework.LightPlatformTestCase
 import org.apache.commons.io.FilenameUtils
 import org.jetbrains.plugins.scala.base.ScalaLightCodeInsightFixtureTestCase
 import org.jetbrains.plugins.scala.extensions.inWriteAction
-import org.jetbrains.plugins.scala.project.ModuleExt
-import org.jetbrains.plugins.scala.project.settings.ScalaCompilerConfiguration
+import org.jetbrains.plugins.scala.project.settings.{ScalaCompilerConfiguration, ScalaCompilerSettingsProfile}
 import org.jetbrains.plugins.scala.projectHighlighting.base.AllProjectHighlightingTest
 import org.jetbrains.plugins.scala.projectHighlighting.reporter.HighlightingProgressReporter
 import org.jetbrains.plugins.scala.util.{PsiFileTestUtil, TestUtils}
@@ -105,7 +104,7 @@ abstract class ScalaCompilerTestdataHighlightingTest
 
     val addedFiles = sourceFiles.map(addFileToProject(_, relativeTo = root))
 
-    val compilerProfile = getModule.scalaCompilerSettingsProfile
+    val compilerProfile = ScalaCompilerSettingsProfile.forModule(getModule)
     try {
       val newSettings = compilerProfile.getSettings.copy(
         additionalCompilerOptions = flagFiles.flatMap(parseScalacFlags).toIndexedSeq

@@ -11,7 +11,7 @@ import com.intellij.pom.java.LanguageLevel
 import com.intellij.testFramework.{IdeaTestUtil, UsefulTestCase}
 import org.jetbrains.plugins.scala.compiler.data.DebuggingInfoLevel
 import org.jetbrains.plugins.scala.project.external.{JdkByHome, JdkByName, SdkReference, SdkUtils}
-import org.jetbrains.plugins.scala.project.settings.ScalaCompilerConfiguration
+import org.jetbrains.plugins.scala.project.settings.ScalaCompilerSettings
 import org.jetbrains.sbt.project.data._
 import org.junit.Assert._
 
@@ -47,7 +47,7 @@ class SbtModuleExtDataServiceTest extends SbtModuleDataServiceTestCase {
 
     importProjectData(generateScalaProject("2.11.5", Some("2.11.5"), options))
     val module = ModuleManager.getInstance(getProject).findModuleByName("Module 1")
-    val compilerConfiguration = ScalaCompilerConfiguration.instanceIn(getProject).getSettingsForModule(module)
+    val compilerConfiguration = ScalaCompilerSettings.forModule(module)
 
     assertEquals(compilerConfiguration.debuggingInfoLevel, DebuggingInfoLevel.Source)
     assertTrue(compilerConfiguration.plugins.exists(_.endsWith("test-plugin.jar")))

@@ -75,7 +75,7 @@ private case class Feature(@Nls name: String,
                           (findIn: PartialFunction[PsiElement, PsiElement]) {
 
   def process(e: PsiElement, holder: ProblemsHolder): Unit = {
-    compilerProfile(e).foreach { profile =>
+    ScalaCompilerSettingsProfile.forElement(e).foreach { profile =>
       val compilerSettings = profile.getSettings
       val isFeatureEnabled = isEnabled(compilerSettings) || compilerSettings.languageWildcard
       if (!isFeatureEnabled && isEnabledOn(e)) {
@@ -92,14 +92,6 @@ private case class Feature(@Nls name: String,
       }
     }
   }
-
-  private def compilerProfile(e: PsiElement): Option[ScalaCompilerSettingsProfile] =
-    e.getContainingFile match {
-      case null => None
-      case file =>
-        val provided = ScalaCompilerSettingsProfileProvider.settingsFor(file)
-        provided.orElse(file.module.map(_.scalaCompilerSettingsProfile))
-    }
 
   private def isFlagImportedFor(e: PsiElement): Boolean = {
     val reference = ScalaPsiElementFactory.createReferenceFromText(flagName, e, e)

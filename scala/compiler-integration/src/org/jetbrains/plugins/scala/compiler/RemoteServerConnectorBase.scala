@@ -96,7 +96,7 @@ abstract class RemoteServerConnectorBase(
     worksheetArgs = worksheetArgs
   )
 
-  protected def compilerSettings: ScalaCompilerSettings = module.scalaCompilerSettings
+  protected def compilerSettings: ScalaCompilerSettings = ScalaCompilerSettings.forModule(module)
 
   protected def findJdk: Path = CompileServerLauncher.compileServerJdk(module.getProject)
     .fold(m => throw new IllegalArgumentException(s"JDK for compiler process not found: $m"), _.executable)

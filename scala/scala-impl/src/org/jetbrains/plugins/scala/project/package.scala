@@ -338,12 +338,6 @@ package object project {
     def isTrailingCommasEnabled: Boolean =
       scalaModuleSettings.exists(_.isTrailingCommasEnabled)
 
-    def scalaCompilerSettingsProfile: ScalaCompilerSettingsProfile =
-      compilerConfiguration.getProfileForModule(module)
-
-    def scalaCompilerSettings: ScalaCompilerSettings =
-      compilerConfiguration.getSettingsForModule(module)
-
     def configureScalaCompilerSettingsFrom(source: String, options: collection.Seq[String], compileOrder: CompileOrder = CompileOrder.Mixed): Unit = {
       val baseDirectory = Option(ExternalSystemModulePropertyManager.getInstance(module).getRootProjectPath)
         .getOrElse(module.getProject.getBasePath)

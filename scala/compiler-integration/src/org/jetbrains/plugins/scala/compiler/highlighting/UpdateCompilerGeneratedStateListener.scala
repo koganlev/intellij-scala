@@ -13,7 +13,8 @@ import org.jetbrains.plugins.scala.compiler.highlighting.BackgroundExecutorServi
 import org.jetbrains.plugins.scala.compiler.highlighting.ExternalHighlighting.RangeInfo
 import org.jetbrains.plugins.scala.compiler.{CompilerEvent, CompilerEventListener}
 import org.jetbrains.plugins.scala.extensions.PathExt
-import org.jetbrains.plugins.scala.project.ProjectPsiFileExt
+import org.jetbrains.plugins.scala.project.settings.ScalaCompilerSettings
+import org.jetbrains.plugins.scala.project.{ModuleExt, ProjectPsiFileExt}
 import org.jetbrains.plugins.scala.settings.ScalaProjectSettings
 
 private class UpdateCompilerGeneratedStateListener(project: Project) extends CompilerEventListener {
@@ -124,10 +125,14 @@ private class UpdateCompilerGeneratedStateListener(project: Project) extends Com
   private def scalacOptionsForFile(virtualFile: VirtualFile): Seq[String] = {
     val psiFileOpt = findPsiFile(virtualFile)
     val moduleOpt = psiFileOpt.flatMap(_.module)
-    moduleOpt match {
-      case Some(module) => CompilerOptions.scalacOptions(module)
-      case None => Seq.empty
-    }
+    val compilerSettingsOpt = psiFileOpt.flatMap(ScalaCompilerSettings.forFile)
+
+    val optionsOpt = for {
+      settings <- compilerSettingsOpt
+      module <- moduleOpt
+    } yield settings.getOptionsAsStrings(module.hasScala3)
+
+    optionsOpt.getOrElse(Seq.empty)
   }
 
   @RequiresBackgroundThread

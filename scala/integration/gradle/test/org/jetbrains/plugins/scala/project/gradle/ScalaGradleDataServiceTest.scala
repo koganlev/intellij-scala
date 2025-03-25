@@ -8,7 +8,7 @@ import org.jetbrains.plugins.gradle.model.data.{ScalaCompileOptionsData, ScalaMo
 import org.jetbrains.plugins.gradle.util.GradleConstants
 import org.jetbrains.plugins.scala.compiler.data.DebuggingInfoLevel
 import org.jetbrains.plugins.scala.project._
-import org.jetbrains.plugins.scala.project.settings.ScalaCompilerConfiguration
+import org.jetbrains.plugins.scala.project.settings.ScalaCompilerSettings
 import org.jetbrains.plugins.scala.util.assertions.CollectionsAssertions.assertCollectionEquals
 import org.jetbrains.sbt.project.SbtProjectSystem
 import org.jetbrains.sbt.project.data._
@@ -158,7 +158,7 @@ class ScalaGradleDataServiceTest extends ProjectDataServiceTestCase {
 
     val compilerConfiguration = {
       val module = ModuleManager.getInstance(getProject).findModuleByName("module")
-      ScalaCompilerConfiguration.instanceIn(getProject).getSettingsForModule(module)
+      ScalaCompilerSettings.forModule(module)
     }
 
     assertTrue("Scala compiler options must be set",
@@ -204,7 +204,7 @@ class ScalaGradleDataServiceTest extends ProjectDataServiceTestCase {
 
     val compilerConfiguration = {
       val module = ModuleManager.getInstance(getProject).findModuleByName("module_main")
-      ScalaCompilerConfiguration.instanceIn(getProject).getSettingsForModule(module)
+      ScalaCompilerSettings.forModule(module)
     }
 
     def toProjectAbsolutePath(relativePath: String): String =
@@ -232,7 +232,7 @@ class ScalaGradleDataServiceTest extends ProjectDataServiceTestCase {
 
     val testCompilerConfiguration = {
       val module = ModuleManager.getInstance(getProject).findModuleByName("module_test")
-      ScalaCompilerConfiguration.instanceIn(getProject).getSettingsForModule(module)
+      ScalaCompilerSettings.forModule(module)
     }
 
     assertCollectionEquals("additional compiler options (tests) ", Seq("-encoding", "utf-8"), testCompilerConfiguration.additionalCompilerOptions)
@@ -252,7 +252,7 @@ class ScalaGradleDataServiceTest extends ProjectDataServiceTestCase {
 
     val compilerConfiguration = {
       val module = ModuleManager.getInstance(getProject).findModuleByName("module_main")
-      ScalaCompilerConfiguration.instanceIn(getProject).getSettingsForModule(module)
+      ScalaCompilerSettings.forModule(module)
     }
 
     assertCollectionEquals(Seq(scalacPluginPath.toString), compilerConfiguration.plugins)

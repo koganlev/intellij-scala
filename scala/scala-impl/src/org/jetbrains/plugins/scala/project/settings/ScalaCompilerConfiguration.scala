@@ -43,7 +43,7 @@ class ScalaCompilerConfiguration(project: Project) extends PersistentStateCompon
     profile
   }
 
-  def getProfileForModule(module: Module): ScalaCompilerSettingsProfile =
+  private[settings] def getProfileForModule(module: Module): ScalaCompilerSettingsProfile =
     module match {
       case profileAware: CompilerProfileAwareModule =>
         val profileName = profileAware.compilerProfileName
@@ -55,7 +55,7 @@ class ScalaCompilerConfiguration(project: Project) extends PersistentStateCompon
   def findByProfileName(profileName: String): Option[ScalaCompilerSettingsProfile] =
     allProfiles.find(_.getName == profileName)
 
-  def getSettingsForModule(module: Module): ScalaCompilerSettings =
+  private def getSettingsForModule(module: Module): ScalaCompilerSettings =
     getProfileForModule(module).getSettings
 
   def allCompilerPlugins: Seq[String] = allProfiles.map(_.getSettings).flatMap(_.plugins)

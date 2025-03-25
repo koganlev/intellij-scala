@@ -9,7 +9,7 @@ import org.jetbrains.plugins.scala.base.{ScalaFileSetTestCase, ScalaLightCodeIns
 import org.jetbrains.plugins.scala.editor.DocumentExt
 import org.jetbrains.plugins.scala.extensions.{IterableOnceExt, PsiElementExt, executeWriteActionCommand}
 import org.jetbrains.plugins.scala.lang.psi.api.base.literals.ScStringLiteral
-import org.jetbrains.plugins.scala.project.ModuleExt
+import org.jetbrains.plugins.scala.project.settings.ScalaCompilerSettingsProfile
 import org.junit.Assert.assertEquals
 import org.junit.experimental.categories.Category
 
@@ -22,7 +22,7 @@ abstract class ScStringLiteralAnnotatorTestBase(testDataPath: String)
   override protected def needsSdk: Boolean = true
 
   protected def addCompilerOptions(module: Module, additionalCompilerOptions: Seq[String]): Unit = {
-    val profile = module.scalaCompilerSettingsProfile
+    val profile = ScalaCompilerSettingsProfile.forModule(module)
     val newSettings = profile.getSettings.copy(additionalCompilerOptions = additionalCompilerOptions)
     profile.setSettings(newSettings)
   }

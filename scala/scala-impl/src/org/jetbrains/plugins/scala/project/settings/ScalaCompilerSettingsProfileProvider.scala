@@ -1,9 +1,8 @@
-package org.jetbrains.plugins.scala.codeInspection.feature
+package org.jetbrains.plugins.scala.project.settings
 
 import com.intellij.psi.PsiFile
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.scala.ExtensionPointDeclaration
-import org.jetbrains.plugins.scala.project.settings.ScalaCompilerSettingsProfile
 
 @ApiStatus.Internal
 trait ScalaCompilerSettingsProfileProvider {

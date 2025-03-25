@@ -4,10 +4,10 @@ package org.jetbrains.plugins.scala.statistics
 import com.intellij.internal.statistic.beans.MetricEvent
 import com.intellij.internal.statistic.eventLog.EventLogGroup
 import com.intellij.internal.statistic.eventLog.events.EventFields.{StringValidatedByRegexpReference, String => FString}
+import org.jetbrains.plugins.scala.project.settings.ScalaCompilerSettings
 //noinspection ApiStatus,UnstableApiUsage
 import com.intellij.internal.statistic.service.fus.collectors.ProjectUsagesCollector
 import com.intellij.openapi.project.Project
-import org.jetbrains.plugins.scala.project.settings.ScalaCompilerConfiguration
 import org.jetbrains.plugins.scala.project.{ModuleExt, ProjectExt}
 import org.jetbrains.plugins.scala.statistics.ScalaProjectStateCollector._
 import org.jetbrains.sbt.settings.SbtSettings
@@ -40,9 +40,8 @@ class ScalaProjectStateCollector extends ProjectUsagesCollector {
         SbtInfoEvent.metric(sbtVersion)
       }
 
-    val compilerConfiguration = ScalaCompilerConfiguration.instanceIn(project)
     val compilerPluginEvents = modulesWithScala
-      .map(compilerConfiguration.getSettingsForModule)
+      .map(ScalaCompilerSettings.forModule)
       .flatMap(_.plugins)
       .toSet[String]
       .map(Path.of(_))

@@ -150,7 +150,7 @@ abstract class WorksheetReplIntegration_Since_3_2_TestBase extends WorksheetRepl
 
     val editorAndFile = prepareWorksheetEditor(worksheetText, scratchFile = true)
 
-    setAdditionalCompilerOptions(Seq("-Werror", "-Xfatal-warnings"))
+    setAdditionalCompilerOptions(editorAndFile.psiFile, Seq("-Werror", "-Xfatal-warnings"))
 
     doRenderTestWithoutCompilationChecks(editorAndFile,
       s"""
@@ -427,7 +427,7 @@ abstract class WorksheetReplIntegration_Scala_3_BaseTest extends WorksheetReplIn
 
     val editorAndFile = prepareWorksheetEditor(worksheetText, scratchFile = true)
 
-    setAdditionalCompilerOptions(Seq("-Wunused:imports"))
+    setAdditionalCompilerOptions(editorAndFile.psiFile, Seq("-Wunused:imports"))
 
     doRenderTestWithoutCompilationChecks(editorAndFile,
       s"""

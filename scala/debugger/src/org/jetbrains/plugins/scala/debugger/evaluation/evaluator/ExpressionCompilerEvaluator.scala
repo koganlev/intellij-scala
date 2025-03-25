@@ -20,6 +20,7 @@ import org.jetbrains.plugins.scala.debugger.evaluation.{EvaluationException, Exp
 import org.jetbrains.plugins.scala.debugger.{DebuggerBundle, ScalaPositionManager}
 import org.jetbrains.plugins.scala.extensions.inReadAction
 import org.jetbrains.plugins.scala.project.ModuleExt
+import org.jetbrains.plugins.scala.project.settings.ScalaCompilerSettings
 import org.jetbrains.plugins.scala.settings.ScalaCompileServerSettings
 
 import java.io.IOException
@@ -70,7 +71,7 @@ private[evaluation] final class ExpressionCompilerEvaluator(codeFragment: PsiEle
         module.scalaCompilerClasspath ++
           enumerator.getClassesRoots.map(_.getCanonicalPath).map(stripJarPathSuffix).map(Path.of(_)) ++
           expressionCompilerJar
-      val scalacOptions = module.scalaCompilerSettings.getOptionsAsStrings(module.hasScala3)
+      val scalacOptions = ScalaCompilerSettings.forModule(module).getOptionsAsStrings(module.hasScala3)
       val source = Path.of(position.getFile.getVirtualFile.getCanonicalPath)
       val line = position.getLine + 1
       val expression = codeFragment.getText

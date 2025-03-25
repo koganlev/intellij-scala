@@ -5,8 +5,7 @@ package typeInference
 import org.jetbrains.plugins.scala.DependencyManagerBase._
 import org.jetbrains.plugins.scala.base.ScalaLightCodeInsightFixtureTestCase
 import org.jetbrains.plugins.scala.base.libraryLoaders.{IvyManagedLoader, LibraryLoader}
-import org.jetbrains.plugins.scala.project._
-import org.jetbrains.plugins.scala.project.settings.ScalaCompilerConfiguration
+import org.jetbrains.plugins.scala.project.settings.{ScalaCompilerConfiguration, ScalaCompilerSettingsProfile}
 import org.junit.experimental.categories.Category
 
 @Category(Array(classOf[TypecheckerTests]))
@@ -18,7 +17,7 @@ class PartialUnificationCatsHighlightingTest_2_12 extends ScalaLightCodeInsightF
 
   override def setUp(): Unit = {
     super.setUp()
-    val moduleProfile = getModule.scalaCompilerSettingsProfile
+    val moduleProfile = ScalaCompilerSettingsProfile.forModule(getModule)
     val newModuleSettings = moduleProfile.getSettings.copy(
       additionalCompilerOptions = Seq("-Ypartial-unification")
     )

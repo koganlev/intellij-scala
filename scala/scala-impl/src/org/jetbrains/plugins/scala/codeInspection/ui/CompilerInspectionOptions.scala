@@ -1,7 +1,7 @@
 package org.jetbrains.plugins.scala.codeInspection.ui
 
 import org.jetbrains.plugins.scala.lang.psi.api.ScalaPsiElement
-import org.jetbrains.plugins.scala.project.ModuleExt
+import org.jetbrains.plugins.scala.project.settings.ScalaCompilerSettings
 
 object CompilerInspectionOptions {
 
@@ -10,7 +10,7 @@ object CompilerInspectionOptions {
   val AlwaysDisabled: Int = 2
 
   def isCompilerOptionPresent(elem: ScalaPsiElement, compilerOptionName: String): Boolean =
-    elem.module.exists(_.scalaCompilerSettings.additionalCompilerOptions.contains(compilerOptionName))
+    ScalaCompilerSettings.forElement(elem).exists(_.additionalCompilerOptions.contains(compilerOptionName))
 
   def isInspectionAllowed(elem: ScalaPsiElement, checkCompilerOption: Boolean, compilerOptionName: String): Boolean =
     !checkCompilerOption || isCompilerOptionPresent(elem, compilerOptionName)

@@ -1,7 +1,8 @@
 package org.jetbrains.plugins.scala.worksheet.integration.repl
 
-import org.jetbrains.plugins.scala.project.ModuleExt
+import org.jetbrains.plugins.scala.project.settings.ScalaCompilerSettingsProfile
 import org.jetbrains.plugins.scala.util.runners.{RunWithJdkVersions, RunWithScalaVersions, TestJdkVersion, TestScalaVersion}
+import org.jetbrains.plugins.scala.worksheet.WorksheetFile
 import org.jetbrains.plugins.scala.worksheet.actions.topmenu.RunWorksheetAction.RunWorksheetActionResult
 import org.jetbrains.plugins.scala.worksheet.integration.WorksheetRuntimeExceptionsTests
 import org.jetbrains.plugins.scala.worksheet.processor.WorksheetCompiler.WorksheetCompilerResult
@@ -41,11 +42,7 @@ class WorksheetReplIntegration_Scala_2_12_Test
   // -Ypartial-unification is enabled in 2.13 by default, so testing on 2.12
   def testWorksheetShouldRespectCompilerSettingsFromCompilerProfile(): Unit = {
     val editorAndFile = prepareWorksheetEditor(PartialUnificationTestText, scratchFile = true)
-    val profile = getModule.scalaCompilerSettingsProfile
-    val newSettings = profile.getSettings.copy(
-      additionalCompilerOptions = PartialUnificationCompilerOptions
-    )
-    profile.setSettings(newSettings)
+    setAdditionalCompilerOptions(editorAndFile.psiFile, PartialUnificationCompilerOptions)
     doRenderTest(editorAndFile,
       """foo: [F[_], A](fa: F[A])String
         |res0: String = 123""".stripMargin
@@ -54,11 +51,7 @@ class WorksheetReplIntegration_Scala_2_12_Test
 
   def testWorksheetShouldRespectCompilerSettingsFromCompilerProfile_WithoutSetting(): Unit = {
     val editorAndFile = prepareWorksheetEditor(PartialUnificationTestText, scratchFile = true)
-    val profile = getModule.scalaCompilerSettingsProfile
-    val newSettings = profile.getSettings.copy(
-      additionalCompilerOptions = Seq.empty
-    )
-    profile.setSettings(newSettings)
+    setAdditionalCompilerOptions(editorAndFile.psiFile, Seq.empty)
     doResultTest(editorAndFile, RunWorksheetActionResult.WorksheetRunError(WorksheetCompilerResult.CompilationError))
   }
 

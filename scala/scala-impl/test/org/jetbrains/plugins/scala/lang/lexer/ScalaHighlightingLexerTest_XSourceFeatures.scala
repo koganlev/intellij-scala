@@ -5,9 +5,10 @@ import com.intellij.openapi.module.{Module, ModuleManager}
 import com.intellij.openapi.project.Project
 import com.intellij.testFramework.LightVirtualFile
 import junit.framework.{Test, TestCase}
-import org.jetbrains.plugins.scala.{ScalaFileType, ScalaVersion}
 import org.jetbrains.plugins.scala.highlighter.ScalaSyntaxHighlighterFactory
-import org.jetbrains.plugins.scala.project.{ModuleExt, ScalaFeaturePusher, ScalaLanguageLevel, UserDataKeys}
+import org.jetbrains.plugins.scala.project.settings.ScalaCompilerSettingsProfile
+import org.jetbrains.plugins.scala.project.{ModuleExt, ScalaFeaturePusher, UserDataKeys}
+import org.jetbrains.plugins.scala.{ScalaFileType, ScalaVersion}
 
 class ScalaHighlightingLexerTest_XSourceFeatures extends TestCase
 
@@ -27,7 +28,7 @@ object ScalaHighlightingLexerTest_XSourceFeatures {
     }
 
     protected def addCompilerOptions(module: Module, additionalCompilerOptions: Seq[String]): Unit = {
-      val profile = module.scalaCompilerSettingsProfile
+      val profile = ScalaCompilerSettingsProfile.forModule(module)
       val newSettings = profile.getSettings.copy(additionalCompilerOptions = additionalCompilerOptions)
       profile.setSettings(newSettings)
     }
