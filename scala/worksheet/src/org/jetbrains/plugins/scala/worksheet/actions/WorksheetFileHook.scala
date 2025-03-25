@@ -93,7 +93,6 @@ object WorksheetFileHook {
      *
      * If project compiler profiles configuration is not changed it means that no changes were made in any module profile.
      * Worksheet profile "lives" out of scope of [[org.jetbrains.plugins.scala.project.settings.ScalaCompilerConfiguration]]
-     * (see [[org.jetbrains.plugins.scala.worksheet.actions.WorksheetSyntheticModule.compilerProfileName]])
      * So to trigger correct file re-highlighting we need to invalidate some compiler-options-specific caches.
      */
     ScalaCompilerConfiguration.incModificationCount()

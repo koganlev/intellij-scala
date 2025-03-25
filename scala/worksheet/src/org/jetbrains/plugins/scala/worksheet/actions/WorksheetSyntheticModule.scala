@@ -9,7 +9,6 @@ import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.util.ReflectionUtil
 import org.jetbrains.plugins.scala.extensions.LoggerExt
 import org.jetbrains.plugins.scala.project.SyntheticModule
-import org.jetbrains.plugins.scala.project.settings.CompilerProfileAwareModule
 import org.jetbrains.plugins.scala.worksheet.actions.WorksheetSyntheticModule.Log
 import org.jetbrains.plugins.scala.worksheet.settings.WorksheetFileSettings
 
@@ -38,7 +37,6 @@ final class WorksheetSyntheticModule(
   virtualFile: VirtualFile,
   val cpModule: Module
 ) extends ModuleDelegate(cpModule)
-  with CompilerProfileAwareModule
   with SyntheticModule {
 
   locally {
@@ -81,9 +79,6 @@ final class WorksheetSyntheticModule(
     worksheetFileScope
   override def getModuleContentWithDependenciesScope: GlobalSearchScope =
     worksheetFileScope
-
-  override def compilerProfileName: String =
-    WorksheetFileSettings(getProject, virtualFile).getCompilerProfileName
 
   override def hasComponent(interfaceClass: Class[_]): Boolean = cpModule.hasComponent(interfaceClass)
 
