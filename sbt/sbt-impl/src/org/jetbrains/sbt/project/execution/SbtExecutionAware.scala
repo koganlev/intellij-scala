@@ -1,6 +1,8 @@
 package org.jetbrains.sbt.project.execution
 
 import com.intellij.build.events.impl.{FinishEventImpl, SkippedResultImpl, StartEventImpl, SuccessResultImpl}
+import com.intellij.build.issue.{BuildIssue, BuildIssueQuickFix}
+import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.externalSystem.model.task.event.ExternalSystemBuildEvent
@@ -12,11 +14,19 @@ import com.intellij.openapi.progress.util.ProgressIndicatorBase
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ProjectRootManager
-import com.intellij.openapi.roots.ui.configuration.SdkLookupProvider
+import com.intellij.openapi.roots.ui.configuration.{ProjectSettingsService, SdkLookupProvider}
 import com.intellij.openapi.roots.ui.configuration.SdkLookupProvider.SdkInfo
+import com.intellij.pom.Navigatable
+import com.intellij.util.lang.JavaVersion
+import org.jetbrains.plugins.scala.build.ExternalSystemNotificationReporter
 import org.jetbrains.plugins.scala.extensions.ObjectExt
-import org.jetbrains.sbt.SbtBundle
+import org.jetbrains.sbt.project.execution.SbtExecutionAware.{OpenProjectJDKSettingsQuickFix, OpenProjectJDKSettingsQuickFixID}
+import org.jetbrains.sbt.{SbtBundle, SbtVersion, SbtVersionDetector}
+import org.jetbrains.sbt.project.template.wizard.JdkSbtCompatibilityChecker
 import org.jetbrains.sbt.settings.SbtSettings
+
+import java.util
+import java.util.concurrent.CompletableFuture
 
 class SbtExecutionAware extends ExternalSystemExecutionAware {
 
@@ -47,20 +57,44 @@ class SbtExecutionAware extends ExternalSystemExecutionAware {
     //  the import does not wait for the download to finish.
     //  2. After resolution we can verify if the JDK is correct - it could be useful because, currently,
     //  if the SDK is resolved but broken, no meaningful message is displayed.
-    resolveJdk(project, externalSystemTask, taskNotificationListener)
+    val sdkInfo = resolveJdk(project, externalSystemTask, taskNotificationListener)
+    validateJDKWithSbt(sdkInfo, externalSystemTask, taskNotificationListener, externalProjectPath, project)
+  }
+
+  private def validateJDKWithSbt(
+    sdk: SdkInfo,
+    externalSystemTask: ExternalSystemTask,
+    taskNotificationListener: ExternalSystemTaskNotificationListener,
+    externalProjectPath: String,
+    project: Project
+  ): Unit = {
+    sdk match {
+      case resolved: SdkInfo.Resolved =>
+        val versionString = Option(resolved.getVersionString).map(JavaVersion.parse)
+
+        versionString.foreach { version =>
+          val sbtVersion = SbtVersionDetector.detectSbtVersion(project, externalProjectPath)
+          val highestCompatibleJdk = JdkSbtCompatibilityChecker.getHighestCompatibleJdkForSbt(version, sbtVersion)
+          highestCompatibleJdk.foreach { javaVersion =>
+            displayJDKSbtCompatibilityWarning(externalSystemTask, taskNotificationListener, externalProjectPath, javaVersion, sbtVersion)
+          }
+        }
+      case _ =>
+    }
   }
 
   private def resolveJdk(
     project: Project,
     task: ExternalSystemTask,
     taskNotificationListener: ExternalSystemTaskNotificationListener,
-  ): Unit = {
+  ): SdkInfo = {
     val provider = SdkLookupProvider.getInstance(project, DefaultSdkLookupId)
     val sdkInfo = nonblockingResolveJdk(provider, project)
     val isResolving = sdkInfo.is[SdkInfo.Resolving]
     if (isResolving) {
       waitForJvmResolving(provider, task, taskNotificationListener)
     }
+    nonblockingResolveJdk(provider, project)
   }
 
   private def waitForJvmResolving(
@@ -93,6 +127,26 @@ class SbtExecutionAware extends ExternalSystemExecutionAware {
     if (task.getState == ExternalSystemTaskState.CANCELED || task.getState == ExternalSystemTaskState.CANCELING) {
       onCancelAction
     }
+  }
+
+  private def displayJDKSbtCompatibilityWarning(
+    task: ExternalSystemTask,
+    taskNotificationListener: ExternalSystemTaskNotificationListener,
+    externalProjectPath: String,
+    highestCompatibleJdk: JavaVersion,
+    sbtVersion: SbtVersion,
+  ): Unit = {
+    val esReporter = new ExternalSystemNotificationReporter(externalProjectPath, task.getId, taskNotificationListener)
+    val buildIssue = new BuildIssue {
+      override def getTitle: String = SbtBundle.message("sbt.jdk.compatibility.issue.title")
+
+      override def getDescription: String = SbtBundle.message("sbt.jdk.compatibility.issue.description", highestCompatibleJdk.feature, sbtVersion.value.presentation, OpenProjectJDKSettingsQuickFixID)
+
+      override def getQuickFixes: util.List[BuildIssueQuickFix] = java.util.List.of(OpenProjectJDKSettingsQuickFix)
+
+      override def getNavigatable(project: Project): Navigatable = null
+    }
+    esReporter.warning(buildIssue)
   }
 
   private def submitProgressStarted(
@@ -129,5 +183,18 @@ class SbtExecutionAware extends ExternalSystemExecutionAware {
   ): SdkInfo = {
     val projectSdk = ProjectRootManager.getInstance(project).getProjectSdk
     ExternalSystemJdkUtilKt.nonblockingResolveJdkInfo(provider, projectSdk, ExternalSystemJdkUtil.USE_PROJECT_JDK)
+  }
+}
+
+object SbtExecutionAware {
+  private val OpenProjectJDKSettingsQuickFixID = "open_project_JDK"
+
+  private val OpenProjectJDKSettingsQuickFix = new BuildIssueQuickFix {
+    override def getId: String = OpenProjectJDKSettingsQuickFixID
+
+    override def runQuickFix(project: Project, dataContext: DataContext): CompletableFuture[_] = {
+      ProjectSettingsService.getInstance(project).openProjectSettings()
+      CompletableFuture.completedFuture(null)
+    }
   }
 }
