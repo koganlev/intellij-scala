@@ -52,6 +52,7 @@ object ScalaSuppressableInspectionTool {
     new ScalaSuppressForClassFix(key),
     new ScalaSuppressForFunctionFix(key),
     new ScalaSuppressForVariableFix(key),
-    new ScalaSuppressForTypeAliasFix(key)
+    new ScalaSuppressForTypeAliasFix(key),
+    new ScalaSuppressForFileFix(key),
   )
 }
