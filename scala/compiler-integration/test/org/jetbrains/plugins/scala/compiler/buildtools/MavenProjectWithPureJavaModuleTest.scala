@@ -2,7 +2,7 @@ package org.jetbrains.plugins.scala.compiler.buildtools
 
 import com.intellij.maven.testFramework.MavenImportingTestCase
 import com.intellij.openapi.compiler.CompilerMessageCategory
-import com.intellij.openapi.module.{ModuleManager, ModuleTypeManager, StdModuleTypes}
+import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.projectRoots.{ProjectJdkTable, Sdk}
 import com.intellij.openapi.roots.ModuleRootModificationUtil
 import com.intellij.testFramework.CompilerTester
@@ -27,13 +27,6 @@ abstract class MavenProjectWithPureJavaModuleTestBase(incrementality: Incrementa
 
   override def setUp(): Unit = {
     super.setUp()
-
-    // Without this HACK for some reason different instances of com.intellij.openapi.module.JavaModuleType will be used
-    // in org.jetbrains.idea.maven.importing.MavenImporter (e.g. ScalaMavenImporter)
-    // and org.jetbrains.idea.maven.importing.MavenModuleImporter
-    // (Note that it uses `==` instead of `equals` for some reason: `importer.getModuleType() == moduleType`)
-    //noinspection ApiStatus
-    ModuleTypeManager.getInstance.registerModuleType(StdModuleTypes.JAVA)
 
     sdk = {
       val jdkVersion = JdkVersionDiscovery.discoveredJdk
@@ -152,8 +145,6 @@ abstract class MavenProjectWithPureJavaModuleTestBase(incrementality: Incrementa
     settings.USE_DEFAULT_SDK = true
     settings.COMPILE_SERVER_SDK = null
     inWriteAction(ProjectJdkTable.getInstance().removeJdk(sdk))
-    //noinspection ApiStatus
-    ModuleTypeManager.getInstance.unregisterModuleType(StdModuleTypes.JAVA)
   } finally {
     super.tearDown()
   }

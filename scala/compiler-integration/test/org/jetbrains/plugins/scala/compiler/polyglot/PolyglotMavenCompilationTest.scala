@@ -1,7 +1,7 @@
 package org.jetbrains.plugins.scala.compiler.polyglot
 
 import com.intellij.maven.testFramework.MavenImportingTestCase
-import com.intellij.openapi.module.{Module, ModuleManager, ModuleTypeManager, StdModuleTypes}
+import com.intellij.openapi.module.{Module, ModuleManager}
 import com.intellij.openapi.projectRoots.{ProjectJdkTable, Sdk}
 import com.intellij.openapi.roots.ModuleRootModificationUtil
 import com.intellij.testFramework.{CompilerTester, IndexingTestUtil}
@@ -28,13 +28,6 @@ class PolyglotMavenCompilationTest extends MavenImportingTestCase {
 
   override def setUp(): Unit = {
     super.setUp()
-
-    // Without this HACK for some reason different instances of com.intellij.openapi.module.JavaModuleType will be used
-    // in org.jetbrains.idea.maven.importing.MavenImporter (e.g. ScalaMavenImporter)
-    // and org.jetbrains.idea.maven.importing.MavenModuleImporter
-    // (Note that it uses `==` instead of `equals` for some reason: `importer.getModuleType() == moduleType`)
-    //noinspection ApiStatus
-    ModuleTypeManager.getInstance.registerModuleType(StdModuleTypes.JAVA)
 
     sdk = {
       val jdkVersion = JdkVersionDiscovery.discoveredJdk
@@ -237,8 +230,6 @@ class PolyglotMavenCompilationTest extends MavenImportingTestCase {
       val kotlinSdk = jdkTable.getAllJdks.find(_.getName.contains("Kotlin SDK"))
       kotlinSdk.foreach(jdkTable.removeJdk)
     }
-    //noinspection ApiStatus
-    ModuleTypeManager.getInstance.unregisterModuleType(StdModuleTypes.JAVA)
   } finally {
     super.tearDown()
   }

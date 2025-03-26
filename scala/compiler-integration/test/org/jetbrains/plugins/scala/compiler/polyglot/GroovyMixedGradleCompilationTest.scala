@@ -1,7 +1,7 @@
 package org.jetbrains.plugins.scala.compiler.polyglot
 
 import com.intellij.openapi.externalSystem.model.ProjectSystemId
-import com.intellij.openapi.module.{Module, ModuleManager, ModuleTypeManager, StdModuleTypes}
+import com.intellij.openapi.module.{Module, ModuleManager}
 import com.intellij.openapi.projectRoots.{ProjectJdkTable, Sdk}
 import com.intellij.openapi.roots.ModuleRootModificationUtil
 import com.intellij.platform.externalSystem.testFramework.ExternalSystemImportingTestCase
@@ -151,8 +151,6 @@ class GroovyMixedGradleCompilationTest extends ExternalSystemImportingTestCase {
       val kotlinSdk = jdkTable.getAllJdks.find(_.getName.contains("Kotlin SDK"))
       kotlinSdk.foreach(jdkTable.removeJdk)
     }
-    //noinspection ApiStatus
-    ModuleTypeManager.getInstance.unregisterModuleType(StdModuleTypes.JAVA)
   } finally {
     super.tearDown()
   }

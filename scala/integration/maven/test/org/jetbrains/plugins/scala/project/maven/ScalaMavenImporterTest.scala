@@ -1,7 +1,6 @@
 package org.jetbrains.plugins.scala.project.maven
 
 import com.intellij.maven.testFramework.MavenImportingTestCase
-import com.intellij.openapi.module.{ModuleTypeManager, StdModuleTypes}
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.projectRoots.impl.JavaAwareProjectJdkTableImpl
 import com.intellij.openapi.roots.impl.libraries.LibraryEx
@@ -39,12 +38,6 @@ abstract class ScalaMavenImporterTest
   override protected def setUp(): Unit = {
     super.setUp()
 
-    // Without this HACK for some reason different instances of com.intellij.openapi.module.JavaModuleType will be used
-    // in org.jetbrains.idea.maven.importing.MavenImporter (e.g. ScalaMavenImporter)
-    // and org.jetbrains.idea.maven.importing.MavenModuleImporter
-    // (Note that it uses `==` instead of `equals` for some reason: `importer.getModuleType() == moduleType`)
-    ModuleTypeManager.getInstance.registerModuleType(StdModuleTypes.JAVA)
-
     projectJdkVersion.foreach { jdkVersion =>
       inWriteAction {
         jdk = SmartJDKLoader.getOrCreateJDK(jdkVersion)
@@ -58,8 +51,6 @@ abstract class ScalaMavenImporterTest
       val jdkTable = JavaAwareProjectJdkTableImpl.getInstanceEx
       inWriteAction(jdkTable.removeJdk(jdk))
     }
-
-    ModuleTypeManager.getInstance.unregisterModuleType(StdModuleTypes.JAVA)
 
     super.tearDown()
   }
