@@ -1,3 +1,4 @@
+//noinspection ApiStatus,UnstableApiUsage
 package org.jetbrains.sbt.project.execution
 
 import com.intellij.build.events.impl.{FinishEventImpl, SkippedResultImpl, StartEventImpl, SuccessResultImpl}
@@ -10,20 +11,21 @@ import com.intellij.openapi.externalSystem.model.task.{ExternalSystemTask, Exter
 import com.intellij.openapi.externalSystem.service.execution.{ExternalSystemExecutionAware, ExternalSystemJdkException, ExternalSystemJdkUtil, ExternalSystemJdkUtilKt}
 import com.intellij.openapi.externalSystem.service.notification.ExternalSystemProgressNotificationManager
 import com.intellij.openapi.externalSystem.service.notification.callback.OpenProjectJdkSettingsCallback
-import com.intellij.openapi.progress.util.ProgressIndicatorBase
+import com.intellij.openapi.progress.CoroutinesKt.runBlockingCancellable
 import com.intellij.openapi.progress.ProgressIndicator
+import com.intellij.openapi.progress.util.ProgressIndicatorBase
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ProjectRootManager
-import com.intellij.openapi.roots.ui.configuration.{ProjectSettingsService, SdkLookupProvider}
 import com.intellij.openapi.roots.ui.configuration.SdkLookupProvider.SdkInfo
+import com.intellij.openapi.roots.ui.configuration.{ProjectSettingsService, SdkLookupProvider}
 import com.intellij.pom.Navigatable
 import com.intellij.util.lang.JavaVersion
 import org.jetbrains.plugins.scala.build.ExternalSystemNotificationReporter
 import org.jetbrains.plugins.scala.extensions.ObjectExt
 import org.jetbrains.sbt.project.execution.SbtExecutionAware.{OpenProjectJDKSettingsQuickFix, OpenProjectJDKSettingsQuickFixID}
-import org.jetbrains.sbt.{SbtBundle, SbtVersion, SbtVersionDetector}
 import org.jetbrains.sbt.project.template.wizard.JdkSbtCompatibilityChecker
 import org.jetbrains.sbt.settings.SbtSettings
+import org.jetbrains.sbt.{SbtBundle, SbtVersion, SbtVersionDetector}
 
 import java.util
 import java.util.concurrent.CompletableFuture
@@ -182,7 +184,9 @@ class SbtExecutionAware extends ExternalSystemExecutionAware {
     project: Project
   ): SdkInfo = {
     val projectSdk = ProjectRootManager.getInstance(project).getProjectSdk
-    ExternalSystemJdkUtilKt.nonblockingResolveJdkInfo(provider, projectSdk, ExternalSystemJdkUtil.USE_PROJECT_JDK)
+    runBlockingCancellable { (_, continuation) =>
+      ExternalSystemJdkUtilKt.resolveJdkInfo(provider, project, projectSdk, ExternalSystemJdkUtil.USE_PROJECT_JDK, continuation)
+    }
   }
 }
 
