@@ -1,13 +1,13 @@
 package org.jetbrains.plugins.scala.lang.resolve
 
-import org.jetbrains.plugins.scala.project._
+import org.jetbrains.plugins.scala.project.settings.ScalaCompilerSettingsProfile
 
 class PartialUnificationImplicitClassTest extends SimpleResolveTestBase {
   import SimpleResolveTestBase._
 
   override def setUp(): Unit = {
     super.setUp()
-    val profile = getModule.scalaCompilerSettingsProfile
+    val profile = ScalaCompilerSettingsProfile.forModule(getModule)
     val newSettings = profile.getSettings.copy(
       additionalCompilerOptions = Seq("-Ypartial-unification")
     )

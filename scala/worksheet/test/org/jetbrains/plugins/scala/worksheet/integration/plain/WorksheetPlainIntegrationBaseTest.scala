@@ -1,7 +1,6 @@
 package org.jetbrains.plugins.scala.worksheet.integration.plain
 
 import com.intellij.psi.PsiDocumentManager
-import org.jetbrains.plugins.scala.project.ModuleExt
 import org.jetbrains.plugins.scala.util.assertions.StringAssertions.assertStringMatches
 import org.jetbrains.plugins.scala.util.runners._
 import org.jetbrains.plugins.scala.worksheet.actions.topmenu.RunWorksheetAction.RunWorksheetActionResult
@@ -471,11 +470,7 @@ abstract class WorksheetPlainIntegrationBaseTest extends WorksheetIntegrationBas
   @RunWithScalaVersions(Array(TestScalaVersion.Scala_2_12))
   def testWorksheetShouldRespectCompilerSettingsFromCompilerProfile(): Unit = {
     val editorAndFile = prepareWorksheetEditor(PartialUnificationTestText, scratchFile = true)
-    val profile = getModule.scalaCompilerSettingsProfile
-    val newSettings = profile.getSettings.copy(
-      additionalCompilerOptions = PartialUnificationCompilerOptions
-    )
-    profile.setSettings(newSettings)
+    setAdditionalCompilerOptions(editorAndFile.psiFile, PartialUnificationCompilerOptions)
     doRenderTest(editorAndFile,
       """foo: foo[F[_],A](val fa: F[A]) => String
         |res0: String = 123""".stripMargin
@@ -485,11 +480,7 @@ abstract class WorksheetPlainIntegrationBaseTest extends WorksheetIntegrationBas
   @RunWithScalaVersions(Array(TestScalaVersion.Scala_2_12))
   def testWorksheetShouldRespectCompilerSettingsFromCompilerProfile_WithoutSetting(): Unit = {
     val editorAndFile = prepareWorksheetEditor(PartialUnificationTestText, scratchFile = true)
-    val profile = getModule.scalaCompilerSettingsProfile
-    val newSettings = profile.getSettings.copy(
-      additionalCompilerOptions = Seq.empty
-    )
-    profile.setSettings(newSettings)
+    setAdditionalCompilerOptions(editorAndFile.psiFile, Seq.empty)
     doResultTest(editorAndFile, RunWorksheetActionResult.WorksheetRunError(WorksheetCompilerResult.CompilationError))
   }
 

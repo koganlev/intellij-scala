@@ -19,6 +19,7 @@ import org.jetbrains.jps.model.module.JpsModuleSourceRootType
 import org.jetbrains.plugins.scala.compiler.data.CompileOrder
 import org.jetbrains.plugins.scala.extensions.ThrowableExt
 import org.jetbrains.plugins.scala.project.external.{SdkReference, SdkUtils, ShownNotification, ShownNotificationsKey}
+import org.jetbrains.plugins.scala.project.settings.ScalaCompilerSettings
 import org.jetbrains.plugins.scala.project.{LibraryExt, ModuleExt, ProjectExt, ScalaLibraryProperties}
 import org.jetbrains.plugins.scala.util.teamcity.TeamcityUtils
 import org.jetbrains.sbt.DslUtils.MatchType
@@ -202,7 +203,8 @@ trait ProjectStructureMatcher {
 
   private def assertModuleCompileOrder(module: Module)(expected: CompileOrder)
                                       (implicit compareContext: ProjectStructureComparisonContext): Unit = {
-    assertEquals("Compile order", expected, module.scalaCompilerSettings.compileOrder)
+    val settings = ScalaCompilerSettings.forModule(module)
+    assertEquals("Compile order", expected, settings.compileOrder)
   }
 
   private def assertModuleCompileOutputPath(module: Module, test: Boolean = false)

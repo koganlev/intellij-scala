@@ -1,6 +1,9 @@
 package org.jetbrains.plugins.scala.project.settings
 
+import com.intellij.openapi.module.Module
+import com.intellij.psi.{PsiElement, PsiFile}
 import org.jetbrains.plugins.scala.compiler.data.ScalaCompilerSettingsState
+import org.jetbrains.plugins.scala.project.ProjectPsiFileExt
 
 import java.util.concurrent.atomic.AtomicReference
 
@@ -52,4 +55,18 @@ class ScalaCompilerSettingsProfile(name: String) {
 
   // BAD! don't rely on toString for user presentation
   override def toString: String = myName
+}
+
+object ScalaCompilerSettingsProfile {
+  def forElement(e: PsiElement): Option[ScalaCompilerSettingsProfile] = e.getContainingFile match {
+    case null => None
+    case file => forFile(file)
+  }
+
+  def forFile(file: PsiFile): Option[ScalaCompilerSettingsProfile] =
+    ScalaCompilerSettingsProfileProvider.settingsFor(file)
+      .orElse(file.module.map(forModule))
+
+  def forModule(module: Module): ScalaCompilerSettingsProfile =
+    ScalaCompilerConfiguration.instanceIn(module.getProject).getProfileForModule(module)
 }

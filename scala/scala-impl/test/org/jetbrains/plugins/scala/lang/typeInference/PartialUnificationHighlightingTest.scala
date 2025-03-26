@@ -2,14 +2,14 @@ package org.jetbrains.plugins.scala
 package lang.typeInference
 
 import org.jetbrains.plugins.scala.base.ScalaLightCodeInsightFixtureTestCase
-import org.jetbrains.plugins.scala.project._
+import org.jetbrains.plugins.scala.project.settings.ScalaCompilerSettingsProfile
 import org.junit.experimental.categories.Category
 
 @Category(Array(classOf[TypecheckerTests]))
 class PartialUnificationHighlightingTest extends ScalaLightCodeInsightFixtureTestCase {
   override def setUp(): Unit = {
     super.setUp()
-    val profile = getModule.scalaCompilerSettingsProfile
+    val profile = ScalaCompilerSettingsProfile.forModule(getModule)
     val newSettings = profile.getSettings.copy(
       additionalCompilerOptions = Seq("-Ypartial-unification")
     )

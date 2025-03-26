@@ -2,6 +2,7 @@ package org.jetbrains.plugins.scala.annotator
 
 import org.jetbrains.plugins.scala.base.ScalaLightCodeInsightFixtureTestCase
 import org.jetbrains.plugins.scala.extensions.PathExt
+import org.jetbrains.plugins.scala.project.settings.ScalaCompilerSettingsProfile
 import org.jetbrains.plugins.scala.util.TestUtils
 
 import java.nio.charset.StandardCharsets
@@ -23,8 +24,7 @@ abstract class LiteralTypesHighlightingTestBase
     }
 
     if (settingOn) {
-      import org.jetbrains.plugins.scala.project._
-      val profile = myFixture.getModule.scalaCompilerSettingsProfile
+      val profile = ScalaCompilerSettingsProfile.forModule(myFixture.getModule)
       val newSettings = profile.getSettings.copy(
         additionalCompilerOptions = Seq("-Yliteral-types")
       )

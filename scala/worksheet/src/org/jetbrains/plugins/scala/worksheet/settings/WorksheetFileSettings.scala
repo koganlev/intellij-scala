@@ -5,7 +5,6 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiFile
 import com.intellij.util.SlowOperations
-import org.jetbrains.plugins.scala.project.ProjectExt
 import org.jetbrains.plugins.scala.project.settings.{ScalaCompilerConfiguration, ScalaCompilerSettingsProfile}
 import org.jetbrains.plugins.scala.util.ScalaUtil
 import org.jetbrains.plugins.scala.worksheet.WorksheetUtils
@@ -99,13 +98,8 @@ final class WorksheetFileSettings private(
     profile3
   }
 
-  private def profileFromModule: Option[ScalaCompilerSettingsProfile] = {
-    val maybeModule = getModule
-    for {
-      module  <- maybeModule
-      profile = ScalaCompilerConfiguration(project).getProfileForModule(module)
-    } yield profile
-  }
+  private def profileFromModule: Option[ScalaCompilerSettingsProfile] =
+    getModule.map(ScalaCompilerSettingsProfile.forModule)
 
   private def profileFromPersistedSettings: Option[ScalaCompilerSettingsProfile] = {
     val maybeProfileName = persistedSetting(_.getCompilerProfileName, _.getCompilerProfileName)

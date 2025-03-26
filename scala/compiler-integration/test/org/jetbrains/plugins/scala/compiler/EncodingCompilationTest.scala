@@ -2,7 +2,7 @@ package org.jetbrains.plugins.scala.compiler
 
 import org.jetbrains.plugins.scala.compiler.CompilerMessagesUtil.{assertCompilingScalaSources, assertNoErrorsOrWarnings}
 import org.jetbrains.plugins.scala.compiler.data.IncrementalityType
-import org.jetbrains.plugins.scala.project.ModuleExt
+import org.jetbrains.plugins.scala.project.settings.ScalaCompilerSettingsProfile
 import org.jetbrains.plugins.scala.{CompilationTests, ScalaVersion}
 import org.junit.experimental.categories.Category
 
@@ -31,7 +31,7 @@ abstract class EncodingCompilationTestBase(override val incrementalityType: Incr
 
   private def runEncodingTest(encodingSettings: Seq[String]): Unit = {
     addFileToProjectSources("Foo.scala", "class Foo")
-    val profile = getModule.scalaCompilerSettingsProfile
+    val profile = ScalaCompilerSettingsProfile.forModule(getModule)
     val newSettings = profile.getSettings.copy(
       additionalCompilerOptions = encodingSettings
     )

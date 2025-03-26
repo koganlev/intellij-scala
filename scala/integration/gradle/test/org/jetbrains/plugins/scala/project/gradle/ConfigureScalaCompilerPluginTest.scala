@@ -14,7 +14,7 @@ import org.jetbrains.plugins.scala.SlowTests
 import org.jetbrains.plugins.scala.base.libraryLoaders.SmartJDKLoader
 import org.jetbrains.plugins.scala.extensions.inWriteAction
 import org.jetbrains.plugins.scala.project.ModuleExt
-import org.jetbrains.plugins.scala.project.settings.ScalaCompilerConfiguration
+import org.jetbrains.plugins.scala.project.settings.ScalaCompilerSettings
 import org.jetbrains.plugins.scala.settings.ScalaCompileServerSettings
 import org.junit.Assert.{assertEquals, assertTrue}
 import org.junit.experimental.categories.Category
@@ -105,7 +105,7 @@ class ConfigureScalaCompilerPluginTest extends ExternalSystemImportingTestCase {
   }
 
   def testConfigureScalaCompilerPlugin(): Unit = {
-    val compilerConfiguration = ScalaCompilerConfiguration.instanceIn(getProject).getSettingsForModule(mainModule)
+    val compilerConfiguration = ScalaCompilerSettings.forModule(mainModule)
 
     assertEquals(1, compilerConfiguration.plugins.size)
     val plugin = compilerConfiguration.plugins.head

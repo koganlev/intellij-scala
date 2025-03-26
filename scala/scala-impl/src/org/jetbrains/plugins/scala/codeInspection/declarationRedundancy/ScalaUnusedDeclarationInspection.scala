@@ -17,7 +17,8 @@ import org.jetbrains.plugins.scala.lang.psi.api.statements.ScFunctionDeclaration
 import org.jetbrains.plugins.scala.lang.psi.api.statements.params.ScTypeParam
 import org.jetbrains.plugins.scala.lang.psi.api.toplevel.ScNamedElement
 import org.jetbrains.plugins.scala.lang.psi.api.toplevel.typedef.{ScMember, ScTypeDefinition}
-import org.jetbrains.plugins.scala.project.{ModuleExt, ScalaLanguageLevel}
+import org.jetbrains.plugins.scala.project.ScalaLanguageLevel
+import org.jetbrains.plugins.scala.project.settings.ScalaCompilerSettings
 import org.jetbrains.plugins.scala.util.SAMUtil.PsiClassToSAMExt
 
 import scala.beans.{BeanProperty, BooleanBeanProperty}
@@ -128,7 +129,7 @@ final class ScalaUnusedDeclarationInspection extends HighlightingPassInspection 
                 if (reportLocalDeclarations == AlwaysDisabled) {
                   false
                 } else if (reportLocalDeclarations == ComplyToCompilerOption) {
-                  n.module.toSeq.flatMap(_.scalaCompilerSettings.additionalCompilerOptions).exists { compilerOption =>
+                  ScalaCompilerSettings.forElement(n).toSeq.flatMap(_.additionalCompilerOptions).exists { compilerOption =>
                     compilerOption.equals("-Wunused:locals") ||
                       compilerOption.equals("-Wunused:linted") ||
                       compilerOption.equals("-Xlint:unused")

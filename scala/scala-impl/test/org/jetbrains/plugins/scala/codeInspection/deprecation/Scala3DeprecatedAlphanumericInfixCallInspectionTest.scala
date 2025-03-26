@@ -2,7 +2,7 @@ package org.jetbrains.plugins.scala.codeInspection.deprecation
 
 import org.jetbrains.plugins.scala.codeInspection.ScalaInspectionTestBase
 import org.jetbrains.plugins.scala.codeInspection.quickfix.{ConvertFromInfixExpressionQuickFix, ConvertFromInfixPatternQuickFix, ConvertFromInfixTypeQuickFix, WrapInBackticksQuickFix}
-import org.jetbrains.plugins.scala.project.ModuleExt
+import org.jetbrains.plugins.scala.project.settings.ScalaCompilerSettingsProfile
 import org.jetbrains.plugins.scala.{LatestScalaVersions, ScalaVersion}
 
 abstract class Scala3DeprecatedAlphanumericInfixCallInspectionTestBase extends ScalaInspectionTestBase {
@@ -18,7 +18,7 @@ abstract class Scala3DeprecatedAlphanumericInfixCallInspectionTestBase extends S
 
   override protected def setUp(): Unit = {
     super.setUp()
-    val profile = getModule.scalaCompilerSettingsProfile
+    val profile = ScalaCompilerSettingsProfile.forModule(getModule)
     val newSettings = profile.getSettings.copy(additionalCompilerOptions = additionalCompilerOptions)
     profile.setSettings(newSettings)
   }

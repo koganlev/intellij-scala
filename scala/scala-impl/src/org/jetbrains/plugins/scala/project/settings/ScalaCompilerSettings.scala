@@ -1,5 +1,7 @@
 package org.jetbrains.plugins.scala.project.settings
 
+import com.intellij.openapi.module.Module
+import com.intellij.psi.{PsiElement, PsiFile}
 import org.jetbrains.plugins.scala.compiler.data.{CompileOrder, DebuggingInfoLevel, ScalaCompilerSettingsState, ScalaCompilerSettingsStateBuilder}
 import org.jetbrains.plugins.scala.{LatestScalaVersions, ScalaVersion}
 
@@ -124,4 +126,13 @@ object ScalaCompilerSettings {
     val state = ScalaCompilerSettingsStateBuilder.stateFromOptions(options, compileOrder)
     fromState(state)
   }
+
+  def forElement(e: PsiElement): Option[ScalaCompilerSettings] =
+    ScalaCompilerSettingsProfile.forElement(e).map(_.getSettings)
+
+  def forFile(file: PsiFile): Option[ScalaCompilerSettings] =
+    ScalaCompilerSettingsProfile.forFile(file).map(_.getSettings)
+
+  def forModule(module: Module): ScalaCompilerSettings =
+    ScalaCompilerSettingsProfile.forModule(module).getSettings
 }

@@ -29,7 +29,7 @@ import org.jetbrains.plugins.scala.build.CompilerEventReporter
 import org.jetbrains.plugins.scala.compiler.{CompileServerLauncher, CompilerIntegrationBundle}
 import org.jetbrains.plugins.scala.extensions._
 import org.jetbrains.plugins.scala.lang.psi.api.ScalaFile
-import org.jetbrains.plugins.scala.project.{ModuleExt, ScalaLanguageLevel, SyntheticModule}
+import org.jetbrains.plugins.scala.project.{ModuleExt, ScalaLanguageLevel}
 import org.jetbrains.plugins.scala.settings.{ScalaHighlightingMode, ScalaProjectSettings}
 import org.jetbrains.plugins.scala.util.{CanonicalPath, DocumentVersion}
 
@@ -190,16 +190,8 @@ private final class CompilerHighlightingService(project: Project, coroutineScope
     if (isFirstTimeHighlighting) {
       //If we have just opened worksheet we need to invoke incremental compilation to ensure that worksheet module is compiled to avoid red code
       //Otherwise if you open non-compiled project and open worksheet it will contain red code
-      val realModule = module match {
-        case synthetic: SyntheticModule =>
-          // We need to compile the real module, not the synthetic one for the worksheet. Otherwise, bytecode for
-          // classes from the real module will not be produced.
-          synthetic.underlying
-        case m => m
-      }
-
       val sourceScope = calculateSourceScope(virtualFile)
-      val scope = FileCompilationScope(virtualFile, realModule, sourceScope, document, file)
+      val scope = FileCompilationScope(virtualFile, module, sourceScope, document, file)
       val incrementalRequest = CompilationRequest.IncrementalRequest(Map(virtualFile -> scope), debugReason, timestamp = System.nanoTime())
       executeIncrementalCompilationRequest(incrementalRequest, runDocumentCompiler = false)
     }

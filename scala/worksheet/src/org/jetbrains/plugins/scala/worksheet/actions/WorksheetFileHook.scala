@@ -67,7 +67,7 @@ object WorksheetFileHook {
     WorksheetFileHook.getPanel(file).exists(!_.isRunEnabled)
 
   def moduleUpdated(project: Project, virtualFile: VirtualFile): Unit = {
-    WorksheetSyntheticModuleService(project).moduleUpdated(virtualFile)
+    WorksheetModuleService(project).moduleUpdated(virtualFile)
     restartFileAnalyzing(project, virtualFile)
   }
 
@@ -93,7 +93,6 @@ object WorksheetFileHook {
      *
      * If project compiler profiles configuration is not changed it means that no changes were made in any module profile.
      * Worksheet profile "lives" out of scope of [[org.jetbrains.plugins.scala.project.settings.ScalaCompilerConfiguration]]
-     * (see [[org.jetbrains.plugins.scala.worksheet.actions.WorksheetSyntheticModule.compilerProfileName]])
      * So to trigger correct file re-highlighting we need to invalidate some compiler-options-specific caches.
      */
     ScalaCompilerConfiguration.incModificationCount()
@@ -138,7 +137,7 @@ object WorksheetFileHook {
       val project = source.getProject
 
       WorksheetFileSettings(project, file).ensureSettingsArePersisted()
-      WorksheetSyntheticModuleService(project).ensureWorksheetModuleAttachedToPsiFile(file)
+      WorksheetModuleService(project).ensureWorksheetModuleAttachedToPsiFile(file)
       initWorksheetUiComponents(file)
       loadEvaluationResult(project, source, file)
 

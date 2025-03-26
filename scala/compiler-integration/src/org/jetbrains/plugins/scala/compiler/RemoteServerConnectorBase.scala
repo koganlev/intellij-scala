@@ -7,7 +7,7 @@ import org.jetbrains.plugins.scala.compiler.data._
 import org.jetbrains.plugins.scala.compiler.data.worksheet.WorksheetArgs
 import org.jetbrains.plugins.scala.extensions.{ObjectExt, PathExt}
 import org.jetbrains.plugins.scala.project.settings.ScalaCompilerSettings
-import org.jetbrains.plugins.scala.project.{ModuleExt, ProjectContext, SyntheticModule, VirtualFileExt}
+import org.jetbrains.plugins.scala.project.{ModuleExt, ProjectContext, VirtualFileExt}
 import org.jetbrains.plugins.scala.util.ScalaPluginJars
 
 import java.nio.file.Path
@@ -62,11 +62,7 @@ abstract class RemoteServerConnectorBase(
     p.toCanonicalPath.toString.stripSuffix("!").stripSuffix("!/")
 
   protected def assemblyRuntimeClasspath(): Seq[Path] = {
-    val searchModule = module match {
-      case synthetic: SyntheticModule => synthetic.underlying
-      case m => m
-    }
-    val enumerator = OrderEnumerator.orderEntries(searchModule).compileOnly().recursively()
+    val enumerator = OrderEnumerator.orderEntries(module).compileOnly().recursively()
     enumerator.getClassesRoots.map(_.toPath).toSeq
   }
 
@@ -96,7 +92,7 @@ abstract class RemoteServerConnectorBase(
     worksheetArgs = worksheetArgs
   )
 
-  protected def compilerSettings: ScalaCompilerSettings = module.scalaCompilerSettings
+  protected def compilerSettings: ScalaCompilerSettings = ScalaCompilerSettings.forModule(module)
 
   protected def findJdk: Path = CompileServerLauncher.compileServerJdk(module.getProject)
     .fold(m => throw new IllegalArgumentException(s"JDK for compiler process not found: $m"), _.executable)

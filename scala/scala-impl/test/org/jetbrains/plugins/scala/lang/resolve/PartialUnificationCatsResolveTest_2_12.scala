@@ -4,7 +4,7 @@ package resolve
 
 import org.jetbrains.plugins.scala.DependencyManagerBase._
 import org.jetbrains.plugins.scala.base.libraryLoaders.{IvyManagedLoader, LibraryLoader}
-import org.jetbrains.plugins.scala.project._
+import org.jetbrains.plugins.scala.project.settings.ScalaCompilerSettingsProfile
 
 class PartialUnificationCatsResolveTest_2_12 extends SimpleResolveTestBase {
   import SimpleResolveTestBase._
@@ -15,7 +15,7 @@ class PartialUnificationCatsResolveTest_2_12 extends SimpleResolveTestBase {
 
   override def setUp(): Unit = {
     super.setUp()
-    val profile = getModule.scalaCompilerSettingsProfile
+    val profile = ScalaCompilerSettingsProfile.forModule(getModule)
     val newSettings = profile.getSettings.copy(
       additionalCompilerOptions = Seq("-Ypartial-unification")
     )

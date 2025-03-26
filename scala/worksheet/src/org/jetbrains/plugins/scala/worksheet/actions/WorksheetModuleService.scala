@@ -3,7 +3,6 @@ package org.jetbrains.plugins.scala.worksheet.actions
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.{PsiFile, PsiManager}
 import com.intellij.util.SlowOperations
@@ -15,9 +14,9 @@ import scala.ref.Reference
 import scala.util.Using
 
 @Service(Array(Service.Level.PROJECT))
-final class WorksheetSyntheticModuleService(project: Project) {
+final class WorksheetModuleService(project: Project) {
 
-  private val modulesMap = mutable.HashMap[VirtualFile, WorksheetSyntheticModule]()
+  private val modulesMap = mutable.HashMap[VirtualFile, Module]()
 
   private def psiManager = PsiManager.getInstance(project)
 
@@ -40,39 +39,35 @@ final class WorksheetSyntheticModuleService(project: Project) {
 
   private def attachWorksheetModuleToPsiFile(virtualFile: VirtualFile, psiFile: PsiFile): Unit =
     for {
-      wrapperModule <- syntheticModuleForFile(virtualFile)
+      wrapperModule <- moduleForFile(virtualFile)
     } {
       val moduleReferenceRef = moduleReference(wrapperModule)
       psiFile.putUserData(UserDataKeys.SCALA_ATTACHED_MODULE, moduleReferenceRef)
     }
 
-  private def syntheticModuleForFile(virtualFile: VirtualFile): Option[WorksheetSyntheticModule] = {
+  private def moduleForFile(virtualFile: VirtualFile): Option[Module] = {
+    //noinspection ApiStatus
     val cpModule = Using.resource(SlowOperations.knownIssue("SCL-22095, SCL-22097")) { _ =>
       WorksheetFileSettings(project, virtualFile).getModule
     }
-    cpModule.map(syntheticModuleForFile(virtualFile, _))
+    cpModule.map(moduleForFile(virtualFile, _))
   }
 
-  private def syntheticModuleForFile(virtualFile: VirtualFile, currentCpModule: Module): WorksheetSyntheticModule = {
+  private def moduleForFile(virtualFile: VirtualFile, currentCpModule: Module): Module = {
     val maybeCached = modulesMap.get(virtualFile)
+    val representative = currentCpModule.findRepresentativeModuleForSharedSourceModuleOrSelf
     val result = maybeCached match {
       case Some(cached) =>
-        if (cached.cpModule != currentCpModule) {
-          Disposer.dispose(cached)
-          registerNewSyntheticModuleForFile(virtualFile, currentCpModule)
+        if (cached != representative) {
+          modulesMap.put(virtualFile, representative)
+          representative
         } else
           cached
       case _ =>
-        registerNewSyntheticModuleForFile(virtualFile, currentCpModule)
+        modulesMap.put(virtualFile, representative)
+        representative
     }
     result
-  }
-
-  private def registerNewSyntheticModuleForFile(virtualFile: VirtualFile, currentCpModule: Module): WorksheetSyntheticModule = {
-    val module = new WorksheetSyntheticModule(virtualFile, currentCpModule.findRepresentativeModuleForSharedSourceModuleOrSelf)
-    Disposer.register(currentCpModule, module)
-    modulesMap.put(virtualFile, module)
-    module
   }
 
   private def moduleReference(module: Module): Reference[Module] =
@@ -85,8 +80,8 @@ final class WorksheetSyntheticModuleService(project: Project) {
     }
 }
 
-object WorksheetSyntheticModuleService {
+object WorksheetModuleService {
 
-  def apply(project: Project): WorksheetSyntheticModuleService =
-    project.getService(classOf[WorksheetSyntheticModuleService])
+  def apply(project: Project): WorksheetModuleService =
+    project.getService(classOf[WorksheetModuleService])
 }

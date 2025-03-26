@@ -7,7 +7,6 @@ import com.intellij.openapi.util.SystemInfo
 import com.intellij.psi.PsiDocumentManager
 import org.jetbrains.plugins.scala.compiler.{CompileServerLauncher, ScalaCompilerTestBase}
 import org.jetbrains.plugins.scala.extensions.TextRangeExt
-import org.jetbrains.plugins.scala.project.ModuleExt
 import org.jetbrains.plugins.scala.project.settings.{ScalaCompilerConfiguration, ScalaCompilerSettingsProfile}
 import org.jetbrains.plugins.scala.settings.ScalaProjectSettings
 import org.jetbrains.plugins.scala.util.MarkersUtils
@@ -263,11 +262,15 @@ abstract class WorksheetIntegrationBaseTest
     ViewerEditorData(viewer, renderedText, foldings.toIndexedSeq)
   }
 
-  protected def setAdditionalCompilerOptions(options: Seq[String]): Unit = {
-    val profile = getModule.scalaCompilerSettingsProfile
+  protected def setAdditionalCompilerOptions(file: WorksheetFile, options: Seq[String]): Unit = {
+    val profile = compilerSettingsProfile(file)
     val newSettings = profile.getSettings.copy(additionalCompilerOptions = options)
     profile.setSettings(newSettings)
   }
+
+  private def compilerSettingsProfile(file: WorksheetFile): ScalaCompilerSettingsProfile =
+    ScalaCompilerSettingsProfile.forFile(file)
+      .getOrElse(throw new IllegalStateException(s"No compiler settings configured for $file"))
 }
 
 object WorksheetIntegrationBaseTest {
