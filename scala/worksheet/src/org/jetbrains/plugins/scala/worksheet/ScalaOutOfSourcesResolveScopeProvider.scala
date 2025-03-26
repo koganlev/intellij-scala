@@ -11,7 +11,6 @@ import com.intellij.psi.{PsiManager, ResolveScopeProvider}
 import org.jetbrains.plugins.scala.ScalaLanguage
 import org.jetbrains.plugins.scala.project._
 import org.jetbrains.plugins.scala.worksheet.ScalaOutOfSourcesResolveScopeProvider._
-import org.jetbrains.plugins.scala.worksheet.actions.WorksheetSyntheticModule
 import org.jetbrains.sbt.SbtSourceSetUtil.SbtSourceSetModuleExt
 import org.jetbrains.sbt.SbtUtil
 
@@ -29,12 +28,8 @@ private final class ScalaOutOfSourcesResolveScopeProvider extends ResolveScopePr
       psiFile.scratchFileModule match {
         case Some(module) if module.getProject == project =>
           // scratch file created from one project can be opened in another project manually =/
-          val underlying = module match {
-            case s: WorksheetSyntheticModule => s.cpModule
-            case m => m
-          }
           val separate = SbtUtil.isBuiltWithSeparateModulesForProdTest(project)
-          val needsTests = separate && underlying.isTest
+          val needsTests = separate && module.isTest
           GlobalSearchScope.moduleWithDependenciesAndLibrariesScope(module, /*includeTests=*/ needsTests)
         case _ =>
           scalaFileScope(file, project)
