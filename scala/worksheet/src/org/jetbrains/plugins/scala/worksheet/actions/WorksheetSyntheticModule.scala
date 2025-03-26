@@ -8,7 +8,6 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.util.ReflectionUtil
 import org.jetbrains.plugins.scala.extensions.LoggerExt
-import org.jetbrains.plugins.scala.project.SyntheticModule
 import org.jetbrains.plugins.scala.worksheet.actions.WorksheetSyntheticModule.Log
 import org.jetbrains.plugins.scala.worksheet.settings.WorksheetFileSettings
 
@@ -36,8 +35,7 @@ import java.nio.file.Path
 final class WorksheetSyntheticModule(
   virtualFile: VirtualFile,
   val cpModule: Module
-) extends ModuleDelegate(cpModule)
-  with SyntheticModule {
+) extends ModuleDelegate(cpModule) {
 
   locally {
     Log.debugSafe(s"new instance $debugId")
@@ -90,8 +88,6 @@ final class WorksheetSyntheticModule(
   //noinspection ApiStatus,UnstableApiUsage
   override def instantiateClass[T](aClass: Class[T], pluginId: PluginId): T =
     cpModule.instantiateClass(aClass, pluginId)
-
-  override def underlying: Module = cpModule
 }
 
 object WorksheetSyntheticModule {

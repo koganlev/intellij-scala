@@ -14,8 +14,8 @@ import org.jetbrains.plugins.scala.console.configuration.ScalaSdkJLineFixer
 import org.jetbrains.plugins.scala.console.configuration.ScalaSdkJLineFixer.JlineResolveResult
 import org.jetbrains.plugins.scala.extensions.LoggerExt
 import org.jetbrains.plugins.scala.lang.psi.api.ScFile
+import org.jetbrains.plugins.scala.project.ModuleExt
 import org.jetbrains.plugins.scala.project.settings.ScalaCompilerSettings
-import org.jetbrains.plugins.scala.project.{ModuleExt, SyntheticModule}
 import org.jetbrains.plugins.scala.util.ScalaPluginJars
 import org.jetbrains.plugins.scala.worksheet.WorksheetUtils
 import org.jetbrains.plugins.scala.worksheet.actions.WorksheetFileHook
@@ -150,19 +150,11 @@ final class RemoteServerConnector(
   }
 
   private def outputDirs: Seq[Path] = {
-    def workspaceModelModule(module: Module): Module = module match {
-      case synthetic: SyntheticModule => synthetic.underlying
-      case m => m
-    }
-
-    def isTestModule(module: Module): Boolean = workspaceModelModule(module).isTest
-
-    val realModule = workspaceModelModule(module)
-    val modules = ModuleRootManager.getInstance(realModule).getDependencies ++ Seq(realModule, module)
+    val modules = ModuleRootManager.getInstance(module).getDependencies :+ module
     val separateModulesForProdTest = SbtUtil.isBuiltWithSeparateModulesForProdTest(project)
     val paths = modules.map { module =>
-      val isTest = separateModulesForProdTest && isTestModule(module)
-      CompilerPaths.getModuleOutputPath(workspaceModelModule(module), isTest)
+      val isTest = separateModulesForProdTest && module.isTest
+      CompilerPaths.getModuleOutputPath(module, isTest)
     }
 
     paths.map(Path.of(_)).toSeq
