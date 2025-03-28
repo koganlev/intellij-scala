@@ -18,7 +18,6 @@ import com.intellij.platform.workspace.jps.entities.{DependenciesKt, DependencyS
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.psi.{LanguageSubstitutors, PsiElement, PsiFile}
 import com.intellij.util.PathsList
-import kotlin.Unit.{INSTANCE => KUnit}
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.jps.model.serialization.library.JpsLibraryTableSerializer
 import org.jetbrains.plugins.scala.caches.cachedInUserData
@@ -35,7 +34,7 @@ import org.jetbrains.plugins.scala.project.LibraryExt.guessLibraryVersionFromNam
 import org.jetbrains.plugins.scala.project.ScalaFeatures.SerializableScalaFeatures
 import org.jetbrains.plugins.scala.project.external.CompanionProxyUtils
 import org.jetbrains.plugins.scala.project.external.CompanionProxyUtils.LegacyBridgeModifiableBaseCompanion
-import org.jetbrains.plugins.scala.project.settings.{ScalaCompilerConfiguration, ScalaCompilerSettings, ScalaCompilerSettingsProfile}
+import org.jetbrains.plugins.scala.project.settings.{ScalaCompilerConfiguration, ScalaCompilerSettings}
 import org.jetbrains.plugins.scala.settings.ScalaProjectSettings
 import org.jetbrains.plugins.scala.tasty.reader.CompilerOptions
 import org.jetbrains.plugins.scala.util.{ScalaPluginJars, UnloadAwareDisposable}
@@ -45,6 +44,7 @@ import org.jetbrains.sbt.{Sbt, WorkspaceModelUtil}
 
 import java.net.URL
 import java.nio.file.Path
+import kotlin.Unit.{INSTANCE => KUnit}
 import scala.annotation.unused
 import scala.jdk.CollectionConverters._
 import scala.language.implicitConversions
@@ -608,7 +608,7 @@ package object project {
       attachedFileModule
 
     private def attachedFileModule: Option[Module] =
-      Option(file.getUserData(UserDataKeys.SCALA_ATTACHED_MODULE)).flatMap(_.get)
+      Option(file.getVirtualFile).flatMap(vf => Option(vf.getUserData(UserDataKeys.SCALA_ATTACHED_MODULE)).flatMap(_.get))
 
     def isMetaEnabled: Boolean =
       !ScStubElementType.Processing.isRunning &&

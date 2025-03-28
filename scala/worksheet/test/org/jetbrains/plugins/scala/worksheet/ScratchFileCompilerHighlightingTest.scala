@@ -3,12 +3,11 @@ package org.jetbrains.plugins.scala.worksheet
 import com.intellij.ide.scratch.ScratchRootType
 import com.intellij.lang.annotation.HighlightSeverity
 import com.intellij.openapi.util.TextRange
+import com.intellij.testFramework.VfsTestUtil
+import org.jetbrains.plugins.scala.ScalaVersion
 import org.jetbrains.plugins.scala.compiler.highlighting.ScalaCompilerHighlightingTestBase
 import org.jetbrains.plugins.scala.util.CompilerTestUtil.runWithErrorsFromCompiler
-import org.jetbrains.plugins.scala.{FlakyTests, ScalaVersion}
-import org.junit.experimental.categories.Category
 
-@Category(Array(classOf[FlakyTests]))
 class ScratchFileCompilerHighlightingTest extends ScalaCompilerHighlightingTestBase {
   override protected def supportedIn(version: ScalaVersion): Boolean = version == ScalaVersion.Latest.Scala_3
 
@@ -24,7 +23,12 @@ class ScratchFileCompilerHighlightingTest extends ScalaCompilerHighlightingTestB
 
     val scratchFile =
       ScratchRootType.getInstance().createScratchFile(getProject, "simpleError.sc", WorksheetLanguage.INSTANCE, "val x: String = 123")
-    waitUntilFileIsHighlighted(scratchFile)
-    doAssertion(scratchFile, expected)
+
+    try {
+      waitUntilFileIsHighlighted(scratchFile)
+      doAssertion(scratchFile, expected)
+    } finally {
+      VfsTestUtil.deleteFile(scratchFile)
+    }
   }
 }

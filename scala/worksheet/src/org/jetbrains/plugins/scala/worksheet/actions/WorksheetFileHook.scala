@@ -67,7 +67,7 @@ object WorksheetFileHook {
     WorksheetFileHook.getPanel(file).exists(!_.isRunEnabled)
 
   def moduleUpdated(project: Project, virtualFile: VirtualFile): Unit = {
-    WorksheetModuleService(project).moduleUpdated(virtualFile)
+    WorksheetModuleService(project).ensureModuleAttached(virtualFile)
     restartFileAnalyzing(project, virtualFile)
   }
 
@@ -137,7 +137,7 @@ object WorksheetFileHook {
       val project = source.getProject
 
       WorksheetFileSettings(project, file).ensureSettingsArePersisted()
-      WorksheetModuleService(project).ensureWorksheetModuleAttachedToPsiFile(file)
+      WorksheetModuleService(project).ensureModuleAttached(file)
       initWorksheetUiComponents(file)
       loadEvaluationResult(project, source, file)
 
