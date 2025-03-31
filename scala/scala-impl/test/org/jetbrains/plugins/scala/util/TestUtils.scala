@@ -103,9 +103,12 @@ object TestUtils {
   def readInput(filePath: String): util.List[String] = readInput(Path.of(filePath), null)
 
   @throws[IOException]
-  def readInput(file: Path, @Nullable encoding: Charset): util.List[String] = {
+  def readInput(file: Path, @Nullable encoding: Charset, allowEmptyFiles: Boolean = false): util.List[String] = {
     var content = file.readAllBytesToString(encoding.nullSafe.getOrElse(Charset.defaultCharset))
     Assert.assertNotNull(content)
+
+    if (allowEmptyFiles && content.isEmpty) return util.Collections.emptyList()
+
     val input = new util.ArrayList[String]
     var separatorIndex = 0
     content = StringUtil.replace(content, "\r", "") // for MACs
