@@ -5,9 +5,8 @@ import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.util.ModificationTracker
 import com.intellij.psi.PsiElement
 import org.apache.maven.artifact.versioning.ComparableVersion
-import org.jetbrains.plugins.scala.caches.cachedInUserData
+import org.jetbrains.plugins.scala.caches.{ModTracker, cachedInUserData}
 import org.jetbrains.plugins.scala.extensions._
-import org.jetbrains.plugins.scala.lang.parser.parsing.top.TmplDef
 import org.jetbrains.plugins.scala.lang.psi.api.ScalaFile
 import org.jetbrains.plugins.scala.lang.psi.api.base.types._
 import org.jetbrains.plugins.scala.lang.psi.api.statements.ScFunction
@@ -15,7 +14,7 @@ import org.jetbrains.plugins.scala.lang.psi.api.statements.params.ScTypeParam
 import org.jetbrains.plugins.scala.lang.psi.api.toplevel.typedef.ScTypeDefinition
 import org.jetbrains.plugins.scala.lang.psi.impl.ScalaPsiElementFactory
 import org.jetbrains.plugins.scala.lang.psi.impl.toplevel.synthetic.ScSyntheticClass
-import org.jetbrains.plugins.scala.lang.psi.types.api.{Any, ValueType}
+import org.jetbrains.plugins.scala.lang.psi.types.api.Any
 import org.jetbrains.plugins.scala.lang.psi.types.{ScParameterizedType, ScType, ScalaType}
 import org.jetbrains.plugins.scala.project._
 
@@ -96,7 +95,7 @@ object KindProjectorUtil {
     new ComparableVersion(version).compareTo(newSyntaxVersion) >= 0
 
   /**
-   * Creates synhtetic companion object used in value-level polymorphic lambdas
+   * Creates synthetic companion object used in value-level polymorphic lambdas
    * (e.g. `val a: PF[List, Option] = λ[PF[List, Option]].run(_.headOption)`).
    * Apply method return type is computed in an ad-hoc manner in [[org.jetbrains.plugins.scala.lang.psi.impl.expr.ScGenericCallImpl]]
    * See usages of [[PolymorphicLambda]] extractor.
@@ -166,7 +165,7 @@ object KindProjectorUtil {
   implicit class `synthetic poly-lambda builder ext`(private val tdef: ScTypeDefinition) extends AnyVal {
 
     /**
-    * Creates an intermidiate "Builder" trait which represents the type of an
+    * Creates an intermediate "Builder" trait which represents the type of an
     * expression of shape `Lambda[Op[F, G]]`, i.e. suppose we have the following definitions
     * {{{
     * trait Op[M[_], N[_]] {
@@ -182,45 +181,50 @@ object KindProjectorUtil {
     *   def anotherMethod(f: F[A] => G[A]): Op[F, G] = ???
     * }
     * }}}
-    *
-    * Returns parameterized type designated to generated trait, with `f` and `g` as it's type arguments.
     */
-    def synhteticPolyLambdaBuilder(f: ScTypeElement, g: ScTypeElement): Option[ScType] = cachedInUserData("syntheticPolyLambdaBuilder", tdef, containingFileModTracker(tdef), (f, g)) {
-      val tparams = tdef.typeParameters
-      val methods = tdef.functions.filter(canBeRewritten(_, tparams))
+    def syntheticPolyLambdaBuilder: Option[ScTypeDefinition] =
+      cachedInUserData("getSyntheticImplicitMethod", tdef, ModTracker.libraryAware(tdef)) {
+        val tparams = tdef.typeParameters
+        val methods = tdef.functions.filter(canBeRewritten(_, tparams))
 
-      methods.nonEmpty.option {
-        val methodsText = methods.map { m =>
-          s"def ${m.name}(f: F[A] => G[A]): ${tdef.name}[F, G] = ???"
-        }.mkString("\n  ")
+        methods.nonEmpty.option {
+          val methodsText = methods.map { m =>
+            s"def ${m.name}(f: F[A] => G[A]): ${tdef.name}[F, G] = ???"
+          }.mkString("\n  ")
 
-        val text =
-          s"""
-             |trait `${tdef.getName}PolyLambdaBuilder`[F[_], G[_]] {
-             |  type A
-             |  $methodsText
-             |}
+          val text =
+            s"""
+               |trait `${tdef.getName}PolyLambdaBuilder`[F[_], G[_]] {
+               |  type A
+               |  $methodsText
+               |}
          """.stripMargin
 
-        val buiderTrait = ScalaPsiElementFactory.createTypeDefinitionWithContext(text, tdef, null)
+          ScalaPsiElementFactory.createTypeDefinitionWithContext(text, tdef, null)
+        }
+      }
 
+    /**
+    * Returns parameterized type designated to generated trait, with `f` and `g` as it's type arguments.
+    */
+    def polyLambdaType(f: ScTypeElement, g: ScTypeElement): Option[ScType] =
+      syntheticPolyLambdaBuilder.map(builderTrait =>
         ScParameterizedType(
-          ScalaType.designator(buiderTrait),
+          ScalaType.designator(builderTrait),
           Seq(f.`type`().getOrAny, g.`type`().getOrAny)
         )
-      }
-    }
+      )
   }
 
   def kindProjectorPolymorphicLambdaType(
     target: ScTypeElement,
     lhs:    ScTypeElement,
     rhs:    ScTypeElement,
-  )(implicit pc: ProjectContext): Option[ScType] =
+  ): Option[ScType] =
     for {
       targetTpe   <- target.`type`().toOption
       targetClass <- targetTpe.extractClass
       tdef        <- targetClass.asOptionOf[ScTypeDefinition]
-      tpe         <- tdef.synhteticPolyLambdaBuilder(lhs, rhs)
+      tpe         <- tdef.polyLambdaType(lhs, rhs)
     } yield tpe
 }
