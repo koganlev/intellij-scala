@@ -23,4 +23,6 @@ trait ScTemplateDefinitionStub[T <: ScTemplateDefinition]
   def javaName: String
 
   def givenDefinitionParameterText: String
+
+  def enumClassCaseMentionsParentTypeParams: Boolean
 }

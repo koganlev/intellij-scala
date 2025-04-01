@@ -33,19 +33,24 @@ final class ScEnumClassCaseImpl(
   def physicalTypeParameters: Seq[ScTypeParam] = super.typeParameters
 
   override def typeParameters: Seq[ScTypeParam] =
-    if (enumTypeParameters.nonEmpty && physicalTypeParameters.isEmpty && (extendsBlock.templateParents.isEmpty || mentionsEnumTypeParameters))
+    if (enumTypeParameters.nonEmpty &&
+      physicalTypeParameters.isEmpty &&
+      (extendsBlock.templateParents.isEmpty || mentionsEnumTypeParameters))
       enumTypeParameters
     else
       physicalTypeParameters
 
-  private def mentionsEnumTypeParameters: Boolean = {
-    val tps = enumTypeParameters
+  def mentionsEnumTypeParameters: Boolean =
+    byStubOrPsi(_.enumClassCaseMentionsParentTypeParams) {
+      val tps = enumTypeParameters
 
-    (constructor.map(_.parameterList) ++ extendsBlock.templateParents).flatMap(_.elements).exists {
-      case ScSimpleTypeElement(r) if r.qualifier.isEmpty => tps.exists(_.name == r.refName)
-      case _ => false
+      (constructor.map(_.parameterList) ++ extendsBlock.templateParents)
+        .flatMap(_.elements)
+        .exists {
+          case ScSimpleTypeElement(r) if r.qualifier.isEmpty => tps.exists(_.name == r.refName)
+          case _                                             => false
+        }
     }
-  }
 
   override def superTypes: List[ScType] =
     if (extendsBlock.templateParents.nonEmpty) super.superTypes

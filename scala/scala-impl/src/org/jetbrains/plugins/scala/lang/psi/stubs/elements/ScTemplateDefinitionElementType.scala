@@ -9,7 +9,7 @@ import com.intellij.util.ArrayUtil.EMPTY_STRING_ARRAY
 import org.jetbrains.plugins.scala.ScalaLanguage
 import org.jetbrains.plugins.scala.extensions._
 import org.jetbrains.plugins.scala.lang.psi.api.base.ScAnnotation
-import org.jetbrains.plugins.scala.lang.psi.api.statements.ScFunctionDefinition
+import org.jetbrains.plugins.scala.lang.psi.api.statements.{ScEnumClassCase, ScFunctionDefinition}
 import org.jetbrains.plugins.scala.lang.psi.api.toplevel.typedef._
 import org.jetbrains.plugins.scala.lang.psi.impl.toplevel.typedef.ScGivenDefinitionImpl
 import org.jetbrains.plugins.scala.lang.psi.stubs.impl.ScTemplateDefinitionStubImpl
@@ -41,30 +41,32 @@ abstract class ScTemplateDefinitionElementType[TypeDef <: ScTemplateDefinition](
     dataStream.writeBoolean(stub.isGiven)
     dataStream.writeNames(stub.givenClassNames)
     dataStream.writeUTFFast(stub.givenDefinitionParameterText)
+    dataStream.writeBoolean(stub.enumClassCaseMentionsParentTypeParams)
   }
 
   override final def deserialize(dataStream: StubInputStream, parentStub: StubElement[_ <: PsiElement]) =
     new ScTemplateDefinitionStubImpl(
       parentStub,
       this,
-      nameRef                          = dataStream.readNameString,
-      getQualifiedName                 = dataStream.readNameString,
-      getSourceFileName                = dataStream.readNameString,
-      javaName                         = dataStream.readNameString,
-      javaQualifiedName                = dataStream.readNameString,
-      additionalJavaName               = dataStream.readOptionName,
-      isPackageObject                  = dataStream.readBoolean,
-      isDeprecated                     = dataStream.readBoolean,
-      isLocal                          = dataStream.readBoolean,
-      isVisibleInJava                  = dataStream.readBoolean,
-      isImplicitObject                 = dataStream.readBoolean,
-      implicitConversionParameterClass = dataStream.readOptionName,
-      implicitClassNames               = dataStream.readNames,
-      isTopLevel                       = dataStream.readBoolean,
-      topLevelQualifier                = dataStream.readOptionName,
-      isGiven                          = dataStream.readBoolean,
-      givenClassNames                  = dataStream.readNames,
-      givenDefinitionParameterText     = dataStream.readUTFFast,
+      nameRef                               = dataStream.readNameString,
+      getQualifiedName                      = dataStream.readNameString,
+      getSourceFileName                     = dataStream.readNameString,
+      javaName                              = dataStream.readNameString,
+      javaQualifiedName                     = dataStream.readNameString,
+      additionalJavaName                    = dataStream.readOptionName,
+      isPackageObject                       = dataStream.readBoolean,
+      isDeprecated                          = dataStream.readBoolean,
+      isLocal                               = dataStream.readBoolean,
+      isVisibleInJava                       = dataStream.readBoolean,
+      isImplicitObject                      = dataStream.readBoolean,
+      implicitConversionParameterClass      = dataStream.readOptionName,
+      implicitClassNames                    = dataStream.readNames,
+      isTopLevel                            = dataStream.readBoolean,
+      topLevelQualifier                     = dataStream.readOptionName,
+      isGiven                               = dataStream.readBoolean,
+      givenClassNames                       = dataStream.readNames,
+      givenDefinitionParameterText          = dataStream.readUTFFast,
+      enumClassCaseMentionsParentTypeParams = dataStream.readBoolean,
     )
 
   override final def createStubImpl(definition: TypeDef,
@@ -120,27 +122,33 @@ abstract class ScTemplateDefinitionElementType[TypeDef <: ScTemplateDefinition](
       case _                               => (false, EMPTY_STRING_ARRAY, "")
     }
 
+    val enumClassCaseMentionsParentTypeParams = definition match {
+      case enumCase: ScEnumClassCase => enumCase.mentionsEnumTypeParameters
+      case _                         => false
+    }
+
     new ScTemplateDefinitionStubImpl(
       parent,
       this,
-      nameRef                          = definition.name,
-      getQualifiedName                 = definition.qualifiedName,
-      getSourceFileName                = fileName,
-      javaName                         = definition.getName,
-      javaQualifiedName                = definition.getQualifiedName,
-      additionalJavaName               = additionalJavaName,
-      isPackageObject                  = isPackageObject,
-      isDeprecated                     = isDeprecated,
-      isLocal                          = isLocal,
-      isVisibleInJava                  = isVisibleInJava,
-      isImplicitObject                 = isImplicitObject,
-      implicitConversionParameterClass = implicitConversionParamClass,
-      implicitClassNames               = implicitClassNames,
-      isTopLevel                       = isTopLevel,
-      topLevelQualifier                = topLevelQualifier,
-      isGiven                          = isGivenDefinition,
-      givenClassNames                  = givenDefinitionClassNames,
-      givenDefinitionParameterText     = givenDefinitionParameterText,
+      nameRef                               = definition.name,
+      getQualifiedName                      = definition.qualifiedName,
+      getSourceFileName                     = fileName,
+      javaName                              = definition.getName,
+      javaQualifiedName                     = definition.getQualifiedName,
+      additionalJavaName                    = additionalJavaName,
+      isPackageObject                       = isPackageObject,
+      isDeprecated                          = isDeprecated,
+      isLocal                               = isLocal,
+      isVisibleInJava                       = isVisibleInJava,
+      isImplicitObject                      = isImplicitObject,
+      implicitConversionParameterClass      = implicitConversionParamClass,
+      implicitClassNames                    = implicitClassNames,
+      isTopLevel                            = isTopLevel,
+      topLevelQualifier                     = topLevelQualifier,
+      isGiven                               = isGivenDefinition,
+      givenClassNames                       = givenDefinitionClassNames,
+      givenDefinitionParameterText          = givenDefinitionParameterText,
+      enumClassCaseMentionsParentTypeParams = enumClassCaseMentionsParentTypeParams,
     )
   }
 
