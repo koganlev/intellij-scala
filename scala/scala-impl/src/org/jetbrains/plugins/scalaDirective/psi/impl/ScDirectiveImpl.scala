@@ -19,6 +19,10 @@ final class ScDirectiveImpl(buffer: CharSequence, tokenType: IElementType)
 
   override def getTokenType: IElementType = tokenType
 
+  override def prefix: PsiElement = findFirstChildByType(ScalaDirectiveTokenTypes.tDIRECTIVE_PREFIX).get
+
+  override def command: PsiElement = findFirstChildByType(ScalaDirectiveTokenTypes.tDIRECTIVE_COMMAND).get
+
   override def key: Option[PsiElement] = findFirstChildByType(ScalaDirectiveTokenTypes.tDIRECTIVE_KEY)
 
   override def value: Option[PsiElement] = findFirstChildByType(ScalaDirectiveTokenTypes.tDIRECTIVE_VALUE)
