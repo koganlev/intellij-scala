@@ -55,12 +55,16 @@ class ScalaCompletionTestFixture(
     completionType: CompletionType = CompletionType.BASIC
   )(predicate: LookupElement => Boolean = Function.const(true)): Unit = {
     val (lookup, items) = activeLookupWithItems(fileText, completionType, invocationCount)
+    selectLookupItem(lookup, items, char)(predicate)
+    checkResultByText(resultText)
+  }
 
+  private[this] def selectLookupItem(lookup: LookupImpl, items: Iterable[LookupElement], completionChar: Char)
+                                    (predicate: LookupElement => Boolean): Unit = {
     items.find(predicate) match {
       case Some(item) =>
-        lookup.finishLookup(char, item)
+        lookup.finishLookup(completionChar, item)
         NonBlockingReadActionImpl.waitForAsyncTaskCompletion()
-        checkResultByText(resultText)
       case _ =>
         fail(
           s"""Lookup not found.
@@ -68,6 +72,12 @@ class ScalaCompletionTestFixture(
              |${lookupItemsDebugText(items)}""".stripMargin
         )
     }
+  }
+
+  final def finishLookup(completionChar: Char = Lookup.REPLACE_SELECT_CHAR)
+                        (predicate: LookupElement => Boolean): Unit = {
+    val (lookup, items) = getActiveLookupWithItems()
+    selectLookupItem(lookup, items, completionChar)(predicate)
   }
 
   final def checkNoBasicCompletion(
@@ -158,6 +168,10 @@ class ScalaCompletionTestFixture(
       completionHandler.invokeCompletion(getProject, getEditor, invocationCount)
     }
 
+    getActiveLookupWithItems(itemsExtractor)
+  }
+
+  private[this] def getActiveLookupWithItems(itemsExtractor: LookupImpl => Iterable[LookupElement] = allItems): (LookupImpl, Iterable[LookupElement]) = {
     val activeLookup = LookupManager.getActiveLookup(getEditor)
     activeLookup match {
       case impl: LookupImpl =>

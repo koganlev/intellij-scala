@@ -6,8 +6,8 @@ import org.jetbrains.plugins.scalaDirective.lang.lexer.ScalaDirectiveTokenTypes
 import org.jetbrains.plugins.scalaDirective.psi.api.ScDirective
 
 package object completion {
-  private[completion] val DirectivePrefix = "//>"
-  private[completion] val UsingDirective = "using"
+  private[scalaDirective] val DirectivePrefix = "//>"
+  private[scalaDirective] val UsingDirective = "using"
 
   private[completion] val ScalaDirectiveKeyPattern = psiElement()
     .withElementType(ScalaDirectiveTokenTypes.tDIRECTIVE_KEY)
