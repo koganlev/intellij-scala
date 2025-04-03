@@ -319,10 +319,16 @@ class ReferenceExpressionResolver(implicit projectContext: ProjectContext) {
            */
           case fdef: ScFunction => fdef.extensionMethodOwner.fold(state)(state.withExtensionContext)
           case (cc: ScCaseClause) & Parent(Parent(m: ScMatch)) =>
-            //@TODO: partial functions as well???
-            val subst = PatternTypeInference.doForMatchClause(m, cc)
-            val oldSubst = state.matchClauseSubstitutor
-            state.withMatchClauseSubstitutor(oldSubst.followed(subst))
+            if (cc.pattern.exists(pat => isContextAncestor(pat, ref, true))) {
+              //Don't trigger pattern type inference, when resolving references inside patterns.
+              //Avoids recursion related problems.
+              state
+            } else {
+              //@TODO: partial functions as well???
+              val subst = PatternTypeInference.doForMatchClause(m, cc)
+              val oldSubst = state.matchClauseSubstitutor
+              state.withMatchClauseSubstitutor(oldSubst.followed(subst))
+            }
           case _ => state
         }
 

@@ -10,9 +10,9 @@ import org.jetbrains.plugins.scala.lang.psi.api.statements.ScFunctionDefinition
 import org.jetbrains.plugins.scala.lang.psi.api.statements.params.TypeParamIdOwner
 import org.jetbrains.plugins.scala.lang.psi.api.toplevel.typedef.ScTemplateDefinition
 import org.jetbrains.plugins.scala.lang.psi.types._
-import org.jetbrains.plugins.scala.lang.psi.types.api.designator.ScThisType
 import org.jetbrains.plugins.scala.lang.psi.types.api._
-import org.jetbrains.plugins.scala.lang.psi.types.recursiveUpdate.AfterUpdate.{ProcessSubtypes, ReplaceWith, Stop}
+import org.jetbrains.plugins.scala.lang.psi.types.api.designator.ScThisType
+import org.jetbrains.plugins.scala.lang.psi.types.recursiveUpdate.AfterUpdate.{ReplaceWith, Stop}
 import org.jetbrains.plugins.scala.lang.psi.types.recursiveUpdate.ScSubstitutor
 import org.jetbrains.plugins.scala.lang.resolve.ScalaResolveResult
 import org.jetbrains.plugins.scala.lang.resolve.processor.ExpandedExtractorResolveProcessor
@@ -141,7 +141,7 @@ object PatternTypeInference {
     }
 
     pattern match {
-      case tuple: ScTuplePattern => doForTuplePattern(tuple, noTopLevelTypeVariables)
+      case tuple: ScTuplePattern      => doForTuplePattern(tuple, noTopLevelTypeVariables)
       case tuple: ScNamedTuplePattern => doForNamedTuplePattern(tuple, noTopLevelTypeVariables)
       case _ =>
         cachedInUserData(
@@ -406,12 +406,13 @@ object PatternTypeInference {
   }
 
   def doForMatchClause(m: ScMatch, cc: ScCaseClause): ScSubstitutor = {
-    (
+    val maybeSubst =
       for {
         scrutinee    <- m.expression
         scrutineeTpe <- scrutinee.`type`().toOption
         pattern      <- cc.pattern
       } yield PatternTypeInference.doTypeInference(pattern, scrutineeTpe)
-    ).getOrElse(ScSubstitutor.empty)
+
+    maybeSubst.getOrElse(ScSubstitutor.empty)
   }
 }
