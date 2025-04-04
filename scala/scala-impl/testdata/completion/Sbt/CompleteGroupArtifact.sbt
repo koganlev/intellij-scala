@@ -1,4 +1,4 @@
 libraryDependencies += "org.scalatest<caret>" % "" % ""
 /*
-org.scalatest:scalatest:Sbtzzz
+org.scalatest:scalatest
 */

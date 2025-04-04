@@ -1,6 +1,7 @@
 package org.jetbrains.sbt.lang.completion
 
 import com.intellij.testFramework.{EditorTestUtil, UsefulTestCase}
+import com.intellij.util.IdempotenceChecker
 import org.jetbrains.plugins.scala.extensions.PathExt
 import org.jetbrains.plugins.scala.lang.completion.FileTestDataCompletionTestBase
 import org.jetbrains.plugins.scala.util.RevertableChange
@@ -16,6 +17,12 @@ abstract class SbtFileTestDataCompletionTestBase extends FileTestDataCompletionT
   override protected lazy val extension = "sbt"
 
   override def folderPath: Path = super.folderPath / "Sbt"
+
+  override def setUp(): Unit = {
+    super.setUp()
+    // TODO: SCL-23749
+    IdempotenceChecker.disableRandomChecksUntil(getTestRootDisposable)
+  }
 
   override def doTest(): Unit = {
     // child tests contain too many completion items (more then default 500) which leads to nondeterministic test result
