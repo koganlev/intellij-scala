@@ -31,7 +31,7 @@ import org.jetbrains.plugins.scala.util.SAMUtil
 class MethodResolveProcessor(
   override val ref:           PsiElement,
   val refName:                String,
-  var argumentClauses:        List[Seq[Expression]],
+  val argumentClauses:        List[Seq[Expression]],
   val typeArgElements:        Seq[ScTypeElement],
   val prevTypeInfo:           Seq[TypeParameter],
   override val kinds:         Set[ResolveTargets.Value] = StdKinds.methodRef,
@@ -45,8 +45,7 @@ class MethodResolveProcessor(
   val nameArgForDynamic:      Option[String]            = None
 ) extends ResolveProcessor(kinds, ref, refName) {
 
-  def isDynamic: Boolean = nameArgForDynamic.nonEmpty
-
+  private def isDynamic: Boolean                 = nameArgForDynamic.nonEmpty
   private def useScala3OverloadingRules: Boolean = ref.isInScala3File
 
   override protected def execute(namedElement: PsiNamedElement)
@@ -176,8 +175,9 @@ object MethodResolveProcessor {
       case _                                              => Seq(element)
     }
 
-    val iterator = elementsForUndefining.iterator
-    var tempSubstitutor: ScSubstitutor = ScSubstitutor.empty
+    val iterator        = elementsForUndefining.iterator
+    var tempSubstitutor = ScSubstitutor.empty
+
     while (iterator.hasNext) {
       val element = iterator.next()
 
@@ -560,6 +560,7 @@ object MethodResolveProcessor {
         expandedInput,
         checkWithImplicits = false,
         useExpectedType    = true,
+        args               = proc.argumentClauses,
         shapesOnly         = true
       )
 
@@ -567,7 +568,7 @@ object MethodResolveProcessor {
     }
 
     val applicableToShape = mappedShapesOnly.filter {
-      case (srr, _) => srr.isApplicable(withExpectedType = true)
+      case (srr, _) => srr.isApplicable()
     }
 
     if (isShapeResolve) {
@@ -600,7 +601,8 @@ object MethodResolveProcessor {
       proc,
       preselected,
       checkWithImplicits = false,
-      useExpectedType    = useExpectedType
+      useExpectedType    = useExpectedType,
+      args               = proc.argumentClauses
     )
 
     var filtered = applicableResults(mapped)
@@ -613,7 +615,8 @@ object MethodResolveProcessor {
         proc,
         preselected,
         checkWithImplicits = true,
-        useExpectedType    = useExpectedType
+        useExpectedType    = useExpectedType,
+        args               = proc.argumentClauses
       )
 
       filtered = applicableResults(mapped)
@@ -633,25 +636,25 @@ object MethodResolveProcessor {
     ) {
       /**
        * If everything else failed, try auto-tupling
+       *
+       * @TODO: how should auto-tupling work in scala 3?
+       *        do we tuple all arg clauses if theres is more than one?
        */
       val argsTupled = ScalaPsiUtil.tupled(argumentClauses.head, ref)
 
       if (argsTupled.nonEmpty) {
-        val oldArgs     = argumentClauses
-        argumentClauses = argsTupled.toList
-
         val candsWithTupledArgs =
           checkResultsApplicability(
             proc,
             preselected,
             checkWithImplicits = true,
-            useExpectedType    = false
+            useExpectedType    = false,
+            args               = argsTupled.toList
           ).map { case (srr, _) =>
             srr.copy(tuplingUsed = true)
           }
 
-        filtered        = candsWithTupledArgs.filter(_.isApplicable())
-        argumentClauses = oldArgs
+        filtered = candsWithTupledArgs.filter(_.isApplicable())
       }
     }
 
@@ -788,9 +791,10 @@ object MethodResolveProcessor {
     expandedInput:      Set[(ScalaResolveResult, Boolean)],
     checkWithImplicits: Boolean,
     useExpectedType:    Boolean,
+    args:               List[Seq[Expression]],
     shapesOnly:         Boolean = false,
   ): Set[(ScalaResolveResult, Boolean)] = {
-    import proc._
+    import proc.{argumentClauses => _, _}
 
     val resultBuilder = Set.newBuilder[(ScalaResolveResult, Boolean)]
     val iterator      = expandedInput.iterator
@@ -807,7 +811,7 @@ object MethodResolveProcessor {
         cand,
         checkWithImplicits,
         ref,
-        argumentClauses,
+        args,
         actualTypeArgs,
         prevTypeInfo,
         if (useExpectedType) expectedOption else () => None,

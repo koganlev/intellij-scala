@@ -99,17 +99,18 @@ abstract class BaseProcessor(val kinds: Set[ResolveTargets.Value])
 
   //todo: fix this ugly performance improvement
   private var classKind = true
+
   def setClassKind(classKind: Boolean): Unit = {
     this.classKind = classKind
   }
-  def getClassKind: Boolean = {
+
+  def getClassKind: Boolean =
     classKind && getClassKindInner
-  }
-  def getClassKindInner: Boolean = {
+
+  def getClassKindInner: Boolean =
     (kinds contains ResolveTargets.CLASS) ||
       (kinds contains ResolveTargets.OBJECT) ||
       (kinds contains ResolveTargets.METHOD)
-  }
 
   //java compatibility
   private object MyElementClassHint extends ElementClassHint {

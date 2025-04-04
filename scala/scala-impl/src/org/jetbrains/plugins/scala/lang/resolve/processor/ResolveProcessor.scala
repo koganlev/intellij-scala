@@ -202,10 +202,10 @@ class ResolveProcessor(override val kinds: Set[ResolveTargets.Value],
     }
      */
     res.filter {
-      case r@ScalaResolveResult(_: ScTypeAlias | _: ScClass | _: ScTrait, _) =>
+      case r @ ScalaResolveResult(_: ScTypeAlias | _: ScClass | _: ScTrait, _) =>
         res.foldLeft(true) {
           case (false, _) => false
-          case (true, rr@ScalaResolveResult(_: ScTypeAlias | _: ScClass | _: ScTrait, _)) =>
+          case (true, rr @ ScalaResolveResult(_: ScTypeAlias | _: ScClass | _: ScTrait, _)) =>
             rr.element.name != r.element.name ||
               !ScalaPsiUtil.superTypeMembers(rr.element).contains(r.element)
           case (true, _) => true
