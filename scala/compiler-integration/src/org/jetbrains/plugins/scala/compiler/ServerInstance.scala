@@ -1,12 +1,10 @@
 package org.jetbrains.plugins.scala.compiler
 
-import com.intellij.openapi.project.Project
 import org.jetbrains.plugins.scala.compiler.data.IncrementalityType
 
 import java.nio.file.Path
 
 private final class ServerInstance(
-  val project: Project,
   val watcher: ProcessWatcher,
   val port: Int,
   val workingDir: Option[Path],
@@ -41,6 +39,7 @@ private final class ServerInstance(
       s", jdk: $jdk" +
       s", jvmParameters: ${jvmParameters.mkString(",")}" +
       s", jpsUseUnifiedIC: $jpsUseUnifiedIC" +
+      s", incrementalCompiler: $incrementalCompiler" +
       s", stopped: ${_stopped}" +
       s", running: $running" +
       s", errors: ${errorBuffer.toString}"

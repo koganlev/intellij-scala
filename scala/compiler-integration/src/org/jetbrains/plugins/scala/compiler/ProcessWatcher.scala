@@ -1,15 +1,16 @@
 package org.jetbrains.plugins.scala.compiler
 
 import com.intellij.execution.process._
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.Logger
-import com.intellij.openapi.project.Project
+import com.intellij.openapi.project.{Project, ProjectManager}
 import com.intellij.openapi.util.Key
 import com.intellij.util.io.BaseOutputReader
 import org.jetbrains.jps.incremental.scala.utils.CompileServerSharedMessages
 import org.jetbrains.plugins.scala.compiler.ProcessWatcher.Log
 import org.jetbrains.plugins.scala.extensions.invokeLater
 
-private final class ProcessWatcher(project: Project, process: Process, commandLine: String) {
+private final class ProcessWatcher(process: Process, commandLine: String) {
   private val processHandler = new OSProcessHandler(process, commandLine) {
     override def readerOptions(): BaseOutputReader.Options = BaseOutputReader.Options.BLOCKING
   }
@@ -61,8 +62,10 @@ private final class ProcessWatcher(project: Project, process: Process, commandLi
             if (text.contains(CompileServerSharedMessages.ProcessWasIdleFor)) {
               _terminatedByIdleTimeout = true
               invokeLater {
-                if (!project.isDisposed) {
-                  CompileServerManager(project).showStoppedByIdleTimoutNotification()
+                ProjectManager.getInstance().getOpenProjects.foreach { project =>
+                  if (!project.isDisposed) {
+                    CompileServerManager(project).showStoppedByIdleTimoutNotification()
+                  }
                 }
               }
             }
@@ -79,7 +82,7 @@ private final class ProcessWatcher(project: Project, process: Process, commandLi
       Log.warn(s"[$outputType] ${text.trim}")
       val filtered = text.linesIterator.mkString(System.lineSeparator())
       if (filtered.nonEmpty) {
-        project.getMessageBus.syncPublisher(CompileServerManager.ErrorTopic).onError(filtered)
+        ApplicationManager.getApplication.getMessageBus.syncPublisher(CompileServerManager.ErrorTopic).onError(filtered)
       }
     }
 

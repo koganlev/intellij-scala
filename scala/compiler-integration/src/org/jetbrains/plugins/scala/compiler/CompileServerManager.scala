@@ -50,7 +50,7 @@ final class CompileServerManager(project: Project) extends Disposable with Compi
   { // init
     if (!ApplicationManager.getApplication.isUnitTestMode) {
       configureWidget()
-      connection = project.getMessageBus.connect()
+      connection = ApplicationManager.getApplication.getMessageBus.connect()
       connection.subscribe(CompileServerManager.ServerStatusTopic, Widget)
       connection.subscribe(CompileServerManager.ErrorTopic, this)
     }
@@ -79,8 +79,6 @@ final class CompileServerManager(project: Project) extends Disposable with Compi
   private val NotificationGroupId = "Scala Compile Server"
 
   private def configureWidget(): Unit = {
-    if (ApplicationManager.getApplication.isUnitTestMode) return
-
     (applicable, installed) match {
       case (false, false) => // do nothing
       case (true, true) => // do nothing
@@ -113,7 +111,7 @@ final class CompileServerManager(project: Project) extends Disposable with Compi
     with Consumer[MouseEvent]
     with ServerStatusListener {
 
-    private var icon: Icon = IconStopped
+    private var icon: Icon = if (running) IconRunning else IconStopped
 
     override def ID = "Compile server"
 
@@ -183,9 +181,11 @@ final class CompileServerManager(project: Project) extends Disposable with Compi
 
   private val errorsBuffer: java.lang.StringBuilder = new java.lang.StringBuilder()
 
+  private val errorsBufferLock: AnyRef = new Object()
+
   private val showNotificationUpdate: Update = new Update(this) {
     override def run(): Unit = {
-      val text = synchronized {
+      val text = errorsBufferLock.synchronized {
         val text = errorsBuffer.toString
         errorsBuffer.setLength(0)
         text
@@ -196,7 +196,9 @@ final class CompileServerManager(project: Project) extends Disposable with Compi
   }
 
   override def onError(errorsText: String): Unit = {
-    synchronized(errorsBuffer.append(errorsText))
+    errorsBufferLock.synchronized {
+      errorsBuffer.append(errorsText)
+    }
     errorNotificationUpdateQueue.queue(showNotificationUpdate)
   }
 

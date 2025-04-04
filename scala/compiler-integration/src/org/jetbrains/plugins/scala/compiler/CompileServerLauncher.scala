@@ -247,9 +247,8 @@ object CompileServerLauncher {
               }
             }
 
-            val watcher = new ProcessWatcher(project, process, "scalaCompileServer")
+            val watcher = new ProcessWatcher(process, "scalaCompileServer")
             val instance = new ServerInstance(
-              project = project,
               watcher = watcher,
               port = freePort,
               workingDir = Option(builder.directory()).map(_.toPath),
@@ -260,9 +259,7 @@ object CompileServerLauncher {
             )
             LOG.assertTrue(serverInstance.isEmpty, "serverInstance is expected to be None")
             serverInstance = Some(instance)
-            // initialize the compile server manager service instance for the project which holds the widget state
-            CompileServerManager.init(project)
-            project.getMessageBus.syncPublisher(CompileServerManager.ServerStatusTopic).onServerStatus(true)
+            ApplicationManager.getApplication.getMessageBus.syncPublisher(CompileServerManager.ServerStatusTopic).onServerStatus(true)
             watcher.startNotify()
             watcher.addProcessListener(new ProcessListener {
               override def processTerminated(event: ProcessEvent): Unit = {
@@ -278,9 +275,7 @@ object CompileServerLauncher {
                 }
 
                 serverInstance = None
-                if (!project.isDisposed) {
-                  project.getMessageBus.syncPublisher(CompileServerManager.ServerStatusTopic).onServerStatus(false)
-                }
+                ApplicationManager.getApplication.getMessageBus.syncPublisher(CompileServerManager.ServerStatusTopic).onServerStatus(false)
               }
             })
             infoAndPrintOnTeamcity(s"compile server process started: ${instance.summary}")
@@ -564,21 +559,25 @@ object CompileServerLauncher {
    *
    * @note This method is blocking. It should not be called on the UI thread.
    */
-  def ensureServerRunning(project: Project): Boolean = serverStartLock.synchronized {
-    LOG.traceWithDebugInDev(s"ensureServerRunning [thread:${Thread.currentThread.getId}]")
-    if (project.isDisposed) {
-      LOG.warn(s"ensureServerRunning is invoked for a disposed project: $project")
-      return false
-    }
-    val reasons = restartReasons(project)
-    if (reasons.nonEmpty) {
-      val stopped = stopServerAndWait(debugReason = Some(s"needs to restart: ${reasons.mkString(", ")}"))
-      if (!stopped && isUnitTestMode) {
-        LOG.error("couldn't stop compile server")
+  def ensureServerRunning(project: Project): Boolean = {
+    // initialize the compile server manager service instance for the project which holds the widget state
+    CompileServerManager.init(project)
+    serverStartLock.synchronized {
+      LOG.traceWithDebugInDev(s"ensureServerRunning [thread:${Thread.currentThread.getId}]")
+      if (project.isDisposed) {
+        LOG.warn(s"ensureServerRunning is invoked for a disposed project: $project")
+        return false
       }
-    }
+      val reasons = restartReasons(project)
+      if (reasons.nonEmpty) {
+        val stopped = stopServerAndWait(debugReason = Some(s"needs to restart: ${reasons.mkString(", ")}"))
+        if (!stopped && isUnitTestMode) {
+          LOG.error("couldn't stop compile server")
+        }
+      }
 
-    running || start(project)
+      running || start(project)
+    }
   }
 
   private def restartReasons(project: Project): Seq[String] = {
@@ -595,12 +594,6 @@ object CompileServerLauncher {
       val jpsUseUnifiedICChanged = isJpsUseUnifiedIC != instance.jpsUseUnifiedIC
       val incrementalCompilerChanged = ScalaCompilerConfiguration(project).incrementalityType != instance.incrementalCompiler
       val reasons = mutable.ArrayBuffer.empty[String]
-      if (!isUnitTestMode && instance.project.isDisposed) {
-        // We intentionally reuse the compile server in worksheet tests. This check would
-        // otherwise stop and start the compile server before each test, since each test
-        // spawns a new instance (JVM object instance) of the same project on disk.
-        reasons += "running instance project disposed"
-      }
       if (workingDirChanged) reasons += "working dir changed"
       if (jdkChanged) reasons += "jdk changed"
       if (jvmParametersChanged) reasons += "jvm parameters changed"
