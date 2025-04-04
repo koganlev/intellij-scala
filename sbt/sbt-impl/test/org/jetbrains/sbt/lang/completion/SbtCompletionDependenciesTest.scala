@@ -17,12 +17,12 @@ class SbtCompletionDependenciesTest
   private val apiPackage = apiMavenPackage(GROUP_ID, "scalatest", versionsContainer("3.0.8", Some("3.0.8"),
     versions))
 
-
   def testCompleteVersion(): Unit = {
     DependencyUtil.updateMockVersionCompletionCache((GROUP_ID -> "scalatest") -> versions)
     doTest()
   }
 
+  @WithIndexingMode(mode = IndexingMode.SMART, reason = "Requires type resolution")
   def testCompleteGroupArtifact(): Unit = {
     PackageSearchClient.instance().updateByQueryCache(GROUP_ID, "", java.util.Arrays.asList(apiPackage))
     doTest()

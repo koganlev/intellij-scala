@@ -2,6 +2,8 @@ package org.jetbrains.plugins.scala.extensions
 
 import org.jetbrains.annotations.Nullable
 
+import scala.reflect.ClassTag
+
 /** This type is handy for working with possible null values.
   * It has no overhead of converting to Option, and allows to chain several nullable functions in a safe way
   * using `map` and `collect` methods.
@@ -61,6 +63,11 @@ final case class NullSafe[+A >: Null] private(@Nullable get: A) extends AnyVal {
                      (f: A => B): B =
     if (notNull) f(get)
     else ifEmpty
+
+  @inline def filterByType[T >: Null <: AnyRef : ClassTag]: NullSafe[T] = {
+    val clazz = implicitly[ClassTag[T]].runtimeClass
+    filter(clazz.isInstance).map(_.asInstanceOf[T])
+  }
 }
 
 object NullSafe {

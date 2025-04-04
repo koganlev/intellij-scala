@@ -2,289 +2,291 @@ package org.jetbrains.sbt.language.completion
 
 import com.intellij.codeInsight.completion._
 import com.intellij.codeInsight.completion.impl.RealPrefixMatchingWeigher
-import com.intellij.codeInsight.lookup.{LookupElement, LookupElementBuilder, LookupElementPresentation}
+import com.intellij.codeInsight.lookup.{LookupElement, LookupElementBuilder}
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.project.{DumbAware, Project}
+import com.intellij.openapi.editor.RangeMarker
+import com.intellij.openapi.project.DumbAware
+import com.intellij.openapi.util.TextRange
 import com.intellij.patterns.PlatformPatterns.psiElement
 import com.intellij.psi.PsiElement
 import com.intellij.util.ProcessingContext
-import org.apache.maven.artifact.versioning.ComparableVersion
-import org.jetbrains.plugins.scala.extensions.{ObjectExt, PsiElementExt, inReadAction, inWriteCommandAction}
+import org.jetbrains.packagesearch.api.v3.ApiMavenPackage
+import org.jetbrains.plugins.scala.LatestScalaVersions
+import org.jetbrains.plugins.scala.extensions.{&, ObjectExt, Parent, PsiClassExt, PsiElementExt, ToNullSafe}
 import org.jetbrains.plugins.scala.lang.completion._
+import org.jetbrains.plugins.scala.lang.psi.ScalaPsiUtil
 import org.jetbrains.plugins.scala.lang.psi.api.base.literals.ScStringLiteral
-import org.jetbrains.plugins.scala.lang.psi.api.expr.{ScArgumentExprList, ScInfixExpr, ScMethodCall, ScReferenceExpression}
-import org.jetbrains.plugins.scala.lang.psi.api.statements.ScPatternDefinition
+import org.jetbrains.plugins.scala.lang.psi.api.base.patterns.ScBindingPattern
+import org.jetbrains.plugins.scala.lang.psi.api.expr.{ScArgumentExprList, ScExpression, ScInfixExpr, ScMethodCall, ScReferenceExpression}
+import org.jetbrains.plugins.scala.lang.psi.api.statements.{ScFunctionDefinition, ScPatternDefinition}
+import org.jetbrains.plugins.scala.lang.psi.types.ScType
+import org.jetbrains.plugins.scala.lang.psi.types.api.ExtractClass
+import org.jetbrains.plugins.scala.lang.psi.types.result.Typeable
+import org.jetbrains.plugins.scala.packagesearch.codeInspection.DependencyVersionInspection.{ArtifactIdSuffix, DependencyDescriptor}
+import org.jetbrains.plugins.scala.packagesearch.lang.completion.DependencyVersionWeigher
+import org.jetbrains.plugins.scala.packagesearch.lang.completion.DependencyVersionWeigher.DependencyVersion
 import org.jetbrains.plugins.scala.packagesearch.util.DependencyUtil
-import org.jetbrains.sbt.language.utils.SbtDependencyUtils.GetMode.GetDep
+import org.jetbrains.sbt.language.completion.SbtMavenPackageSearchDependencyCompletionProvider._
 import org.jetbrains.sbt.language.utils._
 
-// TODO(SCL-19130, SCL-22206): refactor
-class SbtMavenPackageSearchDependencyCompletionContributor extends CompletionContributor with DumbAware {
+import scala.jdk.CollectionConverters.SeqHasAsJava
+import scala.util.chaining.scalaUtilChainingOps
 
+final class SbtMavenPackageSearchDependencyCompletionContributor extends CompletionContributor with DumbAware {
   private val PATTERN = (SbtPsiElementPatterns.sbtFilePattern || SbtPsiElementPatterns.scalaFilePattern) &&
-      psiElement.inside(SbtPsiElementPatterns.sbtModuleIdPattern)
+    psiElement.inside(SbtPsiElementPatterns.sbtModuleIdPattern)
 
-  private val RENDERING_PLACEHOLDER = "Sbtzzz"
-  private val JAVA_VERSION_FLAG = "java"
+  extend(CompletionType.BASIC, PATTERN, new SbtMavenPackageSearchDependencyCompletionProvider)
+}
 
-  extend(CompletionType.BASIC, PATTERN, new CompletionProvider[CompletionParameters] {
-    override def addCompletions(params: CompletionParameters, context: ProcessingContext, resultSet: CompletionResultSet): Unit = try {
-      resultSet.restartCompletionOnAnyPrefixChange()
+final class SbtMavenPackageSearchDependencyCompletionProvider extends CompletionProvider[CompletionParameters] {
+  override def addCompletions(parameters: CompletionParameters, context: ProcessingContext, resultSet: CompletionResultSet): Unit = {
+    val place = positionFromParameters(parameters)
+    resultSet.restartCompletionOnAnyPrefixChange()
+    doAddCompletions(place)(parameters, resultSet)
+  }
 
-      val place = positionFromParameters(params)
-      implicit val project: Project = place.getProject
+  private def doAddCompletions(positionFromParams: PsiElement)(implicit params: CompletionParameters, resultSet: CompletionResultSet): Unit = {
+    // replace the current element if there is any, otherwise insert text at the caret position
+    def defaultRangeMarkerToReplace: RangeMarker = {
+      val originalPositionParent = params.getOriginalPosition.nullSafe.map(_.getContext).get
 
-      val useCache: Boolean = !params.isExtendedCompletion || ApplicationManager.getApplication.isUnitTestMode
-      val stableVersionOnly: Boolean = !params.isExtendedCompletion
+      val range =
+        if (originalPositionParent == null || trimDummyText(positionFromParams.getText).isEmpty) {
+          TextRange.EMPTY_RANGE.shiftRight(params.getOffset)
+        } else originalPositionParent.getTextRange
 
-      val depLookUp = collection.mutable.Map[String, Boolean]()
-      var versions = Map[ComparableVersion, List[String]]()
-
-      def generateCompletedDependency(dep: String): List[String] = {
-        var depList: List[String] = dep.split(':').toList
-        if (depList.length == 2) depList = List.concat(depList, List(""))
-        depList
+      params.getEditor.getDocument.createRangeMarker(range).tap { marker =>
+        marker.setGreedyToLeft(true)
+        marker.setGreedyToRight(true)
       }
-
-      def addArtifactResult(result: String, fillArtifact: Boolean, resultSet: CompletionResultSet): Unit = {
-        val depList: List[String] = generateCompletedDependency(result)
-        val artifactText = SbtDependencyUtils.generateArtifactText(SbtArtifactInfo(depList(0), depList(1), depList(2), SbtDependencyCommon.defaultLibScope))
-        val partialArtifactText = artifactText.split("%").filter(_.nonEmpty).map(_.trim).slice(1, artifactText.length).mkString(" % ")
-        if (!(depLookUp contains artifactText)) {
-          resultSet.addElement(LookupElementBuilder.create(result + RENDERING_PLACEHOLDER)
-            .withRenderer { (_, presentation) =>
-              val itemText = if (fillArtifact) partialArtifactText else artifactText
-              presentation.setItemText(itemText)
-              presentation.setItemTextBold(true)
-            }
-            .withInsertHandler { (context, item) =>
-              val artifactExpr = SbtDependencyUtils.generateArtifactPsiExpression(
-                SbtArtifactInfo(depList(0), depList(1), depList(2), SbtDependencyCommon.defaultLibScope),
-                context.getFile
-              )
-              val caretModel = context.getEditor.getCaretModel
-
-              val psiElement = context.getFile.findElementAt(context.getStartOffset)
-
-              var parentElemToChange = psiElement.getContext
-
-              parentElemToChange match {
-                case ref: ScReferenceExpression =>
-                  // inserted outside of the string literal
-                  // replace inserted lookupString with placeholder and proceed
-
-                  val startOffset = ref.startOffset
-                  inWriteCommandAction {
-                    context.getDocument.replaceString(startOffset, startOffset + item.getLookupString.length, RENDERING_PLACEHOLDER)
-                  }
-                  context.commitDocument()
-                  parentElemToChange = context.getFile.findElementAt(startOffset)
-                  parentElemToChange = parentElemToChange.getParent
-                case _ =>
-              }
-
-              while (parentElemToChange.getParent.is[ScInfixExpr] &&
-                MODULE_ID_OPS.contains(parentElemToChange.getParent.asInstanceOf[ScInfixExpr].operation.refName)
-              ) {
-                parentElemToChange = parentElemToChange.getParent
-              }
-              parentElemToChange = parentElemToChange.getParent
-
-              inWriteCommandAction {
-                parentElemToChange match {
-                  case exprList: ScArgumentExprList =>
-                    exprList.exprs.foreach { expr =>
-                      if (expr.getText.contains(RENDERING_PLACEHOLDER)) {
-                        val offset = expr.getTextOffset
-                        expr.replace(artifactExpr)
-                        caretModel.moveToOffset(offset + artifactExpr.getTextLength - 1)
-                      }
-                    }
-                  case patDef: ScPatternDefinition =>
-                    patDef.expr.get.replace(artifactExpr)
-                    caretModel.moveToOffset(patDef.getTextOffset + patDef.getTextLength - 1)
-                  case infix: ScInfixExpr =>
-                    infix.right.replace(artifactExpr)
-                    caretModel.moveToOffset(infix.getTextOffset + infix.getTextLength - 1)
-                  case _ =>
-                }
-              }
-              context.commitDocument()
-            })
-          depLookUp += (artifactText -> true)
-        }
-      }
-
-      def completeDependencies(groupIdText: String, artifactIdText: String, resultSet: CompletionResultSet, fillArtifact: Boolean): Unit = {
-        val groupId = formatString(groupIdText)
-        val artifactId = formatString(artifactIdText)
-        val packages = DependencyUtil.getArtifacts(groupId, artifactId, useCache, exactMatchGroupId = fillArtifact)
-
-        packages.foreach { pkg =>
-          addArtifactResult(s"${pkg.getGroupId}:${pkg.getArtifactId}:", fillArtifact, resultSet)
-        }
-        resultSet.stopHere()
-      }
-
-      def generateVersionLookupElement(version: ComparableVersion, tailText: String, weigh: Int = 0): LookupElement = {
-        PrioritizedLookupElement.withPriority(new LookupElement {
-          override def getLookupString: String = version.toString
-
-          override def renderElement(presentation: LookupElementPresentation): Unit = {
-            presentation.setItemText(version.toString)
-            if (DependencyUtil.isStable(version.toString)) presentation.setItemTextBold(true)
-            presentation.setTailText(" ")
-            presentation.appendTailTextItalic(tailText, true)
-          }
-        }, weigh)
-      }
-
-      def addVersionResult(version: ComparableVersion, tailText: String, resultSet: CompletionResultSet): Unit = {
-        resultSet.addElement(generateVersionLookupElement(version, tailText))
-      }
-
-      def fillInVersions(groupId: String, artifactId: String, scalaVer: String): Unit = {
-        val artifactVersions = DependencyUtil.getArtifactVersions(groupId, artifactId, stableVersionOnly)
-        artifactVersions.foreach { version =>
-          versions = versions + (version -> ((if (scalaVer != null) scalaVer else JAVA_VERSION_FLAG) :: versions.getOrElse(version, Nil)))
-        }
-      }
-
-      def completeVersions(resultSet: CompletionResultSet): Unit = {
-        versions.foreach { case (version, scalaVersions) =>
-          if (scalaVersions.head == JAVA_VERSION_FLAG) {
-            addVersionResult(version, "", resultSet)
-          } else {
-            addVersionResult(version, s"(${scalaVersions.mkString(", ")})", resultSet)
-          }
-        }
-        resultSet.stopHere()
-      }
-
-      def trimDummy(text: String) = text.replaceAll(CompletionInitializationContext.DUMMY_IDENTIFIER_TRIMMED, "").replaceAll("\"", "")
-      val cleanText = trimDummy(place.getText)
-
-      var extractedContents: List[Any] = List()
-      def callback(psiElement: PsiElement): Boolean = {
-        psiElement match {
-          case stringLiteral: ScStringLiteral =>
-            extractedContents = stringLiteral.getText :: extractedContents
-            return false
-          case _ =>
-        }
-        true
-      }
-
-      place.parentOfType(classOf[ScInfixExpr], strict = false).foreach(expr => {
-        if (MODULE_ID_OPS.contains(expr.operation.refName)) {
-          expr.getText.split('%').map(_.trim).count(_.nonEmpty) - 1 match {
-            case 1 if !(expr.right.is[ScReferenceExpression] &&
-              expr.right.`type`().getOrAny.canonicalText.equals(SBT_LIB_CONFIGURATION)) =>
-              if (expr.left.textMatches(place.getText)) {
-                completeDependencies(cleanText, "", resultSet, fillArtifact = false)
-                return
-              }
-              else if (expr.right.textMatches(place.getText)) {
-                expr.left match {
-                  case s: ScStringLiteral =>
-                    extractedContents = s.getText :: extractedContents
-                  case ref: ScReferenceExpression =>
-                    inReadAction(SbtDependencyTraverser.traverseReferenceExpr(ref)(callback))
-                }
-                val groupId = extractedContents(0).asInstanceOf[String]
-                val fillArtifact = trimDummy(groupId).nonEmpty
-
-                completeDependencies(groupId, cleanText, resultSet, fillArtifact)
-                return
-              }
-            case x if x > 1 => inReadAction {
-              val deps = SbtDependencyUtils.getLibraryDependenciesOrPlacesFromPsi(expr, mode = GetDep)
-              if (deps.nonEmpty) {
-                val libDepExprTuple = deps.head.asInstanceOf[(ScInfixExpr, String, ScInfixExpr)]
-                extractedContents = SbtDependencyUtils.processLibraryDependencyFromExprAndString(libDepExprTuple)
-                val dep = extractedContents.map(str => trimDummy(str.asInstanceOf[String]))
-                if (dep.length >= 3) {
-                  val groupId = extractedContents(0).asInstanceOf[String]
-                  val artifactId = s"${extractedContents(1).asInstanceOf[String]}"
-                  if (groupId == null || groupId.isEmpty || artifactId == null || artifactId.isEmpty) return
-
-                  val newResultSet = resultSet.withRelevanceSorter(CompletionSorter.emptySorter().weigh(new RealPrefixMatchingWeigher).weigh(SbtDependencyVersionWeigher))
-
-                  val isScalaLib = SbtDependencyUtils.isScalaLibraryDependency(libDepExprTuple._1)
-                  if (!isScalaLib) {
-                    fillInVersions(groupId, artifactId, null)
-                  } else {
-                    val scalaVers = if (SbtDependencyUtils.SCALA_DEPENDENCIES_WITH_MINOR_SCALA_VERSION_LIST contains s"$groupId:$artifactId")
-                      SbtDependencyUtils.getAllScalaVersionsOrDefault(place) else
-                      SbtDependencyUtils.getAllScalaVersionsOrDefault(place, majorOnly = true)
-                    scalaVers.foreach(scalaVer => fillInVersions(groupId, SbtDependencyUtils.buildScalaArtifactIdString(groupId, artifactId, scalaVer), scalaVer))
-                  }
-
-                  completeVersions(newResultSet)
-                  return
-                }
-              }
-            }
-            case _ =>
-          }
-        }
-        else if (expr.left.textMatches("libraryDependencies")) {
-          expr.operation.refName match {
-            case "+=" =>
-              completeDependencies(cleanText, "", resultSet, fillArtifact = false)
-              return
-
-            /*
-              e.g. libraryDependencies ++= Seq("")
-             */
-            case "++=" =>
-              expr.right match {
-                case seq: ScMethodCall if seq.deepestInvokedExpr.textMatches(SbtDependencyUtils.SEQ) =>
-                  seq.args.exprs.foreach { expr =>
-                    if (trimDummy(expr.getText) == cleanText) {
-                      completeDependencies(cleanText, "", resultSet, fillArtifact = false)
-                      return
-                    }
-                  }
-              }
-            case _ =>
-          }
-        }
-      })
-
-      if (place.getContext != null && place.getContext.getContext != null) {
-        val superContext = place.getContext.getContext
-        superContext match {
-          /*
-            e.g. val scalariformTest: ModuleID = ""
-           */
-          case patDef: ScPatternDefinition if SBT_MODULE_ID_TYPE.contains(patDef.`type`().getOrAny.canonicalText) =>
-            val lastLeaf = patDef.lastLeaf
-            if (trimDummy(lastLeaf.getText) == cleanText) {
-              completeDependencies(cleanText, "", resultSet, fillArtifact = false)
-              return
-            }
-          /*
-            e.g. val seqModuleIdList: Seq[ModuleID] = Seq(...)
-           */
-          case argList: ScArgumentExprList =>
-            argList.getContext.getContext match {
-              case patDef: ScPatternDefinition if SBT_MODULE_ID_TYPE.exists(patDef.`type`().getOrAny.canonicalText.contains) =>
-                argList.exprs.foreach(expr => {
-                  if (trimDummy(expr.getText) == cleanText) {
-                    completeDependencies(cleanText, "", resultSet, fillArtifact = false)
-                    return
-                  }
-                })
-              case _ =>
-            }
-          case _ =>
-        }
-      }
-    } catch {
-      case _: Exception =>
     }
-  })
 
-  private def formatString(str: String) = str.replaceAll("^\"+|\"+$", "")
+    positionFromParams.nullSafe.map(_.getContext)
+      .filterByType[ScExpression]
+      .filter(_.is[ScReferenceExpression, ScStringLiteral])
+      .foreach { implicit parent =>
+        parent.getContext match {
+          case infix: ScInfixExpr =>
+            infix match {
+              // 1. libraryDependencies += ref<caret>
+              case ScInfixExpr(ScReferenceExpression.refName(LibraryDependencies), ScReferenceExpression.refName("+="), `parent`) =>
+                completeGroupId(defaultRangeMarkerToReplace)
+              // 2. ref<caret> %% [...] // org
+              case ScInfixExpr(`parent`, ScReferenceExpression.refName("%%" | "%"), _) =>
+                val isOrgArtifact = hasSuitableType(infix, OrgArtifactFqn)
+                if (isOrgArtifact) {
+                  // replace the whole infix expression along with the artifactId but keep the version if it exists
+                  val range = infix.getTextRange.grown(-CompletionInitializationContext.DUMMY_IDENTIFIER_TRIMMED.length)
+                  val marker = params.getEditor.getDocument.createRangeMarker(range)
+                  marker.setGreedyToRight(true)
+                  completeGroupId(marker, withVersion = needsEmptyVersion(infix))
+                }
+              // 3. [...] %% ref<caret> // artifact
+              case ScInfixExpr(lhs, ScReferenceExpression.refName("%%"), `parent`) =>
+                getArtifactPart(lhs).foreach { groupId =>
+                  completeArtifactId(groupId, infix, defaultRangeMarkerToReplace)
+                }
+              // 4. [...] % ref<caret> // artifact or version
+              case ScInfixExpr(lhs, ScReferenceExpression.refName("%"), `parent`) =>
+                getArtifactPart(lhs) match {
+                  case Some(groupId) =>
+                    completeArtifactId(groupId, infix, defaultRangeMarkerToReplace)
+                  case None =>
+                    lhs match {
+                      case ref: ScReferenceExpression =>
+                        // if DependencyBuilders.OrganizationArtifactName -> complete version, otherwise ignore
+                        ref match {
+                          case ReferenceResolvableToValOrDef((_, expr)) if hasSuitableType(expr, OrgArtifactFqn) =>
+                            expr match {
+                              case infix@ScInfixExpr(_, ScReferenceExpression.refName("%" | "%%"), _) =>
+                                completeVersion(infix, defaultRangeMarkerToReplace)
+                              case _ => // ignore
+                            }
+                          case _ => // ignore
+                        }
+                      case infix@ScInfixExpr(_, ScReferenceExpression.refName("%" | "%%"), _) =>
+                        completeVersion(infix, defaultRangeMarkerToReplace)
+                      case _ => // ignore
+                    }
+                }
+              case _ => // ignore
+            }
+          case (_: ScArgumentExprList) &
+            Parent((call: ScMethodCall) &
+              Parent(ScInfixExpr(ScReferenceExpression.refName(LibraryDependencies), ScReferenceExpression.refName("++="), rhs)))
+            if rhs == call && org.jetbrains.plugins.scala.codeInspection.collections.isSeq(call) =>
+            // complete dependencies (e.g.: `libraryDependencies ++= Seq(ref<caret>)`)
+            completeGroupId(defaultRangeMarkerToReplace)
+          case _ if hasSuitableExpectedType(parent, ModuleIdFqn) =>
+            // complete dependencies (e.g.: `val dep: ModuleID = ref<caret>`)
+            // complete dependencies (e.g.: `val deps: Seq[ModuleID] = Seq(ref<caret>)`)
+            completeGroupId(defaultRangeMarkerToReplace)
+          case _ => // ignore
+        }
+      }
+  }
+
+  private def extractText(expr: ScExpression, trimDummy: Boolean = false)
+                         (implicit params: CompletionParameters): Option[String] = {
+    def doExtract(rawText: String, textOffset: Int): String = if (trimDummy) {
+      val cleanText = trimDummyText(rawText)
+      // extract only prefix before the caret
+      // e.g.: `"""com.exa<caret>mple"""` -> `com.exa`
+      //        ^  ^
+      //        |  |_ textOffset
+      //        |_ expr.startOffset
+      cleanText.slice(0, params.getOffset - textOffset)
+    } else rawText
+
+    expr match {
+      case ref: ScReferenceExpression =>
+        Some(doExtract(ref.refName, ref.startOffset))
+      case str: ScStringLiteral =>
+        Some(doExtract(str.getValue, str.contentRange.getStartOffset))
+      case _ => None
+    }
+  }
+
+  private def getArtifactPart(expr: ScExpression)(implicit params: CompletionParameters): Option[String] = expr match {
+    case str: ScStringLiteral => extractText(str)
+    case ReferenceResolvableToValOrDef((_, str: ScStringLiteral)) => extractText(str)
+    case _ => None
+  }
+
+  private def getArtifacts(groupId: String, artifactId: String, exactMatchGroupId: Boolean)
+                          (implicit params: CompletionParameters): Seq[ApiMavenPackage] = {
+    val useCache = !params.isExtendedCompletion || ApplicationManager.getApplication.isUnitTestMode
+    val packages = DependencyUtil.getArtifacts(groupId, artifactId, useCache, exactMatchGroupId)
+    packages
+  }
+
+  private def needsEmptyVersion(infix: ScInfixExpr): Boolean = infix.getContext match {
+    case ScInfixExpr(`infix`, ScReferenceExpression.refName("%"), _) => false // probably already has a version
+    case _ => true
+  }
+
+  private def completeGroupId(marker: RangeMarker, withVersion: Boolean = true)
+                             (implicit params: CompletionParameters, resultSet: CompletionResultSet, place: ScExpression): Unit =
+    extractText(place, trimDummy = true).foreach { groupIdQuery =>
+      val packages = getArtifacts(groupIdQuery, artifactId = "", exactMatchGroupId = false)
+      val lookupElements = packages.map(toLookupElement(_, marker, withGroupId = true, addEmptyVersion = withVersion))
+        .distinctBy(_.getLookupString)
+      addAllAndStopIfInsideString(lookupElements)
+    }
+
+  private def completeArtifactId(groupId: String, infix: ScInfixExpr, marker: RangeMarker)
+                                (implicit params: CompletionParameters, resultSet: CompletionResultSet, place: ScExpression): Unit =
+    extractText(place, trimDummy = true).foreach { artifactIdQuery =>
+      val withVersion = needsEmptyVersion(infix)
+      val lookupElements = getArtifacts(groupId, artifactIdQuery, exactMatchGroupId = true)
+        .map(toLookupElement(_, marker, withGroupId = false, addEmptyVersion = withVersion))
+        .distinctBy(_.getLookupString)
+      addAllAndStopIfInsideString(lookupElements)
+    }
+
+  private def completeVersion(infix: ScInfixExpr, marker: RangeMarker)
+                             (implicit params: CompletionParameters, resultSet: CompletionResultSet, place: ScExpression): Unit =
+    getArtifactPart(infix.left).foreach { groupId =>
+      getArtifactPart(infix.right).foreach { artifactId =>
+        val artifactIdSuffix = infix.operation.refName match {
+          case "%%" if SbtDependencyUtils.SCALA_DEPENDENCIES_WITH_MINOR_SCALA_VERSION_LIST.contains(s"$groupId:$artifactId") =>
+            ArtifactIdSuffix.FullScalaVersion
+          case "%%" => ArtifactIdSuffix.ScalaVersion
+          case _ => ArtifactIdSuffix.Empty
+        }
+
+        val descriptor = DependencyDescriptor(groupId = groupId, artifactId = artifactId, version = None, artifactIdSuffix = artifactIdSuffix)
+        val versions = DependencyUtil.getDependencyVersions(descriptor, context = infix.operation, onlyStable = !params.isExtendedCompletion)
+        val lookupElements = versions.map { version =>
+          val presentableText = s"\"$version\""
+          LookupElementBuilder.create(DependencyVersion(version), version.toString)
+            .withInsertHandler { (context, _) =>
+              context.getDocument.replaceString(marker.getStartOffset, marker.getEndOffset, presentableText)
+              // move the caret before the closing quote in the version string
+              context.getEditor.getCaretModel.moveToOffset(marker.getStartOffset + presentableText.length - 1)
+            }
+        }
+
+        val sorter = CompletionSorter.emptySorter()
+          .weigh(new RealPrefixMatchingWeigher)
+          .weigh(DependencyVersionWeigher)
+        addAllAndStopIfInsideString(lookupElements)(resultSet.withRelevanceSorter(sorter), place)
+      }
+    }
+}
+
+object SbtMavenPackageSearchDependencyCompletionProvider {
+  private val LibraryDependencies = "libraryDependencies"
+  private val ModuleIdFqn = "sbt.librarymanagement.ModuleID"
+  private val OrgArtifactFqn = "sbt.librarymanagement.DependencyBuilders.OrganizationArtifactName"
+
+  private def trimDummyText(text: String) = text.replaceAll(CompletionInitializationContext.DUMMY_IDENTIFIER_TRIMMED, "")
+
+  private def addAllAndStopIfInsideString(elements: Seq[LookupElement])
+                                         (implicit resultSet: CompletionResultSet, place: ScExpression): Unit = {
+    resultSet.addAllElements(elements.asJava)
+    if (place.is[ScStringLiteral]) {
+      resultSet.stopHere()
+    }
+  }
+
+  private[this] val CrossPublishedArtifact = "^(.+)_(\\d+.*)$".r
+  private[this] val Scala2MajorVersions = LatestScalaVersions.allScala2.map(_.major)
+  private[this] val ScalaMajorVersions = Scala2MajorVersions :+ "3"
+
+  private def toLookupElement(pkg: ApiMavenPackage, marker: RangeMarker, withGroupId: Boolean, addEmptyVersion: Boolean): LookupElement = {
+    val groupId = pkg.getGroupId
+    val (delimiterLen, artifactId) = pkg.getArtifactId match {
+      case CrossPublishedArtifact(artifactId, version) if ScalaMajorVersions.contains(version) =>
+        (2, artifactId)
+      case id => (1, id)
+    }
+    val lookupString = s"$groupId${":" * delimiterLen}$artifactId"
+    val presentableText = {
+      val groupIdPrefix = if (withGroupId) s"\"$groupId\" ${"%" * delimiterLen} " else ""
+      val presentableArtifactText = s"\"$artifactId\""
+      val versionSuffix = if (addEmptyVersion) " % \"\"" else ""
+      groupIdPrefix + presentableArtifactText + versionSuffix
+    }
+
+    LookupElementBuilder.create(lookupString)
+      .withRenderer { (_, presentation) =>
+        presentation.setItemText(presentableText)
+        presentation.setItemTextBold(true)
+      }
+      .withInsertHandler { (context, _) =>
+        context.getDocument.replaceString(marker.getStartOffset, marker.getEndOffset, presentableText)
+        // move the caret before the closing quote in the artifactId/version string
+        context.getEditor.getCaretModel.moveToOffset(marker.getStartOffset + presentableText.length - 1)
+        if (addEmptyVersion) {
+          context.scheduleAutoPopup()
+        }
+      }
+  }
+
+  private object ReferenceResolvableToValOrDef {
+    def unapply(expr: ScExpression): Option[(ScReferenceExpression, ScExpression)] = expr match {
+      case ref@ScReferenceExpression((_: ScBindingPattern) & ScalaPsiUtil.inNameContext(ScPatternDefinition.expr(expr))) =>
+        Some((ref, expr))
+      case ref@ScReferenceExpression(ScFunctionDefinition.withBody(expr)) =>
+        Some((ref, expr))
+      case _ => None
+    }
+  }
+
+  private def hasSuitableExpectedType(expr: ScExpression, fqns: String*): Boolean =
+    isSameOrInheritor(expr, fqns: _*)(_.expectedType())
+
+  private def hasSuitableType(e: Typeable with PsiElement, fqns: String*): Boolean =
+    isSameOrInheritor(e, fqns: _*)(_.`type`().toOption)
+
+  private def isSameOrInheritor[E <: PsiElement](element: E, fqns: String*)(getType: E => Option[ScType]): Boolean =
+    getType(element).exists {
+      case ExtractClass(cls) =>
+        val elementScope = element.elementScope
+        fqns.flatMap(elementScope.getCachedClass)
+          .exists(cls.sameOrInheritor)
+      case _ => false
+    }
 }
