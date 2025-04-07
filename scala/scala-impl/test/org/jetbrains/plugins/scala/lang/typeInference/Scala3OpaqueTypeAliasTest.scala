@@ -529,28 +529,54 @@ class Scala3OpaqueTypeAliasTest extends ScalaLightCodeInsightFixtureTestCase {
     )
   }
 
-  def testCachingEquivalence(): Unit = {
+  def testCachingEquivalence1(): Unit = {
     checkHasErrorAroundCaret(
       s"""
          |class Foo
          |object Inside:
          |  opaque type T = Foo
-         |  val x: Foo = ??? : T
+         |  val x: Foo = ??? : Inside.T
          |object Outside:
          |  val y: Foo = ??? : ${CARET}Inside.T
          |""".stripMargin
     )
   }
 
-  def testCachingConformance(): Unit = {
+  def testCachingEquivalence2(): Unit = {
+    checkHasErrorAroundCaret(
+      s"""
+         |class Foo
+         |object Outside:
+         |  val y: Foo = ??? : ${CARET}Inside.T
+         |object Inside:
+         |  opaque type T = Foo
+         |  val x: Foo = ??? : Inside.T
+         |""".stripMargin
+    )
+  }
+
+  def testCachingConformance1(): Unit = {
     checkHasErrorAroundCaret(
       s"""
          |class Foo; class Bar extends Foo
          |object Inside:
          |  opaque type T = Bar
-         |  val x: Foo = ??? : T
+         |  val x: Foo = ??? : Inside.T
          |object Outside:
          |  val y: Foo = ??? : ${CARET}Inside.T
+         |""".stripMargin
+    )
+  }
+
+  def testCachingConformance2(): Unit = {
+    checkHasErrorAroundCaret(
+      s"""
+         |class Foo; class Bar extends Foo
+         |object Outside:
+         |  val y: Foo = ??? : ${CARET}Inside.T
+         |object Inside:
+         |  opaque type T = Bar
+         |  val x: Foo = ??? : Inside.T
          |""".stripMargin
     )
   }

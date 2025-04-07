@@ -3,30 +3,30 @@ package org.jetbrains.plugins.scala.lang.psi.types
 import com.intellij.openapi.progress.ProgressManager
 import org.jetbrains.annotations.Nls
 import org.jetbrains.plugins.scala.extensions.ifReadAllowed
-import org.jetbrains.plugins.scala.lang.psi.api.statements.ScTypeAlias
-import org.jetbrains.plugins.scala.lang.psi.types.Context.TrackingContext
-import org.jetbrains.plugins.scala.lang.psi.types.api.presentation.TypePresentation.PresentationOptions
+import org.jetbrains.plugins.scala.lang.psi.types.Context.{Location, TrackingContext}
 import org.jetbrains.plugins.scala.lang.psi.types.api.presentation.NameRenderer
+import org.jetbrains.plugins.scala.lang.psi.types.api.presentation.TypePresentation.PresentationOptions
 import org.jetbrains.plugins.scala.project.ProjectContextOwner
 import org.jetbrains.plugins.scala.settings.ScalaApplicationSettings.{getInstance => ScalaApplicationSettings}
 
+import scala.collection.immutable.SeqMap
 import scala.language.implicitConversions
 
 trait ScType extends ProjectContextOwner {
 
   def typeSystem: api.TypeSystem = projectContext.typeSystem
 
-  private var cachedAliasTypes = Seq.empty[(Map[ScTypeAlias, Boolean], Option[AliasType])]
+  private var cachedAliasTypes = SeqMap.empty[Location, Option[AliasType]]
 
   final def aliasType(implicit context: Context): Option[AliasType] = {
     val cachedAliasType = cachedAliasTypes.collectFirst {
-      case (location, aliasType) if location.forall { case (alias, isInScope) => context.isInScopeOf(alias) == isInScope } => aliasType
+      case (location, aliasType) if location.forall { case (opaqueTypeAlias, isInScope) => context.isInScopeOf(opaqueTypeAlias) == isInScope } => aliasType
     }
     cachedAliasType.getOrElse {
       ProgressManager.checkCanceled()
       val ctx = new TrackingContext()
       val aliasType = calculateAliasType(ctx)
-      cachedAliasTypes +:= (ctx.locations, aliasType)
+      cachedAliasTypes += ctx.usedOpaqueTypeAliases -> aliasType
       aliasType
     }
   }
