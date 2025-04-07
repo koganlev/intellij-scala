@@ -3,6 +3,8 @@ package org.jetbrains.plugins.scala.lang.psi.types
 import com.intellij.openapi.progress.ProgressManager
 import org.jetbrains.annotations.Nls
 import org.jetbrains.plugins.scala.extensions.ifReadAllowed
+import org.jetbrains.plugins.scala.lang.psi.api.statements.ScTypeAlias
+import org.jetbrains.plugins.scala.lang.psi.types.Context.TrackingContext
 import org.jetbrains.plugins.scala.lang.psi.types.api.presentation.TypePresentation.PresentationOptions
 import org.jetbrains.plugins.scala.lang.psi.types.api.presentation.NameRenderer
 import org.jetbrains.plugins.scala.project.ProjectContextOwner
@@ -14,17 +16,22 @@ trait ScType extends ProjectContextOwner {
 
   def typeSystem: api.TypeSystem = projectContext.typeSystem
 
-  private var aliasTypeInner: Option[AliasType] = _
+  private var cachedAliasTypes = Seq.empty[(Map[ScTypeAlias, Boolean], Option[AliasType])]
 
-  final def aliasType: Option[AliasType] = {
-    if (aliasTypeInner == null) {
-      ProgressManager.checkCanceled()
-      aliasTypeInner = calculateAliasType
+  final def aliasType(implicit context: Context): Option[AliasType] = {
+    val cachedAliasType = cachedAliasTypes.collectFirst {
+      case (location, aliasType) if location.forall { case (alias, isInScope) => context.isInScopeOf(alias) == isInScope } => aliasType
     }
-    aliasTypeInner
+    cachedAliasType.getOrElse {
+      ProgressManager.checkCanceled()
+      val ctx = new TrackingContext()
+      val aliasType = calculateAliasType(ctx)
+      cachedAliasTypes +:= (ctx.locations, aliasType)
+      aliasType
+    }
   }
 
-  final def isAliasType: Boolean = aliasType.isDefined
+  final def isAliasType(implicit context: Context): Boolean = aliasType.isDefined
 
   private var unpacked: ScType = _
 
@@ -36,7 +43,7 @@ trait ScType extends ProjectContextOwner {
     unpacked
   }
 
-  protected def calculateAliasType: Option[AliasType] = None
+  protected def calculateAliasType(implicit context: Context): Option[AliasType] = None
 
   // TODO: we must not override toString which does such a complex stuff (resolve, tree traversal etc...)
   //  for such things we should always use explicit methods oText/mkString/presentableText/etc...
@@ -56,7 +63,7 @@ trait ScType extends ProjectContextOwner {
     case ex                                                                => ex
   }
 
-  def equivInner(r: ScType, constraints: ConstraintSystem, falseUndef: Boolean): ConstraintsResult = {
+  def equivInner(r: ScType, constraints: ConstraintSystem, falseUndef: Boolean)(implicit context: Context): ConstraintsResult = {
     ConstraintsResult.Left
   }
 
