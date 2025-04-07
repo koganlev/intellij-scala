@@ -8,6 +8,8 @@ final class ScalaDocumentationProviderTest_ScalaDocContent extends ScalaDocument
   with ScalaDocumentationsBodySectionTesting
   with ScalaDocumentationsScalaDocContentTesting {
 
+  override protected def includeScalaLibrarySources: Boolean = true
+
   def testMethod(): Unit =
     doGenerateDocBodyTestWithoutContainerInfo(
       s"""class A {

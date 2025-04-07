@@ -14,7 +14,8 @@ class ScalaLibraryHighlightingTest_3 extends ScalaLibraryHighlightingTest {
    * Scala 2.13 library is tested independently in [[ScalaLibraryHighlightingTest_2_13]]
    */
   override protected def customScalaSdkLoader: ScalaSDKLoader = super.customScalaSdkLoader.copy(
-    includeScalaLibraryTransitiveDependencies = false
+    includeScalaLibraryTransitiveDependencies = false,
+    includeScalaLibrarySources = true
   )
 
   override protected val filesWithProblems: Map[String, Set[TextRange]] = Map()

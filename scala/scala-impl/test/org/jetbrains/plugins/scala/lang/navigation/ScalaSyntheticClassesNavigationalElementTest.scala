@@ -22,6 +22,8 @@ class ScalaSyntheticClassesNavigationalElementTest extends ScalaLightCodeInsight
 
   override protected def supportedIn(version: ScalaVersion): Boolean = version == ScalaVersion.Latest.Scala_3_5
 
+  override protected def includeScalaLibrarySources: Boolean = true
+
   protected def assertNavigationElementPointsToSources(elements: Seq[PsiElement]): Unit = {
     val fileToElements = elements.groupBy(_.getContainingFile.asInstanceOf[ScalaFile]).toSeq.sortBy(_._1.getName)
 

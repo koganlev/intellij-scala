@@ -9,6 +9,8 @@ import org.jetbrains.plugins.scala.lang.psi.api.toplevel.typedef.{ScClass, ScObj
 
 class GoToDeclarationTest extends GoToDeclarationTestBase {
 
+  override protected def includeScalaLibrarySources: Boolean = true
+
   def testConstructorInvocationViaNew(): Unit = doTest(
     s"""
        |class Test(i: Int)

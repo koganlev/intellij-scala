@@ -21,6 +21,8 @@ class ScalaClausesCompletionTest extends ScalaClausesCompletionTestBase {
   override protected lazy val projectJdk: Sdk =
     SmartJDKLoader.createFilteredJdk(LanguageLevel.JDK_17, Seq("java.base", "java.desktop"))
 
+  override protected def includeScalaLibrarySources: Boolean = true
+
   def testSyntheticUnapply(): Unit = doPatternCompletionTest(
     fileText =
       s"""case class Foo(foo: Int = 42)(bar: Int = 42)

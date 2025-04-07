@@ -20,6 +20,8 @@ class ShowDecompiledTastyActionTest extends ScalaLightCodeInsightFixtureTestCase
 
   override protected def supportedIn(version: ScalaVersion): Boolean = version.isScala3
 
+  override protected def includeScalaLibrarySources: Boolean = true
+
   private val ActionId = "Scala.DecompileTasty"
 
   private def getAction: AnAction = {

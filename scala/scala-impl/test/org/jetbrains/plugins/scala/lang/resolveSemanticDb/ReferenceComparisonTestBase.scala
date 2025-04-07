@@ -26,9 +26,6 @@ import org.jetbrains.plugins.scala.util.AliasExports._
 import scala.collection.mutable.ArrayBuffer
 
 abstract class ReferenceComparisonTestBase(config: ReferenceComparisonTestConfig) extends ComparisonTestBase(config) {
-  // Mute "Tree access disabled" exceptions as workaround for #SCL-22994
-  override protected def includeScalaLibrarySources: Boolean = false
-
   override protected def reportFailedTestContextDetails: Boolean = false
 
   override protected lazy val projectJdk: Sdk =

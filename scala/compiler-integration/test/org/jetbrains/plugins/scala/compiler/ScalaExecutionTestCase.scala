@@ -59,8 +59,10 @@ trait ScalaExecutionTestCase extends ExecutionTestCase with ScalaSdkOwner {
 
   override protected def getTestAppPath: String = testAppPath.toString
 
+  protected def includeScalaLibrarySources: Boolean = false
+
   override protected def librariesLoaders: Seq[LibraryLoader] = Seq(
-    ScalaSDKLoader(includeScalaReflectIntoCompilerClasspath = true),
+    ScalaSDKLoader(includeScalaReflectIntoCompilerClasspath = true, includeScalaLibrarySources = includeScalaLibrarySources),
     HeavyJDKLoader(testProjectJdkVersion)
   ) ++ additionalLibraries
 
