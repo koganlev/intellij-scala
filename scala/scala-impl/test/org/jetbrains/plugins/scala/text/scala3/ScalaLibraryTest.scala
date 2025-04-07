@@ -25,4 +25,6 @@ class ScalaLibraryTest extends TextToTextTestBase(
     "scala.runtime.coverage.Invoker", // no annotation
     "scala.util.TupledFunction", // duplicate annotation
   )
-)
+) {
+  override protected val includeScalaLibrarySources: Boolean = true
+}
