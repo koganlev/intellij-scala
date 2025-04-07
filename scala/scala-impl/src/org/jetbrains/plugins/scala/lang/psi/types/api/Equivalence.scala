@@ -5,7 +5,7 @@ import org.jetbrains.plugins.scala.caches.RecursionManager
 import org.jetbrains.plugins.scala.caches.stats.{CacheCapabilities, CacheTracker, Tracer}
 import org.jetbrains.plugins.scala.extensions.NullSafe
 import org.jetbrains.plugins.scala.lang.psi.types.api.Equivalence._
-import org.jetbrains.plugins.scala.lang.psi.types.{ConstraintSystem, ConstraintsResult, ScType}
+import org.jetbrains.plugins.scala.lang.psi.types.{ConstraintSystem, ConstraintsResult, Context, ScType}
 
 import java.util.concurrent.ConcurrentHashMap
 import java.util.function.Supplier
@@ -27,7 +27,7 @@ trait Equivalence {
 
   private val eval = new DynamicVariable(false)
 
-  final def equiv(left: ScType, right: ScType): Boolean = equivInner(left, right).isRight
+  final def equiv(left: ScType, right: ScType)(implicit context: Context): Boolean = equivInner(left, right).isRight
 
   def clearCache(): Unit = cache.clear()
 
@@ -36,7 +36,7 @@ trait Equivalence {
     */
   final def equivInner(left: ScType, right: ScType,
                        constraints: ConstraintSystem = ConstraintSystem.empty,
-                       falseUndef: Boolean = true): ConstraintsResult = {
+                       falseUndef: Boolean = true)(implicit context: Context): ConstraintsResult = {
     ProgressManager.checkCanceled()
 
     if (left == right) constraints
@@ -46,9 +46,9 @@ trait Equivalence {
     } else Left
   }
 
-  protected def equivComputable(key: Key): Supplier[ConstraintsResult]
+  protected def equivComputable(key: Key)(implicit context: Context): Supplier[ConstraintsResult]
 
-  private def equivInner(key: Key): ConstraintsResult = {
+  private def equivInner(key: Key)(implicit context: Context): ConstraintsResult = {
     val tracer = Tracer(equivInnerTraceId, equivInnerTraceId)
 
     tracer.invocation()

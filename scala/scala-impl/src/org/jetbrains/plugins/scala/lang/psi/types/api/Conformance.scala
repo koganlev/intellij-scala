@@ -6,7 +6,7 @@ import org.jetbrains.plugins.scala.caches.RecursionManager
 import org.jetbrains.plugins.scala.caches.stats.{CacheCapabilities, CacheTracker, Tracer}
 import org.jetbrains.plugins.scala.extensions._
 import org.jetbrains.plugins.scala.lang.psi.types.api.Conformance._
-import org.jetbrains.plugins.scala.lang.psi.types.{ConstraintSystem, ConstraintsResult, ScType}
+import org.jetbrains.plugins.scala.lang.psi.types.{ConstraintSystem, ConstraintsResult, Context, ScType}
 
 import java.util.concurrent.ConcurrentHashMap
 import java.util.function.Supplier
@@ -31,7 +31,7 @@ trait Conformance {
   final def conformsInner(left: ScType, right: ScType,
                           visited: Set[PsiClass] = Set.empty,
                           constraints: ConstraintSystem = ConstraintSystem.empty,
-                          checkWeak: Boolean = false): ConstraintsResult = {
+                          checkWeak: Boolean = false)(implicit context: Context): ConstraintsResult = {
     ProgressManager.checkCanceled()
 
     if (left.isAny || left.isAnyKind || left.is[WildcardType] || right.isNothing || left == right)
@@ -47,9 +47,9 @@ trait Conformance {
 
   def clearCache(): Unit = cache.clear()
 
-  protected def conformsComputable(key: Key, visited: Set[PsiClass]): Supplier[ConstraintsResult]
+  protected def conformsComputable(key: Key, visited: Set[PsiClass])(implicit context: Context): Supplier[ConstraintsResult]
 
-  def conformsInner(key: Key, visited: Set[PsiClass]): ConstraintsResult = {
+  def conformsInner(key: Key, visited: Set[PsiClass])(implicit context: Context): ConstraintsResult = {
     val tracer = Tracer(conformsInnerCache, conformsInnerCache)
     tracer.invocation()
 
