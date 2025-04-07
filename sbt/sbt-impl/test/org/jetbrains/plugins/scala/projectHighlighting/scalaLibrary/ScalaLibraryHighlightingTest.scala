@@ -26,7 +26,7 @@ import scala.collection.mutable
 @Category(Array(classOf[HighlightingTests]))
 abstract class ScalaLibraryHighlightingTest extends ScalaLightCodeInsightFixtureTestCase {
 
-  protected def customScalaSdkLoader = ScalaSDKLoader()
+  protected def customScalaSdkLoader = ScalaSDKLoader(includeScalaLibrarySources = true)
 
   override def librariesLoaders: Seq[LibraryLoader] = Seq(customScalaSdkLoader)
 

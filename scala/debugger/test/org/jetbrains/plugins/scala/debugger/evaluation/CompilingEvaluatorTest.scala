@@ -48,6 +48,9 @@ class CompilingEvaluatorTest_3_Next_RC extends CompilingEvaluatorTest_3 {
 }
 
 abstract class CompilingEvaluatorTestBase extends ExpressionEvaluationTestBase {
+
+  override protected def includeScalaLibrarySources: Boolean = true
+
   addSourceFile("SimplePlace.scala",
     s"""
        |object SimplePlace {
