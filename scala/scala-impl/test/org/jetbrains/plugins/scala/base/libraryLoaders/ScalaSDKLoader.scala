@@ -24,9 +24,7 @@ case class ScalaSDKLoader(
   includeScalaCompilerIntoLibraryClasspath: Boolean = false,
   includeScalaLibraryTransitiveDependencies: Boolean = true,
   includeScalaLibraryFilesInSdk: Boolean = true,
-  //TODO: by default sources are not needed in all tests
-  // make it "false" by default, check which tests fail and set it to true in those tests
-  includeScalaLibrarySources: Boolean = true,
+  includeScalaLibrarySources: Boolean = false,
   compilerBridgeBinaryJar: Option[Path] = None
 ) extends LibraryLoader {
 

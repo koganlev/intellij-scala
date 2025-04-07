@@ -64,7 +64,7 @@ abstract class ScalaLightCodeInsightFixtureTestCase
 
   protected def includeReflectLibrary: Boolean = false
   protected def includeCompilerAsLibrary: Boolean = false
-  protected def includeScalaLibrarySources: Boolean = true
+  protected def includeScalaLibrarySources: Boolean = false
 
   protected def additionalLibraries: Seq[LibraryLoader] = Seq.empty
 
