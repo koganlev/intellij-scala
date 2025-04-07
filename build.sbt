@@ -827,6 +827,7 @@ lazy val mavenIntegration =
     )
     .settings(
       intellijPlugins += "org.jetbrains.idea.maven".toPlugin,
+      intellijPlugins += "org.jetbrains.idea.reposearch".toPlugin, // required for Maven (IJPL-35276)
       libraryDependencies += Dependencies.intellijMavenTestFramework % Test,
       resolvers += Versions.intellijRepository_ForManagedIntellijDependencies,
       packageMethod := PackagingMethod.PluginModule("scalaCommunity.maven")

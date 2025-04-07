@@ -1,5 +1,6 @@
 package org.jetbrains.plugins.scala.lang.refactoring.delete
 
+import com.intellij.java.syntax.parser.JavaKeywords
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.util.Condition
 import com.intellij.psi._
@@ -428,7 +429,7 @@ object SafeDeleteProcessorUtil {
           element.getParent.getParent match {
             case call: PsiMethodCallExpression =>
               val methodExpression: PsiReferenceExpression = call.getMethodExpression
-              if (methodExpression.textMatches(PsiKeyword.SUPER)) {
+              if (methodExpression.textMatches(JavaKeywords.SUPER)) {
                 true
               } else if (methodExpression.getQualifierExpression.is[PsiSuperExpression]) {
                 owner match {

@@ -104,6 +104,7 @@ abstract class SbtNewProjectWizardStep(parent: NewProjectWizardStep) extends Abs
         sdkProperty,
         sdkDownloadTaskProperty,
         getBaseData(this).getPathProperty,
+        null,
         { s: Sdk =>
           getContext.setProjectJdk(s)
           KUnit
