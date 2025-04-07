@@ -129,7 +129,7 @@ case class ScalaSDKLoader(
       compilerBridgeBinaryJar
     ).##
 
-    val scalaSdkName = s"scala-sdk-${version.minor}-$featuresHash"
+    val scalaSdkName = s"test-${featuresHash.toHexString}-scala-sdk-${version.minor}"
 
     import scala.jdk.CollectionConverters._
 
