@@ -8,7 +8,7 @@ import com.intellij.openapi.roots.ModuleRootModificationUtil
 import com.intellij.testFramework.CompilerTester
 import org.jetbrains.plugins.scala.base.libraryLoaders.SmartJDKLoader
 import org.jetbrains.plugins.scala.compiler.data.IncrementalityType
-import org.jetbrains.plugins.scala.compiler.{CompileServerLauncher, JdkVersionDiscovery}
+import org.jetbrains.plugins.scala.compiler.{CompileServerTestUtil, JdkVersionDiscovery}
 import org.jetbrains.plugins.scala.extensions.inWriteAction
 import org.jetbrains.plugins.scala.project.settings.ScalaCompilerConfiguration
 import org.jetbrains.plugins.scala.settings.ScalaCompileServerSettings
@@ -35,6 +35,8 @@ abstract class MavenProjectWithPureJavaModuleTestBase(incrementality: Incrementa
       settings.USE_DEFAULT_SDK = false
       res
     }
+
+    CompileServerTestUtil.registerLongRunningThreads()
 
     createProjectSubDirs("module1/src/main/java", "module2/src/main/scala")
     createProjectPom(
@@ -138,7 +140,6 @@ abstract class MavenProjectWithPureJavaModuleTestBase(incrementality: Incrementa
   }
 
   override def tearDown(): Unit = try {
-    CompileServerLauncher.stopServerAndWait()
     compiler.tearDown()
     val settings = ScalaCompileServerSettings.getInstance()
     settings.USE_DEFAULT_SDK = true

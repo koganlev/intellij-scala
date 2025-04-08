@@ -9,7 +9,7 @@ import junit.framework.TestCase.{assertEquals, assertNotNull}
 import org.jetbrains.plugins.scala.CompilationTests_Zinc
 import org.jetbrains.plugins.scala.base.libraryLoaders.SmartJDKLoader
 import org.jetbrains.plugins.scala.compiler.data.IncrementalityType
-import org.jetbrains.plugins.scala.compiler.{CompileServerLauncher, JdkVersionDiscovery}
+import org.jetbrains.plugins.scala.compiler.{CompileServerTestUtil, JdkVersionDiscovery}
 import org.jetbrains.plugins.scala.extensions.inWriteAction
 import org.jetbrains.plugins.scala.project.settings.ScalaCompilerConfiguration
 import org.jetbrains.plugins.scala.settings.ScalaCompileServerSettings
@@ -37,6 +37,8 @@ class PolyglotMavenCompilationTest extends MavenImportingTestCase {
       settings.USE_DEFAULT_SDK = false
       res
     }
+
+    CompileServerTestUtil.registerLongRunningThreads()
 
     createProjectSubDirs("module1/src/main/java", "module1/src/main/kotlin", "module2/src/main/scala")
     createProjectPom(
@@ -219,7 +221,6 @@ class PolyglotMavenCompilationTest extends MavenImportingTestCase {
   }
 
   override def tearDown(): Unit = try {
-    CompileServerLauncher.stopServerAndWait()
     compiler.tearDown()
     val settings = ScalaCompileServerSettings.getInstance()
     settings.USE_DEFAULT_SDK = true

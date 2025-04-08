@@ -13,7 +13,7 @@ import org.jetbrains.plugins.scala.CompilationTests_Zinc
 import org.jetbrains.plugins.scala.base.libraryLoaders.SmartJDKLoader
 import org.jetbrains.plugins.scala.compiler.CompilerMessagesUtil.assertNoErrorsOrWarnings
 import org.jetbrains.plugins.scala.compiler.data.IncrementalityType
-import org.jetbrains.plugins.scala.compiler.{CompileServerLauncher, JdkVersionDiscovery}
+import org.jetbrains.plugins.scala.compiler.{CompileServerTestUtil, JdkVersionDiscovery}
 import org.jetbrains.plugins.scala.extensions.inWriteAction
 import org.jetbrains.plugins.scala.project.gradle.GradleTestUtil
 import org.jetbrains.plugins.scala.project.settings.ScalaCompilerConfiguration
@@ -57,6 +57,8 @@ class GroovyMixedGradleCompilationTest extends ExternalSystemImportingTestCase {
       settings.USE_DEFAULT_SDK = false
       res
     }
+
+    CompileServerTestUtil.registerLongRunningThreads()
 
     createProjectSubDirs("src/main/groovy", "src/main/java", "src/main/kotlin", "src/main/scala")
     createProjectSubFile("settings.gradle",
@@ -140,7 +142,6 @@ class GroovyMixedGradleCompilationTest extends ExternalSystemImportingTestCase {
   }
 
   override def tearDown(): Unit = try {
-    CompileServerLauncher.stopServerAndWait()
     compiler.tearDown()
     val settings = ScalaCompileServerSettings.getInstance()
     settings.USE_DEFAULT_SDK = true
