@@ -1023,7 +1023,6 @@ lazy val runTestCategory = Command.single("runTestCategory") { (state, category)
 def runTestsInTC(category: String): String = s"runTestCategory $category"
 
 addCommandAlias("runFileSetTests", runTestsInTC(fileSetTests))
-addCommandAlias("runCompilationTests", runTestsInTC(compilationTestsZinc)) // kept for CI compatibility, will be removed
 addCommandAlias("runCompilationTestsZinc", runTestsInTC(compilationTestsZinc))
 addCommandAlias("runCompilationTestsIDEA", runTestsInTC(compilationTestsIDEA))
 addCommandAlias("runCompilerHighlightingTests", runTestsInTC(compilerHighlightingTests))
