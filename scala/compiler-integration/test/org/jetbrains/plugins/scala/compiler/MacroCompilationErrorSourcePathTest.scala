@@ -6,25 +6,16 @@ import com.intellij.testFramework.CompilerTester
 import junit.framework.TestCase.{assertEquals, assertNull}
 import org.hamcrest.CoreMatchers.{containsString, not}
 import org.hamcrest.MatcherAssert.assertThat
-import org.jetbrains.plugins.scala.CompilationTests
 import org.jetbrains.plugins.scala.compiler.data.IncrementalityType
 import org.jetbrains.plugins.scala.project.settings.ScalaCompilerConfiguration
+import org.jetbrains.plugins.scala.{CompilationTests_IDEA, CompilationTests_Zinc}
 import org.junit.experimental.categories.Category
 
 import scala.jdk.CollectionConverters._
 
-@Category(Array(classOf[CompilationTests]))
-class MacroCompilationErrorSourcePathTest extends SbtProjectCompilationTestBase {
+abstract class MacroCompilationErrorSourcePathTestBase(incrementalityType: IncrementalityType) extends SbtProjectCompilationTestBase {
 
-  def testMacroCompilationErrorSourcePath_Zinc(): Unit = {
-    runMacroCompilationErrorSourcePathTest(IncrementalityType.SBT)
-  }
-
-  def testMacroCompilationErrorSourcePath_IDEA(): Unit = {
-    runMacroCompilationErrorSourcePathTest(IncrementalityType.IDEA)
-  }
-
-  private def runMacroCompilationErrorSourcePathTest(incrementalityType: IncrementalityType): Unit = {
+  def testMacroCompilationErrorSourcePath(): Unit = {
     setUpSbtProject(incrementalityType)
 
     val messages = compiler.make().asScala.toSeq
@@ -85,3 +76,9 @@ class MacroCompilationErrorSourcePathTest extends SbtProjectCompilationTestBase 
     compiler = new CompilerTester(getProject, java.util.Arrays.asList(modules: _*), null, false)
   }
 }
+
+@Category(Array(classOf[CompilationTests_Zinc]))
+class MacroCompilationErrorSourcePathTest_Zinc extends MacroCompilationErrorSourcePathTestBase(IncrementalityType.SBT)
+
+@Category(Array(classOf[CompilationTests_IDEA]))
+class MacroCompilationErrorSourcePathTest_IDEA extends MacroCompilationErrorSourcePathTestBase(IncrementalityType.IDEA)

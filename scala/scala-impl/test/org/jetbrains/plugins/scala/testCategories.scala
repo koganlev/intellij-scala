@@ -48,7 +48,9 @@ trait CompletionTests
  */
 trait EditorTests
 
-trait CompilationTests
+trait CompilationTests_Zinc
+
+trait CompilationTests_IDEA
 
 /**
  * Applied to tests in the `org.jetbrains.plugins.scala.compiler.highlighting` package in

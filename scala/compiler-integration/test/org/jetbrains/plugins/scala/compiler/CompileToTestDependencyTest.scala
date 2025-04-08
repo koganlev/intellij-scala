@@ -2,25 +2,18 @@ package org.jetbrains.plugins.scala.compiler
 
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.testFramework.CompilerTester
-import org.jetbrains.plugins.scala.CompilationTests
 import org.jetbrains.plugins.scala.compiler.CompilerMessagesUtil.assertNoErrorsOrWarnings
 import org.jetbrains.plugins.scala.compiler.data.IncrementalityType
 import org.jetbrains.plugins.scala.project.settings.ScalaCompilerConfiguration
+import org.jetbrains.plugins.scala.{CompilationTests_IDEA, CompilationTests_Zinc}
 import org.junit.Assert.assertNotNull
 import org.junit.experimental.categories.Category
 
 import scala.jdk.CollectionConverters._
 
-@Category(Array(classOf[CompilationTests]))
-class CompileToTestDependencyTest extends SbtProjectCompilationTestBase(separateProdAndTestSources = true) {
+abstract class CompileToTestDependencyTestBase(incrementality: IncrementalityType) extends SbtProjectCompilationTestBase(separateProdAndTestSources = true) {
 
-  def testCompileToTestDependency_Zinc(): Unit =
-    runTest(IncrementalityType.SBT)
-
-  def testCompileToTestDependency_IDE(): Unit =
-    runTest(IncrementalityType.IDEA)
-
-  private def runTest(incrementality: IncrementalityType): Unit  = {
+  def testCompileToTestDependency(): Unit  = {
     createProjectSubDirs(
       "project",
       "src/main/scala",
@@ -53,3 +46,9 @@ class CompileToTestDependencyTest extends SbtProjectCompilationTestBase(separate
     assertNoErrorsOrWarnings(messages)
   }
 }
+
+@Category(Array(classOf[CompilationTests_Zinc]))
+class CompileToTestDependencyTest_Zinc extends CompileToTestDependencyTestBase(IncrementalityType.SBT)
+
+@Category(Array(classOf[CompilationTests_IDEA]))
+class CompileToTestDependencyTest_IDEA extends CompileToTestDependencyTestBase(IncrementalityType.IDEA)

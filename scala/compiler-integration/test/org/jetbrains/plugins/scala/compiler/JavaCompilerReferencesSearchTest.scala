@@ -10,13 +10,12 @@ import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.testFramework.IdeaTestUtil
 import org.jetbrains.plugins.scala.compiler.CompilerMessagesUtil.assertNoErrorsOrWarnings
 import org.jetbrains.plugins.scala.compiler.data.IncrementalityType
-import org.jetbrains.plugins.scala.{CompilationTests, ScalaVersion}
+import org.jetbrains.plugins.scala.{CompilationTests_IDEA, CompilationTests_Zinc, ScalaVersion}
 import org.junit.Assert.{assertEquals, assertNotNull, assertNull}
 import org.junit.experimental.categories.Category
 
 import scala.jdk.CollectionConverters._
 
-@Category(Array(classOf[CompilationTests]))
 abstract class JavaCompilerReferencesSearchTestBase(
   override protected val incrementalityType: IncrementalityType
 ) extends ScalaCompilerTestBase with JdkVersionDiscovery {
@@ -73,6 +72,7 @@ abstract class JavaCompilerReferencesSearchTestBase(
   protected def assertCompilerDirectHierarchyInfo(info: CompilerDirectHierarchyInfo): Unit
 }
 
+@Category(Array(classOf[CompilationTests_IDEA]))
 class JavaCompilerReferencesSearchTest_IDEA extends JavaCompilerReferencesSearchTestBase(IncrementalityType.IDEA) {
   override protected def assertCompilerDirectHierarchyInfo(info: CompilerDirectHierarchyInfo): Unit = {
     val references = info.getHierarchyChildren.toList
@@ -80,6 +80,7 @@ class JavaCompilerReferencesSearchTest_IDEA extends JavaCompilerReferencesSearch
   }
 }
 
+@Category(Array(classOf[CompilationTests_Zinc]))
 class JavaCompilerReferencesSearchTest_Zinc extends JavaCompilerReferencesSearchTestBase(IncrementalityType.SBT) {
   override protected def assertCompilerDirectHierarchyInfo(info: CompilerDirectHierarchyInfo): Unit = {
     // The hierarchy info returned by the compiler reference service should be null when the indices are disabled for

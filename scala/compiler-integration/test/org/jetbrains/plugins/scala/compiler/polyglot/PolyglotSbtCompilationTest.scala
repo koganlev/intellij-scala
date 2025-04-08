@@ -7,7 +7,7 @@ import com.intellij.openapi.roots.ModuleRootModificationUtil
 import com.intellij.platform.externalSystem.testFramework.ExternalSystemImportingTestCase
 import com.intellij.testFramework.{CompilerTester, IndexingTestUtil}
 import junit.framework.TestCase.{assertEquals, assertNotNull}
-import org.jetbrains.plugins.scala.CompilationTests
+import org.jetbrains.plugins.scala.CompilationTests_Zinc
 import org.jetbrains.plugins.scala.base.libraryLoaders.SmartJDKLoader
 import org.jetbrains.plugins.scala.compiler.data.IncrementalityType
 import org.jetbrains.plugins.scala.compiler.{CompileServerLauncher, JdkVersionDiscovery}
@@ -19,7 +19,7 @@ import org.jetbrains.sbt.project.settings.SbtProjectSettings
 import org.jetbrains.sbt.project.{SbtCachesSetupUtil, SbtProjectSystem}
 import org.junit.experimental.categories.Category
 
-@Category(Array(classOf[CompilationTests]))
+@Category(Array(classOf[CompilationTests_Zinc]))
 abstract class PolyglotSbtCompilationTestBase(separateModules: Boolean) extends ExternalSystemImportingTestCase {
 
   private var sdk: Sdk = _

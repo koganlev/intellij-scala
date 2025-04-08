@@ -1,9 +1,9 @@
 package org.jetbrains.plugins.scala.compiler
 
-import org.jetbrains.plugins.scala.CompilationTests
+import org.jetbrains.plugins.scala.CompilationTests_Zinc
 import org.junit.experimental.categories.Category
 
-@Category(Array(classOf[CompilationTests]))
+@Category(Array(classOf[CompilationTests_Zinc]))
 class UseDisplayModuleNameVMArgumentTest extends DisplayModuleNameTestBase {
 
   def testSingleBuild(): Unit = {

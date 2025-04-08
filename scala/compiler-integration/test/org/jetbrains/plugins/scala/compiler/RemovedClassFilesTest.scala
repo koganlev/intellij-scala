@@ -4,14 +4,14 @@ import com.intellij.openapi.vfs.VfsUtil
 import org.jetbrains.plugins.scala.compiler.CompilerMessagesUtil.{assertCompilingScalaSources, assertNoErrorsOrWarnings}
 import org.jetbrains.plugins.scala.compiler.data.IncrementalityType
 import org.jetbrains.plugins.scala.extensions.inWriteAction
-import org.jetbrains.plugins.scala.{CompilationTests, ScalaVersion}
+import org.jetbrains.plugins.scala.{CompilationTests_Zinc, ScalaVersion}
 import org.junit.Assert.assertTrue
 import org.junit.experimental.categories.Category
 
 import java.nio.file.{Files, Path}
 import scala.jdk.CollectionConverters._
 
-@Category(Array(classOf[CompilationTests]))
+@Category(Array(classOf[CompilationTests_Zinc]))
 class RemovedClassFilesTest extends ScalaCompilerTestBase with JdkVersionDiscovery {
 
   override protected def supportedIn(version: ScalaVersion): Boolean = version == ScalaVersion.Latest.Scala_2_13

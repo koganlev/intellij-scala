@@ -2,27 +2,18 @@ package org.jetbrains.plugins.scala.compiler
 
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.testFramework.CompilerTester
-import org.jetbrains.plugins.scala.CompilationTests
 import org.jetbrains.plugins.scala.compiler.CompilerMessagesUtil.{assertCompilingScalaSources, assertNoErrorsOrWarnings}
 import org.jetbrains.plugins.scala.compiler.data.IncrementalityType
 import org.jetbrains.plugins.scala.project.settings.ScalaCompilerConfiguration
+import org.jetbrains.plugins.scala.{CompilationTests_IDEA, CompilationTests_Zinc}
 import org.junit.Assert.assertNotNull
 import org.junit.experimental.categories.Category
 
 import scala.jdk.CollectionConverters._
 
-@Category(Array(classOf[CompilationTests]))
-class ClasspathOrderingCompilationTest extends SbtProjectCompilationTestBase {
+abstract class ClasspathOrderingCompilationTestBase(incrementality: IncrementalityType) extends SbtProjectCompilationTestBase {
 
-  def testClasspathOrdering_Zinc(): Unit = {
-    runClasspathOrderingTest(IncrementalityType.SBT)
-  }
-
-  def testClasspathOrdering_IDEA(): Unit = {
-    runClasspathOrderingTest(IncrementalityType.IDEA)
-  }
-
-  private def runClasspathOrderingTest(incrementality: IncrementalityType): Unit = {
+  def testClasspathOrdering(): Unit = {
     createProjectSubDirs("project", "src/main/scala")
     createProjectSubFile("project/build.properties", "sbt.version=1.10.1")
     createProjectSubFile("src/main/scala/Test.scala",
@@ -66,3 +57,9 @@ class ClasspathOrderingCompilationTest extends SbtProjectCompilationTestBase {
     assertNotNull("Could not find compiled Test$.class", testObject)
   }
 }
+
+@Category(Array(classOf[CompilationTests_Zinc]))
+class ClasspathOrderingCompilationTest_Zinc extends ClasspathOrderingCompilationTestBase(IncrementalityType.SBT)
+
+@Category(Array(classOf[CompilationTests_IDEA]))
+class ClasspathOrderingCompilationTest_IDEA extends ClasspathOrderingCompilationTestBase(IncrementalityType.IDEA)

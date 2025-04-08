@@ -9,12 +9,11 @@ import org.hamcrest.MatcherAssert.assertThat
 import org.jetbrains.plugins.scala.compiler.data.IncrementalityType
 import org.jetbrains.plugins.scala.extensions.PathExt
 import org.jetbrains.plugins.scala.util.matchers.HamcrestMatchers.everyValueGreaterThanIn
-import org.jetbrains.plugins.scala.{CompilationTests, ScalaVersion}
+import org.jetbrains.plugins.scala.{CompilationTests_IDEA, CompilationTests_Zinc, ScalaVersion}
 import org.junit.experimental.categories.Category
 
 import java.nio.file.{Files, Path}
 
-@Category(Array(classOf[CompilationTests]))
 abstract class IncrementalCompilationTestBase(
   scalaVersion: ScalaVersion,
   override protected val incrementalityType: IncrementalityType,
@@ -215,7 +214,7 @@ abstract class IncrementalCompilationTestBase(
 }
 
 // IncrementalIdeaOnServerCompilationTests
-
+@Category(Array(classOf[CompilationTests_IDEA]))
 abstract class IncrementalIdeaOnServerCompilationTestBase(scalaVersion: ScalaVersion)
   extends IncrementalCompilationTestBase(scalaVersion, IncrementalityType.IDEA, useCompileServer = true)
   
@@ -252,7 +251,7 @@ class IncrementalIdeaOnServerCompilationTest_3_LTS_RC extends IncrementalIdeaOnS
 class IncrementalIdeaOnServerCompilationTest_3_Next_RC extends IncrementalIdeaOnServerCompilationTestBase(ScalaVersion.Latest.Scala_3_Next_RC)
 
 // IncrementalIdeaCompilationTests
-
+@Category(Array(classOf[CompilationTests_IDEA]))
 abstract class IncrementalIdeaCompilationTestBase(scalaVersion: ScalaVersion)
   extends IncrementalCompilationTestBase(scalaVersion, IncrementalityType.IDEA, useCompileServer = false) {
   override def testProjectJdkVersion: LanguageLevel = LanguageLevel.JDK_17
@@ -291,7 +290,7 @@ class IncrementalIdeaCompilationTest_3_LTS_RC extends IncrementalIdeaCompilation
 class IncrementalIdeaCompilationTest_3_Next_RC extends IncrementalIdeaCompilationTestBase(ScalaVersion.Latest.Scala_3_Next_RC)
 
 // IncrementalSbtCompilationTests
-
+@Category(Array(classOf[CompilationTests_Zinc]))
 abstract class IncrementalSbtOnServerCompilationTestBase(scalaVersion: ScalaVersion)
   extends IncrementalCompilationTestBase(scalaVersion, IncrementalityType.SBT, useCompileServer = true) {
 
@@ -371,6 +370,7 @@ class IncrementalSbtOnServerCompilationTest_3_LTS_RC extends IncrementalSbtOnSer
 class IncrementalSbtOnServerCompilationTest_3_Next_RC extends IncrementalSbtOnServerCompilationTestBase(ScalaVersion.Latest.Scala_3_Next_RC)
 
 // IncrementalSbtCompilationTests
+@Category(Array(classOf[CompilationTests_Zinc]))
 abstract class IncrementalSbtCompilationTestBase(scalaVersion: ScalaVersion)
   extends IncrementalSbtOnServerCompilationTestBase(scalaVersion) {
 

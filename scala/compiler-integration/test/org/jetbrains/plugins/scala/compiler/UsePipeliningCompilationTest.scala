@@ -5,44 +5,31 @@ import com.intellij.testFramework.CompilerTester
 import org.jetbrains.plugins.scala.compiler.CompilerMessagesUtil.assertNoErrorsOrWarnings
 import org.jetbrains.plugins.scala.compiler.data.IncrementalityType
 import org.jetbrains.plugins.scala.project.settings.ScalaCompilerConfiguration
-import org.jetbrains.plugins.scala.{CompilationTests, ScalaVersion}
+import org.jetbrains.plugins.scala.{CompilationTests_IDEA, CompilationTests_Zinc, ScalaVersion}
 import org.junit.Assert.assertNotNull
 import org.junit.experimental.categories.Category
 
 import scala.jdk.CollectionConverters._
 
-@Category(Array(classOf[CompilationTests]))
-class UsePipeliningCompilationTest extends SbtProjectCompilationTestBase {
+abstract class UsePipeliningCompilationTestBase(incrementalityType: IncrementalityType) extends SbtProjectCompilationTestBase {
 
   private var module1: Module = _
   private var module2: Module = _
   private var module3: Module = _
 
-  def testUsePipelining_Zinc_Scala_2_12(): Unit = {
-    runUsePipeliningTest(IncrementalityType.SBT, ScalaVersion.Latest.Scala_2_12)
+  def testUsePipelining_Scala_2_12(): Unit = {
+    runUsePipeliningTest(ScalaVersion.Latest.Scala_2_12)
   }
 
-  def testUsePipelining_IDEA_Scala_2_12(): Unit = {
-    runUsePipeliningTest(IncrementalityType.IDEA, ScalaVersion.Latest.Scala_2_12)
+  def testUsePipelining_Scala_2_13(): Unit = {
+    runUsePipeliningTest(ScalaVersion.Latest.Scala_2_13)
   }
 
-  def testUsePipelining_Zinc_Scala_2_13(): Unit = {
-    runUsePipeliningTest(IncrementalityType.SBT, ScalaVersion.Latest.Scala_2_13)
+  def testUsePipelining_Scala_3(): Unit = {
+    runUsePipeliningTest(ScalaVersion.Latest.Scala_3_Next_RC)
   }
 
-  def testUsePipelining_IDEA_Scala_2_13(): Unit = {
-    runUsePipeliningTest(IncrementalityType.IDEA, ScalaVersion.Latest.Scala_2_13)
-  }
-
-  def testUsePipelining_Zinc_Scala_3(): Unit = {
-    runUsePipeliningTest(IncrementalityType.SBT, ScalaVersion.Latest.Scala_3_Next_RC)
-  }
-
-  def testUsePipelining_IDEA_Scala_3(): Unit = {
-    runUsePipeliningTest(IncrementalityType.IDEA, ScalaVersion.Latest.Scala_3_Next_RC)
-  }
-
-  private def runUsePipeliningTest(incrementalityType: IncrementalityType, scalaVersion: ScalaVersion): Unit = {
+  private def runUsePipeliningTest(scalaVersion: ScalaVersion): Unit = {
     createProjectSubDirs("project", "module1/src/main/scala", "module2/src/main/scala", "module3/src/main/scala")
     createProjectSubFile("project/build.properties", "sbt.version=1.10.0")
     createProjectSubFile("module1/src/main/scala/Greeter.scala", "trait Greeter { def greeting: String }")
@@ -93,3 +80,9 @@ class UsePipeliningCompilationTest extends SbtProjectCompilationTestBase {
     assertNotNull(s"Could not find compiled class 'GoodEveningGreeter$$' in 'module3'", goodEveningGreeterObject)
   }
 }
+
+@Category(Array(classOf[CompilationTests_Zinc]))
+class UsePipeliningCompilationTest_Zinc extends UsePipeliningCompilationTestBase(IncrementalityType.SBT)
+
+@Category(Array(classOf[CompilationTests_IDEA]))
+class UsePipeliningCompilationTest_IDEA extends UsePipeliningCompilationTestBase(IncrementalityType.IDEA)

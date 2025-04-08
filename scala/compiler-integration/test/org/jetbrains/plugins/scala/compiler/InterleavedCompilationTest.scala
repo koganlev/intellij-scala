@@ -5,7 +5,7 @@ import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.platform.externalSystem.testFramework.ExternalSystemTestCase
 import com.intellij.testFramework.{CompilerTester, VfsTestUtil}
-import org.jetbrains.plugins.scala.CompilationTests
+import org.jetbrains.plugins.scala.CompilationTests_Zinc
 import org.jetbrains.plugins.scala.compiler.CompilerMessagesUtil.{assertCompilingScalaSources, assertNoErrorsOrWarnings}
 import org.jetbrains.plugins.scala.compiler.data.IncrementalityType
 import org.jetbrains.plugins.scala.extensions.inWriteAction
@@ -17,7 +17,7 @@ import org.junit.experimental.categories.Category
 import java.nio.file.Path
 import scala.jdk.CollectionConverters._
 
-@Category(Array(classOf[CompilationTests]))
+@Category(Array(classOf[CompilationTests_Zinc]))
 class InterleavedCompilationTest extends SbtProjectCompilationTestBase {
 
   override def setUp(): Unit = {

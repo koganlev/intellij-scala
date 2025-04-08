@@ -6,19 +6,18 @@ import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.projectRoots.{ProjectJdkTable, Sdk}
 import com.intellij.openapi.roots.ModuleRootModificationUtil
 import com.intellij.testFramework.CompilerTester
-import org.jetbrains.plugins.scala.CompilationTests
 import org.jetbrains.plugins.scala.base.libraryLoaders.SmartJDKLoader
 import org.jetbrains.plugins.scala.compiler.data.IncrementalityType
 import org.jetbrains.plugins.scala.compiler.{CompileServerLauncher, JdkVersionDiscovery}
 import org.jetbrains.plugins.scala.extensions.inWriteAction
 import org.jetbrains.plugins.scala.project.settings.ScalaCompilerConfiguration
 import org.jetbrains.plugins.scala.settings.ScalaCompileServerSettings
+import org.jetbrains.plugins.scala.{CompilationTests_IDEA, CompilationTests_Zinc}
 import org.junit.Assert.{assertNotNull, assertTrue}
 import org.junit.experimental.categories.Category
 
 import scala.jdk.CollectionConverters._
 
-@Category(Array(classOf[CompilationTests]))
 abstract class MavenProjectWithPureJavaModuleTestBase(incrementality: IncrementalityType) extends MavenImportingTestCase {
 
   private var sdk: Sdk = _
@@ -186,6 +185,8 @@ abstract class MavenProjectWithPureJavaModuleTestBase(incrementality: Incrementa
   }
 }
 
+@Category(Array(classOf[CompilationTests_IDEA]))
 class MavenProjectWithPureJavaModuleTest_IDEA extends MavenProjectWithPureJavaModuleTestBase(IncrementalityType.IDEA)
 
+@Category(Array(classOf[CompilationTests_Zinc]))
 class MavenProjectWithPureJavaModuleTest_Zinc extends MavenProjectWithPureJavaModuleTestBase(IncrementalityType.SBT)

@@ -6,13 +6,13 @@ import com.intellij.openapi.module.{Module, ModuleManager}
 import com.intellij.openapi.projectRoots.{ProjectJdkTable, Sdk}
 import com.intellij.platform.externalSystem.testFramework.ExternalSystemImportingTestCase
 import com.intellij.testFramework.CompilerTester
-import org.jetbrains.plugins.scala.CompilationTests
 import org.jetbrains.plugins.scala.base.libraryLoaders.SmartJDKLoader
 import org.jetbrains.plugins.scala.compiler.data.IncrementalityType
 import org.jetbrains.plugins.scala.compiler.{CompileServerLauncher, JdkVersionDiscovery}
 import org.jetbrains.plugins.scala.extensions.inWriteAction
 import org.jetbrains.plugins.scala.project.settings.ScalaCompilerConfiguration
 import org.jetbrains.plugins.scala.settings.ScalaCompileServerSettings
+import org.jetbrains.plugins.scala.{CompilationTests_IDEA, CompilationTests_Zinc}
 import org.jetbrains.sbt.Sbt
 import org.jetbrains.sbt.project.settings.SbtProjectSettings
 import org.jetbrains.sbt.project.{SbtCachesSetupUtil, SbtProjectSystem}
@@ -21,7 +21,6 @@ import org.junit.experimental.categories.Category
 
 import scala.jdk.CollectionConverters._
 
-@Category(Array(classOf[CompilationTests]))
 abstract class SbtProjectWithPureJavaModuleTestBase(incrementality: IncrementalityType, separateModulesForProdTest: Boolean) extends ExternalSystemImportingTestCase {
 
   private var sdk: Sdk = _
@@ -157,10 +156,14 @@ abstract class SbtProjectWithPureJavaModuleTestBase(incrementality: Incrementali
   }
 }
 
+@Category(Array(classOf[CompilationTests_IDEA]))
 class SbtProjectWithPureJavaModuleTest_IDEA extends SbtProjectWithPureJavaModuleTestBase(IncrementalityType.IDEA, separateModulesForProdTest = false)
 
+@Category(Array(classOf[CompilationTests_Zinc]))
 class SbtProjectWithPureJavaModuleTest_Zinc extends SbtProjectWithPureJavaModuleTestBase(IncrementalityType.SBT, separateModulesForProdTest = false)
 
+@Category(Array(classOf[CompilationTests_IDEA]))
 class SbtProjectWithPureJavaModuleTest_separateModulesForProdTest_IDEA extends SbtProjectWithPureJavaModuleTestBase(IncrementalityType.IDEA, separateModulesForProdTest = true)
 
+@Category(Array(classOf[CompilationTests_Zinc]))
 class SbtProjectWithPureJavaModuleTest_separateModulesForProdTest_Zinc extends SbtProjectWithPureJavaModuleTestBase(IncrementalityType.SBT, separateModulesForProdTest = true)

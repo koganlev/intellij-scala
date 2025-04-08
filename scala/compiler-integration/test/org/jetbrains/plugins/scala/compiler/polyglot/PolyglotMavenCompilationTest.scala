@@ -6,7 +6,7 @@ import com.intellij.openapi.projectRoots.{ProjectJdkTable, Sdk}
 import com.intellij.openapi.roots.ModuleRootModificationUtil
 import com.intellij.testFramework.{CompilerTester, IndexingTestUtil}
 import junit.framework.TestCase.{assertEquals, assertNotNull}
-import org.jetbrains.plugins.scala.CompilationTests
+import org.jetbrains.plugins.scala.CompilationTests_Zinc
 import org.jetbrains.plugins.scala.base.libraryLoaders.SmartJDKLoader
 import org.jetbrains.plugins.scala.compiler.data.IncrementalityType
 import org.jetbrains.plugins.scala.compiler.{CompileServerLauncher, JdkVersionDiscovery}
@@ -15,7 +15,7 @@ import org.jetbrains.plugins.scala.project.settings.ScalaCompilerConfiguration
 import org.jetbrains.plugins.scala.settings.ScalaCompileServerSettings
 import org.junit.experimental.categories.Category
 
-@Category(Array(classOf[CompilationTests]))
+@Category(Array(classOf[CompilationTests_Zinc]))
 class PolyglotMavenCompilationTest extends MavenImportingTestCase {
 
   private var sdk: Sdk = _

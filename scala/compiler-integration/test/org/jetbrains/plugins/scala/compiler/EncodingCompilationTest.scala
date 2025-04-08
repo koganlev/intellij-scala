@@ -3,12 +3,11 @@ package org.jetbrains.plugins.scala.compiler
 import org.jetbrains.plugins.scala.compiler.CompilerMessagesUtil.{assertCompilingScalaSources, assertNoErrorsOrWarnings}
 import org.jetbrains.plugins.scala.compiler.data.IncrementalityType
 import org.jetbrains.plugins.scala.project.settings.ScalaCompilerSettingsProfile
-import org.jetbrains.plugins.scala.{CompilationTests, ScalaVersion}
+import org.jetbrains.plugins.scala.{CompilationTests_IDEA, CompilationTests_Zinc, ScalaVersion}
 import org.junit.experimental.categories.Category
 
 import scala.jdk.CollectionConverters._
 
-@Category(Array(classOf[CompilationTests]))
 abstract class EncodingCompilationTestBase(override val incrementalityType: IncrementalityType) extends ScalaCompilerTestBase with JdkVersionDiscovery {
 
   override protected def supportedIn(version: ScalaVersion): Boolean = version == ScalaVersion.Latest.Scala_3
@@ -47,6 +46,8 @@ abstract class EncodingCompilationTestBase(override val incrementalityType: Incr
   }
 }
 
+@Category(Array(classOf[CompilationTests_Zinc]))
 class EncodingCompilationTest_Zinc extends EncodingCompilationTestBase(IncrementalityType.SBT)
 
+@Category(Array(classOf[CompilationTests_IDEA]))
 class EncodingCompilationTest_IDEA extends EncodingCompilationTestBase(IncrementalityType.IDEA)

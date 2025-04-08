@@ -3,7 +3,7 @@ package org.jetbrains.plugins.scala.compiler
 import com.intellij.openapi.module.{Module, ModuleManager}
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.testFramework.CompilerTester
-import org.jetbrains.plugins.scala.CompilationTests
+import org.jetbrains.plugins.scala.CompilationTests_Zinc
 import org.jetbrains.plugins.scala.compiler.CompilerMessagesUtil.assertNoErrorsOrWarnings
 import org.jetbrains.plugins.scala.compiler.data.IncrementalityType
 import org.jetbrains.plugins.scala.extensions.inWriteAction
@@ -14,7 +14,7 @@ import org.junit.experimental.categories.Category
 import java.nio.file.Path
 import scala.jdk.CollectionConverters._
 
-@Category(Array(classOf[CompilationTests]))
+@Category(Array(classOf[CompilationTests_Zinc]))
 class MultiModuleRemovedClassFilesTest_ProdTestSourcesSeparatedEnabled extends SbtProjectCompilationTestBase(separateProdAndTestSources = true) {
 
   private var module1Main: Module = _

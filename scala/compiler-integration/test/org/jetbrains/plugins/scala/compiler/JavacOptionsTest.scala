@@ -5,14 +5,13 @@ import com.intellij.psi.JavaCompilerConfigurationProxy
 import com.intellij.testFramework.IdeaTestUtil
 import org.jetbrains.plugins.scala.compiler.CompilerMessagesUtil.assertNoErrorsOrWarnings
 import org.jetbrains.plugins.scala.compiler.data.IncrementalityType
-import org.jetbrains.plugins.scala.{CompilationTests, ScalaVersion}
+import org.jetbrains.plugins.scala.{CompilationTests_IDEA, CompilationTests_Zinc, ScalaVersion}
 import org.junit.Assert.{assertEquals, assertNotNull}
 import org.junit.experimental.categories.Category
 
 import java.net.URLClassLoader
 import scala.jdk.CollectionConverters._
 
-@Category(Array(classOf[CompilationTests]))
 abstract class JavacOptionsTestBase(
   override protected val incrementalityType: IncrementalityType
 ) extends ScalaCompilerTestBase with JdkVersionDiscovery {
@@ -74,6 +73,8 @@ abstract class JavacOptionsTestBase(
   }
 }
 
+@Category(Array(classOf[CompilationTests_Zinc]))
 class JavacOptionsTest_Zinc extends JavacOptionsTestBase(IncrementalityType.SBT)
 
+@Category(Array(classOf[CompilationTests_IDEA]))
 class JavacOptionsTest_IDEA extends JavacOptionsTestBase(IncrementalityType.IDEA)

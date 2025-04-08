@@ -9,7 +9,6 @@ import com.intellij.platform.externalSystem.testFramework.ExternalSystemImportin
 import com.intellij.testFramework.CompilerTester
 import org.jetbrains.plugins.gradle.settings.GradleProjectSettings
 import org.jetbrains.plugins.gradle.util.GradleConstants
-import org.jetbrains.plugins.scala.CompilationTests
 import org.jetbrains.plugins.scala.base.libraryLoaders.SmartJDKLoader
 import org.jetbrains.plugins.scala.compiler.data.IncrementalityType
 import org.jetbrains.plugins.scala.compiler.{CompileServerLauncher, JdkVersionDiscovery}
@@ -17,12 +16,12 @@ import org.jetbrains.plugins.scala.extensions.inWriteAction
 import org.jetbrains.plugins.scala.project.gradle.GradleTestUtil
 import org.jetbrains.plugins.scala.project.settings.ScalaCompilerConfiguration
 import org.jetbrains.plugins.scala.settings.ScalaCompileServerSettings
+import org.jetbrains.plugins.scala.{CompilationTests_IDEA, CompilationTests_Zinc}
 import org.junit.Assert.{assertNotNull, assertTrue}
 import org.junit.experimental.categories.Category
 
 import scala.jdk.CollectionConverters._
 
-@Category(Array(classOf[CompilationTests]))
 abstract class GradleProjectWithPureJavaModuleTestBase(incrementality: IncrementalityType) extends ExternalSystemImportingTestCase {
 
   private var sdk: Sdk = _
@@ -150,6 +149,8 @@ abstract class GradleProjectWithPureJavaModuleTestBase(incrementality: Increment
   }
 }
 
+@Category(Array(classOf[CompilationTests_IDEA]))
 class GradleProjectWithPureJavaModuleTest_IDEA extends GradleProjectWithPureJavaModuleTestBase(IncrementalityType.IDEA)
 
+@Category(Array(classOf[CompilationTests_Zinc]))
 class GradleProjectWithPureJavaModuleTest_Zinc extends GradleProjectWithPureJavaModuleTestBase(IncrementalityType.SBT)

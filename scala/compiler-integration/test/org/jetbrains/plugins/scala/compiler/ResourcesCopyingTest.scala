@@ -5,16 +5,15 @@ import com.intellij.openapi.roots.{CompilerModuleExtension, ModuleRootManager}
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.testFramework.{CompilerTester, VfsTestUtil}
 import junit.framework.TestCase.{assertNotNull, assertTrue}
-import org.jetbrains.plugins.scala.CompilationTests
 import org.jetbrains.plugins.scala.compiler.CompilerMessagesUtil.assertNoErrorsOrWarnings
 import org.jetbrains.plugins.scala.compiler.data.IncrementalityType
 import org.jetbrains.plugins.scala.project.settings.ScalaCompilerConfiguration
+import org.jetbrains.plugins.scala.{CompilationTests_IDEA, CompilationTests_Zinc}
 import org.junit.experimental.categories.Category
 
 import java.nio.file.Files
 import scala.jdk.CollectionConverters._
 
-@Category(Array(classOf[CompilationTests]))
 abstract class ResourcesCopyingTestBase(
   separateMainTest: Boolean,
   incrementalityType: IncrementalityType,
@@ -182,14 +181,18 @@ abstract class ResourcesCopyingTestBase(
   }
 }
 
+@Category(Array(classOf[CompilationTests_Zinc]))
 class ResourcesCopyingTest_Zinc
   extends ResourcesCopyingTestBase(separateMainTest = false, IncrementalityType.SBT, expectedResourcesCopied = true)
 
+@Category(Array(classOf[CompilationTests_Zinc]))
 class ResourcesCopyingTest_Zinc_Split
   extends ResourcesCopyingTestBase(separateMainTest = true, IncrementalityType.SBT, expectedResourcesCopied = true)
 
+@Category(Array(classOf[CompilationTests_IDEA]))
 class ResourcesCopyingTest_IDEA
   extends ResourcesCopyingTestBase(separateMainTest = false, IncrementalityType.IDEA, expectedResourcesCopied = false)
 
+@Category(Array(classOf[CompilationTests_IDEA]))
 class ResourcesCopyingTest_IDEA_Split
   extends ResourcesCopyingTestBase(separateMainTest = true, IncrementalityType.IDEA, expectedResourcesCopied = false)
