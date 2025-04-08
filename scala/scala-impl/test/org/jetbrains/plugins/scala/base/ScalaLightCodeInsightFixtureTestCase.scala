@@ -35,6 +35,7 @@ import scala.jdk.CollectionConverters._
 //TODO: try to remove EditorTestUtil.buildInitialFoldingsInBackground(getEditor) and see if tests pass?
 abstract class ScalaLightCodeInsightFixtureTestCase
   extends LightJavaCodeInsightFixtureTestCase
+    with SuppressMissingTemplateExceptions
     with ScalaSdkOwner
     with FailableTest {
 
