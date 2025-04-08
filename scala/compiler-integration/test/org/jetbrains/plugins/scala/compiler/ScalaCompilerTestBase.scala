@@ -3,7 +3,6 @@ package compiler
 
 import com.intellij.compiler.CompilerConfiguration
 import com.intellij.compiler.server.BuildManager
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.compiler._
 import com.intellij.openapi.projectRoots._
 import com.intellij.openapi.roots._
@@ -11,7 +10,6 @@ import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs._
 import com.intellij.pom.java.LanguageLevel
 import com.intellij.testFramework._
-import com.intellij.testFramework.common.ThreadLeakTracker
 import org.jetbrains.plugins.scala.base.SourceRootTestUtil
 
 import java.nio.file.{Files, Path}
@@ -78,13 +76,7 @@ abstract class ScalaCompilerTestBase extends JavaModuleTestCase with ScalaSdkOwn
   override protected def setUp(): Unit = {
     super.setUp()
     if (reuseCompileServerProcessBetweenTests) {
-      //noinspection ApiStatus,UnstableApiUsage
-      ThreadLeakTracker.longRunningThreadCreated(
-        ApplicationManager.getApplication,
-        "BaseDataReader: output stream of scalaCompileServer",
-        "BaseDataReader: error stream of scalaCompileServer",
-        "scalaCompileServer"
-      )
+      CompileServerTestUtil.registerLongRunningThreads()
     } else {
       // We don't want to reuse the compile server in this test class, but it may have already been started.
       // We should shut it down first.

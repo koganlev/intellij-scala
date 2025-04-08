@@ -3,13 +3,11 @@ package org.jetbrains.plugins.scala.compiler
 import com.intellij.debugger.impl.OutputChecker
 import com.intellij.execution.ExecutionTestCase
 import com.intellij.execution.configurations.JavaParameters
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.pom.java.LanguageLevel
 import com.intellij.testFramework.EdtTestUtil
-import com.intellij.testFramework.common.ThreadLeakTracker
 import org.jetbrains.plugins.scala.base.libraryLoaders.{HeavyJDKLoader, LibraryLoader, ScalaSDKLoader, SmartJDKLoader}
 import org.jetbrains.plugins.scala.base.{ScalaSdkOwner, SourceRootTestUtil}
 import org.jetbrains.plugins.scala.extensions.PathExt
@@ -106,12 +104,7 @@ trait ScalaExecutionTestCase extends ExecutionTestCase with ScalaSdkOwner {
 
     if (reuseCompileServerProcessBetweenTests) {
       //noinspection ApiStatus,UnstableApiUsage
-      ThreadLeakTracker.longRunningThreadCreated(
-        ApplicationManager.getApplication,
-        "BaseDataReader: output stream of scalaCompileServer",
-        "BaseDataReader: error stream of scalaCompileServer",
-        "scalaCompileServer"
-      )
+      CompileServerTestUtil.registerLongRunningThreads()
     } else {
       // We don't want to reuse the compile server in this test class, but it may have already been started.
       // We should shut it down first.
