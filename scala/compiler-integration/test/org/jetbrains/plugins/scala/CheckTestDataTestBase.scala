@@ -10,7 +10,7 @@ import org.junit.experimental.categories.Category
 
 import scala.jdk.CollectionConverters.IterableHasAsScala
 
-@Category(Array(classOf[SlowTests]))
+@Category(Array(classOf[CompilerHighlightingTests]))
 abstract class CheckTestDataTestBase(testData: Seq[TestData], minScalaVersion: ScalaVersion)
   extends ScalaCompilerTestBase
 {
