@@ -1,58 +1,22 @@
 package org.jetbrains.plugins.scala.compiler.buildtools
 
 import com.intellij.openapi.compiler.CompilerMessageCategory
-import com.intellij.openapi.externalSystem.model.ProjectSystemId
 import com.intellij.openapi.module.{Module, ModuleManager}
-import com.intellij.openapi.projectRoots.{ProjectJdkTable, Sdk}
-import com.intellij.platform.externalSystem.testFramework.ExternalSystemImportingTestCase
 import com.intellij.testFramework.CompilerTester
-import org.jetbrains.plugins.scala.base.libraryLoaders.SmartJDKLoader
+import org.jetbrains.plugins.scala.compiler.SbtProjectCompilationTestBase
 import org.jetbrains.plugins.scala.compiler.data.IncrementalityType
-import org.jetbrains.plugins.scala.compiler.{CompileServerLauncher, JdkVersionDiscovery}
-import org.jetbrains.plugins.scala.extensions.inWriteAction
 import org.jetbrains.plugins.scala.project.settings.ScalaCompilerConfiguration
-import org.jetbrains.plugins.scala.settings.ScalaCompileServerSettings
 import org.jetbrains.plugins.scala.{CompilationTests_IDEA, CompilationTests_Zinc}
-import org.jetbrains.sbt.Sbt
-import org.jetbrains.sbt.project.settings.SbtProjectSettings
-import org.jetbrains.sbt.project.{SbtCachesSetupUtil, SbtProjectSystem}
 import org.junit.Assert.{assertNotNull, assertTrue}
 import org.junit.experimental.categories.Category
 
 import scala.jdk.CollectionConverters._
 
-abstract class SbtProjectWithPureJavaModuleTestBase(incrementality: IncrementalityType, separateModulesForProdTest: Boolean) extends ExternalSystemImportingTestCase {
-
-  private var sdk: Sdk = _
-
-  private var compiler: CompilerTester = _
-
-  override lazy val getCurrentExternalProjectSettings: SbtProjectSettings = {
-    val settings = new SbtProjectSettings()
-    settings.separateProdAndTestSources = separateModulesForProdTest
-    settings.jdk = sdk.getName
-    settings
-  }
-
-  override def getExternalSystemId: ProjectSystemId = SbtProjectSystem.Id
-
-  override def getTestsTempDir: String = this.getClass.getSimpleName
-
-  override def getExternalSystemConfigFileName: String = Sbt.BuildFile
+abstract class SbtProjectWithPureJavaModuleTestBase(incrementality: IncrementalityType, separateModulesForProdTest: Boolean)
+  extends SbtProjectCompilationTestBase(separateProdAndTestSources = separateModulesForProdTest) {
 
   override def setUp(): Unit = {
     super.setUp()
-
-    sdk = {
-      val jdkVersion = JdkVersionDiscovery.discoveredJdk
-      val res = SmartJDKLoader.getOrCreateJDK(jdkVersion)
-      val settings = ScalaCompileServerSettings.getInstance()
-      settings.COMPILE_SERVER_SDK = res.getName
-      settings.USE_DEFAULT_SDK = false
-      res
-    }
-
-    SbtCachesSetupUtil.setupCoursierAndIvyCache(getProject)
 
     createProjectSubDirs("project", "module1/src/main/java", "module2/src/main/scala")
     createProjectSubFile("project/build.properties",
@@ -84,17 +48,6 @@ abstract class SbtProjectWithPureJavaModuleTestBase(incrementality: Incrementali
         |    scalaVersion := "2.13.12"
         |  )
         |""".stripMargin)
-  }
-
-  override def tearDown(): Unit = try {
-    CompileServerLauncher.stopServerAndWait()
-    compiler.tearDown()
-    val settings = ScalaCompileServerSettings.getInstance()
-    settings.USE_DEFAULT_SDK = true
-    settings.COMPILE_SERVER_SDK = null
-    inWriteAction(ProjectJdkTable.getInstance().removeJdk(sdk))
-  } finally {
-    super.tearDown()
   }
 
   def testImportAndCompile(): Unit = {
