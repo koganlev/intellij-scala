@@ -40,10 +40,42 @@ class MethodResolveProcessor(
   var isShapeResolve:         Boolean                   = false,
   val constructorResolve:     Boolean                   = false,
   val enableTupling:          Boolean                   = false,
-  var noImplicitsForArgs:     Boolean                   = false,
+  val noImplicitsForArgs:     Boolean                   = false,
   val selfConstructorResolve: Boolean                   = false,
   val nameArgForDynamic:      Option[String]            = None
 ) extends ResolveProcessor(kinds, ref, refName) {
+
+  def copy(
+    ref:                    PsiElement                = ref,
+    refName:                String                    = refName,
+    argumentClauses:        List[Seq[Expression]]     = argumentClauses,
+    typeArgElements:        Seq[ScTypeElement]        = typeArgElements,
+    prevTypeInfo:           Seq[TypeParameter]        = prevTypeInfo,
+    kinds:                  Set[ResolveTargets.Value] = kinds,
+    expectedOption:         () => Option[ScType]      = expectedOption,
+    isUnderscore:           Boolean                   = isUnderscore,
+    isShapeResolve:         Boolean                   = isShapeResolve,
+    constructorResolve:     Boolean                   = constructorResolve,
+    enableTupling:          Boolean                   = enableTupling,
+    noImplicitsForArgs:     Boolean                   = noImplicitsForArgs,
+    selfConstructorResolve: Boolean                   = selfConstructorResolve,
+    nameArgForDynamic:      Option[String]            = nameArgForDynamic
+  ): MethodResolveProcessor = new MethodResolveProcessor(
+    ref,
+    refName,
+    argumentClauses,
+    typeArgElements,
+    prevTypeInfo,
+    kinds,
+    expectedOption,
+    isUnderscore,
+    isShapeResolve,
+    constructorResolve,
+    enableTupling,
+    noImplicitsForArgs,
+    selfConstructorResolve,
+    nameArgForDynamic
+  )
 
   private def isDynamic: Boolean                 = nameArgForDynamic.nonEmpty
   private def useScala3OverloadingRules: Boolean = ref.isInScala3File
@@ -568,7 +600,7 @@ object MethodResolveProcessor {
     }
 
     val applicableToShape = mappedShapesOnly.filter {
-      case (srr, _) => srr.isApplicable()
+      case (srr, _) => srr.isApplicable(withExpectedType = true)
     }
 
     if (isShapeResolve) {

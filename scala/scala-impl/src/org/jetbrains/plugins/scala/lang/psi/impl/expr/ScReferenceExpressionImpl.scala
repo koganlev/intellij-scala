@@ -11,6 +11,7 @@ import org.jetbrains.plugins.scala.lang.psi.api.base.patterns.ScBindingPattern
 import org.jetbrains.plugins.scala.lang.psi.api.base.types.{ScSelfTypeElement, ScSimpleTypeElement, ScTypeElement}
 import org.jetbrains.plugins.scala.lang.psi.api.base.{ScFieldId, ScNamedTupleComponent, ScPrimaryConstructor, ScReference}
 import org.jetbrains.plugins.scala.lang.psi.api.expr._
+import org.jetbrains.plugins.scala.lang.psi.api.statements.ScFunction.CommonNames
 import org.jetbrains.plugins.scala.lang.psi.api.statements._
 import org.jetbrains.plugins.scala.lang.psi.api.statements.params.ScParameter
 import org.jetbrains.plugins.scala.lang.psi.api.toplevel.ScTypedDefinition
@@ -453,9 +454,8 @@ class ScReferenceExpressionImpl(node: ASTNode) extends ScReferenceImpl(node) wit
               this.expectedType() match {
                 case Some(tp) =>
                   if (FunctionType.isFunctionType(tp)) {
-                    val tp = tail
-                    val processor =
-                      new MethodResolveProcessor(this, "apply", Nil, Nil, Nil)
+                    val tp        = tail
+                    val processor = new MethodResolveProcessor(this, CommonNames.Apply, Nil, Nil, Nil)
                     processor.processType(tp, this)
                     val candidates = processor.candidates
                     if (candidates.length != 1) tail

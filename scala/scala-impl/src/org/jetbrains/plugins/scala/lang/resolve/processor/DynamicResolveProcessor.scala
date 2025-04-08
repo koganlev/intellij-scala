@@ -85,21 +85,11 @@ object DynamicResolveProcessor {
 
     fromProcessor match {
       case processor: MethodResolveProcessor =>
-        new MethodResolveProcessor(
-          qualifier,
-          name,
-          List(List(emptyStringExpression), expressionsOrContext.getOrElse(Seq.empty)),
-          processor.typeArgElements,
-          processor.prevTypeInfo,
-          processor.kinds,
-          processor.expectedOption,
-          processor.isUnderscore,
-          processor.isShapeResolve,
-          processor.constructorResolve,
-          processor.noImplicitsForArgs,
-          processor.enableTupling,
-          processor.selfConstructorResolve,
-          nameArgForDynamic = Some(ref.refName)
+        processor.copy(
+          ref               = qualifier,
+          refName           = name,
+          argumentClauses   = List(List(emptyStringExpression), expressionsOrContext.getOrElse(Seq.empty)),
+          nameArgForDynamic = Option(ref.refName)
         )
       case _ =>
         new MethodResolveProcessor(

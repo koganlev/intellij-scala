@@ -102,17 +102,11 @@ object ExtensionConversionHelper {
     processor
       .asOptionOf[MethodResolveProcessor]
       .map { processor =>
-        new MethodResolveProcessor(
-          ref,
-          refName,
-          processor.argumentClauses,
-          processor.typeArgElements,
-          typeParams,
-          kinds,
-          processor.expectedOption,
-          processor.isUnderscore,
-          processor.isShapeResolve,
-          processor.constructorResolve,
+        processor.copy(
+          ref                = ref,
+          refName            = refName,
+          prevTypeInfo       = typeParams,
+          kinds              = kinds,
           noImplicitsForArgs = withoutImplicitsForArgs
         )
       }

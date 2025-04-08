@@ -739,40 +739,45 @@ class ReferenceExpressionResolver(implicit projectContext: ProjectContext) {
         else                                      candidates
 
       if (shouldTryImplicitConversions(withExplicitApply) || withImplicitConversion) {
+        val procForConversions = procForImplicitConversions(proc, candidates)
+
         ImplicitConversionResolveResult.processImplicitConversionsAndExtensions(
-          targetNameForImplicitProcessor(proc, candidates),
+          targetNameForImplicitProcessor(proc),
           ref,
-          proc,
+          procForConversions,
           noImplicitsForArgs = candidates.nonEmpty,
-          forCompletion      = proc.is[CompletionProcessor]
+          forCompletion      = procForConversions.is[CompletionProcessor]
         )(_.withImports.withImplicitType.withType)(qualifier)
 
-        (proc, proc.candidates) match {
+        val fromImplicits = (procForConversions, procForConversions.candidates) match {
           case (methodProcessor: MethodResolveProcessor, Array()) if conformsToDynamic(fromType, ref.resolveScope) =>
             val dynamicProcessor = dynamicResolveProcessor(ref, qualifier, methodProcessor)
             dynamicProcessor.processType(fromType, qualifier, state)
             dynamicProcessor.candidates
           case (_, cands) => cands
         }
+
+        //If none of the candidates from implicit conversions/extensions are applicable,
+        //and simple resolve produced some (inapplicable) candidates, return them.
+        if (fromImplicits.forall(!_.isApplicable()) && withExplicitApply.nonEmpty) withExplicitApply
+        else                                                                       fromImplicits
       } else withExplicitApply
     }
 
-    def targetNameForImplicitProcessor(
+    def procForImplicitConversions(
       processor: BaseProcessor,
-      found:     Array[ScalaResolveResult]
-    ): Option[String] = processor match {
-      case _: CompletionProcessor => None
-      case processor: ResolveProcessor =>
-        processor.resetPrecedence() //do not clear candidate set, we want wrong resolve, if don't found anything
-
-        processor match {
-          case processor: MethodResolveProcessor => processor.noImplicitsForArgs = found.nonEmpty
-          case _                                 =>
-        }
-
-        Option(processor.name) // See SCL-2934.
-      case _ => Option(ref.refName)
+      found: Array[ScalaResolveResult]
+    ): BaseProcessor = processor match {
+      case mrp: MethodResolveProcessor => mrp.copy(noImplicitsForArgs = found.nonEmpty)
+      case other                       => other
     }
+
+    def targetNameForImplicitProcessor(processor: BaseProcessor): Option[String] =
+      processor match {
+        case _: CompletionProcessor      => None
+        case processor: ResolveProcessor => Option(processor.name) // See SCL-2934.
+        case _                           => Option(ref.refName)
+      }
 
     if (!accessibilityCheck) proc.doNotCheckAccessibility()
 

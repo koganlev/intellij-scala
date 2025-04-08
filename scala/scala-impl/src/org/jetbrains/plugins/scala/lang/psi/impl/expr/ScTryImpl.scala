@@ -7,6 +7,7 @@ import org.jetbrains.plugins.scala.lang.lexer.ScalaTokenTypes
 import org.jetbrains.plugins.scala.lang.psi.api.ScBegin
 import org.jetbrains.plugins.scala.lang.psi.api.expr._
 import org.jetbrains.plugins.scala.lang.psi.api.statements.ScFunction
+import org.jetbrains.plugins.scala.lang.psi.api.statements.ScFunction.CommonNames
 import org.jetbrains.plugins.scala.lang.psi.types.api.designator.ScDesignatorType
 import org.jetbrains.plugins.scala.lang.psi.types.result._
 import org.jetbrains.plugins.scala.lang.psi.types.{Compatibility, ScTypeExt}
@@ -59,6 +60,12 @@ object ScTryImpl {
       .map(ScDesignatorType(_))
       .map(Compatibility.Expression(_))
       .map { compatibilityExpression =>
-        new MethodResolveProcessor(expression, "apply", List(Seq(compatibilityExpression)), Seq.empty, Seq.empty)
+        new MethodResolveProcessor(
+          expression,
+          CommonNames.Apply,
+          List(Seq(compatibilityExpression)),
+          Seq.empty,
+          Seq.empty
+        )
       }
 }
