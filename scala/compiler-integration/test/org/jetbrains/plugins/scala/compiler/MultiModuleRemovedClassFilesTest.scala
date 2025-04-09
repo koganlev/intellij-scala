@@ -62,7 +62,7 @@ class MultiModuleRemovedClassFilesTest extends SbtProjectCompilationTestBase {
     val srcMainScala = Path.of("src", "main", "scala")
 
     val barSourcePath = projectPath.resolve(Path.of("module2").resolve(srcMainScala).resolve("Bar.scala"))
-    val barSource = VfsUtil.findFileByIoFile(barSourcePath.toFile, true)
+    val barSource = VfsUtil.findFile(barSourcePath, true)
     inWriteAction {
       VfsUtil.saveText(barSource, "class Bar extends Foo { def foo = 1 }")
     }

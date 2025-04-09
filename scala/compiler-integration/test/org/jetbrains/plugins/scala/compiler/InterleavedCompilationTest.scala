@@ -55,7 +55,7 @@ class InterleavedCompilationTest extends SbtProjectCompilationTestBase {
     val projectPath = Path.of(getProjectPath)
 
     val fooSourcePath = projectPath.resolve(Path.of("src", "main", "scala", "Foo.scala"))
-    val fooSource = VfsUtil.findFileByIoFile(fooSourcePath.toFile, true)
+    val fooSource = VfsUtil.findFile(fooSourcePath, true)
     inWriteAction {
       VfsUtil.saveText(fooSource, """object Foo { def foo = "123" }""")
     }
@@ -71,7 +71,7 @@ class InterleavedCompilationTest extends SbtProjectCompilationTestBase {
     assertCompilingScalaSources(messages2, 2)
 
     val srcMainScalaDir = projectPath.resolve(Path.of("src", "main", "scala"))
-    val srcMainScalaDirVirtualFile = VfsUtil.findFileByIoFile(srcMainScalaDir.toFile, true)
+    val srcMainScalaDirVirtualFile = VfsUtil.findFile(srcMainScalaDir, true)
     VfsTestUtil.createFile(srcMainScalaDirVirtualFile, "Client.scala", "class Client { val v: Int = Bar.bar }")
 
     val messages3 = compiler.make().asScala.toSeq
@@ -85,9 +85,9 @@ class InterleavedCompilationTest extends SbtProjectCompilationTestBase {
     val srcMainScalaPath = Path.of("src", "main", "scala")
 
     val fooSourcePath = projectPath.resolve(srcMainScalaPath.resolve("Foo.scala"))
-    val fooSource = VfsUtil.findFileByIoFile(fooSourcePath.toFile, true)
+    val fooSource = VfsUtil.findFile(fooSourcePath, true)
     val barSourcePath = projectPath.resolve(srcMainScalaPath.resolve("Bar.scala"))
-    val barSource = VfsUtil.findFileByIoFile(barSourcePath.toFile, true)
+    val barSource = VfsUtil.findFile(barSourcePath, true)
 
     inWriteAction {
       VfsUtil.saveText(barSource, "object Bar")

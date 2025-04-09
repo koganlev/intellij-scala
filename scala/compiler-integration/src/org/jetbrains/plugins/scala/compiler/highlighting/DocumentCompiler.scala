@@ -15,6 +15,7 @@ import org.jetbrains.plugins.scala.ScalaVersion
 import org.jetbrains.plugins.scala.compiler.data.{CompilerData, CompilerJarsFactory, DocumentCompilationArguments, DocumentCompilationData, IncrementalityType}
 import org.jetbrains.plugins.scala.compiler.{RemoteServerConnectorBase, RemoteServerRunner}
 import org.jetbrains.plugins.scala.editor.DocumentExt
+import org.jetbrains.plugins.scala.extensions.PathExt
 import org.jetbrains.plugins.scala.project.{ModuleExt, ScalaLanguageLevel, VirtualFileExt}
 import org.jetbrains.plugins.scala.settings.ScalaProjectSettings
 import org.jetbrains.plugins.scala.util.ScalaPluginJars
@@ -25,17 +26,18 @@ import java.nio.file.{Files, Path}
 private final class DocumentCompiler(project: Project) {
 
   private val workingDirectory: Path = {
-    var compilerDir = CompilerManager.getInstance(project).getJavacCompilerWorkingDir
-    if (compilerDir eq null) {
-      // This shouldn't happen, as the implementation of `CompilerManagerImpl#getJavacCompilerWorkingDir`
-      // does not return a nullable file, but just in case, this is the same directory.
-      compilerDir = BuildManager.getInstance().getProjectSystemDirectory(project)
+    val compilerDir =
+      Option(CompilerManager.getInstance(project).getJavacCompilerWorkingDir)
+        .map(_.toPath)
+        .getOrElse {
+          // This shouldn't happen, as the implementation of `CompilerManagerImpl#getJavacCompilerWorkingDir`
+          // does not return a nullable file, but just in case, this is the same directory.
+          BuildManager.getInstance().getProjectSystemDir(project)
+        }.resolve("document-compiler")
+    if (!compilerDir.exists) {
+      Files.createDirectories(compilerDir)
     }
-    compilerDir = compilerDir.toPath.resolve("document-compiler").toFile
-    if (!compilerDir.exists()) {
-      compilerDir.mkdirs()
-    }
-    compilerDir.toPath
+    compilerDir
   }
 
   def compile(
@@ -87,10 +89,7 @@ private final class DocumentCompiler(project: Project) {
     try connector.compile(originalSourceFile, client)
     finally {
       if (connector.requiresCleanup) {
-        val files = workingDirectory.toFile.listFiles()
-        if (files ne null) {
-          files.foreach(FileUtil.delete)
-        }
+        cleanWorkingDirectory()
       } else {
         FileUtil.delete(tempSourceFile)
       }
@@ -106,12 +105,14 @@ private final class DocumentCompiler(project: Project) {
     try connector.compile(client)
     finally {
       if (connector.requiresCleanup) {
-        val files = workingDirectory.toFile.listFiles()
-        if (files ne null) {
-          files.foreach(FileUtil.delete)
-        }
+        cleanWorkingDirectory()
       }
     }
+  }
+
+  private def cleanWorkingDirectory(): Unit = {
+    val files = workingDirectory.children()
+    files.foreach(FileUtil.delete)
   }
 
   private final class PhysicalFileConnector(tempSourceFile: Path, module: Module, sourceScope: SourceScope)

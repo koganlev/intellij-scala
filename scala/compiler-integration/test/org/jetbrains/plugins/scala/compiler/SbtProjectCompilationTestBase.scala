@@ -98,7 +98,7 @@ abstract class SbtProjectCompilationTestBase(separateProdAndTestSources: Boolean
   }
 
   protected def removeFile(path: Path): Unit = {
-    val virtualFile = VfsUtil.findFileByIoFile(path.toFile, true)
+    val virtualFile = VfsUtil.findFile(path, true)
     inWriteAction {
       virtualFile.delete(null)
     }

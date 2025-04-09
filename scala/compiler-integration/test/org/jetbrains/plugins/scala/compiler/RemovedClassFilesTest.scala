@@ -89,7 +89,7 @@ class RemovedClassFilesTest extends ScalaCompilerTestBase with JdkVersionDiscove
     removeFile(firstClassFiles.head) // delete A.class
 
     val bSourcePath = getSourceRootDir.toNioPath.resolve(Path.of("B.scala"))
-    val bSource = VfsUtil.findFileByIoFile(bSourcePath.toFile, true)
+    val bSource = VfsUtil.findFile(bSourcePath, true)
     inWriteAction {
       VfsUtil.saveText(bSource, """class B { new A().foo }""")
     }

@@ -33,7 +33,7 @@ import scala.io.Source
 //noinspection ApiStatus,UnstableApiUsage
 import org.jetbrains.plugins.scala.util.teamcity.TeamcityUtils
 
-import java.io.{BufferedReader, File, IOException, InputStreamReader}
+import java.io.{BufferedReader, IOException, InputStreamReader}
 import java.nio.file.{Files, Path}
 import java.util.UUID
 import javax.swing.event.HyperlinkEvent
@@ -141,7 +141,7 @@ object CompileServerLauncher {
       case (presentFiles, Seq()) =>
         val (nailgunCpFiles, classpathFiles) = presentFiles.partition(_.nameContains("nailgun"))
         val nailgunClasspath = nailgunCpFiles
-          .map(_.toFile.canonicalPath).mkString(File.pathSeparator)
+          .map(_.toCanonicalPath.toString).mkString(java.io.File.pathSeparator)
         val buildProcessClasspath = {
           //noinspection ApiStatus
           // in worksheet tests we reuse compile server between projects
@@ -212,8 +212,8 @@ object CompileServerLauncher {
             NailgunRunnerFQN +:
             freePort.toString +:
             id +:
-            classpath.mkString(File.pathSeparator) +:
-            scalaCompileServerSystemDir.toFile.getCanonicalPath +:
+            classpath.mkString(java.io.File.pathSeparator) +:
+            scalaCompileServerSystemDir.toCanonicalPath.toString +:
             Nil
 
         val builder = new GeneralCommandLine(commands.asJava)
@@ -222,7 +222,7 @@ object CompileServerLauncher {
 
         val customWorkingDir = settings.CUSTOM_WORKING_DIR_FOR_TESTS
         if (customWorkingDir != null) {
-          builder.directory(new File(customWorkingDir))
+          builder.directory(new java.io.File(customWorkingDir))
         }
         else if (settings.USE_PROJECT_HOME_AS_WORKING_DIR) {
           projectHome(project).foreach(dir => builder.directory(dir))
@@ -523,13 +523,12 @@ object CompileServerLauncher {
             val rtJarPath = exportDirectoryPath.resolve("rt.jar")
 
             // Create the export directory if it doesn't exist.
-            val exportDirectory = exportDirectoryPath.toFile
-            if (!exportDirectory.exists()) {
-              exportDirectory.mkdirs()
+            if (!exportDirectoryPath.exists) {
+              Files.createDirectories(exportDirectoryPath)
             }
 
             // Create the `rt.jar` if it doesn't exist.
-            if (!rtJarPath.toFile.exists()) {
+            if (!rtJarPath.exists) {
               // The command
               // `java -jar <plugin root>/java9-rt-export/java9-rt-export.jar <IDEA system directory>/scala-compile-server/jvm-rt/<jdk specific directory>`
               // is executed and creates the `rt.jar`.
@@ -620,11 +619,11 @@ object CompileServerLauncher {
     ApplicationManager.getApplication.saveSettings()
   }
 
-  private def projectHome(project: Project): Option[File] = {
+  private def projectHome(project: Project): Option[java.io.File] = {
     for {
       dir <- Option(project.baseDir)
       path <- Option(dir.getCanonicalPath)
-      file = new File(path)
+      file = new java.io.File(path)
       if file.exists()
     } yield file
   }

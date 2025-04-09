@@ -5,7 +5,7 @@ import com.intellij.testFramework.CompilerTester
 import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory
 import org.jetbrains.plugins.scala.SlowTests
 import org.jetbrains.plugins.scala.compiler.ScalaCompilerTestBase.ListCompilerMessageExt
-import org.jetbrains.plugins.scala.extensions.inWriteAction
+import org.jetbrains.plugins.scala.extensions.{PathExt, inWriteAction}
 import org.jetbrains.plugins.scala.settings.ScalaCompileServerSettings
 import org.jetbrains.plugins.scala.util.{CompilerTestUtil, RevertableChange, TestUtils}
 import org.jetbrains.sbt.project.{SbtCachesSetupUtil, SbtExternalSystemImportingTestLike}
@@ -64,9 +64,9 @@ class CompileSimpleProjectWithSemanticDbTest extends SbtExternalSystemImportingT
     val projectRoot = myProjectRoot.toNioPath
 
     val srcFolder = projectRoot.resolve("src")
-    assertTrue("src folder not found", srcFolder.toFile.exists())
+    assertTrue("src folder not found", srcFolder.exists)
     val targetFolder = projectRoot.resolve("target")
-    assertTrue("target folder not found", targetFolder.toFile.exists())
+    assertTrue("target folder not found", targetFolder.exists)
 
     val nonScalaFilesInSrc = getRecursiveFilesIn(srcFolder).map(projectRoot.relativize)
     assertNotContains[Path](
@@ -101,11 +101,11 @@ class CompileSimpleProjectWithSemanticDbTest extends SbtExternalSystemImportingT
   }
 
   private def getRecursiveFilesIn(path: Path): Seq[Path] =
-    Files.walk(path).iterator().asScala.filter(_.toFile.isFile).toSeq
+    Files.walk(path).iterator().asScala.filter(_.isRegularFile).toSeq
 
   private def buildProject(): Unit = {
     val settings = ScalaCompileServerSettings.getInstance()
-    val compileServerWorkingDir = Files.createTempDirectory("scala-compile-server-working-dir").toFile.getAbsoluteFile
+    val compileServerWorkingDir = Files.createTempDirectory("scala-compile-server-working-dir")
 
     //We need to use a completely-unrelated working directory for the compile server in order teh test tests the correct thing.
     //In `dotty.tools.dotc.semanticdb.ExtractSemanticDB#write` when `SourceFile.relativePath` is calculated
@@ -115,7 +115,7 @@ class CompileSimpleProjectWithSemanticDbTest extends SbtExternalSystemImportingT
     val withModifiedCompileServerWorkingDir = RevertableChange.withModifiedSetting[String](
       settings.CUSTOM_WORKING_DIR_FOR_TESTS,
       settings.CUSTOM_WORKING_DIR_FOR_TESTS = _,
-      compileServerWorkingDir.getAbsolutePath
+      compileServerWorkingDir.toCanonicalPath.toString
     )
     val revertible = CompilerTestUtil.withEnabledCompileServer(true) |+| withModifiedCompileServerWorkingDir
     revertible.run {

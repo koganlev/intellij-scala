@@ -14,7 +14,7 @@ import org.jetbrains.plugins.scala.extensions.PathExt
 import org.jetbrains.plugins.scala.project.ModuleExt
 import org.jetbrains.plugins.scala.util.TestUtils
 
-import java.io.{FileInputStream, FileOutputStream, ObjectInputStream, ObjectOutputStream}
+import java.io.{ObjectInputStream, ObjectOutputStream}
 import java.nio.charset.StandardCharsets
 import java.nio.file.{Files, Path}
 import java.security.MessageDigest
@@ -93,7 +93,7 @@ trait ScalaExecutionTestCase extends ExecutionTestCase with ScalaSdkOwner {
 
     sourceFiles.foreach { case (filePath, fileContents) =>
       val path = srcPath.resolve(filePath)
-      if (!path.toFile.exists() || Files.readString(path) != fileContents) {
+      if (!path.exists || Files.readString(path) != fileContents) {
         Files.createDirectories(path.getParent)
         val bytes = fileContents.getBytes(StandardCharsets.UTF_8)
         Files.write(path, bytes)
@@ -111,7 +111,7 @@ trait ScalaExecutionTestCase extends ExecutionTestCase with ScalaSdkOwner {
       CompileServerLauncher.stopServerAndWait()
     }
 
-    LocalFileSystem.getInstance().refreshIoFiles(srcPath.toFile.listFiles().toList.asJava)
+    LocalFileSystem.getInstance().refreshNioFiles(srcPath.children().asJava)
     compileProject()
   }
 
@@ -130,7 +130,7 @@ trait ScalaExecutionTestCase extends ExecutionTestCase with ScalaSdkOwner {
 
   override protected def compileProject(): Unit = {
     def loadChecksumsFromDisk(): Map[Path, Array[Byte]] =
-      Using(new ObjectInputStream(new FileInputStream(checksumsFilePath.toFile)))(_.readObject())
+      Using(new ObjectInputStream(Files.newInputStream(checksumsFilePath)))(_.readObject())
         .map(_.asInstanceOf[Map[String, Array[Byte]]])
         .map(_.map { case (path, checksum) => (Path.of(path), checksum) })
         .getOrElse(Map.empty)
@@ -160,7 +160,7 @@ trait ScalaExecutionTestCase extends ExecutionTestCase with ScalaSdkOwner {
 
     def writeChecksumsToDisk(checksums: Map[Path, Array[Byte]]): Unit = {
       val strings = checksums.map { case (path, sum) => (path.toString, sum) }
-      Using(new ObjectOutputStream(new FileOutputStream(checksumsFilePath.toFile)))(_.writeObject(strings))
+      Using(new ObjectOutputStream(Files.newOutputStream(checksumsFilePath)))(_.writeObject(strings))
     }
 
     val srcChecksums = calculateSrcCheksums()
@@ -183,7 +183,7 @@ trait ScalaExecutionTestCase extends ExecutionTestCase with ScalaSdkOwner {
 
   override protected def createJavaParameters(mainClass: String): JavaParameters = {
     val params = new JavaParameters()
-    params.getClassPath.addAllFiles(getModule.scalaCompilerClasspath.map(_.toFile).toArray)
+    params.getClassPath.addAll(getModule.scalaCompilerClasspath.map(_.toCanonicalPath.toString).asJava)
     params.getClassPath.add(getAppOutputPath)
     params.setJdk(getTestProjectJdk)
     params.setWorkingDirectory(getTestAppPath)
