@@ -315,7 +315,7 @@ object Main {
 
   @throws(classOf[TokenVerificationException])
   private def validateToken(path: Path, actualToken: String): Unit = {
-    if (!path.toFile.exists) {
+    if (!Files.exists(path)) {
       throw new TokenVerificationException("Token not found: " + path)
     }
 

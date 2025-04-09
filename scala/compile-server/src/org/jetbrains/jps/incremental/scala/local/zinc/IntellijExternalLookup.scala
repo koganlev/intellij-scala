@@ -1,15 +1,14 @@
 package org.jetbrains.jps.incremental.scala.local.zinc
 
-import java.util.Optional
-
 import org.jetbrains.jps.incremental.scala.Client
 import org.jetbrains.jps.incremental.scala.local.zinc.IntellijExternalLookup.EmptyProvenanceLookupAnalyzedClassResult
 import org.jetbrains.plugins.scala.compiler.data.CompilationData
 import sbt.internal.inc._
 import xsbti.api.AnalyzedClass
-import xsbti.{VirtualFile, VirtualFileRef}
 import xsbti.compile._
+import xsbti.{VirtualFile, VirtualFileRef}
 
+import java.util.Optional
 import scala.jdk.CollectionConverters._
 
 case class IntellijExternalLookup(compilationData: CompilationData, client: Client)
@@ -47,7 +46,7 @@ case class IntellijExternalLookup(compilationData: CompilationData, client: Clie
   override def shouldDoIncrementalCompilation(changedClasses: Set[String], analysis: CompileAnalysis): Boolean = {
     if (compilationData.zincData.isCompile){
       def invalidateClass(source: VirtualFileRef): Unit =
-        client.sourceStarted(PlainVirtualFileConverter.converter.toPath(source).toFile.getAbsolutePath)
+        client.sourceStarted(PlainVirtualFileConverter.converter.toPath(source).toAbsolutePath.normalize().toString)
 
       changedClasses.flatMap(analysis.asInstanceOf[Analysis].relations.definesClass).foreach(invalidateClass)
     }

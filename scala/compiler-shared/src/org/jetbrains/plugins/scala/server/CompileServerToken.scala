@@ -15,7 +15,7 @@ object CompileServerToken {
      readStringFrom(tokenPathForPort(scalaCompileServerSystemDir, port))
 
   private def readStringFrom(path: Path): Option[String] =
-    if (path.toFile.exists)
+    if (Files.exists(path))
       Some(new String(Files.readAllBytes(path), StandardCharsets.UTF_8))
     else None
 }
