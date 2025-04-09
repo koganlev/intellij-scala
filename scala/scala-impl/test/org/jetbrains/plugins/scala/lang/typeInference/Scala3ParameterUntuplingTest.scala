@@ -58,7 +58,7 @@ class Scala3ParameterUntuplingTest extends TypeInferenceTestBase {
        |object A {
        |  val xs: List[(Int, Int)] = ???
        |  val combiner: (Int, Int) => Int = ???
-       |  xs.ma${CARET}p(combiner)
+       |  xs.map(co${CARET}mbiner)
        |}
        |""".stripMargin
   )

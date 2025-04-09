@@ -450,7 +450,7 @@ class ScReferenceExpressionImpl(node: ASTNode) extends ScReferenceImpl(node) wit
         //hack to add Eta expansion for case classes
         if (obj.isSyntheticObject) {
           ScalaPsiUtil.getCompanionModule(obj) match {
-            case Some(clazz) if clazz.isCase && !clazz.hasTypeParameters =>
+            case Some(clazz) if clazz.isCase =>
               this.expectedType() match {
                 case Some(tp) =>
                   if (FunctionType.isFunctionType(tp)) {

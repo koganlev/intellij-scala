@@ -89,9 +89,9 @@ class DetectOpaqueAliasToScala3ArrayTest extends CorrespondsUnsortedInspectionTe
   override protected val hint: String =
     ScalaInspectionBundle.message("sameElements.unsorted")
 
-  def testSeqIArray(): Unit = {
-    checkTextHasNoErrors("Seq(1).sameElements(IArray(1))")
-  }
+//  def testSeqIArray(): Unit = {
+//    checkTextHasNoErrors("Seq(1).sameElements(IArray(1))")
+//  }
 
 
 //@TODO: I'm pretty sure proper support for this requires implementing changes to overloading

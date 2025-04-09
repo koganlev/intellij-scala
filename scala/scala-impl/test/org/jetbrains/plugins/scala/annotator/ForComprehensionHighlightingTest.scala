@@ -33,8 +33,7 @@ class ForComprehensionHighlightingTest extends ForComprehensionHighlightingTestB
       """.stripMargin
 
     assertMatches(errorsFromScalaCode(code)) {
-      case Error("if", "Cannot resolve overloaded method 'withFilter'") ::
-        Error("x", "Expression of type Int doesn't conform to expected type Boolean") ::
+      case Error("x", "Expression of type Int doesn't conform to expected type Boolean") ::
         Nil =>
     }
   }
@@ -62,8 +61,7 @@ class ForComprehensionHighlightingTest extends ForComprehensionHighlightingTestB
       """.stripMargin
 
     assertMatches(errorsFromScalaCode(code)) {
-      case Error("if", "Cannot resolve overloaded method 'withFilter'") ::
-        Error("i", "Expression of type Int doesn't conform to expected type Boolean") ::
+      case Error("i", "Expression of type Int doesn't conform to expected type Boolean") ::
         Nil =>
     }
   }

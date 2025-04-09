@@ -37,8 +37,8 @@ class ScGenericCallImpl(node: ASTNode) extends ScExpressionImplBase(node) with S
   }
 
     val applyResolveContext = getContext match {
-      case inv: MethodInvocation => inv
-      case _                     => this
+      case inv: MethodInvocation if inv.getInvokedExpr == this => inv
+      case _                                                   => this
     }
 
     val applyCandidates = this.resolveApplyOrUpdateMethod(

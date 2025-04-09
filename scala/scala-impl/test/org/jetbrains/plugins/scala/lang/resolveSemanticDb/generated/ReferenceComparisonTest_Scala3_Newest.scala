@@ -392,7 +392,7 @@ class ReferenceComparisonTest_Scala3_Newest extends ReferenceComparisonTestBase(
   def test_i880(): Unit = doTest("i880", true)
   def test_i0881(): Unit = doTest("i0881", true)
   def test_i884(): Unit = doTest("i884", true)
-  def test_i903(): Unit = doTest("i903", false)
+  def test_i903(): Unit = doTest("i903", true)
   def test_i939(): Unit = doTest("i939", true)
   def test_i941(): Unit = doTest("i941", true)
   def test_i947(): Unit = doTest("i947", true)
@@ -2070,7 +2070,7 @@ class ReferenceComparisonTest_Scala3_Newest extends ReferenceComparisonTestBase(
   def test_nested2(): Unit = doTest("nested2", true)
   def test_nestedLambdas(): Unit = doTest("nestedLambdas", true) // #typeLambda
   def test_new_array(): Unit = doTest("new-array", false)
-  def test_newline_braces(): Unit = doTest("newline-braces", false)
+  def test_newline_braces(): Unit = doTest("newline-braces", true)
   def test_news(): Unit = doTest("news", true)
   def test_no_mirror_derives(): Unit = doTest("no-mirror-derives", true) // #derives
   def test_no_selftype(): Unit = doTest("no-selftype", true)

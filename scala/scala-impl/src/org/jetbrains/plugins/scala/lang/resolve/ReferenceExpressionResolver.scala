@@ -62,17 +62,19 @@ class ReferenceExpressionResolver(implicit projectContext: ProjectContext) {
   @tailrec
   private def getContextInfo(ref: ScReferenceExpression, e: ScExpression, steppedOverGenericCall: Boolean = false): ContextInfo = {
     e.getContext match {
-      case generic: ScGenericCall if !steppedOverGenericCall =>
+      case generic: ScGenericCall if !steppedOverGenericCall && generic.referencedExpr == ref =>
         getContextInfo(ref, generic, steppedOverGenericCall = true)
-      case call: ScMethodCall if !call.isUpdateCall =>
+      case call: ScMethodCall if !call.isUpdateCall && call.getInvokedExpr == e =>
         ContextInfo(
           Option(call.argumentExpressions),
           () => call.expectedType(),
           isUnderscore = false,
           Option(call.getInvokedExpr)
         )
-      case call: ScMethodCall =>
-        val args = call.argumentExpressions ++ call.getContext.asInstanceOf[ScAssignment].rightExpression.toList
+      case call: ScMethodCall if call.getInvokedExpr == e =>
+        val args = call.argumentExpressions ++
+          call.getContext.asInstanceOf[ScAssignment].rightExpression.toList
+
         ContextInfo(
           Option(args),
           () => None,
