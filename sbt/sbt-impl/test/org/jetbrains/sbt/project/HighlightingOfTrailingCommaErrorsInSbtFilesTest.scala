@@ -2,7 +2,7 @@ package org.jetbrains.sbt.project
 
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.psi.{PsiErrorElement, PsiFile}
-import org.jetbrains.plugins.scala.SlowTests
+import org.jetbrains.plugins.scala.ExtremelySlowTests
 import org.jetbrains.plugins.scala.editor.DocumentExt
 import org.jetbrains.plugins.scala.extensions.{PsiElementExt, executeUndoTransparentAction, inWriteAction, invokeAndWait}
 import org.jetbrains.plugins.scala.project.ProjectPsiFileExt
@@ -14,7 +14,7 @@ import org.junit.Assert
 import org.junit.Assert.assertTrue
 import org.junit.experimental.categories.Category
 
-@Category(Array(classOf[SlowTests]))
+@Category(Array(classOf[ExtremelySlowTests]))
 final class HighlightingOfTrailingCommaErrorsInSbtFilesTest extends SbtExternalSystemImportingTestLike {
 
   override protected def getTestDataProjectPath: String =

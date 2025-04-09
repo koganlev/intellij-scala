@@ -7,14 +7,14 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.{JavaSdk, ProjectJdkTable}
 import com.intellij.openapi.roots.{LanguageLevelProjectExtension, ProjectRootManager}
 import com.intellij.testFramework.IndexingTestUtil
-import org.jetbrains.plugins.scala.SlowTests
+import org.jetbrains.plugins.scala.{ExtremelySlowTests, SlowTests}
 import org.jetbrains.plugins.scala.extensions.inWriteAction
 import org.jetbrains.sbt.project.utils.ProjectStructureComparisonContext
 import org.junit.Assert
 import org.junit.Assert.assertNotNull
 import org.junit.experimental.categories.Category
 
-@Category(Array(classOf[SlowTests]))
+@Category(Array(classOf[ExtremelySlowTests]))
 abstract class NewScalaProjectWizardTestBase extends NewProjectWizardTestCase
   with ProjectStructureMatcher {
 

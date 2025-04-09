@@ -5,6 +5,8 @@ package org.jetbrains.plugins.scala
 
 trait SlowTests
 
+trait ExtremelySlowTests
+
 trait DebuggerTests
 
 /**
