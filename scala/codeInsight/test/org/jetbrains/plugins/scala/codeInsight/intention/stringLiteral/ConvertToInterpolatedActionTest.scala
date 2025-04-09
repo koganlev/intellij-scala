@@ -1,6 +1,14 @@
 package org.jetbrains.plugins.scala.codeInsight.intention.stringLiteral
 
+import com.intellij.util.IdempotenceChecker
+
 class ConvertToInterpolatedActionTest extends StringConversionTestBase {
+
+  override protected def setUp(): Unit = {
+    super.setUp()
+    // TODO: SCL-23749
+    IdempotenceChecker.disableRandomChecksUntil(getTestRootDisposable)
+  }
 
   override def familyName: String = FormatConversionIntention.ConvertToInterpolated
 
