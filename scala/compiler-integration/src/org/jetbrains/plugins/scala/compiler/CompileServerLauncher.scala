@@ -216,17 +216,17 @@ object CompileServerLauncher {
             scalaCompileServerSystemDir.toCanonicalPath.toString +:
             Nil
 
+        val workingDirectory: Path = {
+          val customWorkingDir = settings.CUSTOM_WORKING_DIR_FOR_TESTS
+          if (customWorkingDir ne null) Path.of(customWorkingDir).toCanonicalPath
+          else if (settings.USE_PROJECT_HOME_AS_WORKING_DIR) projectHome(project).map(_.toCanonicalPath).orNull
+          else null
+        }
+
         val builder = new GeneralCommandLine(commands.asJava)
           .withParentEnvironmentType(GeneralCommandLine.ParentEnvironmentType.CONSOLE)
+          .withWorkingDirectory(workingDirectory)
           .toProcessBuilder
-
-        val customWorkingDir = settings.CUSTOM_WORKING_DIR_FOR_TESTS
-        if (customWorkingDir != null) {
-          builder.directory(new java.io.File(customWorkingDir))
-        }
-        else if (settings.USE_PROJECT_HOME_AS_WORKING_DIR) {
-          projectHome(project).foreach(dir => builder.directory(dir))
-        }
 
         val incrementalCompiler = ScalaCompilerConfiguration(project).incrementalityType
 
@@ -619,13 +619,11 @@ object CompileServerLauncher {
     ApplicationManager.getApplication.saveSettings()
   }
 
-  private def projectHome(project: Project): Option[java.io.File] = {
+  private def projectHome(project: Project): Option[Path] = {
     for {
       dir <- Option(project.baseDir)
-      path <- Option(dir.getCanonicalPath)
-      file = new java.io.File(path)
-      if file.exists()
-    } yield file
+      path <- Option(dir.getFileSystem.getNioPath(dir)) if path.exists
+    } yield path
   }
 
 
