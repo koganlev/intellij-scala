@@ -1,9 +1,12 @@
 package org.jetbrains.sbt
 package annotator
 
+import org.jetbrains.plugins.scala.ExtremelySlowTests
 import org.jetbrains.plugins.scala.lang.psi.impl.ScalaPsiElementFactory
 import org.junit.Assert.assertTrue
+import org.junit.experimental.categories.Category
 
+@Category(Array(classOf[ExtremelySlowTests]))
 abstract class SbtAnnotatorConformanceTestBase extends SbtAnnotatorTestBase {
 
   override protected def setUp(): Unit = {
