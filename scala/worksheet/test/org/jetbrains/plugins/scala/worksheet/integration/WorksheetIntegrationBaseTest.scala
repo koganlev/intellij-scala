@@ -61,9 +61,6 @@ abstract class WorksheetIntegrationBaseTest
 
   protected def worksheetFileName: String = s"worksheet_${getTestName(false)}.sc"
 
-  override protected def reuseCompileServerProcessBetweenTests: Boolean =
-    !SystemInfo.isMac || SystemInfo.OS_ARCH != "aarch64"
-
   protected def setupWorksheetSettings(settings: WorksheetFilePersistentSettings): Unit = {
     settings.setRunType(self.runType)
     settings.setInteractive(false) // TODO: test these values?
