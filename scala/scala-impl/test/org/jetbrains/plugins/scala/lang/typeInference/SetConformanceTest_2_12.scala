@@ -25,29 +25,17 @@ class SetConformanceTest_2_12 extends SetConformanceTestBase {
       """.stripMargin)
   }
 
-  //TODO: replace with "checkTextHasNoErrors" when SCL-11139  is fixed
-  def testSCL11139(): Unit = checkErrorsText(
+  def testSCL11139(): Unit = checkTextHasNoErrors(
     s"""
        |import scala.reflect.Manifest
        |object App {
-       |  def tryCast[T](o: Any)(implicit manifest: Manifest[T]): Option[T] = {
-       |    val clazz = manifest.runtimeClass.asInstanceOf[Class[T]]
-       |    if (clazz.isAssignableFrom(o.getClass)) {
-       |      Some(o.asInstanceOf[T])
-       |    } else {
-       |      None
-       |    }
-       |  }
+       |  def tryCast[T](o: Any)(implicit manifest: Manifest[T]): Option[T] = ???
        |
        |  def main(arg: Array[String]) = {
-       |    val text: String = Seq("a", 1)
-       |      .flatMap(tryCast[String])
-       |      .mkString
-       |    println(text)
+       |    val text = Seq("a", 1).flatMap(tryCast[String])
        |  }
        |}
        |//true
-    """.stripMargin,
-    """Error(flatMap,Cannot resolve overloaded method 'flatMap')"""
+    """.stripMargin
   )
 }

@@ -178,7 +178,7 @@ trait ScExpression extends ScBlockStatement
 
             // isSAMEnabled is checked in tryAdaptTypeToSAM, but we can cut it right here
             val adapted =
-              if (this.isSAMEnabled) this.tryAdaptTypeToSAM(tp, expType, fromUnderscore, checkImplicits)
+              if (this.isSAMEnabled) this.tryAdaptTypeToSAM(tp, expType, fromUnderscore, checkImplicits = checkImplicits)
               else                   None
 
             adapted.getOrElse(
@@ -349,7 +349,7 @@ object ScExpression {
                      * is inferred to scala.Nothing and it is not covariant in `internalType`, it is
                      * considered to be undetermined.
                      */
-                    val substed = subst(tpt)
+                    val substed        = subst(tpt)
                     val retractNothing = substed.isNothing && !variance.isPositive
 
                     val result =
