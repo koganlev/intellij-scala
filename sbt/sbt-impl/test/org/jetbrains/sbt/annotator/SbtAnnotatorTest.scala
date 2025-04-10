@@ -6,10 +6,10 @@ import com.intellij.openapi.roots.{ModifiableRootModel, ModuleRootModificationUt
 import com.intellij.openapi.vfs.{LocalFileSystem, VfsUtilCore}
 import com.intellij.psi.PsiManager
 import com.intellij.testFramework.{HeavyPlatformTestCase, UsefulTestCase}
-import org.jetbrains.plugins.scala.SlowTests
 import org.jetbrains.plugins.scala.annotator._
 import org.jetbrains.plugins.scala.base.libraryLoaders.{HeavyJDKLoader, LibraryLoader, SmartJDKLoader}
 import org.jetbrains.plugins.scala.util.TestUtils.getTestDataPath
+import org.jetbrains.plugins.scala.{ExtremelySlowTests, SlowTests}
 import org.jetbrains.sbt.language.SbtFileImpl
 import org.jetbrains.sbt.project.settings.SbtProjectSettings
 import org.jetbrains.sbt.settings.SbtSettings
@@ -87,7 +87,7 @@ abstract class SbtAnnotatorTestBase extends HeavyPlatformTestCase
   }
 }
 
-@Category(Array(classOf[SlowTests]))
+@Category(Array(classOf[ExtremelySlowTests]))
 @Ignore
 class SbtAnnotatorTest_0_13_1 extends SbtAnnotatorTestBase with MockSbt_0_13 {
   override implicit val sbtVersion: SbtVersion = SbtVersion("0.13.1")
@@ -95,7 +95,7 @@ class SbtAnnotatorTest_0_13_1 extends SbtAnnotatorTestBase with MockSbt_0_13 {
   def test(): Unit = runTest(sbtVersion, Expectations.sbt_0_13(sbtVersion))
 }
 
-@Category(Array(classOf[SlowTests]))
+@Category(Array(classOf[ExtremelySlowTests]))
 @Ignore
 class SbtAnnotatorTest_0_13_7 extends SbtAnnotatorTestBase with MockSbt_0_13 {
   override implicit val sbtVersion: SbtVersion = SbtVersion("0.13.7")
@@ -103,12 +103,12 @@ class SbtAnnotatorTest_0_13_7 extends SbtAnnotatorTestBase with MockSbt_0_13 {
   def test(): Unit = runTest(sbtVersion, Expectations.sbt_0_13_7)
 }
 
-@Category(Array(classOf[SlowTests]))
+@Category(Array(classOf[ExtremelySlowTests]))
 class SbtAnnotatorTest_1 extends SbtAnnotatorTestBase with MockSbt_1_0 {
   def test(): Unit = runTest(sbtVersion, Expectations.sbt_1_0)
 }
 
-@Category(Array(classOf[SlowTests]))
+@Category(Array(classOf[ExtremelySlowTests]))
 class SbtAnnotatorTest_2 extends SbtAnnotatorTestBase with MockSbt_2 {
   def test(): Unit = runTest(sbtVersion, Expectations.sbt_2)
 }
