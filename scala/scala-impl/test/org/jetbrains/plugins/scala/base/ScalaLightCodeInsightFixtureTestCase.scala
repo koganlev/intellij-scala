@@ -69,7 +69,11 @@ abstract class ScalaLightCodeInsightFixtureTestCase
   protected def additionalLibraries: Seq[LibraryLoader] = Seq.empty
 
   override protected def librariesLoaders: Seq[LibraryLoader] = {
-    val scalaSdkLoader = ScalaSDKLoader(includeReflectLibrary, includeCompilerAsLibrary, includeScalaLibrarySources = includeScalaLibrarySources)
+    val scalaSdkLoader = ScalaSDKLoader(
+      includeScalaReflectIntoCompilerClasspath = includeReflectLibrary,
+      includeScalaCompilerIntoLibraryClasspath = includeCompilerAsLibrary,
+      includeScalaLibrarySources = includeScalaLibrarySources
+    )
     val additionalLoaders = additionalLibraries
     scalaSdkLoader +: additionalLoaders
   }
