@@ -35,7 +35,6 @@ import scala.jdk.CollectionConverters._
 //TODO: try to remove EditorTestUtil.buildInitialFoldingsInBackground(getEditor) and see if tests pass?
 abstract class ScalaLightCodeInsightFixtureTestCase
   extends LightJavaCodeInsightFixtureTestCase
-    with SuppressMissingTemplateExceptions
     with ScalaSdkOwner
     with FailableTest {
 
@@ -143,6 +142,9 @@ abstract class ScalaLightCodeInsightFixtureTestCase
   //end section: project descriptor
 
   override protected def setUp(): Unit = {
+    // Suppress missing template exceptions.
+    sys.props.put("ide.skip.plugin.templates.registered.check", true.toString)
+
     // initialize indexing mode before java test fixture in super.setUp()
     /** see also [[com.intellij.testFramework.fixtures.JavaIndexingModeCodeInsightTestFixture]] */
     indexingMode = this.getIndexingModeConsideringDumbModeChecks
@@ -165,6 +167,7 @@ abstract class ScalaLightCodeInsightFixtureTestCase
   override protected def tearDown(): Unit = {
     disposeLibraries(getModule)
     super.tearDown()
+    sys.props.put("ide.skip.plugin.templates.registered.check", false.toString)
   }
 
   //start section: helper methods
