@@ -65,9 +65,9 @@ object KindProjectorUtil {
   val Lambda: String         = "Lambda"
   val LambdaSymbolic: String = "λ"
 
-  val qMarkInlineSyntax: Seq[String]      = Seq("?", "-?", "+?")
-  val starInlineSyntax: Seq[String]       = Seq("*", "-*", "+*")
-  val underscoreInlineSyntax: Seq[String] = Seq("_", "-_", "+_")
+  private val qMarkInlineSyntax: Seq[String]      = Seq("?", "-?", "+?")
+  private val starInlineSyntax: Seq[String]       = Seq("*", "-*", "+*")
+  private val underscoreInlineSyntax: Seq[String] = Seq("_", "-_", "+_")
 
   def apply(project: Project): KindProjectorUtil = project.getService(classOf[KindProjectorUtil])
 
@@ -104,7 +104,7 @@ object KindProjectorUtil {
     val text =
       s"""
          |object $objectName {
-         |  def apply[T[_[_], _[_]]]: Any = ???
+         |  def apply[T]: Any = ???
          |}
        """.stripMargin
 
@@ -149,19 +149,6 @@ object KindProjectorUtil {
     }
   }
 
-  private[this] def containingFileModTracker(tdef: ScTypeDefinition): ModificationTracker = {
-    val rootManager = ProjectRootManager.getInstance(tdef.getProject)
-
-    def isInLibrary(file: ScalaFile): Boolean =
-      file.isCompiled && rootManager.getFileIndex.isInLibrary(file.getVirtualFile)
-
-    tdef.getContainingFile match {
-      case file: ScalaFile if isInLibrary(file) => rootManager
-      case null                                 => ModificationTracker.NEVER_CHANGED
-      case file                                 => Option(file.getVirtualFile).getOrElse(ModificationTracker.NEVER_CHANGED)
-    }
-  }
-
   implicit class `synthetic poly-lambda builder ext`(private val tdef: ScTypeDefinition) extends AnyVal {
 
     /**
@@ -182,7 +169,7 @@ object KindProjectorUtil {
     * }
     * }}}
     */
-    def syntheticPolyLambdaBuilder: Option[ScTypeDefinition] =
+    private def syntheticPolyLambdaBuilder: Option[ScTypeDefinition] =
       cachedInUserData("getSyntheticImplicitMethod", tdef, ModTracker.libraryAware(tdef)) {
         val tparams = tdef.typeParameters
         val methods = tdef.functions.filter(canBeRewritten(_, tparams))

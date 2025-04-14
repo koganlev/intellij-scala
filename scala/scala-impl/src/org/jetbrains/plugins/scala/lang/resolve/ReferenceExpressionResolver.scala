@@ -42,6 +42,7 @@ class ReferenceExpressionResolver(implicit projectContext: ProjectContext) {
 
   private case class ContextInfo(
     arguments:    Option[Seq[Expression]],
+    typeArgs:     Seq[ScTypeElement],
     expectedType: () => Option[ScType],
     isUnderscore: Boolean,
     invokedExpr:  Option[ScExpression]
@@ -60,13 +61,18 @@ class ReferenceExpressionResolver(implicit projectContext: ProjectContext) {
   }
 
   @tailrec
-  private def getContextInfo(ref: ScReferenceExpression, e: ScExpression, steppedOverGenericCall: Boolean = false): ContextInfo = {
+  private def getContextInfo(
+    ref:                    ScReferenceExpression,
+    e:                      ScExpression,
+    typeArgs:               Seq[ScTypeElement] = Seq.empty
+  ): ContextInfo = {
     e.getContext match {
-      case generic: ScGenericCall if !steppedOverGenericCall && generic.referencedExpr == ref =>
-        getContextInfo(ref, generic, steppedOverGenericCall = true)
+      case generic: ScGenericCall if typeArgs.isEmpty && generic.referencedExpr == ref =>
+        getContextInfo(ref, generic, typeArgs = generic.arguments)
       case call: ScMethodCall if !call.isUpdateCall && call.getInvokedExpr == e =>
         ContextInfo(
           Option(call.argumentExpressions),
+          typeArgs,
           () => call.expectedType(),
           isUnderscore = false,
           Option(call.getInvokedExpr)
@@ -77,11 +83,19 @@ class ReferenceExpressionResolver(implicit projectContext: ProjectContext) {
 
         ContextInfo(
           Option(args),
+          typeArgs,
           () => None,
           isUnderscore = false,
           None
         )
-      case section: ScUnderscoreSection => ContextInfo(None, () => section.expectedType(), isUnderscore = true, None)
+      case section: ScUnderscoreSection =>
+        ContextInfo(
+          None,
+          typeArgs,
+          () => section.expectedType(),
+          isUnderscore = true,
+          None
+        )
       case infix @ ScInfixExpr.withAssoc(baseExpr, `ref`, argument) =>
         val args =
           argument match {
@@ -98,12 +112,19 @@ class ReferenceExpressionResolver(implicit projectContext: ProjectContext) {
         val postFixRef =
           ScalaPsiElementFactory.createExpressionWithContextFromText(s"${baseExpr.getText} ${ref.getText}", infix)
 
-        ContextInfo(args, () => infix.expectedType(), isUnderscore = false, Option(postFixRef))
-      case parents: ScParenthesisedExpr                   => getContextInfo(ref, parents)
-      case postf: ScPostfixExpr if ref == postf.operation => getContextInfo(ref, postf)
-      case pref: ScPrefixExpr if ref == pref.operation    => getContextInfo(ref, pref)
+        ContextInfo(
+          args,
+          typeArgs,
+          () => infix.expectedType(),
+          isUnderscore = false,
+          Option(postFixRef)
+        )
+      case parents: ScParenthesisedExpr                   => getContextInfo(ref, parents, typeArgs)
+      case postf: ScPostfixExpr if ref == postf.operation => getContextInfo(ref, postf, typeArgs)
+      case pref: ScPrefixExpr if ref == pref.operation    => getContextInfo(ref, pref, typeArgs)
       case _ => ContextInfo(
         None,
+        typeArgs,
         () => e.expectedType(),
         isUnderscore = false,
         None
@@ -125,14 +146,6 @@ class ReferenceExpressionResolver(implicit projectContext: ProjectContext) {
     case pref: ScPrefixExpr if ref == pref.operation    => StdKinds.methodRef
     case _                                              => ref.getKinds(incomplete)
   }
-
-  @tailrec
-  private def getTypeArgs(e: ScExpression): Seq[ScTypeElement] =
-    e.getContext match {
-      case generic: ScGenericCall       => generic.arguments
-      case parents: ScParenthesisedExpr => getTypeArgs(parents)
-      case _                            => Seq.empty
-    }
 
   def resolve(reference: ScReferenceExpression, shapesOnly: Boolean, incomplete: Boolean): Array[ScalaResolveResult] = {
     val resolveWithName = this.resolveWithName(_: String, reference, shapesOnly, incomplete)
@@ -179,7 +192,6 @@ class ReferenceExpressionResolver(implicit projectContext: ProjectContext) {
     val expectedOption = () => info.expectedType()
 
     val prevInfoTypeParams = reference.getPrevTypeInfoParams
-    val typeArgs           = getTypeArgs(reference)
 
     def processor(
       name:           String                    = name,
@@ -189,7 +201,7 @@ class ReferenceExpressionResolver(implicit projectContext: ProjectContext) {
         reference,
         name,
         info.arguments.toList,
-        typeArgs,
+        info.typeArgs,
         prevInfoTypeParams,
         kinds,
         expectedOption,
@@ -289,9 +301,18 @@ class ReferenceExpressionResolver(implicit projectContext: ProjectContext) {
     ref:                ScReferenceExpression,
     proc:               BaseProcessor,
     accessibilityCheck: Boolean = true,
-    tryThisQualifier:   Boolean = false
+    tryThisQualifier:   Boolean = false,
+  ): Array[ScalaResolveResult] =
+    doResolve(ref, proc, accessibilityCheck, tryThisQualifier, None)
+
+  private def doResolve(
+    ref:                ScReferenceExpression,
+    proc:               BaseProcessor,
+    accessibilityCheck: Boolean,
+    tryThisQualifier:   Boolean,
+    contextInfo:        Option[ContextInfo]
   ): Array[ScalaResolveResult] = {
-    val info = getContextInfo(ref, ref)
+    val info = contextInfo.getOrElse(getContextInfo(ref, ref))
 
     val isShape = proc match {
       case m: MethodResolveProcessor => m.isShapeResolve
@@ -654,7 +675,7 @@ class ReferenceExpressionResolver(implicit projectContext: ProjectContext) {
           val hasParams             = srr.elementHasParameters
           val hasTypeParams         = srr.elementHasTypeParameters
           val hasArgs               = info.arguments.nonEmpty
-          val hasMismatchedTypeArgs = !hasTypeParams && getTypeArgs(ref).nonEmpty
+          val hasMismatchedTypeArgs = !hasTypeParams && info.typeArgs.nonEmpty
 
           if (!hasParams || srr.name == CommonNames.Apply) {
             if (hasMismatchedTypeArgs) {
@@ -665,6 +686,7 @@ class ReferenceExpressionResolver(implicit projectContext: ProjectContext) {
               // the case when potential type arguments belong to the initial method invocation
               // foo[A](10) -> foo[A].apply(10)
               val invokedExpr = info.invokedExpr.getOrElse(ref)
+              //@TODO: remove type args from contextinfo
               createRef(invokedExpr.getContext, s"(${invokedExpr.getText}).apply").toOption
             }
             else None
@@ -674,8 +696,13 @@ class ReferenceExpressionResolver(implicit projectContext: ProjectContext) {
       maybeExplicitApplyRef match {
         case Some(applyRef) =>
           val resolvedWithApplyRef =
-            if (isShape) applyRef.shapeResolve
-            else         applyRef.multiResolveScala(false)
+            doResolve(
+              applyRef,
+              proc,
+              accessibilityCheck,
+              tryThisQualifier,
+              contextInfo = Option(info)
+            )
 
           if (resolvedWithApplyRef.isEmpty) found
           else {
@@ -795,7 +822,13 @@ class ReferenceExpressionResolver(implicit projectContext: ProjectContext) {
     }
 
     if (accessibilityCheck && res.isEmpty) {
-      res = doResolve(ref, proc, accessibilityCheck = false)
+      res = doResolve(
+        ref,
+        proc,
+        accessibilityCheck = false,
+        tryThisQualifier   = false,
+        contextInfo        = Option(info)
+      )
     }
 
     val isInfixOp = ref.getContext match {
@@ -811,7 +844,14 @@ class ReferenceExpressionResolver(implicit projectContext: ProjectContext) {
         !isInfixOp
     ) {
       val thisExpr = createRef(ref.getContext, s"this.${ref.getText}")
-      res = doResolve(thisExpr, proc, accessibilityCheck)
+
+      res = doResolve(
+        thisExpr,
+        proc,
+        accessibilityCheck,
+        tryThisQualifier = false,
+        contextInfo      = Option(info)
+      )
     }
 
     res

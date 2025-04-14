@@ -29,6 +29,7 @@ import org.jetbrains.plugins.scala.lang.resolve.MethodTypeProvider._
 import org.jetbrains.plugins.scala.lang.resolve._
 import org.jetbrains.plugins.scala.lang.resolve.processor.DynamicResolveProcessor.ScTypeForDynamicProcessorEx
 import org.jetbrains.plugins.scala.lang.resolve.processor._
+import org.jetbrains.plugins.scala.project.ScalaLanguageLevel
 import org.jetbrains.plugins.scala.{ScalaBundle, Tracing}
 
 import scala.collection.mutable
@@ -449,8 +450,11 @@ class ScReferenceExpressionImpl(node: ASTNode) extends ScReferenceImpl(node) wit
           }
         //hack to add Eta expansion for case classes
         if (obj.isSyntheticObject) {
+          def canEtaExpandPolymorphicCaseClass =
+            this.scalaLanguageLevel.exists(_ >= ScalaLanguageLevel.Scala_2_13)
+
           ScalaPsiUtil.getCompanionModule(obj) match {
-            case Some(clazz) if clazz.isCase =>
+            case Some(clazz) if clazz.isCase && (!clazz.hasTypeParameters || canEtaExpandPolymorphicCaseClass) =>
               this.expectedType() match {
                 case Some(tp) =>
                   if (FunctionType.isFunctionType(tp)) {

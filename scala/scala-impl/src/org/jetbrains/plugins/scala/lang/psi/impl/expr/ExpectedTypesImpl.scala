@@ -3,6 +3,8 @@ package org.jetbrains.plugins.scala.lang.psi.impl.expr
 import com.intellij.psi._
 import com.intellij.psi.util.PsiTreeUtil
 import org.jetbrains.plugins.scala.extensions.{ObjectExt, PsiElementExt, PsiNamedElementExt, PsiTypeExt}
+import org.jetbrains.plugins.scala.externalLibraries.kindProjector.KindProjectorUtil
+import org.jetbrains.plugins.scala.externalLibraries.kindProjector.KindProjectorUtil.{Lambda, LambdaSymbolic}
 import org.jetbrains.plugins.scala.lang.psi.ElementScope
 import org.jetbrains.plugins.scala.lang.psi.ScalaPsiUtil.inNameContext
 import org.jetbrains.plugins.scala.lang.psi.api.InferUtil
@@ -262,9 +264,13 @@ class ExpectedTypesImpl extends ExpectedTypes {
     def mapResolves(resolves: Array[ScalaResolveResult], types: Array[TypeResult]): Array[(TypeResult, Boolean, Boolean)] =
       resolves.zip(types).map {
         case (r, tp) =>
+          val syntheticKindProjectorApplyNames = Set(Lambda, LambdaSymbolic)
+
           val actualType = r match {
-            case ScalaResolveResult(fun: ScFunction, s: ScSubstitutor) if fun.name == CommonNames.Apply =>
-              Right(fun.polymorphicType(s))
+            case srr @ ScalaResolveResult(fun: ScFunction, s: ScSubstitutor) if fun.name == CommonNames.Apply =>
+              if (srr.innerResolveResult.exists(inner => syntheticKindProjectorApplyNames.contains(inner.name)))
+                tp
+              else Right(fun.polymorphicType(s))
             case _ => tp
           }
 
