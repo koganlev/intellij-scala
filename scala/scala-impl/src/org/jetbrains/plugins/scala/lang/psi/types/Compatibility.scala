@@ -8,7 +8,7 @@ import org.jetbrains.annotations.TestOnly
 import org.jetbrains.plugins.scala.ScalaBundle
 import org.jetbrains.plugins.scala.caches.{BlockModificationTracker, cachedWithRecursionGuard}
 import org.jetbrains.plugins.scala.extensions._
-import org.jetbrains.plugins.scala.lang.psi.ScalaPsiUtil.MethodValue
+import org.jetbrains.plugins.scala.lang.psi.ScalaPsiUtil.MethodValueExtractor
 import org.jetbrains.plugins.scala.lang.psi.api.InferUtil.extractImplicitParameterType
 import org.jetbrains.plugins.scala.lang.psi.api.base.{ConstructorInvocationLike, ScPrimaryConstructor}
 import org.jetbrains.plugins.scala.lang.psi.api.expr.ScExpression.ExpressionTypeResult
@@ -185,6 +185,8 @@ object Compatibility {
           case _ => None
         }
 
+      val methodValue = new MethodValueExtractor(Option(pt))
+
       place match {
         case ScFunctionExpr(_, _) if fromUnderscore => checkForSAM()
         case ScUnderscoreSection.binding(ResolvesTo(param: ScParameter)) if param.isCallByNameParameter =>
@@ -192,8 +194,8 @@ object Compatibility {
         case e: ScExpression if !fromUnderscore && ScalaPsiUtil.isAnonExpression(e) =>
           checkForSAM()
         case _ if !checkResolve => checkForSAM(etaExpansionHappened = true)
-        case MethodValue(_) => checkForSAM(etaExpansionHappened = true)
-        case _ => None
+        case methodValue(_)     => checkForSAM(etaExpansionHappened = true)
+        case _                  => None
       }
     }
 

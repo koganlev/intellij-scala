@@ -665,7 +665,7 @@ class ReferenceExpressionResolver(implicit projectContext: ProjectContext) {
     }
 
     def explicitApplyReferenceResolve(found: Array[ScalaResolveResult]): Array[ScalaResolveResult] = {
-      val maybeExplicitApplyRef =
+      val maybeExplicitApplyRefAndContextInfo =
         if (ref.refName != CommonNames.Apply
           && inMethodCallContext(ref)
           && found.length == 1
@@ -681,24 +681,29 @@ class ReferenceExpressionResolver(implicit projectContext: ProjectContext) {
             if (hasMismatchedTypeArgs) {
               // the case when type arguments belong to apply method
               // foo[A](10) -> foo.apply[A](1)
-              createRef(ref.getContext, s"${ref.getText}.apply").toOption
+              val res = createRef(ref.getContext, s"${ref.getText}.apply") -> info
+              Option(res)
             } else if (hasArgs) {
               // the case when potential type arguments belong to the initial method invocation
               // foo[A](10) -> foo[A].apply(10)
               val invokedExpr = info.invokedExpr.getOrElse(ref)
-              //@TODO: remove type args from contextinfo
-              createRef(invokedExpr.getContext, s"(${invokedExpr.getText}).apply").toOption
+
+              val res =
+                createRef(invokedExpr.getContext, s"(${invokedExpr.getText}).apply") ->
+                  info.copy(typeArgs = Seq.empty)
+
+              Option(res)
             }
             else None
           } else None
         } else None
 
-      maybeExplicitApplyRef match {
-        case Some(applyRef) =>
+      maybeExplicitApplyRefAndContextInfo match {
+        case Some((applyRef, info)) =>
           val resolvedWithApplyRef =
             doResolve(
               applyRef,
-              proc,
+              updateResolveProcessor(proc)(_.copy(refName = CommonNames.Apply)),
               accessibilityCheck,
               tryThisQualifier,
               contextInfo = Option(info)
@@ -768,7 +773,7 @@ class ReferenceExpressionResolver(implicit projectContext: ProjectContext) {
         else                                      candidates
 
       if (shouldTryImplicitConversions(withExplicitApply) || withImplicitConversion) {
-        val procForConversions = procForImplicitConversions(proc, candidates)
+        val procForConversions = updateResolveProcessor(proc)(_.copy(noImplicitsForArgs = candidates.nonEmpty))
 
         ImplicitConversionResolveResult.processImplicitConversionsAndExtensions(
           targetNameForImplicitProcessor(proc),
@@ -793,11 +798,12 @@ class ReferenceExpressionResolver(implicit projectContext: ProjectContext) {
       } else withExplicitApply
     }
 
-    def procForImplicitConversions(
-      processor: BaseProcessor,
-      found: Array[ScalaResolveResult]
+    def updateResolveProcessor(
+      processor: BaseProcessor
+    )(
+      update: MethodResolveProcessor => BaseProcessor
     ): BaseProcessor = processor match {
-      case mrp: MethodResolveProcessor => mrp.copy(noImplicitsForArgs = found.nonEmpty)
+      case mrp: MethodResolveProcessor => update(mrp)
       case other                       => other
     }
 

@@ -1180,7 +1180,7 @@ object ScalaPsiUtil {
   def isArgumentOfFunctionType(expr: ScExpression): Boolean =
     isCanonicalArg(expr) && parameterOf(expr).exists(p => FunctionType.isFunctionType(p.paramType))
 
-  object MethodValue {
+  class MethodValueExtractor(pt: Option[ScType]) {
     def unapply(expr: ScExpression): Option[PsiMethod] = {
       // ! this extra check by class is a performance optimisation SCL-16559
       // even though their usage may look redundant
@@ -1209,8 +1209,6 @@ object ScalaPsiUtil {
           case _ => None
         }
     }
-
-
     /**
      * @return true if the method can be eta-expanded automatically/non-explicitly in presence of an expected type.<br>
      *        ("automatically" means without using of underscore `_`, like `foo _`)
@@ -1296,7 +1294,7 @@ object ScalaPsiUtil {
     }
 
     private def expectedFunctionalTypeKind(expr: ScExpression): Option[ExpectedFunctionalTypeKind] = {
-      val expectedType = expr.expectedType(fromUnderscore = false)
+      val expectedType = pt.orElse(expr.expectedType(fromUnderscore = false))
       expectedType.flatMap(expectedFunctionalTypeKind(_, expr))
     }
 
@@ -1311,6 +1309,8 @@ object ScalaPsiUtil {
           None
       }
   }
+
+  object MethodValue extends MethodValueExtractor(None)
 
   def isConcreteElement(element: PsiElement): Boolean = {
     element match {
