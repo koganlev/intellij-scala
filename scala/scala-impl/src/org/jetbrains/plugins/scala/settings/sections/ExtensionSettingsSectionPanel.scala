@@ -84,13 +84,15 @@ class ExtensionSettingsSectionPanel(project: Project) extends SettingsSectionPan
     val extensionsPane = new JPanel(new BorderLayout())
     extensionsPane.add(ScrollPaneFactory.createScrollPane(extensionsList))
     extensionsList.setEmptyText(ScalaBundle.message("select.library.from.the.list.above"))
-    extensionsList.installCellRenderer { (ext: ExtensionDescriptor) =>
-      val ExtensionDescriptor(_, impl, name, description, _) = ext
-      val builder = new StringBuilder
-      if (name.nonEmpty) builder.append(name) else builder.append(impl)
-      if (description.nonEmpty) builder.append(s" - $description")
-      new JBLabel(builder.mkString)
+
+    val extensionsListCellRenderer: java.util.function.Function[ExtensionDescriptor, JBLabel] = {
+      case ExtensionDescriptor(_, impl, name, description, _) =>
+        val builder = new StringBuilder()
+        if (name.nonEmpty) builder.append(name) else builder.append(impl)
+        if (description.nonEmpty) builder.append(s" - $description")
+        new JBLabel(builder.mkString)
     }
+    extensionsList.installCellRenderer(extensionsListCellRenderer)
 
     val libraryListModel = new LibraryListModel(detailsModel)
     val librariesList = new JBList[ExtensionJarData](libraryListModel)
@@ -133,16 +135,18 @@ class ExtensionSettingsSectionPanel(project: Project) extends SettingsSectionPan
         extensionsList.setModel(model)
       }
     }
-    librariesList.installCellRenderer{ (ld: ExtensionJarData) =>
-      val ExtensionJarData(LibraryDescriptor(name, _, description, vendor, version, _), file, _) = ld
-      val builder = new StringBuilder
-      if (vendor.nonEmpty) builder.append(s"($vendor) ")
-      builder.append(s"$name $version")
-      if (description.nonEmpty) builder.append(s" - $description")
-      val label = new JBLabel(builder.mkString)
-      label.setToolTipText(file.toAbsolutePath.toString)
-      label
+    val librariesListCellRenderer: java.util.function.Function[ExtensionJarData, JBLabel] = {
+      case ExtensionJarData(LibraryDescriptor(name, _, description, vendor, version, _), file, _) =>
+        val builder = new StringBuilder()
+        if (vendor.nonEmpty) builder.append(s"($vendor) ")
+        builder.append(s"$name $version")
+        if (description.nonEmpty) builder.append(s" - $description")
+        val label = new JBLabel(builder.mkString)
+        label.setToolTipText(file.toAbsolutePath.toString)
+        label
     }
+    librariesList.installCellRenderer(librariesListCellRenderer)
+
     val librariesPane = new JPanel(new BorderLayout())
     librariesPane.add(toolbarDecorator.createPanel())
 
@@ -150,7 +154,7 @@ class ExtensionSettingsSectionPanel(project: Project) extends SettingsSectionPan
     listsPane.setFirstComponent(librariesPane)
     listsPane.setSecondComponent(extensionsPane)
 
-    UIUtil.addBorder(librariesPane,IdeBorderFactory.createTitledBorder(ScalaBundle.message("known.extension.libraries"), false))
+    UIUtil.addBorder(librariesPane, IdeBorderFactory.createTitledBorder(ScalaBundle.message("known.extension.libraries"), false))
     UIUtil.addBorder(extensionsPane, IdeBorderFactory.createTitledBorder(ScalaBundle.message("extensions.in.selected.library"), false))
 
     enabledCB.addActionListener { _ =>

@@ -111,9 +111,6 @@ package object sbt {
     }
   }
 
-  def isIdeaPluginEnabled(@NonNls id: String): Boolean = {
-    Option(PluginId.findId(id))
-      .safeMap(PluginManagerCore.getPlugin)
-      .exists(_.isEnabled)
-  }
+  def isIdeaPluginEnabled(@NonNls id: String): Boolean =
+    Option(PluginId.findId(id)).exists(PluginManagerCore.isLoaded)
 }
