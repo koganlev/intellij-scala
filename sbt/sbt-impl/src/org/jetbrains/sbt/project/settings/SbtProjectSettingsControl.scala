@@ -17,6 +17,7 @@ import com.intellij.util.ui.{GridBag, JBUI}
 import org.jetbrains.annotations.{NotNull, Nullable}
 import org.jetbrains.plugins.scala.project.external.SdkUtils
 import org.jetbrains.sbt.project.SbtProjectSystem
+import org.jetbrains.sbt.survey.SeparateMainTestModulesDisabledFeedback
 
 import java.awt.{FlowLayout, GridBagConstraints}
 import javax.swing._
@@ -39,6 +40,8 @@ class SbtProjectSettingsControl(context: Context, initialSettings: SbtProjectSet
   }
 
   private val extraControls = new SbtExtraControls()
+
+  private var separateMainTestSourcesShowFeedbackNotification = false
 
   override def fillExtraControls(@NotNull content: PaintAwarePanel, indentLevel: Int): Unit = {
     val labelConstraints = getLabelConstraints(indentLevel)
@@ -112,6 +115,15 @@ class SbtProjectSettingsControl(context: Context, initialSettings: SbtProjectSet
     reloadProjectIfNeeded(shouldReload, getProject)
   }
 
+  override def disposeUIResources(): Unit = {
+    super.disposeUIResources()
+
+    val project = getProject
+    if (separateMainTestSourcesShowFeedbackNotification && project != null) {
+      SeparateMainTestModulesDisabledFeedback.showNotification(project)
+    }
+  }
+
   override protected def applyExtraSettings(settings: SbtProjectSettings): Unit = {
     settings.converterVersion = extraControls.converterVersion
     settings.jdk = selectedJdkName.orNull
@@ -128,6 +140,9 @@ class SbtProjectSettingsControl(context: Context, initialSettings: SbtProjectSet
     // as the value from the control ('true') would match the default value of 'SbtProjectSettings.separateProdAndTestSources' ('true').
     val separateProdAndTestSourcesChanged = getInitialSettings.separateProdAndTestSources != extraControls.separateProdTestModules.isSelected
     if (separateProdAndTestSourcesChanged) {
+      if (context == Context.Configuration) {
+        separateMainTestSourcesShowFeedbackNotification = !extraControls.separateProdTestModules.isSelected
+      }
       settings.separateProdAndTestSourcesIsExplicit = separateProdAndTestSourcesChanged
     }
 
