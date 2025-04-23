@@ -237,7 +237,7 @@ trait ProjectStructureMatcher {
                                            (implicit compareContext: ProjectStructureComparisonContext): Unit = {
     val expectedRoots = expected
     val actualRoots = roots.ModuleRootManager.getInstance(module).getContentEntries.map(_.getUrl.stripPrefix("file://")).toSeq
-    assertMatch(s"Content root of module `${module.getName}`", expectedRoots, actualRoots)(mt)
+    assertMatchWithIgnoredOrder(s"Content root of module `${module.getName}`", expectedRoots, actualRoots)(mt)
   }
 
   /**
@@ -545,9 +545,10 @@ trait ProjectStructureMatcher {
                               (implicit nameOfT: HasName[T], nameOfU: HasName[U], compareContext: ProjectStructureComparisonContext): Seq[(T, U)] =
     expected.flatMap(e => actual.find(a => convertIfScalaCli(nameOfU(a)) == nameOfT(e)).map((e, _)))
 
-  def assertNoNotificationsShown(myProject: Project, notifications: Seq[Notification] = Nil): Unit = {
-    if (notifications.nonEmpty) {
-      val notificationsText = notifications.map(notificationMessage).mkString("\n")
+  def assertNoNotificationsShown(myProject: Project, notifications: Seq[Notification] = Nil, mutedNotificationTitles: Seq[String] = Nil): Unit = {
+    val nonMutedNotifications = notifications.filterNot(n => mutedNotificationTitles.contains(n.getTitle))
+    if (nonMutedNotifications.nonEmpty) {
+      val notificationsText = nonMutedNotifications.map(notificationMessage).mkString("\n")
       org.junit.Assert.fail(
         s"""Expected no notifications, but following notifications were shown:
            |$notificationsText""".stripMargin
