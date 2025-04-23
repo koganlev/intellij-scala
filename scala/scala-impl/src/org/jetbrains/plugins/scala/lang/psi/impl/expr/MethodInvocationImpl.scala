@@ -1,7 +1,7 @@
 package org.jetbrains.plugins.scala.lang.psi.impl.expr
 
 import com.intellij.lang.ASTNode
-import com.intellij.psi.PsiMethod
+import com.intellij.psi.{PsiElement, PsiMethod}
 import org.jetbrains.plugins.scala.caches.{BlockModificationTracker, cachedWithRecursionGuard}
 import org.jetbrains.plugins.scala.extensions._
 import org.jetbrains.plugins.scala.lang.macros.evaluator.{MacroContext, MacroInvocationContext, ScalaMacroEvaluator}
@@ -328,7 +328,7 @@ abstract class MethodInvocationImpl(node: ASTNode) extends ScExpressionImplBase(
               }
             ) match {
               case ExpressionTypeResult(typeResult, imports, _) =>
-                ExpressionTypeResult(typeResult.map(SecondType(_)), imports)
+                ExpressionTypeResult(typeResult.map(SecondType(_, context = expr)), imports)
             }
           }
         }
@@ -362,12 +362,11 @@ object MethodInvocationImpl {
 
   private object SecondType {
 
-    def apply(`type`: ScType)
-             (implicit elementScope: ElementScope): ScType = {
+    def apply(`type`: ScType, context: PsiElement)(implicit elementScope: ElementScope): ScType = {
       val maybeStringType = elementScope.getCachedClass("java.lang.String")
         .map(ScalaType.designator(_))
 
-      api.TupleType(Seq(maybeStringType.getOrElse(api.Any), `type`))
+      api.TupleType(Seq(maybeStringType.getOrElse(api.Any), `type`), context)
     }
 
     def unapply(`type`: ScType): Option[ScType] = `type` match {
