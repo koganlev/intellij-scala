@@ -1,7 +1,7 @@
 package org.jetbrains.jps.incremental.scala.data
 
 import org.jetbrains.jps.builders.java.{JavaBuilderUtil, JavaModuleBuildTargetType}
-import org.jetbrains.jps.incremental.scala.{ChunkExclusionService, JpsBundle, SettingsManager}
+import org.jetbrains.jps.incremental.scala.{ChunkExclusionService, JpsBundle, ModuleBuildTargetUtil, SettingsManager}
 import org.jetbrains.jps.incremental.{CompileContext, ModuleBuildTarget}
 import org.jetbrains.jps.model.java.JpsJavaExtensionService
 import org.jetbrains.jps.{ModuleChunk, ProjectPaths}
@@ -42,8 +42,8 @@ object CompilationDataFactory
       case Some(message) => return Left(message)
       case None =>
     }
-    // target.getOutputDir is not null here, it has already been checked in `outputsNotSpecified`
-    val output = target.getOutputDir.toPath.toAbsolutePath.normalize()
+    // outputDir is not null here, it has already been checked in `outputsNotSpecified`
+    val output = ModuleBuildTargetUtil.outputDir(target).toAbsolutePath.normalize()
     checkOrCreate(output)
 
     val classpath = ProjectPaths.getCompilationClasspathFiles(chunk, chunk.containsTests, false, true).asScala
@@ -139,7 +139,7 @@ object CompilationDataFactory
   }
 
   private def outputsNotSpecified(chunk: ModuleChunk): Option[String] = {
-    val moduleNames = chunk.getTargets.asScala.filter(_.getOutputDir == null).map(_.getModule.getName)
+    val moduleNames = chunk.getTargets.asScala.filter(ModuleBuildTargetUtil.outputDir(_) == null).map(_.getModule.getName)
     moduleNames.toSeq match {
       case Seq() => None
       case Seq(name) => Some(JpsBundle.message("output.directory.not.specified.for.module.name", name))
@@ -148,8 +148,8 @@ object CompilationDataFactory
   }
 
   private def createOutputToCacheMap(context: CompileContext): Either[String, Map[Path, Path]] = {
-    val targetToOutput = targetsIn(context).collect {
-      case target if target.getOutputDir != null => (target, target.getOutputDir.toPath)
+    val targetToOutput = targetsIn(context).flatMap { target =>
+      Option(ModuleBuildTargetUtil.outputDir(target)).map((target, _))
     }
 
     outputClashesIn(targetToOutput).toLeft {
@@ -166,7 +166,7 @@ object CompilationDataFactory
   private def createOutputGroups(chunk: ModuleChunk): Seq[(Path, Path)] =
     for {
       target <- chunk.getTargets.asScala.toSeq
-      outputDir <- Option(target.getOutputDir).map(_.toPath).toSeq
+      outputDir <- Option(ModuleBuildTargetUtil.outputDir(target)).toSeq
       module = target.getModule
       output = outputDir.toAbsolutePath.normalize()
       sourceRoot <- module.getSourceRoots.asScala if sourceRoot.getRootType.isForTests == target.isTests

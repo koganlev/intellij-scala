@@ -97,7 +97,7 @@ object SbtBuilder {
     }
 
     val excludeIndex = project.getModuleExcludeIndex
-    val outputRoot = chunk.representativeTarget().getOutputDir
+    val outputRoot = ModuleBuildTargetUtil.outputDir(chunk.representativeTarget())
     if (outputRoot eq null) return
 
     resourceRoots.foreach { (root: ResourceRootDescriptor) =>
@@ -105,7 +105,7 @@ object SbtBuilder {
 
       FileUtil.processFilesRecursively(root.getRootFile, file => {
         if (file.isFile && filter.accept(file) && !excludeIndex.isExcluded(file)) {
-          ResourceUpdater.updateResource(context, root, file.toPath, outputRoot.toPath)
+          ResourceUpdater.updateResource(context, root, file.toPath, outputRoot)
         }
         true
       })
