@@ -18,7 +18,7 @@ import org.jetbrains.plugins.scala.lang.psi.api.statements.params.{ScParameter, 
 import org.jetbrains.plugins.scala.lang.psi.impl.toplevel.synthetic.ScSyntheticFunction
 import org.jetbrains.plugins.scala.lang.psi.implicits.ImplicitCollector
 import org.jetbrains.plugins.scala.lang.psi.types.api.designator.ScDesignatorType
-import org.jetbrains.plugins.scala.lang.psi.types.api.{FunctionType, UndefinedType, Unit}
+import org.jetbrains.plugins.scala.lang.psi.types.api.{FunctionType, NamedTupleType, TupleType, UndefinedType, Unit}
 import org.jetbrains.plugins.scala.lang.psi.types.nonvalue.Parameter
 import org.jetbrains.plugins.scala.lang.psi.types.recursiveUpdate.ScSubstitutor
 import org.jetbrains.plugins.scala.lang.psi.types.result._
@@ -203,7 +203,18 @@ object Compatibility {
       tpe: ScType,
       expectedType: ScType
     ): ExpressionTypeResult = {
-      val functionType = FunctionType(expectedType, Seq(tpe))
+      // A .toTuple call is inserted implicitly by the compiler
+      // if it encounters a named tuple, but the expected type is a regular tuple.
+      // (https://github.com/scala/scala3/blob/main/docs/_docs/reference/other-new-features/named-tuples.md#pattern-matching-with-named-fields-in-general)
+      val afterNTtoTConversion =
+        (tpe, expectedType) match {
+          case (NamedTupleType(comps), TupleType(_)) =>
+            TupleType(comps.map(_._2))
+          case _ =>
+            tpe
+        }
+
+      val functionType = FunctionType(expectedType, Seq(afterNTtoTConversion))
 
       val implicitCollector = new ImplicitCollector(
         place,
@@ -232,7 +243,7 @@ object Compatibility {
       fromImplicit match {
         case Some((mr, result)) =>
           ExpressionTypeResult(Right(mr), result.importsUsed, Some(result))
-        case _ => ExpressionTypeResult(Right(tpe))
+        case _ => ExpressionTypeResult(Right(afterNTtoTConversion))
       }
     }
   }
