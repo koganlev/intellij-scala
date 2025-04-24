@@ -15,8 +15,8 @@ import org.jetbrains.plugins.scala.extensions.inWriteAction
 import org.jetbrains.plugins.scala.project.settings.ScalaCompilerConfiguration
 import org.jetbrains.plugins.scala.settings.ScalaCompileServerSettings
 import org.jetbrains.sbt.Sbt
-import org.jetbrains.sbt.project.{SbtCachesSetupUtil, SbtProjectSystem}
 import org.jetbrains.sbt.project.settings.SbtProjectSettings
+import org.jetbrains.sbt.project.{SbtCachesSetupUtil, SbtProjectSystem}
 import org.junit.Assert.{assertEquals, assertNotNull, assertTrue}
 import org.junit.experimental.categories.Category
 
@@ -148,7 +148,7 @@ class RebuildProjectOnIncrementalCompilerChangeTest extends ExternalSystemImport
     )
     val firstTimestamps = firstClassFiles.map(Files.getLastModifiedTime(_).toMillis)
 
-    val storagePath = BuildManager.getInstance().getProjectSystemDirectory(myProject).toPath.resolve("incrementalType.dat")
+    val storagePath = BuildManager.getInstance().getProjectSystemDir(myProject).resolve("incrementalType.dat")
     val incrementality1 = IncrementalityType.valueOf(Files.readString(storagePath, StandardCharsets.UTF_8))
     assertEquals(first, incrementality1)
 

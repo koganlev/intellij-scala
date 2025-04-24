@@ -20,7 +20,7 @@ package object references {
     if (project.isDefault)
       None
     else
-      Option(BuildManager.getInstance().getProjectSystemDirectory(project)).map(_.toPath)
+      Option(BuildManager.getInstance().getProjectSystemDir(project))
   }
 
   def indexDir(project: Project): Option[Path] = buildDir(project).map(_.resolve("scala-compiler-references"))

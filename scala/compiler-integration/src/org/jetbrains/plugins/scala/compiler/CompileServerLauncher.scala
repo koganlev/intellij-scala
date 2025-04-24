@@ -258,7 +258,7 @@ object CompileServerLauncher {
             val instance = new ServerInstance(
               watcher = watcher,
               port = freePort,
-              workingDir = Option(builder.directory()).map(_.toPath),
+              workingDir = Option(workingDirectory),
               jdk = jdk,
               jvmParameters = userJvmParameters.toSet,
               jpsUseUnifiedIC = jpsUseUnifiedIC,
