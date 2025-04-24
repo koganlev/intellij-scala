@@ -173,7 +173,7 @@ trait ScExpression extends ScBlockStatement
 
         (expected, initialType.toOption) match {
           case (Some(expType), Some(tp))
-            if !tp.conformsIn(this, expType) =>
+            if !tp.conforms(expType)(Context(this)) =>
             //do not try implicit conversions for shape check or already correct type
 
             // isSAMEnabled is checked in tryAdaptTypeToSAM, but we can cut it right here
