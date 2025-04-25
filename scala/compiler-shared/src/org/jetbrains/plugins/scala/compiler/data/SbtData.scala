@@ -5,7 +5,8 @@ import org.jetbrains.plugins.scala.util.JarManifestUtils
 import java.nio.file.{Files, Path, Paths}
 import java.security.MessageDigest
 import scala.io.Source
-import scala.util.{Failure, Success, Using}
+import scala.util.Using
+import scala.util.control.NonFatal
 
 case class SbtData(sbtInterfaceJar: Path,
                    compilerInterfaceJar: Path,
@@ -101,11 +102,17 @@ object SbtData {
       SbtData(sbtInterfaceJar, compilerInterfaceJar, compilerBridges, interfacesHome, javaClassVersion)
     }
 
-  private def readSbtVersionFrom(sbtInterfaceJar: Path): Either[String, String] =
-    JarManifestUtils.readManifestAttribute(sbtInterfaceJar, "Implementation-Version") match {
-      case Success(version) => Right(version)
-      case Failure(t) => Left(s"Unable to read sbt version from JVM classpath:\n$t")
+  private def readSbtVersionFrom(sbtInterfaceJar: Path): Either[String, String] = {
+    val attributeName = "Implementation-Version"
+    try {
+      JarManifestUtils.readManifestAttribute(sbtInterfaceJar, attributeName) match {
+        case Some(version) => Right(version)
+        case None => Left(s"Unable to read attribute '$attributeName' from jar manifest, attribute missing")
+      }
+    } catch {
+      case NonFatal(t) => Left(s"Unable to read sbt version from JVM classpath:\n$t")
     }
+  }
 
   private def md5(file: Path): Array[Byte] = {
     val md = MessageDigest.getInstance("MD5")
