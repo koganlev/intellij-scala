@@ -34,10 +34,10 @@ class SbtExternalSystemManager
   override def enhanceRemoteProcessing(parameters: SimpleJavaParameters): Unit = {
     val classpath = parameters.getClassPath
 
-    classpath.add(jarWith[this.type])
-    classpath.add(jarWith[org.jetbrains.sbt.structure.XmlSerializer[_]])
-    classpath.add(jarWith[scala.App])
-    classpath.add(jarWith[scala.xml.Node])
+    classpath.add(jarWith[this.type].toFile)
+    classpath.add(jarWith[org.jetbrains.sbt.structure.XmlSerializer[_]].toFile)
+    classpath.add(jarWith[scala.App].toFile)
+    classpath.add(jarWith[scala.xml.Node].toFile)
 
     parameters.getVMParametersList.addProperty(
       ExternalSystemConstants.EXTERNAL_SYSTEM_ID_KEY, SbtProjectSystem.Id.getId)
@@ -82,8 +82,8 @@ object SbtExternalSystemManager {
     val linkedProjectSettings = settings.getLinkedProjectSettings(path)
     val projectSettings = Option(linkedProjectSettings).getOrElse(SbtProjectSettings.default)
 
-    val customLauncher = Option(settingsState.customLauncherPath).map(_.toFile)
-    val customSbtStructureFile = Option(settingsState.customSbtStructurePath).filterNot(StringUtils.isBlank).map(_.toFile)
+    val customLauncher = Option(settingsState.customLauncherPath).map(new File(_))
+    val customSbtStructureFile = Option(settingsState.customSbtStructurePath).filterNot(StringUtils.isBlank).map(new File(_))
 
     val realProjectPath = Option(projectSettings.getExternalProjectPath).getOrElse(path)
 

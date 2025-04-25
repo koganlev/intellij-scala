@@ -3,19 +3,17 @@ package org.jetbrains
 import _root_.org.jetbrains.annotations.NonNls
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.openapi.extensions.PluginId
-import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.{Pair => IdeaPair}
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.{PathUtil, Function => IdeaFunction}
 
-import _root_.java.io._
 import _root_.java.lang.{Boolean => JavaBoolean}
+import _root_.java.nio.file.{Files, Path}
 import _root_.java.security.MessageDigest
 import _root_.java.util.{Optional, ArrayList => JArrayList, List => JList}
 import scala.jdk.CollectionConverters._
 import scala.language.implicitConversions
 import scala.reflect.ClassTag
-import scala.util.Using
 
 package object sbt {
   implicit def toIdeaFunction1[A, B](f: A => B): IdeaFunction[A, B] =
@@ -38,7 +36,6 @@ package object sbt {
   }
 
   implicit class RichString(private val str: String) extends AnyVal {
-    def toFile: File = new File(str)
     def shaDigest: String = {
       val digest = MessageDigest.getInstance("SHA1").digest(str.getBytes)
       digest.map("%02x".format(_)).mkString
@@ -81,33 +78,20 @@ package object sbt {
     def asScala: Option[T] = if (opt.isPresent) Some(opt.get) else None
   }
 
-  def jarWith[T: ClassTag]: File = {
+  def jarWith[T: ClassTag]: Path = {
     val tClass = implicitly[ClassTag[T]].runtimeClass
 
-    Option(PathUtil.getJarPathForClass(tClass)).map(new File(_)).getOrElse {
+    Option(PathUtil.getJarPathForClass(tClass)).map(Path.of(_)).getOrElse {
       throw new RuntimeException("Jar file not found for class " + tClass.getName)
     }
   }
 
-  def copy(source: File, destination: File): Unit = {
-    Using.resource(new BufferedInputStream(new FileInputStream(source))) { in =>
-      Using.resource(new BufferedOutputStream(new FileOutputStream(destination))) { out =>
-        var eof = false
-        while (!eof) {
-          val b = in.read()
-          if (b == -1) eof = true else out.write(b)
-        }
-        out.flush()
-      }
-    }
-  }
-
-  def usingTempFile[T](@NonNls prefix: String, suffix: Option[String] = None)(block: File => T): T = {
-    val file = FileUtil.createTempFile(prefix, suffix.orNull, true)
+  def usingTempFile[T](@NonNls prefix: String, suffix: Option[String] = None)(block: Path => T): T = {
+    val file = Files.createTempFile(prefix, suffix.orNull)
     try {
       block(file)
     } finally {
-      file.delete()
+      Files.delete(file)
     }
   }
 

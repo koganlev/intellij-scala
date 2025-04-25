@@ -10,7 +10,7 @@ object ProjectRootBuildFileProvider extends BuildFileProvider {
   override def findIoFile(module: IJModule, elementType: BuildFileElementType): Option[BuildFileEntry[File]] = {
     import org.jetbrains.sbt._
     val project = module.getProject
-    val buildFile = project.getBasePath.toFile / Sbt.BuildFile
+    val buildFile = new File(project.getBasePath) / Sbt.BuildFile
     if (buildFile.exists) Some(BuildFileEntry(buildFile, isModuleLocal = false)) else None
   }
 }

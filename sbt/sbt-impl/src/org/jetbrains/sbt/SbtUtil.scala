@@ -211,7 +211,7 @@ object SbtUtil {
   def normalizePath(file: File): String = file.getAbsolutePath.replace('\\', '/')
 
   private def pluginBase: File = {
-    val file: File = jarWith[this.type]
+    val file: File = jarWith[this.type].toFile
     val deep = if (file.getName == "classes") 1 else 2
     file << deep
   }
@@ -224,7 +224,7 @@ object SbtUtil {
   private def getDirInPlugin(dirName: String): File = {
     val res = pluginBase / dirName
     if (!res.exists() && isInTest) {
-      val start = jarWith[this.type].parent
+      val start = jarWith[this.type].toFile.parent
       start.flatMap(findDirInPlugin(_, dirName))
         .getOrElse(throw new RuntimeException(s"could not find dir $dirName at or above ${start.get}"))
     }
