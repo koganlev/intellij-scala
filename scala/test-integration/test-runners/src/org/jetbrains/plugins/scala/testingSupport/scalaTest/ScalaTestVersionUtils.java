@@ -1,11 +1,17 @@
 package org.jetbrains.plugins.scala.testingSupport.scalaTest;
 
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
+import java.io.BufferedInputStream;
 import java.io.IOException;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.net.URL;
 import java.net.URLDecoder;
-import java.util.jar.JarFile;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.*;
+import java.util.jar.Manifest;
 
 public class ScalaTestVersionUtils {
 
@@ -25,16 +31,31 @@ public class ScalaTestVersionUtils {
         try {
             String version = detectVersionFromClasspath();
             return isOldScalaTestVersion(version);
-        } catch (IOException | ClassNotFoundException e) {
+        } catch (IOException | ClassNotFoundException | URISyntaxException e) {
             return true;
         }
     }
 
-    private static String detectVersionFromClasspath() throws ClassNotFoundException, IOException {
-        String scalatestJarPath = detectScalatestJarFromInClasspath();
-        try (JarFile jar = new JarFile(URLDecoder.decode(scalatestJarPath, "UTF-8"))) {
-            return jar.getManifest().getMainAttributes().getValue("Bundle-Version");
+    /**
+     * Same code as org.jetbrains.plugins.scala.util.JarManifestUtils. We cannot use that here because this module's
+     * code is injected in each test run and we're keeping it very minimal, with no Scala standard library dependency.
+     */
+    @Nullable
+    private static String readManifestAttribute(Path jar, String attributeName) throws IOException {
+        try (FileSystem fileSystem = FileSystems.newFileSystem(jar, (ClassLoader) null)) {
+            final Path manifestPath = fileSystem.getPath("META-INF", "MANIFEST.MF");
+            try (BufferedInputStream is = new BufferedInputStream(Files.newInputStream(manifestPath))) {
+                final Manifest manifest = new Manifest(is);
+                return manifest.getMainAttributes().getValue(attributeName);
+            }
         }
+    }
+
+    private static String detectVersionFromClasspath() throws ClassNotFoundException, IOException, URISyntaxException {
+        String scalatestJarPath = detectScalatestJarFromInClasspath();
+        final String url = URLDecoder.decode(scalatestJarPath, StandardCharsets.UTF_8.name());
+        final Path jar = Paths.get(new URI(url));
+        return readManifestAttribute(jar, "Bundle-Version");
     }
 
     @NotNull
