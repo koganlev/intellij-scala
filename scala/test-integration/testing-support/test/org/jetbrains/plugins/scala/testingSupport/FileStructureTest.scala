@@ -5,7 +5,7 @@ import com.intellij.ide.util.treeView.AbstractTreeNode
 import com.intellij.ide.util.treeView.smartTree.{NodeProvider, TreeElement, TreeElementWrapper}
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.psi.PsiManager
-import org.jetbrains.plugins.scala.extensions.inReadAction
+import org.jetbrains.plugins.scala.extensions.{PathExt, inReadAction}
 import org.jetbrains.plugins.scala.lang.psi.api.ScalaFile
 import org.jetbrains.plugins.scala.structureView.ScalaStructureViewModel
 import org.jetbrains.plugins.scala.structureView.element.Test
@@ -116,7 +116,7 @@ trait FileStructureTest {
   }
 
   private def testFilePath(testClassName: String): String =
-    srcPath.resolve(testClassName + ".scala").toFile.getCanonicalPath
+    srcPath.resolve(testClassName + ".scala").toCanonicalPath.toString
 
   private def buildFileStructure(filePath: String): TreeElementWrapper =
     inReadAction {

@@ -5,6 +5,7 @@ import com.intellij.execution.testframework.AbstractTestProxy
 import com.intellij.openapi.project.Project
 import org.jetbrains.plugins.scala.configurations.TestLocation
 import org.jetbrains.plugins.scala.configurations.TestLocation.CaretLocation
+import org.jetbrains.plugins.scala.extensions.PathExt
 import org.junit.Assert._
 
 import java.nio.file.Path
@@ -72,12 +73,12 @@ trait IntegrationTest extends AnyRef
     } catch {
       case ex: AssertionError =>
         val filePath = testLocation match {
-          case CaretLocation(fileName, _, _) => Some(srcPath.resolve(fileName).toFile)
-          case TestLocation.CaretLocation2(virtualVile, _, _) => Some(virtualVile.toNioPath.toFile)
-          case TestLocation.PsiElementLocation(psiElement) => Option(psiElement.getContainingFile).map(_.getVirtualFile.toNioPath.toFile)
+          case CaretLocation(fileName, _, _) => Some(srcPath.resolve(fileName))
+          case TestLocation.CaretLocation2(virtualVile, _, _) => Some(virtualVile.toNioPath)
+          case TestLocation.PsiElementLocation(psiElement) => Option(psiElement.getContainingFile).map(_.getVirtualFile.toNioPath)
           case _ => None
         }
-        filePath.foreach(f => System.err.println(s"Test file path: $f"))
+        filePath.foreach(f => System.err.println(s"Test file path: ${f.toCanonicalPath}"))
         throw ex
     }
   }
