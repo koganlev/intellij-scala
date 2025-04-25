@@ -1,11 +1,12 @@
 package org.jetbrains.plugins.scala.projectHighlighting.scalaCompilerTestdata.failing
 
 import com.intellij.openapi.util.TextRange
+import org.jetbrains.plugins.scala.extensions.PathExt
 import org.jetbrains.plugins.scala.projectHighlighting.reporter.HighlightingProgressReporter
 import org.jetbrains.plugins.scala.projectHighlighting.scalaCompilerTestdata.ScalaCompilerTestdataHighlightingTest
 import org.jetbrains.plugins.scala.{LatestScalaVersions, ScalaVersion}
 
-import java.io.File
+import java.nio.file.Path
 import scala.reflect.NameTransformer
 
 abstract class ScalaCompilerTestdataHighlightingFailingTestBase_2_12 extends ScalaCompilerTestdataHighlightingTest {
@@ -30,15 +31,15 @@ abstract class ScalaCompilerTestdataHighlightingFailingTestBase_2_12 extends Sca
     }
   }
 
-  override protected def filesToHighlight: Seq[File] = {
+  override protected def filesToHighlight: Seq[Path] = {
     val decoded = NameTransformer.decode(fileName)
     val dirPath = getTestDataDir + decoded
-    val dir = new File(dirPath)
-    val file = new File(dirPath + ".scala")
+    val dir = Path.of(dirPath)
+    val file = Path.of(s"$dirPath.scala")
 
-    if (dir.exists())
+    if (dir.exists)
       Seq(dir)
-    else if (file.exists())
+    else if (file.exists)
       Seq(file)
     else {
       throw new RuntimeException("No file exists")

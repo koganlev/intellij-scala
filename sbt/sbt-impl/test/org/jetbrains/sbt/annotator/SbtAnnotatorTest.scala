@@ -3,6 +3,7 @@ package org.jetbrains.sbt.annotator
 import com.intellij.openapi.module.ModuleUtilCore
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.roots.{ModifiableRootModel, ModuleRootModificationUtil}
+import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.{LocalFileSystem, VfsUtilCore}
 import com.intellij.psi.PsiManager
 import com.intellij.testFramework.{HeavyPlatformTestCase, UsefulTestCase}
@@ -18,7 +19,6 @@ import org.junit.Assert.assertNotNull
 import org.junit.Ignore
 import org.junit.experimental.categories.Category
 
-import java.io.File
 import scala.annotation.nowarn
 import scala.jdk.CollectionConverters._
 
@@ -32,7 +32,7 @@ abstract class SbtAnnotatorTestBase extends HeavyPlatformTestCase
   protected def loadTestFile(): SbtFileImpl = {
     val filePath = s"$testdataPath/SbtAnnotator.sbt"
     val file = LocalFileSystem.getInstance
-      .findFileByPath(filePath.replace(File.separatorChar, '/'))
+      .findFileByPath(FileUtil.toSystemIndependentName(filePath))
     assertNotNull(filePath, file)
     val sbtFile = PsiManager.getInstance(getProject).findFile(file).asInstanceOf[SbtFileImpl]
     sbtFile.putUserData(ModuleUtilCore.KEY_MODULE, getModule)

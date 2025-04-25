@@ -9,8 +9,8 @@ import com.intellij.openapi.module.ModuleManager
 import org.jetbrains.sbt.resolvers._
 import org.junit.Assert
 
-import java.io.File
 import java.net.URI
+import java.nio.file.Path
 
 class SbtBuildModuleDataServiceTest extends ProjectDataServiceTestCase {
 
@@ -23,7 +23,7 @@ class SbtBuildModuleDataServiceTest extends ProjectDataServiceTestCase {
       linkedProjectPath := getProject.getBasePath
       modules += new javaModule {
         val moduleName = "Module 1"
-        val uri: URI = new File(getProject.getBasePath).toURI
+        val uri: URI = Path.of(getProject.getBasePath).toUri
         val id: String = ModuleNode.combinedId(moduleName, Option(uri))
         projectId := id
         projectURI := uri

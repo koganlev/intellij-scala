@@ -4,7 +4,7 @@ import com.intellij.psi.PsiFile
 import com.intellij.testFramework.LightPlatformTestCase
 import org.apache.commons.io.FilenameUtils
 import org.jetbrains.plugins.scala.base.ScalaLightCodeInsightFixtureTestCase
-import org.jetbrains.plugins.scala.extensions.inWriteAction
+import org.jetbrains.plugins.scala.extensions.{PathExt, inWriteAction}
 import org.jetbrains.plugins.scala.project.settings.{ScalaCompilerConfiguration, ScalaCompilerSettingsProfile}
 import org.jetbrains.plugins.scala.projectHighlighting.base.AllProjectHighlightingTest
 import org.jetbrains.plugins.scala.projectHighlighting.reporter.HighlightingProgressReporter
@@ -13,8 +13,8 @@ import org.jetbrains.plugins.scala.{ScalaFileType, ScalacTests}
 import org.junit.Assert.assertTrue
 import org.junit.experimental.categories.Category
 
-import java.io.File
-import scala.io.{Codec, Source}
+import java.nio.file.{Files, Path}
+import scala.jdk.StreamConverters.StreamHasToScala
 import scala.util.Using
 
 @Category(Array(classOf[ScalacTests]))
@@ -32,16 +32,16 @@ abstract class ScalaCompilerTestdataHighlightingTest
   protected final def getTestDataDir: String =
     s"${getScalaCompilerTestDataRoot}/$getTestDirName/"
 
-  protected def filesToHighlight: Seq[File]
+  protected def filesToHighlight: Seq[Path]
 
   protected val reporter: HighlightingProgressReporter
 
   protected def doTest(): Unit = {
     val allFiles = filesToHighlight
 
-    val allFilesGrouped: Seq[(String, Seq[File])] = allFiles
+    val allFilesGrouped: Seq[(String, Seq[Path])] = allFiles
       .filter(f => f.isDirectory || isScalaFile(f) || isFlagsFile(f))
-      .groupBy(f => FilenameUtils.removeExtension(f.getPath.replace("\\", "/")))
+      .groupBy(f => FilenameUtils.removeExtension(f.toCanonicalPath.toString.replace("\\", "/")))
       .toSeq
       .sortBy(_._1)
 
@@ -63,17 +63,16 @@ abstract class ScalaCompilerTestdataHighlightingTest
     reporter.reportFinalResults()
   }
 
-  private def addFileToProject(file: File, relativeTo: File): PsiFile = {
+  private def addFileToProject(file: Path, relativeTo: Path): PsiFile = {
     val text: String = content(file)
-    val path = relativeTo.toPath.relativize(file.toPath)
-    val originalDirName = relativeTo.getName
+    val path = relativeTo.relativize(file)
+    val originalDirName = relativeTo.getFileName.toString
     val psiFile = PsiFileTestUtil.addFileToProject(path, text, getProject)
     AllProjectHighlightingTest.setOriginalDirName(psiFile, originalDirName)
     psiFile
   }
 
-  private def content(file: File): String =
-    Using.resource(Source.fromFile(file)(Codec.UTF8))(_.getLines().mkString("\n"))
+  private def content(file: Path): String = Files.readString(file)
 
   private def removeFile(psiFile: PsiFile): Unit = {
     inWriteAction {
@@ -81,17 +80,17 @@ abstract class ScalaCompilerTestdataHighlightingTest
     }
   }
 
-  private def annotateFiles(files: Seq[File], reporter: HighlightingProgressReporter): Unit = {
-    def allFiles(f: File): Seq[File] =
-      if (f.isDirectory) f.listFiles.toIndexedSeq.flatMap(allFiles)
+  private def annotateFiles(files: Seq[Path], reporter: HighlightingProgressReporter): Unit = {
+    def allFiles(f: Path): Seq[Path] =
+      if (f.isDirectory) f.children().flatMap(allFiles)
       else               Seq(f)
 
-    def parseScalacFlags(f: File): Seq[String] =
-      Using.resource(Source.fromFile(f, "UTF-8"))(_.getLines().map(_.trim).filter(_.nonEmpty).toList)
+    def parseScalacFlags(f: Path): Seq[String] =
+      Using.resource(Files.lines(f))(_.toScala(Seq).map(_.trim).filter(_.nonEmpty))
 
     val root = files match {
       case Seq(file) if file.isDirectory => file
-      case Seq(file, _*)                 => file.getParentFile
+      case Seq(file, _*)                 => file.getParent
     }
 
     val (flagFiles, sourceFiles) = files.flatMap(allFiles).partition(isFlagsFile)
@@ -128,7 +127,7 @@ abstract class ScalaCompilerTestdataHighlightingTest
     }
   }
 
-  private def isScalaFile(f: File) = f.getName.endsWith(ScalaFileType.INSTANCE.getDefaultExtension)
+  private def isScalaFile(f: Path) = f.getFileName.toString.endsWith(ScalaFileType.INSTANCE.getDefaultExtension)
 
-  private def isFlagsFile(f: File) = f.getName.endsWith("flags")
+  private def isFlagsFile(f: Path) = f.getFileName.toString.endsWith("flags")
 }

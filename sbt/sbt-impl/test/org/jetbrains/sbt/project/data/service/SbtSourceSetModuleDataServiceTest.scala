@@ -7,14 +7,14 @@ import org.jetbrains.sbt.project.data.service.ExternalSystemDataDsl._
 import org.jetbrains.sbt.project.data.{ModuleNode, NestedModuleNode, SbtSourceSetModuleNode}
 import org.junit.Assert.assertTrue
 
-import java.io.File
 import java.net.URI
+import java.nio.file.Path
 
 class SbtSourceSetModuleDataServiceTest extends SbtModuleDataServiceTestCase {
 
   def testExternalModuleTypeSetup(): Unit = {
     val testProject = new project {
-      val buildURI: URI = new File(getProject.getBasePath).toURI
+      val buildURI: URI = Path.of(getProject.getBasePath).toUri
       val c1URI: URI = buildURI.resolve("c1/")
 
       name := getProject.getName

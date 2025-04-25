@@ -4,11 +4,12 @@ import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.util.TextRange
 import com.intellij.pom.java.LanguageLevel
 import org.jetbrains.plugins.scala.base.libraryLoaders.SmartJDKLoader
+import org.jetbrains.plugins.scala.extensions.PathExt
 import org.jetbrains.plugins.scala.projectHighlighting.reporter.HighlightingProgressReporter
 import org.jetbrains.plugins.scala.util.TestUtils
 import org.jetbrains.plugins.scala.{LatestScalaVersions, ScalaVersion}
 
-import java.io.File
+import java.nio.file.Path
 
 //See SCL-12414
 // TODO 1: the tests should be run for 2_13 as well
@@ -35,11 +36,11 @@ class ScalaCompilerTestdataHighlightingTest_2_12 extends ScalaCompilerTestdataHi
   override protected val reporter: HighlightingProgressReporter =
     HighlightingProgressReporter.newInstance(getClass.getSimpleName, filesWithProblems)
 
-  override protected def filesToHighlight: Seq[File] = {
+  override protected def filesToHighlight: Seq[Path] = {
     val testDataPath = s"${TestUtils.getTestDataPath}/scalacTests/pos/"
 
-    val dir = new File(testDataPath)
-    dir.listFiles().toSeq
+    val dir = Path.of(testDataPath)
+    dir.children()
   }
 
   //SOE at pos/t0674.scala

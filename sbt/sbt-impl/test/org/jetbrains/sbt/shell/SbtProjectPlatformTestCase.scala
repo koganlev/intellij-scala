@@ -9,8 +9,8 @@ import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.projectRoots.ProjectJdkTable
 import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.util.Key
+import com.intellij.testFramework.HeavyPlatformTestCase
 import com.intellij.testFramework.common.ThreadLeakTracker
-import com.intellij.testFramework.{HeavyPlatformTestCase, ThreadTracker}
 import com.intellij.util.ui.UIUtil
 import org.jetbrains.plugins.scala.base.libraryLoaders.SmartJDKLoader
 import org.jetbrains.plugins.scala.extensions._
@@ -18,16 +18,16 @@ import org.jetbrains.plugins.scala.util.TestUtils
 import org.jetbrains.sbt.Sbt
 import org.jetbrains.sbt.project.SbtProjectSystem
 
-import java.io.File
+import java.nio.file.Path
 import scala.concurrent.{Future, Promise}
 
 abstract class SbtProjectPlatformTestCase extends HeavyPlatformTestCase {
 
   override def setUpProject(): Unit = {
     //projectFile is the sbt file for the root project
-    val sbtRootFile = getSbtRootFile
-    assert(sbtRootFile.exists, "expected path does not exist: " + sbtRootFile.getAbsolutePath)
-    val path = getSbtRootFile.getAbsolutePath
+    val sbtRootFile = getSbtRootFile.toCanonicalPath
+    assert(sbtRootFile.exists, "expected path does not exist: " + sbtRootFile)
+    val path = sbtRootFile
     val project = ProjectUtil.openOrImport(path, null, false)
     assert(project != null, s"project at path $path was null")
     val sdk = SmartJDKLoader.getOrCreateJDK()
@@ -46,7 +46,7 @@ abstract class SbtProjectPlatformTestCase extends HeavyPlatformTestCase {
 
   def getBuildFileName: String = Sbt.BuildFile
 
-  def getSbtRootFile: File = new File(getBasePath + "/" + getPath + "/" + getBuildFileName)
+  def getSbtRootFile: Path = Path.of(getBasePath, getPath, getBuildFileName)
 
   override protected def setUpModule(): Unit = {}
 

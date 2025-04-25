@@ -4,19 +4,20 @@ import com.intellij.openapi.module.{JavaModuleType, ModuleType}
 import com.intellij.platform.backend.workspace.WorkspaceModel
 import com.intellij.platform.workspace.jps.entities.ModuleId
 import org.jetbrains.plugins.scala.project.ProjectExt
-import org.jetbrains.sbt.WorkspaceModelUtil
 import org.jetbrains.sbt.SbtUtil.EntityStorageOps
-import org.jetbrains.sbt.project.data.{ModuleNode, SbtModuleData, SbtModuleNode}
+import org.jetbrains.sbt.WorkspaceModelUtil
 import org.jetbrains.sbt.project.data.service.ExternalSystemDataDsl._
+import org.jetbrains.sbt.project.data.{ModuleNode, SbtModuleData, SbtModuleNode}
 import org.junit.Assert.{assertEquals, fail}
 
-import java.io.File
 import java.net.URI
+import java.nio.file.Path
+
 class SbtModuleDataWorkspaceDataServiceTest extends SbtModuleDataServiceTestCase {
 
   def testSbtModuleEntitiesExistence(): Unit = {
     val testProject = new project {
-      val buildURI: URI = new File(getProject.getBasePath).toURI
+      val buildURI: URI = Path.of(getProject.getBasePath).toUri
       val c1URI: URI = buildURI.resolve("c1/")
 
       name := getProject.getName
@@ -31,7 +32,7 @@ class SbtModuleDataWorkspaceDataServiceTest extends SbtModuleDataServiceTestCase
         projectURI := c1URI
         moduleFileDirectoryPath := getProject.getBasePath + "/c1"
         externalConfigPath := getProject.getBasePath + "/c1"
-        arbitraryNodes += new SbtModuleNode(SbtModuleData(moduleId, buildURI, new File(getProject.getBasePath)))
+        arbitraryNodes += new SbtModuleNode(SbtModuleData(moduleId, buildURI, Path.of(getProject.getBasePath).toFile))
       }
       val c1NestedModule: javaModule = new javaModule {
         val moduleId: String = ModuleNode.combinedId("project1", Option(c1URI))
@@ -40,7 +41,7 @@ class SbtModuleDataWorkspaceDataServiceTest extends SbtModuleDataServiceTestCase
         projectURI := c1URI
         moduleFileDirectoryPath := getProject.getBasePath + "/c1/project1"
         externalConfigPath := getProject.getBasePath + "/c1/project1"
-        arbitraryNodes += new SbtModuleNode(SbtModuleData(moduleId, c1URI, new File(getProject.getBasePath + "/c1/project1")))
+        arbitraryNodes += new SbtModuleNode(SbtModuleData(moduleId, c1URI, Path.of(getProject.getBasePath, "c1", "project1").toFile))
       }
 
       val root: javaModule = new javaModule {
@@ -51,7 +52,7 @@ class SbtModuleDataWorkspaceDataServiceTest extends SbtModuleDataServiceTestCase
         projectURI := buildURI
         moduleFileDirectoryPath := getProject.getBasePath
         externalConfigPath := getProject.getBasePath
-        arbitraryNodes += new SbtModuleNode(SbtModuleData(moduleId, buildURI, new File(getProject.getBasePath)))
+        arbitraryNodes += new SbtModuleNode(SbtModuleData(moduleId, buildURI, Path.of(getProject.getBasePath).toFile))
       }
       val rootNestedModule: javaModule = new javaModule {
         val moduleId: String = ModuleNode.combinedId("project1", Option(buildURI))
@@ -60,7 +61,7 @@ class SbtModuleDataWorkspaceDataServiceTest extends SbtModuleDataServiceTestCase
         projectURI := buildURI
         moduleFileDirectoryPath := getProject.getBasePath + "/project1"
         externalConfigPath := getProject.getBasePath + "/project1"
-        arbitraryNodes += new SbtModuleNode(SbtModuleData(moduleId, buildURI, new File(getProject.getBasePath + "/project1")))
+        arbitraryNodes += new SbtModuleNode(SbtModuleData(moduleId, buildURI, Path.of(getProject.getBasePath, "project1").toFile))
       }
 
       modules ++= Seq(c1, root, rootNestedModule, c1NestedModule)

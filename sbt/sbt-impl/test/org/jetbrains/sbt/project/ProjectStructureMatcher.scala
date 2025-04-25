@@ -17,7 +17,7 @@ import com.intellij.util.{CommonProcessors, PathUtil}
 import org.jetbrains.jps.model.java.{JavaResourceRootType, JavaSourceRootType}
 import org.jetbrains.jps.model.module.JpsModuleSourceRootType
 import org.jetbrains.plugins.scala.compiler.data.CompileOrder
-import org.jetbrains.plugins.scala.extensions.ThrowableExt
+import org.jetbrains.plugins.scala.extensions.{PathExt, ThrowableExt}
 import org.jetbrains.plugins.scala.project.external.{SdkReference, SdkUtils, ShownNotification, ShownNotificationsKey}
 import org.jetbrains.plugins.scala.project.settings.ScalaCompilerSettings
 import org.jetbrains.plugins.scala.project.{LibraryExt, ModuleExt, ProjectExt, ScalaLibraryProperties}
@@ -30,7 +30,6 @@ import org.jetbrains.sbt.project.utils.{MacroSubstitutor, ProjectStructureCompar
 import org.junit.Assert.{assertFalse, assertNotNull, assertTrue, fail}
 import org.junit.{Assert, ComparisonFailure}
 
-import java.io.File
 import java.nio.file.Path
 import scala.jdk.CollectionConverters._
 
@@ -457,14 +456,14 @@ trait ProjectStructureMatcher {
         val sdkProperties = actualLibrary.properties
         assertEquals("Scala SDK language level", expectedScalaSdk.languageLevel, sdkProperties.languageLevel)
 
-        def testClasspath(name: String, expectedClasspathStr: Seq[String], actualClasspathFile: Seq[File]): Unit = {
+        def testClasspath(name: String, expectedClasspathStr: Seq[String], actualClasspathFile: Seq[Path]): Unit = {
           val expectedClassPathNorm = expectedClasspathStr.map(normalizePathSeparators).sorted.mkString("\n")
-          val actualClasspathNorm = actualClasspathFile.map(_.getAbsolutePath).map(normalizePathSeparators).sorted.mkString("\n")
+          val actualClasspathNorm = actualClasspathFile.map(_.toCanonicalPath.toString).map(normalizePathSeparators).sorted.mkString("\n")
           assertEquals(name, expectedClassPathNorm, actualClasspathNorm)
         }
 
-        expectedScalaSdk.classpath.foreach(testClasspath("Scala SDK classpath", _, sdkProperties.compilerClasspath.map(_.toFile)))
-        expectedScalaSdk.extraClasspath.foreach(testClasspath("Scala SDK extra classpath", _, sdkProperties.scaladocExtraClasspath.map(_.toFile)))
+        expectedScalaSdk.classpath.foreach(testClasspath("Scala SDK classpath", _, sdkProperties.compilerClasspath))
+        expectedScalaSdk.extraClasspath.foreach(testClasspath("Scala SDK extra classpath", _, sdkProperties.scaladocExtraClasspath))
     }
   }
 
@@ -474,7 +473,7 @@ trait ProjectStructureMatcher {
     val externalProjectRoot = ExternalSystemApiUtil.getExternalRootProjectPath(module)
     assertNotNull(s"The external project root for $moduleName is null", externalProjectRoot)
 
-    val defaultModuleFilesDirectory = SbtUtil.getDefaultModuleFilesDirectory(new File(externalProjectRoot))
+    val defaultModuleFilesDirectory = SbtUtil.getDefaultModuleFilesDirectory(Path.of(externalProjectRoot).toFile)
     val expectedModuleFileDirectoryPath = Path.of(defaultModuleFilesDirectory, expected)
     assertEquals(s"The module file directory for $moduleName is incorrect", expectedModuleFileDirectoryPath, module.getModuleNioFile.getParent)
   }

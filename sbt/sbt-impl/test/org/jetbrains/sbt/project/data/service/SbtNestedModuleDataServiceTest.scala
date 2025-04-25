@@ -2,18 +2,18 @@ package org.jetbrains.sbt.project.data.service
 
 import com.intellij.openapi.module.{ModuleManager, StdModuleTypes}
 import org.jetbrains.plugins.scala.util.SbtModuleType.sbtNestedModuleType
-import org.jetbrains.sbt.project.data.{ModuleNode, NestedModuleNode}
 import org.jetbrains.sbt.project.data.service.ExternalSystemDataDsl._
+import org.jetbrains.sbt.project.data.{ModuleNode, NestedModuleNode}
 import org.junit.Assert.assertTrue
 
-import java.io.File
 import java.net.URI
+import java.nio.file.Path
 
 class SbtNestedModuleDataServiceTest extends SbtModuleDataServiceTestCase {
 
   def testExternalModuleTypeSetup(): Unit = {
     val testProject = new project {
-      val buildURI: URI = new File(getProject.getBasePath).toURI
+      val buildURI: URI = Path.of(getProject.getBasePath).toUri
 
       name := getProject.getName
       ideDirectoryPath := getProject.getBasePath

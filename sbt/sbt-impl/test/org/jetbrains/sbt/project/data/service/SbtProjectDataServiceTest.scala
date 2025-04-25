@@ -20,8 +20,8 @@ import org.jetbrains.sbt.project.sources.SharedSourcesModuleType
 import org.jetbrains.sbt.settings.SbtSettings
 import org.junit.Assert._
 
-import java.io.File
 import java.net.URI
+import java.nio.file.Path
 
 class SbtProjectDataServiceTest extends ProjectDataServiceTestCase {
 
@@ -81,7 +81,7 @@ class SbtProjectDataServiceTest extends ProjectDataServiceTestCase {
       linkedProjectPath := getProject.getBasePath
 
       modules += new module {
-        val uri: URI = new File(getProject.getBasePath).toURI
+        val uri: URI = Path.of(getProject.getBasePath).toUri
         val moduleName = "Module 1"
         override val typeId: String = SharedSourcesModuleType.instance.getId
         projectId := ModuleNode.combinedId(moduleName, Option(uri))
@@ -122,7 +122,7 @@ class SbtProjectDataServiceTest extends ProjectDataServiceTestCase {
       linkedProjectPath := getProject.getBasePath
 
       modules += new module {
-        val uri: URI = new File(getProject.getBasePath).toURI
+        val uri: URI = Path.of(getProject.getBasePath).toUri
         val moduleName = "Module 1"
         override val typeId: String = JavaModuleType.getModuleType.getId
         projectId := ModuleNode.combinedId(moduleName, Option(uri))

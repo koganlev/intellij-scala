@@ -2,9 +2,10 @@ package org.jetbrains.plugins.scala.projectHighlighting.base
 
 import com.intellij.lang.javascript.boilerplate.GithubDownloadUtil
 import com.intellij.platform.templates.github.ZipUtil
+import org.jetbrains.plugins.scala.extensions.PathExt
 import org.junit.Assert
 
-import java.io.File
+import java.nio.file.Path
 
 abstract class SbtProjectHighlightingDownloadingFromGithubTestBase extends SbtProjectHighlightingTestBase {
 
@@ -20,13 +21,13 @@ abstract class SbtProjectHighlightingDownloadingFromGithubTestBase extends SbtPr
   }
 
   private def downloadAndExtractProject(): Unit = {
-    val outputZipFile = new File(outputZipFileName)
+    val outputZipFile = Path.of(outputZipFileName)
     val projectDir = getTestProjectDir
 
     reporter.notify(s"Project output zip file: $outputZipFile")
     reporter.notify(s"Project directory: $projectDir")
 
-    if (outputZipFile.exists()) {
+    if (outputZipFile.exists) {
       reporter.notify("Skipping download: project zip file already exists")
     }
     else if (projectDir.exists() && projectDir.listFiles().nonEmpty) {
@@ -38,7 +39,7 @@ abstract class SbtProjectHighlightingDownloadingFromGithubTestBase extends SbtPr
       GithubDownloadUtil.downloadAtomically(
         reporter.progressIndicator,
         githubRepositoryWithRevision.revisionDownloadUrl,
-        outputZipFile,
+        outputZipFile.toFile,
         githubRepositoryWithRevision.userName,
         githubRepositoryWithRevision.repositoryName
       )
@@ -49,7 +50,7 @@ abstract class SbtProjectHighlightingDownloadingFromGithubTestBase extends SbtPr
       reporter.notify("Project files already extracted")
     } else {
       reporter.notify("Finished download, extracting")
-      ZipUtil.unzip(null, projectDir, outputZipFile, null, null, true)
+      ZipUtil.unzip(null, projectDir, outputZipFile.toFile, null, null, true)
     }
 
     Assert.assertTrue("Project dir does not exist. Download or unpack failed!", projectDir.exists())

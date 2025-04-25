@@ -12,8 +12,8 @@ import org.jetbrains.sbt.project.data.{ModuleNode, SharedSourcesOwnersNode}
 import org.jetbrains.sbt.project.sources.SharedSourcesModuleType
 import org.junit.Assert.{assertEquals, assertTrue, fail}
 
-import java.io.File
 import java.net.URI
+import java.nio.file.Path
 import scala.jdk.CollectionConverters.SeqHasAsJava
 
 class SharedSourcesOwnersDataWorkspaceDataServiceTest extends SbtModuleDataServiceTestCase {
@@ -21,7 +21,7 @@ class SharedSourcesOwnersDataWorkspaceDataServiceTest extends SbtModuleDataServi
   def testSharedSourcesOwnersEntitiesExistence(): Unit = {
     val testProject = new project {
       val basePath: String = getProject.getBasePath
-      val buildURI: URI = new File(basePath).toURI
+      val buildURI: URI = Path.of(basePath).toUri
 
       name := getProject.getName
       ideDirectoryPath := basePath

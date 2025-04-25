@@ -1,19 +1,20 @@
 package org.jetbrains.sbt.project
 
-import com.intellij.openapi.util.io.FileUtil
 import org.hamcrest.CoreMatchers.equalTo
 import org.hamcrest.MatcherAssert.assertThat
-import org.jetbrains.sbt.project.structure.{SbtOption, SbtOpts}
+import org.jetbrains.sbt.PathTestUtil
 import org.jetbrains.sbt.project.structure.SbtOption._
-import org.junit.Assert.assertEquals
-import org.junit.Test
+import org.jetbrains.sbt.project.structure.{SbtOption, SbtOpts}
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Test
 
-import java.io.File
+import java.nio.file.Files
+import scala.util.Using
 
 class SbtOptsTest {
 
   @Test
-  def testLoad(): Unit = {
+  def load(): Unit = {
     val input =
       """
         |--sbt-boot /some/where/sbt/boot -sbt-dir      /some/where/else/sbt
@@ -37,14 +38,17 @@ class SbtOptsTest {
       SbtLauncherOption("--debug")()
     )
 
-    val optsDir = FileUtil.createTempDirectory("sbtOptsTest","",true)
-    val optsFile = new File(optsDir,SbtOpts.SbtOptsFile)
-    FileUtil.writeToFile(optsFile, input)
-    val opts = SbtOpts.loadFrom(optsDir)(null)
-    assertEquals(expected, opts)
+    import PathTestUtil.tempPathReleasable
+    Using.resource(Files.createTempDirectory("sbtOptsTest")) { optsDir =>
+      val optsFile = optsDir.resolve(SbtOpts.SbtOptsFile)
+      Files.writeString(optsFile, input)
+      val opts = SbtOpts.loadFrom(optsDir.toFile)(null)
+      assertEquals(expected, opts)
+    }
   }
+
   @Test
-  def testWithComments(): Unit = {
+  def withComments(): Unit = {
     val input =
       """
         |#--sbt-boot /some/where/sbt/boot -sbt-dir      /some/where/else/sbt
@@ -63,15 +67,17 @@ class SbtOptsTest {
       SbtLauncherOption("--debug")()
     )
 
-    val optsDir = FileUtil.createTempDirectory("sbtOptsTest", "", true)
-    val optsFile = new File(optsDir, SbtOpts.SbtOptsFile)
-    FileUtil.writeToFile(optsFile, input)
-    val opts = SbtOpts.loadFrom(optsDir)(null)
-    assertEquals(expected, opts)
+    import PathTestUtil.tempPathReleasable
+    Using.resource(Files.createTempDirectory("sbtOptsTest")) { optsDir =>
+      val optsFile = optsDir.resolve(SbtOpts.SbtOptsFile)
+      Files.writeString(optsFile, input)
+      val opts = SbtOpts.loadFrom(optsDir.toFile)(null)
+      assertEquals(expected, opts)
+    }
   }
 
   @Test
-  def testMapOptionsToSbtOptions(): Unit = {
+  def mapOptionsToSbtOptions(): Unit = {
      def doTest(providedArgs: Seq[String], expected: Seq[SbtOption]): Unit = {
       val actual = SbtOpts.mapOptionsToSbtOptions(providedArgs, "dummy/Path")(null)
       assertThat(actual, equalTo(expected))
@@ -90,7 +96,7 @@ class SbtOptsTest {
   }
 
   @Test
-  def testCombineOptionsWithArgs(): Unit = {
+  def combineOptionsWithArgs(): Unit = {
     def doTest(providedOpts: String, expected: Seq[String]): Unit = {
       val actual = SbtOpts.combineOptionsWithArgs(providedOpts)
       assertThat(actual, equalTo(expected))

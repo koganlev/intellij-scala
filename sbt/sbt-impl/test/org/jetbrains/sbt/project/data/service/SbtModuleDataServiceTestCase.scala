@@ -9,13 +9,13 @@ import com.intellij.openapi.roots.libraries.Library
 import com.intellij.testFramework.IdeaTestUtil
 import org.jetbrains.annotations.Nullable
 import org.jetbrains.plugins.scala.extensions._
-import org.jetbrains.plugins.scala.project.{LibraryExt, ProjectExt}
 import org.jetbrains.plugins.scala.project.external.SdkReference
+import org.jetbrains.plugins.scala.project.{LibraryExt, ProjectExt}
 import org.jetbrains.sbt.project.data._
 import org.junit.Assert.assertEquals
 
-import java.io.File
 import java.net.URI
+import java.nio.file.Path
 
 trait SbtModuleDataServiceTestCase extends ProjectDataServiceTestCase {
 
@@ -62,7 +62,7 @@ trait SbtModuleDataServiceTestCase extends ProjectDataServiceTestCase {
       scalaLibrary.foreach(libraries += _)
 
       modules += new javaModule {
-        val uri: URI = new File(getProject.getBasePath).toURI
+        val uri: URI = Path.of(getProject.getBasePath).toUri
         val moduleName = "Module 1"
         projectId := ModuleNode.combinedId(moduleName, Option(uri))
         projectURI := uri

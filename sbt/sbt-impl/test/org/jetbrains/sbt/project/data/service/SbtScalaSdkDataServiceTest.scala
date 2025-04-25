@@ -1,13 +1,12 @@
 package org.jetbrains.sbt.project.data.service
 
-import org.junit.Assert.assertTrue
 import com.intellij.openapi.module.{JavaModuleType, ModuleType}
 import org.jetbrains.plugins.scala.project.{LibraryExt, ModuleExt, ProjectExt}
 import org.jetbrains.sbt.project.data._
 import org.junit.Assert._
 
-import java.io.File
 import java.net.URI
+import java.nio.file.Path
 
 class SbtScalaSdkDataServiceTest extends SbtModuleDataServiceTestCase {
 
@@ -52,7 +51,7 @@ class SbtScalaSdkDataServiceTest extends SbtModuleDataServiceTestCase {
       libraries ++= Seq(evictedScalaLibrary, newScalaLibrary)
 
       modules += new javaModule {
-        val uri: URI = new File(getProject.getBasePath).toURI
+        val uri: URI = Path.of(getProject.getBasePath).toUri
         val moduleName = "Module 1"
         projectId := ModuleNode.combinedId(moduleName, Option(uri))
         projectURI := uri

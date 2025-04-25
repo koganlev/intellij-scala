@@ -1,17 +1,17 @@
 package org.jetbrains.sbt.project.data.service
 
 import org.jetbrains.sbt.project.ProjectStructureTestUtils.checkDisplayModuleNames
-import org.jetbrains.sbt.project.data.{ModuleNode, SbtDisplayModuleNameNode}
 import org.jetbrains.sbt.project.data.service.ExternalSystemDataDsl.{arbitraryNodes, externalConfigPath, ideDirectoryPath, javaModule, linkedProjectPath, moduleFileDirectoryPath, modules, name, project, projectId, projectURI}
+import org.jetbrains.sbt.project.data.{ModuleNode, SbtDisplayModuleNameNode}
 
-import java.io.File
 import java.net.URI
+import java.nio.file.Path
 
 class DisplayModuleNameDataServiceTest extends SbtModuleDataServiceTestCase {
 
   def testDisplayModuleNames(): Unit = {
     val testProject = new project {
-      val buildURI: URI = new File(getProject.getBasePath).toURI
+      val buildURI: URI = Path.of(getProject.getBasePath).toUri
       name := getProject.getName
       ideDirectoryPath := getProject.getBasePath
       linkedProjectPath := getProject.getBasePath
