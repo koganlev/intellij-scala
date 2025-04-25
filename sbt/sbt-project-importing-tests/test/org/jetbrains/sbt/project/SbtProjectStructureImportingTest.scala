@@ -12,7 +12,7 @@ import org.jetbrains.annotations.Nullable
 import org.jetbrains.jps.model.java.compiler.JpsJavaCompilerOptions
 import org.jetbrains.plugins.scala.SlowTests
 import org.jetbrains.plugins.scala.compiler.data.CompileOrder
-import org.jetbrains.plugins.scala.extensions.{RichFile, inWriteAction}
+import org.jetbrains.plugins.scala.extensions.{PathExt, RichFile, inWriteAction}
 import org.jetbrains.plugins.scala.project.ProjectExt
 import org.jetbrains.plugins.scala.project.external.JdkByName
 import org.jetbrains.sbt.{Sbt, SbtVersion}
@@ -1291,7 +1291,7 @@ final class SbtProjectStructureImportingTest extends SbtProjectStructureImportin
     val expectedScalaLibraries = expectedScala_3_3 ++ expectedScala_3_6
 
     injectVariable(
-      getTestProjectDir / "project" / "build.properties",
+      getTestProjectPath / "project" / "build.properties",
       "$LATEST_SBT_2$",
       SbtVersion.Latest.Sbt_2.minor
     )

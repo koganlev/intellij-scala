@@ -2,31 +2,26 @@ package org.jetbrains.sbt.project
 
 import com.intellij.compiler.impl.javaCompiler.javac.JavacConfiguration
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.compiler.{CompilerMessage, CompilerMessageCategory}
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil
-import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.projectRoots.ProjectJdkTable
 import com.intellij.openapi.roots.DependencyScope
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.pom.java.LanguageLevel
-import com.intellij.testFramework.{CompilerTester, IdeaTestUtil}
+import com.intellij.testFramework.IdeaTestUtil
 import org.jetbrains.annotations.Nullable
 import org.jetbrains.jps.model.java.compiler.JpsJavaCompilerOptions
 import org.jetbrains.plugins.scala.SlowTests
-import org.jetbrains.plugins.scala.compiler.CompileServerLauncher
-import org.jetbrains.plugins.scala.compiler.data.{CompileOrder, IncrementalityType}
-import org.jetbrains.plugins.scala.extensions.{PathExt, RichFile, inWriteAction}
+import org.jetbrains.plugins.scala.compiler.data.CompileOrder
+import org.jetbrains.plugins.scala.extensions.{PathExt, inWriteAction}
 import org.jetbrains.plugins.scala.project.ProjectExt
 import org.jetbrains.plugins.scala.project.external.JdkByName
-import org.jetbrains.sbt.project.utils.ProjectStructureComparisonContext
 import org.jetbrains.sbt.{Sbt, SbtVersion}
 import org.junit.Assert
-import org.junit.Assert.{assertEquals, assertFalse, assertTrue, fail}
+import org.junit.Assert.{assertEquals, assertFalse, assertTrue}
 import org.junit.experimental.categories.Category
 
 import java.net.URI
 import java.nio.file.{Files, Path}
-import scala.jdk.CollectionConverters.CollectionHasAsScala
 
 // TODO: ensure there is test for SCL-19673 for BSO external system as well
 /**
@@ -314,7 +309,7 @@ final class SbtProjectStructureImportingTest_ProdTestSourcesSeparatedEnabled ext
       libraries := scalaLibraries :+ managedLibrary
 
       lazy val unmanagedLibrary: library = new library(s"sbt: ${Sbt.UnmanagedLibraryName}") {
-        libClasses += (getTestProjectDir.toPath / "lib" / "unmanaged.jar").toAbsolutePath.toString
+        libClasses += (getTestProjectPath / "lib" / "unmanaged.jar").toAbsolutePath.toString
       }
       val myLibraryDependencies: Seq[library] = unmanagedLibrary +: managedLibrary +: scalaLibraries
 
@@ -2696,7 +2691,7 @@ final class SbtProjectStructureImportingTest_ProdTestSourcesSeparatedEnabled ext
     val expectedScalaLibraries = expectedScala_3_3 ++ expectedScala_3_6
 
     injectVariable(
-      getTestProjectDir / "project" / "build.properties",
+      getTestProjectPath / "project" / "build.properties",
       "$LATEST_SBT_2$",
       SbtVersion.Latest.Sbt_2.minor
     )

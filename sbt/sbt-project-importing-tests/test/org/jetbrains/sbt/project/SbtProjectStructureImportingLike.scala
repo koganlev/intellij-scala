@@ -7,7 +7,6 @@ import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.roots.{LanguageLevelModuleExtension, LanguageLevelProjectExtension, ModuleRootModificationUtil}
-import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.{VirtualFile, VirtualFileManager}
 import com.intellij.pom.java.LanguageLevel
 import com.intellij.psi.PsiManager
@@ -22,8 +21,7 @@ import org.jetbrains.sbt.settings.SbtSettings
 import org.junit.Assert
 import org.junit.Assert.fail
 
-import java.io.File
-import java.nio.file.Path
+import java.nio.file.{Files, Path}
 import scala.jdk.CollectionConverters.{CollectionHasAsScala, SeqHasAsJava}
 
 abstract class SbtProjectStructureImportingLike extends SbtExternalSystemImportingTestLike
@@ -237,10 +235,10 @@ abstract class SbtProjectStructureImportingLike extends SbtExternalSystemImporti
     ProjectStructureDsl.testResources := Nil
   }
 
-  protected def injectVariable(file: File, variableName: String, value: String): Unit = {
-    val fileContent = FileUtil.loadFile(file)
+  protected def injectVariable(file: Path, variableName: String, value: String): Unit = {
+    val fileContent = Files.readString(file)
     val updatedContent = fileContent.replace(variableName, value)
-    FileUtil.writeToFile(file, updatedContent)
+    Files.writeString(file, updatedContent)
   }
 
   protected def buildCrossProjectAndAssertNoWarningsOrErrors(): Unit = {
