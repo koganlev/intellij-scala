@@ -1,11 +1,11 @@
 package org.jetbrains.sbt.project
 
-import com.intellij.openapi.util.io.FileUtil
 import org.jetbrains.sbt.project.structure.JvmOpts
-import org.junit.Assert._
-import org.junit.Test
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Test
 
-import java.io.File
+import java.nio.file.Files
+import scala.util.Using
 
 class JvmOptsTest {
 
@@ -22,11 +22,13 @@ class JvmOptsTest {
   )
 
   @Test
-  def testLoad(): Unit = {
-    val optsDir = FileUtil.createTempDirectory("jvmOptsTest","",true)
-    val optsFile = new File(optsDir,".jvmopts")
-    FileUtil.writeToFile(optsFile, input)
-    val opts = JvmOpts.loadFrom(optsDir)
-    assertEquals(expected, opts)
+  def load(): Unit = {
+    import org.jetbrains.sbt.PathTestUtil.tempPathReleasable
+    Using.resource(Files.createTempDirectory("jvmOptsTest")) { optsDir =>
+      val optsFile = optsDir.resolve(".jvmopts")
+      Files.writeString(optsFile, input)
+      val opts = JvmOpts.loadFrom(optsDir.toFile)
+      assertEquals(expected, opts)
+    }
   }
 }

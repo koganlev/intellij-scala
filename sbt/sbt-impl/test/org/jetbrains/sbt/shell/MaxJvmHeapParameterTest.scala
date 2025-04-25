@@ -1,49 +1,51 @@
 package org.jetbrains.sbt.shell
 
-import com.intellij.openapi.util.io.FileUtil
 import org.jetbrains.sbt.project.settings.SbtExecutionSettings
 import org.jetbrains.sbt.{JvmMemorySize, SbtVersion}
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.{Test, TestInfo}
 
-import java.io.File
+import java.nio.file.Files
+import scala.util.Using
 
 class MaxJvmHeapParameterTest {
 
-  val hiddenDefaultSize = JvmMemorySize.Megabytes(1500)
-  val hiddenDefaultParam = "-Xmx" + hiddenDefaultSize
-  val hardcoded = List("-Dsbt.supershell=false", "-Djdk.console=java.base")
+  private val hiddenDefaultSize = JvmMemorySize.Megabytes(1500)
+  private val hiddenDefaultParam = "-Xmx" + hiddenDefaultSize
+  private val hardcoded = List("-Dsbt.supershell=false", "-Djdk.console=java.base")
 
-  def buildParamSeq(userOpts: String*)(jvmOpts: String*)(implicit testInfo: TestInfo): Seq[String] = {
-    val workingDir = FileUtil.createTempDirectory("maxHeapJvmParamTest", testInfo.getDisplayName, true)
+  private def buildParamSeq(userOpts: String*)(jvmOpts: String*)(implicit testInfo: TestInfo): Seq[String] = {
+    import org.jetbrains.sbt.PathTestUtil._
 
-    if (jvmOpts.nonEmpty) {
-      val jvmOptsFile = new File(workingDir,".jvmopts")
-      FileUtil.writeToFile(jvmOptsFile, jvmOpts.mkString("\n"))
+    Using.resource(Files.createTempDirectory(s"maxHeapJvmParamTest-${testInfo.getDisplayName}")) { workingDir =>
+      if (jvmOpts.nonEmpty) {
+        val jvmOptsFile = workingDir.resolve(".jvmopts")
+        Files.writeString(jvmOptsFile, jvmOpts.mkString("\n"))
+      }
+
+      val settings = new SbtExecutionSettings(
+        realProjectPath = null,
+        vmExecutable = null,
+        vmOptions = userOpts,
+        sbtOptions = List.empty,
+        hiddenDefaultMaxHeapSize = hiddenDefaultSize,
+        customLauncher = null,
+        customSbtStructureFile = null,
+        jdk = null,
+        resolveClassifiers = false,
+        resolveSbtClassifiers = false,
+        useShellForImport = false ,
+        shellDebugMode = false,
+        preferScala2 = true,
+        userSetEnvironment = Map.empty,
+        passParentEnvironment = false,
+        useSeparateCompilerOutputPaths = false,
+        separateProdTestSources = false,
+        sbtVersion = SbtVersion.Latest.Sbt_1
+      )
+
+      SbtProcessManager.buildVMParameters(settings, workingDir.toFile, List.empty)
     }
-
-    val settings = new SbtExecutionSettings(
-      realProjectPath = null,
-      vmExecutable = null,
-      vmOptions = userOpts,
-      sbtOptions = List.empty,
-      hiddenDefaultMaxHeapSize = hiddenDefaultSize,
-      customLauncher = null,
-      customSbtStructureFile = null,
-      jdk = null,
-      resolveClassifiers = false,
-      resolveSbtClassifiers = false,
-      useShellForImport = false ,
-      shellDebugMode = false,
-      preferScala2 = true,
-      userSetEnvironment = Map.empty,
-      passParentEnvironment = false,
-      useSeparateCompilerOutputPaths = false,
-      separateProdTestSources = false,
-      sbtVersion = SbtVersion.Latest.Sbt_1
-    )
-
-    SbtProcessManager.buildVMParameters(settings, workingDir, List.empty)
   }
 
   /*
