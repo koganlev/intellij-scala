@@ -11,7 +11,7 @@ import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.xdebugger.{XDebuggerManager, XDebuggerUtil}
 import org.jetbrains.java.debugger.breakpoints.properties.JavaLineBreakpointProperties
 import org.jetbrains.plugins.scala.compiler.ScalaExecutionTestCase
-import org.jetbrains.plugins.scala.extensions.{inReadAction, inWriteAction}
+import org.jetbrains.plugins.scala.extensions.{PathExt, inReadAction, inWriteAction}
 import org.jetbrains.plugins.scala.lang.psi.api.toplevel.typedef.ScTypeDefinition
 import org.jetbrains.plugins.scala.lang.psi.impl.ScalaPsiManager
 import org.jetbrains.plugins.scala.project._
@@ -20,6 +20,7 @@ import org.junit.experimental.categories.Category
 
 import javax.swing.SwingUtilities
 import scala.collection.mutable
+import scala.jdk.CollectionConverters._
 import scala.util.chaining.scalaUtilChainingOps
 
 /**
@@ -44,7 +45,7 @@ abstract class ScalaDebuggerTestCase extends DebuggerTestCase with ScalaExecutio
 
   override protected def createJavaParameters(mainClass: String): JavaParameters = {
     val params = new JavaParameters()
-    params.getClassPath.addAllFiles(getModule.scalaCompilerClasspath.map(_.toFile).toArray)
+    params.getClassPath.addAll(getModule.scalaCompilerClasspath.map(_.toCanonicalPath.toString).asJava)
     params.getClassPath.add(getAppOutputPath)
     params.setJdk(getTestProjectJdk)
     params.setWorkingDirectory(getTestAppPath)
@@ -59,7 +60,7 @@ abstract class ScalaDebuggerTestCase extends DebuggerTestCase with ScalaExecutio
     }
 
     val classFilePath = s"${className.split('.').mkString(java.io.File.separator)}.class"
-    if (!classFilesOutputPath.resolve(classFilePath).toFile.exists()) {
+    if (!classFilesOutputPath.resolve(classFilePath).exists) {
       org.junit.Assert.fail(s"Could not find compiled class $className")
     }
 

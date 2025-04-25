@@ -17,7 +17,7 @@ import org.jetbrains.plugins.scala.compiler.data.ExpressionEvaluationArguments
 import org.jetbrains.plugins.scala.compiler.{CompileServerLauncher, CompilerManagerUtil, RemoteServerRunner}
 import org.jetbrains.plugins.scala.debugger.evaluation.{EvaluationException, ExpressionCompilerResolverListener}
 import org.jetbrains.plugins.scala.debugger.{DebuggerBundle, ScalaPositionManager}
-import org.jetbrains.plugins.scala.extensions.inReadAction
+import org.jetbrains.plugins.scala.extensions.{PathExt, inReadAction}
 import org.jetbrains.plugins.scala.project.ModuleExt
 import org.jetbrains.plugins.scala.project.settings.ScalaCompilerSettings
 import org.jetbrains.plugins.scala.settings.ScalaCompileServerSettings
@@ -177,9 +177,8 @@ private[evaluation] final class ExpressionCompilerEvaluator(codeFragment: PsiEle
 
   private def createOutputDirectory(workingDir: Path): Path = {
     val path = workingDir.resolve("scala-debugger").resolve("out")
-    val dir = path.toFile
-    if (!dir.exists()) {
-      dir.mkdirs()
+    if (!path.exists) {
+      Files.createDirectories(path)
     }
     path
   }
