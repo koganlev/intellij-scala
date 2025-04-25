@@ -1,7 +1,8 @@
 package org.jetbrains.plugins.scala.compiler.data
 
-import java.io.BufferedInputStream
-import java.nio.file.{FileSystems, Files, Path, Paths}
+import org.jetbrains.plugins.scala.util.JarManifestUtils
+
+import java.nio.file.{Files, Path, Paths}
 import java.security.MessageDigest
 import scala.io.Source
 import scala.util.{Failure, Success, Using}
@@ -101,11 +102,7 @@ object SbtData {
     }
 
   private def readSbtVersionFrom(sbtInterfaceJar: Path): Either[String, String] =
-    Using(FileSystems.newFileSystem(sbtInterfaceJar, null: ClassLoader)) { fileSystem =>
-      val manifestPath = fileSystem.getPath("/", "META-INF", "MANIFEST.MF")
-      val manifest = Using.resource(new BufferedInputStream(Files.newInputStream(manifestPath)))(new java.util.jar.Manifest(_))
-      manifest.getMainAttributes.getValue("Implementation-Version")
-    } match {
+    JarManifestUtils.readManifestAttribute(sbtInterfaceJar, "Implementation-Version") match {
       case Success(version) => Right(version)
       case Failure(t) => Left(s"Unable to read sbt version from JVM classpath:\n$t")
     }

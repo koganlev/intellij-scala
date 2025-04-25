@@ -11,25 +11,23 @@ import com.intellij.openapi.externalSystem.service.execution.ExternalSystemJdkUt
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.options.SettingsEditor
 import com.intellij.openapi.project.Project
-import org.jetbrains.plugins.scala.extensions.RichFile
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.util.execution.ParametersListUtil
 import com.intellij.util.xmlb.XmlSerializer
 import com.intellij.util.xmlb.annotations.XCollection
 import org.jdom.Element
+import org.jetbrains.plugins.scala.extensions.RichFile
 import org.jetbrains.plugins.scala.project.ProjectExt
-import org.jetbrains.plugins.scala.util.JdomExternalizerMigrationHelper
+import org.jetbrains.plugins.scala.util.{JarManifestUtils, JdomExternalizerMigrationHelper}
 import org.jetbrains.sbt.SbtUtil
 import org.jetbrains.sbt.project.SbtExternalSystemManager
 import org.jetbrains.sbt.settings.SbtSettings
 
-import java.io.File
+import java.nio.file.Path
 import java.util
-import java.util.jar.JarFile
 import scala.beans.BeanProperty
 import scala.jdk.CollectionConverters._
-import scala.util.Using
 
 /**
  * Run configuration of sbt tasks.
@@ -117,11 +115,10 @@ class SbtCommandLineState(val processedCommands: String, val configuration: SbtR
     r
   }
 
-  def determineMainClass(launcherPath: String): String =
-    Using.resource(new JarFile(new File(launcherPath))) { jf =>
-      val attributes = jf.getManifest.getMainAttributes
-      Option(attributes.getValue("Main-Class")).getOrElse("xsbt.boot.Boot")
-    }
+  def determineMainClass(launcherPath: String): String = {
+    val jar = Path.of(launcherPath)
+    JarManifestUtils.readManifestAttribute(jar, "Main-Class").getOrElse("xsbt.boot.Boot")
+  }
 
   override def createJavaParameters(): JavaParameters = {
     val project = configuration.getProject
