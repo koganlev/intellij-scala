@@ -1,7 +1,7 @@
 package org.jetbrains.plugins.scala.compiler.highlighting
 
 import com.intellij.compiler.server.BuildManager
-import com.intellij.openapi.compiler.{CompilerManager, CompilerPaths}
+import com.intellij.openapi.compiler.CompilerPaths
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.module.Module
@@ -13,7 +13,7 @@ import org.jetbrains.jps.incremental.scala.remote.{CommandIds, SerializablePath,
 import org.jetbrains.jps.incremental.scala.{Client, DelegateClient}
 import org.jetbrains.plugins.scala.ScalaVersion
 import org.jetbrains.plugins.scala.compiler.data.{CompilerData, CompilerJarsFactory, DocumentCompilationArguments, DocumentCompilationData, IncrementalityType}
-import org.jetbrains.plugins.scala.compiler.{RemoteServerConnectorBase, RemoteServerRunner}
+import org.jetbrains.plugins.scala.compiler.{CompilerManagerUtil, RemoteServerConnectorBase, RemoteServerRunner}
 import org.jetbrains.plugins.scala.editor.DocumentExt
 import org.jetbrains.plugins.scala.extensions.PathExt
 import org.jetbrains.plugins.scala.project.{ModuleExt, ScalaLanguageLevel, VirtualFileExt}
@@ -27,8 +27,7 @@ private final class DocumentCompiler(project: Project) {
 
   private val workingDirectory: Path = {
     val compilerDir =
-      Option(CompilerManager.getInstance(project).getJavacCompilerWorkingDir)
-        .map(_.toPath)
+      Option(CompilerManagerUtil.javacCompilerWorkingDir(project))
         .getOrElse {
           // This shouldn't happen, as the implementation of `CompilerManagerImpl#getJavacCompilerWorkingDir`
           // does not return a nullable file, but just in case, this is the same directory.

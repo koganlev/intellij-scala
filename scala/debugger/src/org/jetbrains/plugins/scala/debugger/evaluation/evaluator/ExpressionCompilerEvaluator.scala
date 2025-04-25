@@ -5,7 +5,6 @@ import com.intellij.debugger.engine.JVMNameUtil
 import com.intellij.debugger.engine.evaluation.expression.{Evaluator, ExpressionEvaluator, IdentityEvaluator, Modifier, UnBoxingEvaluator}
 import com.intellij.debugger.engine.evaluation.{EvaluateException, EvaluationContext, EvaluationContextImpl}
 import com.intellij.debugger.impl.DebuggerUtilsEx
-import com.intellij.openapi.compiler.CompilerManager
 import com.intellij.openapi.module.ModuleUtilCore
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.OrderEnumerator
@@ -15,7 +14,7 @@ import org.jetbrains.jps.incremental.scala.remote.CommandIds
 import org.jetbrains.jps.incremental.scala.{Client, DummyClient, MessageKind}
 import org.jetbrains.plugins.scala.NlsString
 import org.jetbrains.plugins.scala.compiler.data.ExpressionEvaluationArguments
-import org.jetbrains.plugins.scala.compiler.{CompileServerLauncher, RemoteServerRunner}
+import org.jetbrains.plugins.scala.compiler.{CompileServerLauncher, CompilerManagerUtil, RemoteServerRunner}
 import org.jetbrains.plugins.scala.debugger.evaluation.{EvaluationException, ExpressionCompilerResolverListener}
 import org.jetbrains.plugins.scala.debugger.{DebuggerBundle, ScalaPositionManager}
 import org.jetbrains.plugins.scala.extensions.inReadAction
@@ -38,10 +37,7 @@ private[evaluation] final class ExpressionCompilerEvaluator(codeFragment: PsiEle
       ModuleUtilCore.findModuleForPsiElement(codeFragment)
     }
 
-    val outDir = {
-      val compilerManager = CompilerManager.getInstance(context.getProject)
-      createOutputDirectory(compilerManager.getJavacCompilerWorkingDir.toPath)
-    }
+    val outDir = createOutputDirectory(CompilerManagerUtil.javacCompilerWorkingDir(context.getProject))
 
     val scalaVersion = module.scalaMinorVersion match {
       case Some(version) => version
