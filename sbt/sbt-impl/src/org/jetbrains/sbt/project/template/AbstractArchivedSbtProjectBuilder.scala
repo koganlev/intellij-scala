@@ -9,7 +9,6 @@ import org.jetbrains.plugins.scala.extensions.{ObjectExt, PathExt}
 import org.jetbrains.plugins.scala.project.template.DefaultModuleContentEntryFolders
 import org.jetbrains.sbt.project.template.AbstractArchivedSbtProjectBuilder.{replacePatterns, replacePatterns2}
 
-import java.io.File
 import java.net.URL
 import java.nio.file.{Files, Path}
 import java.util.regex.Matcher.quoteReplacement
@@ -26,9 +25,9 @@ abstract class AbstractArchivedSbtProjectBuilder extends SbtModuleBuilderBase {
   override def modifySettingsStep(settingsStep: SettingsStep): ModuleWizardStep =
     new SdkSettingsStep(settingsStep, this, (_: SdkTypeId).is[JavaSdk])
 
-  protected def extractArchive(root: File, url: URL, unwrapSingleTopLevelFolder: Boolean = false): Unit = {
+  protected def extractArchive(root: Path, url: URL, unwrapSingleTopLevelFolder: Boolean = false): Unit = {
     Using.resource(new ZipInputStream(url.openStream)) { stream =>
-      ZipUtil.unzip(null, root.toPath, stream, null, null, unwrapSingleTopLevelFolder)
+      ZipUtil.unzip(null, root, stream, null, null, unwrapSingleTopLevelFolder)
     }
   }
 
@@ -36,8 +35,8 @@ abstract class AbstractArchivedSbtProjectBuilder extends SbtModuleBuilderBase {
     if (!root.isDirectory)
       return None
 
-    extractArchive(root.toFile, archiveURL)
-    processExtractedArchive(root.toFile)
+    extractArchive(root, archiveURL)
+    processExtractedArchive(root)
 
     Some(DefaultModuleContentEntryFolders(
       sources = Seq("src/main/scala"),
@@ -48,7 +47,7 @@ abstract class AbstractArchivedSbtProjectBuilder extends SbtModuleBuilderBase {
     ))
   }
 
-  protected def processExtractedArchive(root: File): Unit = ()
+  protected def processExtractedArchive(root: Path): Unit = ()
 
   /**
    * Replaces simple strings in file. Doesn't work with regexps
@@ -56,13 +55,12 @@ abstract class AbstractArchivedSbtProjectBuilder extends SbtModuleBuilderBase {
    * @return new file content or a list of error messages
    */
   protected def replaceInFile(
-    root: File,
+    root: Path,
     relativePath: String,
     replacements: Map[String, String]
   ): Either[Seq[String], String] = {
-    val file = new File(root, relativePath)
-    val filePath = file.toPath
-    if (Files.exists(filePath)) {
+    val filePath = root / relativePath
+    if (filePath.exists) {
       val newContent = try {
         val content = Files.readString(filePath)
         val contentPatched = replacePatterns(content, replacements)
@@ -83,7 +81,7 @@ abstract class AbstractArchivedSbtProjectBuilder extends SbtModuleBuilderBase {
   }
 
   protected def replaceInFile2(
-    root: File,
+    root: Path,
     relativePath: String,
     replacements: Map[String, String]
   ): Either[Seq[String], String] = {
@@ -95,13 +93,12 @@ abstract class AbstractArchivedSbtProjectBuilder extends SbtModuleBuilderBase {
   }
 
   protected def modifyFileContent(
-    root: File,
+    root: Path,
     relativePath: String,
     modifyContent: String => Either[Seq[String], String]
   ): Either[Seq[String], String] = {
-    val file = new File(root, relativePath)
-    val filePath = file.toPath
-    if (Files.exists(filePath)) {
+    val filePath = root / relativePath
+    if (filePath.exists) {
       val newContent = try {
         val content = Files.readString(filePath)
         val contentPatched = modifyContent(content)

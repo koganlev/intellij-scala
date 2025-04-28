@@ -10,12 +10,13 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ModifiableRootModel
 import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.openapi.vfs.{VirtualFile, VirtualFileManager}
+import org.jetbrains.annotations.NotNull
 import org.jetbrains.plugins.scala.extensions.PathExt
 import org.jetbrains.plugins.scala.project.template.{DefaultModuleContentEntryFolders, ModuleBuilderUtil}
 import org.jetbrains.plugins.scala.util.ScalaPluginUtils
 import org.jetbrains.sbt.Sbt
 
-import java.nio.file.{Files, Path}
+import java.nio.file.{FileAlreadyExistsException, Files, Path}
 
 abstract class ModuleBuilderBase[T <: ExternalProjectSettings](
   projectSystemId: ProjectSystemId,
@@ -60,11 +61,16 @@ abstract class ModuleBuilderBase[T <: ExternalProjectSettings](
    * Written to be similar to [[com.intellij.openapi.util.io.FileUtilRt#createDirectory(java.io.File)]], but for
    * [[java.nio.file.Path]].
    */
-  private def createDirectory(path: Path): Boolean = {
-    path.isDirectory && {
-      Files.createDirectories(path)
-      true
-    }
+  private def createDirectory(@NotNull path: Path): Boolean = {
+    def mkdirs(p: Path): Boolean =
+      try {
+        Files.createDirectories(p)
+        true
+      } catch {
+        case _: FileAlreadyExistsException => false
+      }
+
+    path.isDirectory || mkdirs(path)
   }
 
   override def setupRootModel(model: ModifiableRootModel): Unit = {

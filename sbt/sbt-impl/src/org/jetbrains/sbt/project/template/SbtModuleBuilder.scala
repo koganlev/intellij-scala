@@ -1,7 +1,6 @@
 package org.jetbrains.sbt.project.template
 
 import com.intellij.openapi.module.Module
-import com.intellij.openapi.util.io.FileUtil
 import org.jetbrains.annotations.{ApiStatus, NonNls}
 import org.jetbrains.plugins.scala.ScalaVersion
 import org.jetbrains.plugins.scala.extensions._
@@ -9,8 +8,7 @@ import org.jetbrains.plugins.scala.project.template.DefaultModuleContentEntryFol
 import org.jetbrains.plugins.scala.project.{Version, Versions}
 import org.jetbrains.sbt.Sbt
 
-import java.io.File
-import java.nio.file.Path
+import java.nio.file.{FileAlreadyExistsException, Files, Path}
 import javax.swing._
 
 /**
@@ -44,13 +42,13 @@ class SbtModuleBuilder(
     val scalaVersion = selections.scalaVersion.getOrElse(ScalaVersion.Latest.Scala_2_13.minor)
     val packagePrefix = selections.packagePrefix
 
-    SbtModuleBuilder.createProjectTemplateIn(root.toFile, name, scalaVersion, sbtVersion, packagePrefix)
+    SbtModuleBuilder.createProjectTemplateIn(root, name, scalaVersion, sbtVersion, packagePrefix)
   }
 }
 
 object SbtModuleBuilder {
   private def createProjectTemplateIn(
-    root: File,
+    root: Path,
     @NonNls name: String,
     @NonNls scalaVersion: String,
     @NonNls sbtVersion: String,
@@ -59,12 +57,12 @@ object SbtModuleBuilder {
     val buildFile = root / Sbt.BuildFile
     val projectDir = root / Sbt.ProjectDirectory
 
-    if (buildFile.createNewFile() && projectDir.mkdir()) {
+    if (createNewFile(buildFile) && mkdir(projectDir)) {
       val mainSourcesPath = "src/main/scala"
       val testSourcesPath = "src/test/scala"
 
-      (root / mainSourcesPath).mkdirs()
-      (root / testSourcesPath).mkdirs()
+      mkdirs(root / mainSourcesPath)
+      mkdirs(root / testSourcesPath)
 
       val rootProjectSettings: Seq[String] = Seq(
         s"""name := "$name""""
@@ -101,11 +99,11 @@ object SbtModuleBuilder {
 
       def ensureSingleNewLineAfter(text: String): String = text.stripTrailing() + "\n"
 
-      FileUtil.writeToFile(buildFile, ensureSingleNewLineAfter(buildSbtContent))
-      FileUtil.writeToFile(projectDir / Sbt.PropertiesFile, ensureSingleNewLineAfter(buildPropertiesContent))
+      Files.writeString(buildFile, ensureSingleNewLineAfter(buildSbtContent))
+      Files.writeString(projectDir / Sbt.PropertiesFile, ensureSingleNewLineAfter(buildPropertiesContent))
 
       if (packagePrefix.isDefined) {
-        FileUtil.writeToFile(projectDir / Sbt.PluginsFile, ensureSingleNewLineAfter(pluginsSbtContent))
+        Files.writeString(projectDir / Sbt.PluginsFile, ensureSingleNewLineAfter(pluginsSbtContent))
       }
 
       Some(DefaultModuleContentEntryFolders(
@@ -118,4 +116,21 @@ object SbtModuleBuilder {
     }
     else None
   }
+
+  private def createNewFile(path: Path): Boolean =
+    pathOp(path)(Files.createFile(_))
+
+  private def mkdir(path: Path): Boolean =
+    pathOp(path)(Files.createDirectory(_))
+
+  private def mkdirs(path: Path): Boolean =
+    pathOp(path)(Files.createDirectories(_))
+
+  private def pathOp(path: Path)(op: Path => Unit): Boolean =
+    try {
+      op(path)
+      true
+    } catch {
+      case _: FileAlreadyExistsException => false
+    }
 }

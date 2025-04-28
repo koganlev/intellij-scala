@@ -8,7 +8,7 @@ import org.jetbrains.plugins.scala.project.template.DefaultModuleContentEntryFol
 import org.jetbrains.sbt.project.template.{ModuleBuilderBase, ScalaModuleBuilderSelections}
 import org.jetbrains.scalaCli.project.ScalaCliProjectUtils
 
-import java.nio.file.{Files, Path}
+import java.nio.file.{FileAlreadyExistsException, Files, Path}
 
 class ScalaCliModuleBuilder (
   _selections: ScalaModuleBuilderSelections
@@ -26,7 +26,7 @@ class ScalaCliModuleBuilder (
       Files.createFile(path)
       true
     } catch {
-      case _: java.nio.file.FileAlreadyExistsException => false
+      case _: FileAlreadyExistsException => false
     }
 
   override def createProjectTemplateIn(root: Path): Option[DefaultModuleContentEntryFolders] = {
