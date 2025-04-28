@@ -15,7 +15,7 @@ import org.jetbrains.plugins.scala.project.template.{DefaultModuleContentEntryFo
 import org.jetbrains.plugins.scala.util.ScalaPluginUtils
 import org.jetbrains.sbt.Sbt
 
-import java.io.File
+import java.nio.file.{Files, Path}
 
 abstract class ModuleBuilderBase[T <: ExternalProjectSettings](
   projectSystemId: ProjectSystemId,
@@ -37,13 +37,13 @@ abstract class ModuleBuilderBase[T <: ExternalProjectSettings](
    *  - `setupModule` calls `setupRootModel`
    */
   override def createModule(moduleModel: ModifiableModuleModel): Module = {
-    val root = new File(getModuleFileDirectory)
+    val root = Path.of(getModuleFileDirectory)
 
     if (ScalaPluginUtils.isRunningFromSources || ApplicationManager.getApplication.isUnitTestMode) {
-      Log.assertTrue(root.exists(), "Module file directory should exist at this point")
+      Log.assertTrue(root.exists, "Module file directory should exist at this point")
     }
 
-    if (root.exists()) {
+    if (root.exists) {
       val moduleFilePathNew = moduleFilePathUpdated(getModuleFilePath)
       setModuleFilePath(moduleFilePathNew)
     }
@@ -56,11 +56,21 @@ abstract class ModuleBuilderBase[T <: ExternalProjectSettings](
     Option(getContentEntryPath).foreach(ModuleBuilderUtil.tryToSetupModule(module, getExternalProjectSettings, _, projectSystemId))
   }
 
+  /**
+   * Written to be similar to [[com.intellij.openapi.util.io.FileUtilRt#createDirectory(java.io.File)]], but for
+   * [[java.nio.file.Path]].
+   */
+  private def createDirectory(path: Path): Boolean = {
+    path.isDirectory && {
+      Files.createDirectories(path)
+      true
+    }
+  }
+
   override def setupRootModel(model: ModifiableRootModel): Unit = {
     for {
       contentPath <- Option(getContentEntryPath)
-      contentDir = new File(contentPath)
-      if FileUtilRt.createDirectory(contentDir)
+      contentDir = Path.of(contentPath) if createDirectory(contentDir)
     } {
       val contentEntryFolders = createProjectTemplateIn(contentDir)
       ModuleBuilderUtil.tryToSetupRootModel2(model, contentPath, contentEntryFolders)
@@ -70,20 +80,20 @@ abstract class ModuleBuilderBase[T <: ExternalProjectSettings](
     }
   }
 
-  private def openEditorForCodeSampleOrBuildFile(project: Project, contentDir: File): Unit = {
+  private def openEditorForCodeSampleOrBuildFile(project: Project, contentDir: Path): Unit = {
     //open code sample or externalSystemConfigFile
     val filesToOpen =
       if (openFileEditorAfterProjectOpened.nonEmpty)
         openFileEditorAfterProjectOpened
       else
-        Option(VirtualFileManager.getInstance().findFileByNioPath(contentDir.toPath / externalSystemConfigFile)).toSeq
+        Option(VirtualFileManager.getInstance().findFileByNioPath(contentDir / externalSystemConfigFile)).toSeq
 
     ModuleBuilderUtil.openFilesInEditor(filesToOpen, project)
   }
 
   protected def externalSystemConfigFile: String
 
-  protected def createProjectTemplateIn(root: File): Option[DefaultModuleContentEntryFolders] = None
+  protected def createProjectTemplateIn(root: Path): Option[DefaultModuleContentEntryFolders] = None
 
   // TODO customize the path in UI when IDEA-122951 will be implemented
   /**
@@ -91,7 +101,8 @@ abstract class ModuleBuilderBase[T <: ExternalProjectSettings](
    * We replace ("re-point") it to `projectRoot/.idea/modules/moduleName.iml`
    */
   private def moduleFilePathUpdated(pathname: String): String = {
-    val file = new File(pathname)
-    FileUtilRt.toSystemIndependentName(file.getParent) + "/" + Sbt.ModulesDirectory + "/" + file.getName
+    val file = Path.of(pathname)
+    val wholePath = (file.getParent / Path.of(Sbt.ModulesDirectory) / file.getFileName).toCanonicalPath
+    FileUtilRt.toSystemIndependentName(wholePath.toString)
   }
 }

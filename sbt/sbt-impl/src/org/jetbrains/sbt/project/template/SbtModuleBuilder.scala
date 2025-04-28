@@ -5,11 +5,12 @@ import com.intellij.openapi.util.io.FileUtil
 import org.jetbrains.annotations.{ApiStatus, NonNls}
 import org.jetbrains.plugins.scala.ScalaVersion
 import org.jetbrains.plugins.scala.extensions._
-import org.jetbrains.plugins.scala.project.template.{DefaultModuleContentEntryFolders, patchProjectLabels}
+import org.jetbrains.plugins.scala.project.template.DefaultModuleContentEntryFolders
 import org.jetbrains.plugins.scala.project.{Version, Versions}
 import org.jetbrains.sbt.Sbt
 
 import java.io.File
+import java.nio.file.Path
 import javax.swing._
 
 /**
@@ -37,13 +38,13 @@ class SbtModuleBuilder(
     super.setupModule(module)
   }
 
-  override protected def createProjectTemplateIn(root: File): Option[DefaultModuleContentEntryFolders] = {
+  override protected def createProjectTemplateIn(root: Path): Option[DefaultModuleContentEntryFolders] = {
     val name = getName
     val sbtVersion = selections.sbtVersion.map(_.minor).getOrElse(Versions.SBT.LatestSbtVersion)
     val scalaVersion = selections.scalaVersion.getOrElse(ScalaVersion.Latest.Scala_2_13.minor)
     val packagePrefix = selections.packagePrefix
 
-    SbtModuleBuilder.createProjectTemplateIn(root, name, scalaVersion, sbtVersion, packagePrefix)
+    SbtModuleBuilder.createProjectTemplateIn(root.toFile, name, scalaVersion, sbtVersion, packagePrefix)
   }
 }
 

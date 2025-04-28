@@ -5,13 +5,13 @@ import com.intellij.openapi.diagnostic.ControlFlowException
 import com.intellij.openapi.projectRoots.{JavaSdk, SdkTypeId}
 import com.intellij.platform.templates.github.ZipUtil
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.plugins.scala.extensions.ObjectExt
+import org.jetbrains.plugins.scala.extensions.{ObjectExt, PathExt}
 import org.jetbrains.plugins.scala.project.template.DefaultModuleContentEntryFolders
 import org.jetbrains.sbt.project.template.AbstractArchivedSbtProjectBuilder.{replacePatterns, replacePatterns2}
 
 import java.io.File
 import java.net.URL
-import java.nio.file.Files
+import java.nio.file.{Files, Path}
 import java.util.regex.Matcher.quoteReplacement
 import java.util.regex.Pattern
 import java.util.zip.ZipInputStream
@@ -32,12 +32,12 @@ abstract class AbstractArchivedSbtProjectBuilder extends SbtModuleBuilderBase {
     }
   }
 
-  override protected def createProjectTemplateIn(root: File): Option[DefaultModuleContentEntryFolders] = {
+  override protected def createProjectTemplateIn(root: Path): Option[DefaultModuleContentEntryFolders] = {
     if (!root.isDirectory)
       return None
 
-    extractArchive(root, archiveURL)
-    processExtractedArchive(root)
+    extractArchive(root.toFile, archiveURL)
+    processExtractedArchive(root.toFile)
 
     Some(DefaultModuleContentEntryFolders(
       sources = Seq("src/main/scala"),

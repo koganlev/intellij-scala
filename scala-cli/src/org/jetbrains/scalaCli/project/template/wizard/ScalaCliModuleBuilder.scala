@@ -1,16 +1,14 @@
 package org.jetbrains.scalaCli.project.template.wizard
 
-import com.intellij.openapi.util.io.FileUtil
-import org.jetbrains.plugins.scala.ScalaVersion
-
 import org.jetbrains.bsp.BSP
 import org.jetbrains.bsp.settings.BspProjectSettings
+import org.jetbrains.plugins.scala.ScalaVersion
 import org.jetbrains.plugins.scala.extensions._
 import org.jetbrains.plugins.scala.project.template.DefaultModuleContentEntryFolders
-
-import java.io.File
 import org.jetbrains.sbt.project.template.{ModuleBuilderBase, ScalaModuleBuilderSelections}
 import org.jetbrains.scalaCli.project.ScalaCliProjectUtils
+
+import java.nio.file.{Files, Path}
 
 class ScalaCliModuleBuilder (
   _selections: ScalaModuleBuilderSelections
@@ -23,17 +21,25 @@ class ScalaCliModuleBuilder (
 
   override protected def externalSystemConfigFile: String = ScalaCliProjectUtils.ProjectDefinitionFileName
 
-  override def createProjectTemplateIn(root: File): Option[DefaultModuleContentEntryFolders] = {
+  private def createNewFile(path: Path): Boolean =
+    try {
+      Files.createFile(path)
+      true
+    } catch {
+      case _: java.nio.file.FileAlreadyExistsException => false
+    }
+
+  override def createProjectTemplateIn(root: Path): Option[DefaultModuleContentEntryFolders] = {
     val buildFile = root / ScalaCliProjectUtils.ProjectDefinitionFileName
 
-    if (buildFile.createNewFile()) {
+    if (createNewFile(buildFile)) {
       val scalaVersion = selections.scalaVersion.getOrElse(ScalaVersion.Latest.Scala_2_13.minor)
       val projectFileContent =
         s"//> using scala $scalaVersion"
 
       def ensureSingleNewLineAfter(text: String): String = text.stripTrailing() + "\n"
 
-      FileUtil.writeToFile(buildFile, ensureSingleNewLineAfter(projectFileContent))
+      Files.writeString(buildFile, ensureSingleNewLineAfter(projectFileContent))
 
       Some(DefaultModuleContentEntryFolders(
         sources = Seq(),
