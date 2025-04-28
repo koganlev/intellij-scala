@@ -1,8 +1,6 @@
 package org.jetbrains.plugins.scala.editor.smartEnter
 
-import java.lang.Long
-
-import com.intellij.codeInsight.CodeInsightUtil
+import com.intellij.codeInsight.CodeInsightFrontbackUtil
 import com.intellij.codeInsight.editorActions.smartEnter._
 import com.intellij.codeInsight.lookup.LookupManager
 import com.intellij.featureStatistics.FeatureUsageTracker
@@ -37,16 +35,16 @@ object ScalaSmartEnterProcessor {
 }
 
 class ScalaSmartEnterProcessor extends SmartEnterProcessor {
-  private final val SMART_ENTER_TIMESTAMP: Key[Long]  = Key.create("smartEnterOriginalTimestamp")
+  private final val SMART_ENTER_TIMESTAMP: Key[java.lang.Long]  = Key.create("smartEnterOriginalTimestamp")
 
   override def process(project: Project, editor: Editor, psiFile: PsiFile): Boolean = {
     FeatureUsageTracker.getInstance.triggerFeatureUsed("codeassists.complete.statement")
 
     try {
-      editor.putUserData(SMART_ENTER_TIMESTAMP, editor.getDocument.getModificationStamp.asInstanceOf[Long])
+      editor.putUserData[java.lang.Long](SMART_ENTER_TIMESTAMP, editor.getDocument.getModificationStamp)
       processImpl(project, editor, psiFile)
     } finally {
-      editor.putUserData(SMART_ENTER_TIMESTAMP, null)
+      editor.putUserData[java.lang.Long](SMART_ENTER_TIMESTAMP, null)
     }
 
     true
@@ -116,7 +114,7 @@ class ScalaSmartEnterProcessor extends SmartEnterProcessor {
     reformat(atCaret)
     commit(editor)
 
-    atCaret = CodeInsightUtil.findElementInRange(psiFile, rangeMarker.getStartOffset, rangeMarker.getEndOffset, atCaret.getClass)
+    atCaret = CodeInsightFrontbackUtil.findElementInRange(psiFile, rangeMarker.getStartOffset, rangeMarker.getEndOffset, atCaret.getClass)
 
     for (processor <- ScalaSmartEnterProcessor.myEnterProcessors) {
       if (atCaret != null && processor.doEnter(editor, atCaret, isModified(editor)))
@@ -188,7 +186,7 @@ class ScalaSmartEnterProcessor extends SmartEnterProcessor {
     EditorActionManager.getInstance.getActionHandler(IdeActions.ACTION_EDITOR_ENTER)
 
   protected def isModified(editor: Editor): Boolean = {
-    val timestamp: Long = editor.getUserData(SMART_ENTER_TIMESTAMP)
+    val timestamp = editor.getUserData[java.lang.Long](SMART_ENTER_TIMESTAMP)
     editor.getDocument.getModificationStamp != timestamp.longValue
   }
 }
