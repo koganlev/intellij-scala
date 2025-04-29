@@ -3,7 +3,6 @@ package org.jetbrains.plugins.scala.lang.psi.impl.toplevel.typedef
 import com.intellij.psi.PsiElement
 import org.jetbrains.plugins.scala.lang.psi.api.toplevel.typedef.{ScClass, ScTypeDefinition}
 import org.jetbrains.plugins.scala.project.settings.ScalaCompilerSettings
-import org.jetbrains.plugins.scala.project.{ModuleExt, ProjectPsiElementExt}
 
 class QuasiQuotesInjector extends SyntheticMembersInjector {
   override def injectFunctions(source: ScTypeDefinition): Seq[String] = {
@@ -17,5 +16,5 @@ class QuasiQuotesInjector extends SyntheticMembersInjector {
   }
 
   private def needQQEmulation(e: PsiElement) =
-    ScalaCompilerSettings.forElement(e).exists(_.plugins.exists(_.contains("paradise_2.10")))
+    ScalaCompilerSettings.forElement(e).exists(_.plugins.exists(_.hasPluginJarWithName("paradise_2.10")))
 }
