@@ -26,8 +26,8 @@ class TestSourcesInWorksheetTest extends SbtProjectCompilationTestBase(separateP
   private var worksheetVirtualFile: VirtualFile = _
 
   override def setUp(): Unit = {
-    super.setUp()
     EdtTestUtil.runInEdtAndWait { () =>
+      super.setUp()
       createProjectSubDirs("project", "src/main/scala", "src/test/scala")
       createProjectSubFile("project/build.properties", "sbt.version=1.10.5")
       createProjectSubFile("src/main/scala/Person.scala",
