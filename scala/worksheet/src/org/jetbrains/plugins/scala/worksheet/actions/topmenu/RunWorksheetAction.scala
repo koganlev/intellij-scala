@@ -6,10 +6,11 @@ import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.module.Module
+import com.intellij.openapi.progress.{ProgressIndicator, Task}
 import com.intellij.openapi.project.{DumbService, IndexNotReadyException, Project}
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.task.{ProjectTaskContext, ProjectTaskManager}
-import org.jetbrains.annotations.{NonNls, TestOnly}
+import org.jetbrains.annotations.NonNls
 import org.jetbrains.plugins.scala.extensions.{LoggerExt, inWriteAction, invokeAndWait, invokeLater}
 import org.jetbrains.plugins.scala.lang.psi.api.ScalaFile
 import org.jetbrains.plugins.scala.statistics.ScalaActionUsagesCollector
@@ -121,7 +122,6 @@ object RunWorksheetAction {
     }
   }
 
-  @TestOnly
   // should be private, but is used in tests
   def runCompiler(editor: Editor, psiFile: WorksheetFile, auto: Boolean): Future[RunWorksheetActionResult] = {
     val start = System.currentTimeMillis()
@@ -190,22 +190,28 @@ object RunWorksheetAction {
 
     def runnable(): Unit = {
       val compiler = new WorksheetCompiler(module, file)
-      compiler.compileAndRun(auto, editor) { result =>
-        val resultTransformed = result match {
-          case error: WorksheetCompilerError =>
-            val reporter = new WorksheetEvaluationErrorReporter(project, vFile, editor, Log)
-            reporter.reportError(error)
-            RunWorksheetActionResult.WorksheetRunError(error)
-          case _ =>
-            RunWorksheetActionResult.Done
-        }
-        promise.success(resultTransformed)
+      val printer = compiler.createWorksheetEditorPrinter(editor, autoTriggered = auto)
+      val task = new Task.Backgroundable(project, WorksheetBundle.message("worksheet.compiler.setting.up"), true) {
+        override def run(indicator: ProgressIndicator): Unit = {
+          compiler.compileAndRun(auto, editor, printer) { result =>
+            val resultTransformed = result match {
+              case error: WorksheetCompilerError =>
+                val reporter = new WorksheetEvaluationErrorReporter(project, vFile, editor, Log)
+                reporter.reportError(error)
+                RunWorksheetActionResult.WorksheetRunError(error)
+              case _ =>
+                RunWorksheetActionResult.Done
+            }
+            promise.success(resultTransformed)
 
-        val hasErrors = resultTransformed != RunWorksheetActionResult.Done
-        invokeLater {
-          WorksheetFileHook.enableRun(vFile, hasErrors)
+            val hasErrors = resultTransformed != RunWorksheetActionResult.Done
+            invokeLater {
+              WorksheetFileHook.enableRun(vFile, hasErrors)
+            }
+          }
         }
       }
+      task.queue()
     }
 
     if (makeBeforeRun) {

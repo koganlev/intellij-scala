@@ -11,6 +11,7 @@ import com.intellij.openapi.options.advanced.AdvancedSettings
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.{JavaSdkVersion, ProjectJdkTable, Sdk}
 import com.intellij.util.PathUtil
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.net.NetUtils
 import org.apache.commons.lang3.StringUtils
 import org.jetbrains.annotations.{Nls, TestOnly}
@@ -539,6 +540,7 @@ object CompileServerLauncher {
    *
    * @note This method is blocking. It should not be called on the UI thread.
    */
+  @RequiresBackgroundThread
   def ensureServerRunning(project: Project): Boolean = {
     // initialize the compile server manager service instance for the project which holds the widget state
     CompileServerManager.init(project)

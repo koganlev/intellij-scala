@@ -10,6 +10,7 @@ import com.intellij.openapi.editor.{Document, Editor}
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.progress.{ProgressIndicator, ProgressManager, Task}
 import com.intellij.openapi.project.{DumbService, Project}
+import com.intellij.util.concurrency.annotations.RequiresEdt
 import org.jetbrains.annotations.Nls
 import org.jetbrains.jps.incremental.scala.Client.PosInfo
 import org.jetbrains.jps.incremental.scala.remote.SerializablePath
@@ -145,8 +146,11 @@ class WorksheetCompiler(
     case ex: ScalaSdkNotConfiguredException => RemoteServerConnectorResult.ExpectedError(ex)
     case ex                                 => RemoteServerConnectorResult.UnexpectedError(ex)
   }
+  
+  private def isShowErrorsInViewerEditor(autoTriggered: Boolean): Boolean =
+    autoTriggered && WorksheetUtils.showReplErrorsInEditorInInteractiveMode || WorksheetUtils.showReplErrorsInEditor
 
-  private def compileAndRun(autoTriggered: Boolean, editor: Editor, request: WorksheetCompileRunRequest)
+  private def compileAndRun(autoTriggered: Boolean, editor: Editor, request: WorksheetCompileRunRequest, printer: WorksheetEditorPrinter)
                            (originalCallback: EvaluationCallback): Unit = {
     WorksheetCompilerUtil.removeOldMessageContent(project) //or not?
 
@@ -166,13 +170,8 @@ class WorksheetCompiler(
     val progressTitle = WorksheetBundle.message("worksheet.compilation", worksheetFile.getName)
     //on auto-run (interactive mode) do not show error messages in build tool window (via CompilerTask)
 
-    val showErrorsInViewerEditor = autoTriggered && WorksheetUtils.showReplErrorsInEditorInInteractiveMode || WorksheetUtils.showReplErrorsInEditor
-    val printer = runType match {
-      case WorksheetExternalRunType.PlainRunType =>
-        WorksheetEditorPrinterFactory.getDefaultUiFor(editor, worksheetFile)
-      case WorksheetExternalRunType.ReplRunType =>
-        WorksheetEditorPrinterFactory.getIncrementalUiFor(editor, worksheetFile, showReplErrorsInEditor = showErrorsInViewerEditor)
-    }
+    val showErrorsInViewerEditor = isShowErrorsInViewerEditor(autoTriggered)
+
     val worksheetEvaluation: WorksheetEvaluationBase =
       if (showErrorsInViewerEditor && runType == WorksheetExternalRunType.ReplRunType)
         new WorksheetEvaluationIgnoringErrors(project, progressTitle, logUnexpectedException, printer)
@@ -234,7 +233,7 @@ class WorksheetCompiler(
     })
   }
 
-  def compileAndRun(autoTriggered: Boolean, editor: Editor)
+  def compileAndRun(autoTriggered: Boolean, editor: Editor, printer: WorksheetEditorPrinter)
                    (originalCallback: EvaluationCallback): Unit = try {
     Log.traceWithDebugInDev(s"compileAndRun, autoTriggered: $autoTriggered")
 
@@ -245,7 +244,7 @@ class WorksheetCompiler(
     } else {
       runType.process(worksheetFile, editor) match {
         case Right(request) =>
-          compileAndRun(autoTriggered, editor, request)(originalCallback)
+          compileAndRun(autoTriggered, editor, request, printer)(originalCallback)
         case Left(preprocessError)  =>
           originalCallback(WorksheetCompilerResult.PreprocessError(preprocessError))
       }
@@ -253,6 +252,17 @@ class WorksheetCompiler(
   } catch {
     case NonFatal(ex) =>
       originalCallback(WorksheetCompilerResult.UnknownError(ex))
+  }
+  
+  @RequiresEdt
+  def createWorksheetEditorPrinter(editor: Editor, autoTriggered: Boolean): WorksheetEditorPrinter = {
+    val showErrorsInViewerEditor = isShowErrorsInViewerEditor(autoTriggered)
+    runType match {
+      case WorksheetExternalRunType.PlainRunType =>
+        WorksheetEditorPrinterFactory.getDefaultUiFor(editor, worksheetFile)
+      case WorksheetExternalRunType.ReplRunType =>
+        WorksheetEditorPrinterFactory.getIncrementalUiFor(editor, worksheetFile, showReplErrorsInEditor = showErrorsInViewerEditor)
+    }
   }
 }
 
