@@ -4,15 +4,12 @@ import com.intellij.compiler.server.BuildProcessParametersProvider
 import com.intellij.compiler.server.impl.BuildProcessClasspathManager
 import com.intellij.execution.configurations.GeneralCommandLine
 import com.intellij.execution.process.{ProcessEvent, ProcessListener}
-import com.intellij.notification.{Notification, NotificationListener, NotificationType, Notifications}
+import com.intellij.notification.{Notification, NotificationType, Notifications}
 import com.intellij.openapi.application.{ApplicationManager, PathManagerEx}
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.options.advanced.AdvancedSettings
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.{JavaSdkVersion, ProjectJdkTable, Sdk}
-import com.intellij.openapi.roots.ModuleRootManager
-import com.intellij.openapi.roots.impl.OrderEntryUtil
-import com.intellij.openapi.roots.ui.configuration.ProjectSettingsService
 import com.intellij.util.PathUtil
 import com.intellij.util.net.NetUtils
 import org.apache.commons.lang3.StringUtils
@@ -35,7 +32,6 @@ import org.jetbrains.plugins.scala.util.teamcity.TeamcityUtils
 
 import java.io.{BufferedReader, IOException, InputStreamReader}
 import java.nio.file.{Files, Path}
-import javax.swing.event.HyperlinkEvent
 import scala.collection.mutable
 import scala.jdk.CollectionConverters._
 import scala.util.Try
@@ -609,29 +605,6 @@ object CompileServerLauncher {
       dir <- Option(project.baseDir)
       path <- Option(dir.getFileSystem.getNioPath(dir)) if path.exists
     } yield path
-  }
-
-
-  class ConfigureLinkListener(project: Project) extends NotificationListener.Adapter {
-    override def hyperlinkActivated(notification: Notification, event: HyperlinkEvent): Unit = {
-      CompileServerManager.showCompileServerSettingsDialog(project)
-      notification.expire()
-    }
-  }
-
-  class ConfigureJDKListener(project: Project) extends NotificationListener.Adapter {
-    override def hyperlinkActivated(notification: Notification, event: HyperlinkEvent): Unit = {
-      val jdkEntries = project.modulesWithScala.flatMap { module =>
-        val rootManager = ModuleRootManager.getInstance(module)
-        Option(OrderEntryUtil.findJdkOrderEntry(rootManager, rootManager.getSdk))
-      }
-      val service = ProjectSettingsService.getInstance(project)
-
-      if (jdkEntries.isEmpty) service.openProjectSettings()
-      else service.openLibraryOrSdkSettings(jdkEntries.head)
-
-      notification.expire()
-    }
   }
 
   sealed trait CompileServerProblem
