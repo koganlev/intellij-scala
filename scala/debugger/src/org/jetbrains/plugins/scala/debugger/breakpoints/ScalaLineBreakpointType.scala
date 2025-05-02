@@ -165,10 +165,8 @@ class ScalaLineBreakpointType extends JavaLineBreakpointType("scala-line", Debug
                     inReadAction(getContainingMethod(lineBp)) //populating caches outside edt
                   }
                   invokeLater {
-                    if (breakpointImpl.isValid) {
-                      breakpointImpl.getHighlighter.dispose()
-                      breakpointImpl.updateUI()
-                    }
+                    breakpointImpl.getHighlighter.dispose()
+                    breakpointImpl.updateUI()
                   }
                 }
               }

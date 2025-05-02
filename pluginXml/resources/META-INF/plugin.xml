@@ -36,7 +36,7 @@
     <version>VERSION</version>
     <change-notes></change-notes>
     <vendor url="https://www.jetbrains.com">JetBrains</vendor>
-    <idea-version since-build="252.12169" until-build="252.*"/>
+    <idea-version since-build="252.13011" until-build="252.*"/>
 
     <depends>com.intellij.modules.java</depends>
     <depends optional="true" config-file="intellilang-scala-support.xml">org.intellij.intelliLang</depends>
