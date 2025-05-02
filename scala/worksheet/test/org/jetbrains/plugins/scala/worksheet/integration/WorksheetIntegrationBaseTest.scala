@@ -5,7 +5,7 @@ import com.intellij.openapi.editor.{Editor, FoldRegion}
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.psi.PsiDocumentManager
-import org.jetbrains.plugins.scala.compiler.{CompileServerLauncher, ScalaCompilerTestBase}
+import org.jetbrains.plugins.scala.compiler.ScalaCompilerTestBase
 import org.jetbrains.plugins.scala.extensions.TextRangeExt
 import org.jetbrains.plugins.scala.project.settings.{ScalaCompilerConfiguration, ScalaCompilerSettingsProfile}
 import org.jetbrains.plugins.scala.settings.ScalaProjectSettings
@@ -74,15 +74,6 @@ abstract class WorksheetIntegrationBaseTest
 
   protected def createCompilerProfileForCurrentModule(profileName: String): ScalaCompilerSettingsProfile =
     ScalaCompilerConfiguration.instanceIn(project).createCustomProfileForModule(profileName, myModule)
-
-  override def setUpProject(): Unit = {
-    super.setUpProject()
-
-    if (useCompileServer) {
-      val result = CompileServerLauncher.ensureServerRunning(getProject)
-      assertTrue("compile server is expected to be running", result)
-    }
-  }
 
   override def setUp(): Unit = {
     super.setUp()
