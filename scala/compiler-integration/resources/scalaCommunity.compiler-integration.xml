@@ -71,7 +71,7 @@
                   class="org.jetbrains.plugins.scala.compiler.highlighting.CompilerHighlightingBuildManagerListener"/>
 
         <listener topic="com.intellij.compiler.server.BuildManagerListener"
-                  class="org.jetbrains.plugins.scala.compiler.CompileServerLauncher$Listener"/>
+                  class="org.jetbrains.plugins.scala.compiler.CompileServerBuildManagerListener"/>
     </applicationListeners>
 
     <projectListeners>

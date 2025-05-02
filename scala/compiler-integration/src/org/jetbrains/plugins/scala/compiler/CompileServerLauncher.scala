@@ -1,7 +1,7 @@
 package org.jetbrains.plugins.scala.compiler
 
+import com.intellij.compiler.server.BuildProcessParametersProvider
 import com.intellij.compiler.server.impl.BuildProcessClasspathManager
-import com.intellij.compiler.server.{BuildManagerListener, BuildProcessParametersProvider}
 import com.intellij.execution.configurations.GeneralCommandLine
 import com.intellij.execution.process.{ProcessEvent, ProcessListener}
 import com.intellij.notification.{Notification, NotificationListener, NotificationType, Notifications}
@@ -35,7 +35,6 @@ import org.jetbrains.plugins.scala.util.teamcity.TeamcityUtils
 
 import java.io.{BufferedReader, IOException, InputStreamReader}
 import java.nio.file.{Files, Path}
-import java.util.UUID
 import javax.swing.event.HyperlinkEvent
 import scala.collection.mutable
 import scala.jdk.CollectionConverters._
@@ -55,27 +54,6 @@ object CompileServerLauncher {
 
   @TestOnly
   private[compiler] var buildProcessParameters: Seq[String] = Seq.empty
-
-  /* @see [[org.jetbrains.plugins.scala.compiler.ServerMediatorTask]] */
-  private class Listener extends BuildManagerListener {
-
-    override def buildStarted(project: Project, sessionId: UUID, isAutomake: Boolean): Unit = {
-      if (!project.isDisposed)
-        ensureCompileServerRunning(project)
-      if (ScalaCompileServerSettings.getInstance.COMPILE_SERVER_ENABLED)
-        CompileServerNotificationsService.get(project).warnIfCompileServerJdkMayLeadToCompilationProblems()
-    }
-
-    private def ensureCompileServerRunning(project: Project): Unit = {
-      val settings = ScalaCompileServerSettings.getInstance
-
-      val compileServerRequired = settings.COMPILE_SERVER_ENABLED && project.hasScala
-      LOG.traceWithDebugInDev(s"Listener.compileServerRequired: $compileServerRequired")
-      if (compileServerRequired) {
-        CompileServerLauncher.ensureServerRunning(project)
-      }
-    }
-  }
 
   executeOnPooledThread {
     ScalaShutDownTracker.registerShutdownTask(() => {
