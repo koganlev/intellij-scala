@@ -3,6 +3,7 @@ package org.jetbrains.plugins.scala.worksheet.settings
 import com.intellij.openapi.editor.{Editor, LogicalPosition}
 import com.intellij.psi.PsiErrorElement
 import org.jetbrains.annotations.{Nls, NonNls}
+import org.jetbrains.plugins.scala.extensions.inReadAction
 import org.jetbrains.plugins.scala.lang.psi.api.ScalaFile
 import org.jetbrains.plugins.scala.worksheet.WorksheetBundle
 import org.jetbrains.plugins.scala.worksheet.processor.WorksheetCompilerUtil.WorksheetCompileRunRequest
@@ -51,7 +52,7 @@ object WorksheetExternalRunType {
     override def isReplRunType: Boolean = false
 
     override def process(srcFile: ScalaFile, editor: Editor): Either[WorksheetPreprocessError, WorksheetCompileRunRequest] = {
-      val result = WorksheetDefaultSourcePreprocessor.preprocess(srcFile, editor.getDocument)
+      val result = inReadAction(WorksheetDefaultSourcePreprocessor.preprocess(srcFile, editor.getDocument))
       result
         .map { case WorksheetDefaultSourcePreprocessor.PreprocessResult(code, className) =>
           WorksheetCompileRunRequest.RunCompile(code, className)
