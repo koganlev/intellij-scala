@@ -1403,7 +1403,7 @@ object ScalaPsiUtil {
       owner <- maybeOwner.toSeq
       typeParameter <- owner.typeParameters
       (bound, idx) <- typeParameter.contextBounds.zipWithIndex
-    } yield ContextBoundInfo(typeParameter, bound.typeElement, idx, bound.name)
+    } yield ContextBoundInfo(typeParameter, bound.typeElement, idx, bound.nameOpt)
 
     contextBounds.find { case ContextBoundInfo(typeParameter, typeElement, index, name) =>
       val currentParameterName = name.getOrElse(contextBoundParameterName(typeParameter, typeElement, index))
@@ -1459,7 +1459,7 @@ object ScalaPsiUtil {
     val bounds = for {
       typeParameter <- tparams
       (cb, index) <- typeParameter.contextBounds.zipWithIndex
-    } yield ParameterDescriptor(typeParameter, cb.typeElement, index, cb.name)
+    } yield ParameterDescriptor(typeParameter, cb.typeElement, index, cb.nameOpt)
 
     val boundsTexts = bounds.map {
       case ParameterDescriptor(typeParameter, typeElement, index, name) =>
@@ -1637,6 +1637,7 @@ object ScalaPsiUtil {
 
   def isImplicit(@Nullable namedElement: PsiNamedElement): Boolean =
     namedElement match {
+      case _: ScContextBound  => true
       case _: ScGiven         => true
       case _: ScGivenPattern  => true
       case Implicit0Binding() => true
