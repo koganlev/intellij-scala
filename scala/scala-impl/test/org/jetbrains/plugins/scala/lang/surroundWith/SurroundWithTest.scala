@@ -19,9 +19,10 @@ import org.jetbrains.plugins.scala.extensions.PathExt
 import org.jetbrains.plugins.scala.lang.formatting.settings.ScalaCodeStyleSettings
 import org.jetbrains.plugins.scala.lang.surroundWith.descriptors.ScalaSurroundDescriptors
 import org.jetbrains.plugins.scala.util.TestUtils
-import org.jetbrains.plugins.scala.{Scala3Language, ScalaLanguage}
+import org.jetbrains.plugins.scala.{FileSetTests, Scala3Language, ScalaLanguage}
 import org.junit.Assert.{assertEquals, assertTrue}
 import org.junit.Test
+import org.junit.experimental.categories.Category
 import org.junit.runner.RunWith
 
 import java.nio.charset.StandardCharsets
@@ -30,6 +31,7 @@ import java.util.regex.Pattern
 import scala.annotation.unused
 
 @RunWith(classOf[JUnitParamsRunner])
+@Category(Array(classOf[FileSetTests]))
 abstract class SurroundWithTestBase(relativeTestDataPath: Path, language: Language) extends LightJavaCodeInsightFixtureTestCase {
 
   private val FilePartsSeparatorPattern: Pattern = Pattern.compile("\\n?(?m)^-{4,}\\n?")
@@ -39,7 +41,11 @@ abstract class SurroundWithTestBase(relativeTestDataPath: Path, language: Langua
   @unused("used reflectively by the @Parameters annotation")
   private def testParameters: Array[AnyRef] =
     findTestFiles(testDirectoryPath).map { path =>
-      val testName = FileUtil.toSystemIndependentName(testDirectoryPath.relativize(path).toString)
+      val testName = {
+        val p = FileUtil.toSystemIndependentName(testDirectoryPath.relativize(path).toString)
+        val ext = path.getFileName.toString.split("\\.").lastOption.map(e => s".$e").getOrElse("")
+        p.stripSuffix(ext)
+      }
       Array(testName, path)
     }
 
