@@ -90,6 +90,7 @@ object Common {
       //jetbrains annotations library is quite minimalistic, it's required for @Nullable/@NotNull/@Nls/etc.. annotations
       Dependencies.jetbrainsAnnotations % Provided,
       Dependencies.junit % Test,
+      Dependencies.junitParams % Test,
       Dependencies.junitInterface % Test,
       Dependencies.jupiterInterface % Test,
       Dependencies.jupiterParams(junitJupiterVersion.value) % Test,

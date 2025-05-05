@@ -43,6 +43,7 @@ object Versions {
   }
 
   val junitVersion: String = "4.13.2"
+  val junitParamsVersion: String = "1.1.1"
   val junitInterfaceVersion: String = "0.13.3"
 
   val bspVersion = "2.1.0-M3"
@@ -113,6 +114,7 @@ object Dependencies {
    * (Both runtime and compilation time)
    */
   val junit: ModuleID = "junit" % "junit" % junitVersion
+  val junitParams: ModuleID = "pl.pragmatists" % "JUnitParams" % junitParamsVersion
   val junitInterface: ModuleID = "com.github.sbt" % "junit-interface" % junitInterfaceVersion
 
   /**
