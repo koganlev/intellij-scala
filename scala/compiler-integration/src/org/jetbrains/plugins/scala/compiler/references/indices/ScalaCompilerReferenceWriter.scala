@@ -1,6 +1,6 @@
 package org.jetbrains.plugins.scala.compiler.references.indices
 
-import com.intellij.openapi.util.io.FileUtil
+import com.intellij.openapi.util.io.NioFiles
 import org.jetbrains.jps.backwardRefs.CompilerReferenceWriter
 import org.jetbrains.jps.backwardRefs.index.CompilerReferenceIndex
 import org.jetbrains.plugins.scala.compiler.references.bytecode.CompiledScalaFile
@@ -13,7 +13,7 @@ private[references] class ScalaCompilerReferenceWriter protected (
 ) extends CompilerReferenceWriter[CompiledScalaFile](index) {
 
   def close(shouldClearIndex: Boolean): Unit = {
-    if (shouldClearIndex) FileUtil.delete(index.getIndexDir)
+    if (shouldClearIndex) NioFiles.deleteRecursively(index.getIndexDir)
     super.close()
   }
 

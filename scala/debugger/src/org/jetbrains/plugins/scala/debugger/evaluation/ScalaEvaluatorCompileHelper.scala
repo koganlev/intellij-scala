@@ -5,7 +5,7 @@ package evaluation
 import com.intellij.debugger.impl.{DebuggerManagerListener, DebuggerSession}
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.io.FileUtil
+import com.intellij.openapi.util.io.{FileUtil, NioFiles}
 import org.jetbrains.jps.incremental.scala.remote.CommandIds
 import org.jetbrains.jps.incremental.scala.{Client, DummyClient, MessageKind}
 import org.jetbrains.plugins.scala.compiler.{CompileServerLauncher, RemoteServerConnectorBase, RemoteServerRunner}
@@ -23,7 +23,7 @@ class ScalaEvaluatorCompileHelper(project: Project) extends EvaluatorCompileHelp
   private val tempFiles = mutable.Set[Path]()
 
   private def clearTempFiles(): Unit = {
-    tempFiles.foreach(FileUtil.delete)
+    tempFiles.foreach(NioFiles.deleteRecursively)
     tempFiles.clear()
   }
 

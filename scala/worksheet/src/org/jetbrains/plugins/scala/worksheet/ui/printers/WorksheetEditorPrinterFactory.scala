@@ -27,6 +27,7 @@ import org.jetbrains.plugins.scala.worksheet.utils.FileAttributeUtilCache
 import java.awt.{Dimension, Rectangle}
 import java.util
 import javax.swing.JComponent
+import scala.annotation.nowarn
 import scala.concurrent.duration.{DurationInt, FiniteDuration}
 
 //noinspection TypeAnnotation
@@ -283,7 +284,7 @@ object WorksheetEditorPrinterFactory {
           if (CommonDataKeys.HOST_EDITOR.is(dataId)) viewer
           else null
         }
-        DataManager.registerDataProvider(jComp, dataProvider)
+        DataManager.registerDataProvider(jComp, dataProvider): @nowarn("cat=deprecation")
       case _ =>
     }
     viewer

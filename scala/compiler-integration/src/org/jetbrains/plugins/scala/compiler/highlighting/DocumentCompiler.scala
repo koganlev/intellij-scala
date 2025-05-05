@@ -6,7 +6,7 @@ import com.intellij.openapi.components.Service
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.io.FileUtil
+import com.intellij.openapi.util.io.NioFiles
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VirtualFile
 import org.jetbrains.jps.incremental.scala.remote.{CommandIds, SerializablePath, SourceScope}
@@ -81,7 +81,7 @@ private final class DocumentCompiler(project: Project) {
       catch {
         case t: Throwable =>
           // Remove the temporary source file if creating the connector failed.
-          FileUtil.delete(tempSourceFile)
+          NioFiles.deleteRecursively(tempSourceFile)
           throw t
       }
 
@@ -90,7 +90,7 @@ private final class DocumentCompiler(project: Project) {
       if (connector.requiresCleanup) {
         cleanWorkingDirectory()
       } else {
-        FileUtil.delete(tempSourceFile)
+        NioFiles.deleteRecursively(tempSourceFile)
       }
     }
   }
@@ -111,7 +111,7 @@ private final class DocumentCompiler(project: Project) {
 
   private def cleanWorkingDirectory(): Unit = {
     val files = workingDirectory.children()
-    files.foreach(FileUtil.delete)
+    files.foreach(NioFiles.deleteRecursively)
   }
 
   private final class PhysicalFileConnector(tempSourceFile: Path, module: Module, sourceScope: SourceScope)
