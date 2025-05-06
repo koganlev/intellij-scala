@@ -12,8 +12,8 @@ import java.net.URI
 
 object BspExternalSystemUtil {
 
-  def getBspProjectData(project: Project): Option[BspProjectData] = {
-    val dataEither = ExternalSystemUtil.getProjectData(BSP.ProjectSystemId, project, BspProjectData.Key)
+  def getBspProjectData(project: Project, rootProjectPath: Option[String] = None): Option[BspProjectData] = {
+    val dataEither = ExternalSystemUtil.getProjectData(BSP.ProjectSystemId, project, BspProjectData.Key, rootProjectPath)
     dataEither.toSeq.flatten.headOption
   }
 

@@ -127,6 +127,12 @@ object BspUtil {
     val projectData = BspExternalSystemUtil.getBspProjectData(project)
     projectData.exists(_.serverDisplayName == "scala-cli")
   }
+
+  def isBspScalaCliProject(project: Project, rootProjectPath: String): Boolean = {
+    val projectData = BspExternalSystemUtil.getBspProjectData(project, Some(rootProjectPath))
+    projectData.exists(_.serverDisplayName == "scala-cli")
+  }
+
   /**
    * Checks whether a specified directory contains at least one file with a name from a given sequence of file names.
    */
