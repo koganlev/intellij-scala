@@ -2,13 +2,12 @@ package org.jetbrains.plugins.scala
 package lang
 package parser
 
-import junit.framework.{Test, TestCase}
-import org.jetbrains.plugins.scala.base.ScalaFileSetTestCase
+import org.jetbrains.plugins.scala.base.{DefaultFileSetTestTransform, NoSdkFileSetTestBase}
 
-class FailedParserTest extends TestCase
+import java.nio.file.Path
 
-object FailedParserTest {
-  def suite(): Test = new ScalaFileSetTestCase("/parser/failed") {
-    override protected def shouldPass = false
-  }
+class FailedParserTest extends NoSdkFileSetTestBase with DefaultFileSetTestTransform {
+  override protected def relativeTestDataPath: Path = Path.of("parser", "failed")
+
+  override protected def shouldPass: Boolean = false
 }

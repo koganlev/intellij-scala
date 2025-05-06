@@ -14,7 +14,7 @@ import org.jetbrains.plugins.scala.extensions.PathExt
 import org.jetbrains.plugins.scala.lang.formatting.settings.ScalaCodeStyleSettings
 import org.jetbrains.plugins.scala.util.TestUtils
 import org.jetbrains.plugins.scala.{FileSetTests, ScalaLanguage}
-import org.junit.Assert.{assertEquals, assertTrue}
+import org.junit.Assert.{assertEquals, assertNotEquals, assertTrue}
 import org.junit.Test
 import org.junit.experimental.categories.Category
 import org.junit.runner.RunWith
@@ -35,6 +35,8 @@ abstract class NoSdkFileSetTestBase extends LightJavaCodeInsightFixtureTestCase 
   protected def relativeTestDataPath: Path
 
   protected def language: Language = ScalaLanguage.INSTANCE
+
+  protected def shouldPass: Boolean = true
 
   private val testDirectoryPath: Path = Path.of(TestUtils.getTestDataPath) / relativeTestDataPath
 
@@ -68,7 +70,11 @@ abstract class NoSdkFileSetTestBase extends LightJavaCodeInsightFixtureTestCase 
     val actualResult = transform(testNameWithoutDot, inputRaw).trim
     val expectedResult = transformExpectedResult(expectedResultRaw).trim
 
-    assertEquals(expectedResult, actualResult)
+    val assertFn: (String, String) => Unit =
+      if (shouldPass) assertEquals
+      else assertNotEquals
+
+    assertFn(expectedResult, actualResult)
   }
 
   protected def transform(testName: String, fileText: String): String
