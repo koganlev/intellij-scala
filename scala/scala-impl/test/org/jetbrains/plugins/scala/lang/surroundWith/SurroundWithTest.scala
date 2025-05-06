@@ -1,6 +1,5 @@
 package org.jetbrains.plugins.scala.lang.surroundWith
 
-import com.intellij.application.options.CodeStyle
 import com.intellij.codeInsight.generation.surroundWith.SurroundWithHandler
 import com.intellij.lang.Language
 import com.intellij.lang.surroundWith.Surrounder
@@ -11,7 +10,6 @@ import com.intellij.psi.PsiFile
 import junit.framework.TestCase.assertNotNull
 import org.jetbrains.plugins.scala.Scala3Language
 import org.jetbrains.plugins.scala.base.NoSdkFileSetTestBase
-import org.jetbrains.plugins.scala.lang.formatting.settings.ScalaCodeStyleSettings
 import org.jetbrains.plugins.scala.lang.surroundWith.descriptors.ScalaSurroundDescriptors
 
 import java.nio.file.Path
@@ -56,6 +54,6 @@ class SurroundWithTest_Scala_3 extends SurroundWithTestBase {
 
   override def setUp(): Unit = {
     super.setUp()
-    CodeStyle.getSettings(getProject).getCustomSettings(classOf[ScalaCodeStyleSettings]).USE_SCALA3_INDENTATION_BASED_SYNTAX = true
+    scalaCodeStyleSettings.USE_SCALA3_INDENTATION_BASED_SYNTAX = true
   }
 }

@@ -1,15 +1,18 @@
 package org.jetbrains.plugins.scala.base
 
+import com.intellij.application.options.CodeStyle
 import com.intellij.lang.Language
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.text.StringUtil
+import com.intellij.psi.codeStyle.CommonCodeStyleSettings
 import com.intellij.psi.{PsiFile, PsiFileFactory}
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
 import junitparams.naming.TestCaseName
 import junitparams.{JUnitParamsRunner, Parameters}
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.plugins.scala.extensions.PathExt
+import org.jetbrains.plugins.scala.lang.formatting.settings.ScalaCodeStyleSettings
 import org.jetbrains.plugins.scala.util.TestUtils
 import org.jetbrains.plugins.scala.{FileSetTests, ScalaLanguage}
 import org.junit.Assert.{assertEquals, assertTrue}
@@ -71,7 +74,7 @@ abstract class NoSdkFileSetTestBase extends LightJavaCodeInsightFixtureTestCase 
 
   protected def transform(testName: String, fileText: String): String
 
-  protected def transformExpectedResult(text: String): String
+  protected def transformExpectedResult(text: String): String = text
 
   protected def createLightFile(@NonNls text: String, project: Project): PsiFile =
     PsiFileFactory.getInstance(project).createFileFromText("dummy.scala", language, text)
@@ -93,6 +96,12 @@ abstract class NoSdkFileSetTestBase extends LightJavaCodeInsightFixtureTestCase 
       !name.startsWith("_") &&
       name != "CVS"
   }
+
+  protected def scalaCodeStyleSettings: ScalaCodeStyleSettings =
+    ScalaCodeStyleSettings.getInstance(getProject)
+
+  protected def commonCodeStyleSettings: CommonCodeStyleSettings =
+    CodeStyle.getSettings(getProject).getCommonSettings(ScalaLanguage.INSTANCE)
 }
 
 private object NoSdkFileSetTestBase {

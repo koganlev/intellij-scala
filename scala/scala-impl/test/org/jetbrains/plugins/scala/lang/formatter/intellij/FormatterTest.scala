@@ -13,17 +13,10 @@
  * limitations under the License.
  */
 
-package org.jetbrains.plugins.scala.lang.formatter.intellij;
+package org.jetbrains.plugins.scala.lang.formatter.intellij
 
-import junit.framework.Test;
-import junit.framework.TestCase;
+import java.nio.file.Path
 
-public class FormatterTest extends TestCase {
-    public static Test suite() {
-        return new FormatterTestSuite("/formatter/data/") {
-        };
-    }
+class FormatterTest extends FormatterTestBase {
+  override protected def relativeTestDataPath: Path = Path.of("formatter", "data")
 }
-
-
-
