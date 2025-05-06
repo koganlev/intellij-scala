@@ -14,13 +14,12 @@ class RearrangerTest extends NoSdkFileSetTestBase {
   override protected def relativeTestDataPath: Path = Path.of("rearranger", "defaultSettingsData")
 
   override protected def transform(testName: String, fileText: String): String = {
-    val project = getProject
-    val file = createLightFile(fileText, project)
+    val file = createLightFile(fileText)
     val runnable: Runnable = { () =>
       try rearrange(file)
       catch { case e: IncorrectOperationException => e.printStackTrace() }
     }
-    WriteCommandAction.runWriteCommandAction(project, runnable)
+    WriteCommandAction.runWriteCommandAction(getProject, runnable)
     file.getText
   }
 

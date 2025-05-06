@@ -33,7 +33,7 @@ abstract class SurroundWithTestBase extends NoSdkFileSetTestBase {
   override protected def transform(@unused testName: String, fileText: String): String = {
     val project = getProject
     val res = SurroundWithTestUtil.prepareFile(fileText)
-    val psiFile = createLightFile(res._1, project)
+    val psiFile = createLightFile(res._1)
     val surrounder = ScalaSurroundDescriptors.getSurroundDescriptors.head.getSurrounders
     val runnable: Runnable = () => doSurround(project, psiFile, surrounder(res._4), res._2, res._3)
     WriteCommandAction.runWriteCommandAction(project, runnable)

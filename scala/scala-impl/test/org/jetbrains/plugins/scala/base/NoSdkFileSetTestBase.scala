@@ -2,7 +2,6 @@ package org.jetbrains.plugins.scala.base
 
 import com.intellij.application.options.CodeStyle
 import com.intellij.lang.Language
-import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings
@@ -76,8 +75,8 @@ abstract class NoSdkFileSetTestBase extends LightJavaCodeInsightFixtureTestCase 
 
   protected def transformExpectedResult(text: String): String = text
 
-  protected def createLightFile(@NonNls text: String, project: Project): PsiFile =
-    PsiFileFactory.getInstance(project).createFileFromText("dummy.scala", language, text)
+  protected def createLightFile(@NonNls text: String): PsiFile =
+    PsiFileFactory.getInstance(getProject).createFileFromText("dummy.scala", language, text)
 
   private def parseTestFileText(text: String): List[String] =
     NoSdkFileSetTestBase.FilePartsSeparatorPattern.split(text, -1).toList
