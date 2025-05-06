@@ -57,7 +57,10 @@ abstract class NoSdkFileSetTestBase extends LightJavaCodeInsightFixtureTestCase 
   def fileSetTest(@unused("used reflectively by the @TestCaseName annotation") testName: String, testFile: Path): Unit = {
     val testName = testFile.getFileName.toString
     val fileText = StringUtil.convertLineSeparators(Files.readString(testFile, StandardCharsets.UTF_8))
+    runTest(testName, fileText)
+  }
 
+  protected def runTest(testName: String, fileText: String): Unit = {
     val fileParts = parseTestFileText(fileText)
 
     assertTrue("Test file should have at least two sections separated with ----", fileParts.sizeIs > 1)
