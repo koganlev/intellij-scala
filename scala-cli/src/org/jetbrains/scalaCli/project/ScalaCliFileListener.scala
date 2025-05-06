@@ -15,6 +15,17 @@ import java.util
 import scala.collection.mutable
 import scala.jdk.CollectionConverters.{CollectionHasAsScala, SeqHasAsJava}
 
+/**
+ * A file listener responsible for scheduling a Scala CLI project reload whenever certain file operations occur.
+ *
+ * Key functionalities:
+ *  - Monitors files and directories changes, including adding, removing, and copying files within nested directories
+ *  - Supports `.scala`, `.sc`, and `.java` extensons
+ *  - Handles file operations performed within IntelliJ IDEA (e.g., via the `New` button) as well as those occurring externally in the file system
+ *  - Prevents unintended processing of files under the `.scala-build` directory
+ *  - Triggers a project reload only for the external project containing the modified files. If multiple external projects are linked,
+ *    only the affected project is reloaded
+ */
 class ScalaCliFileListener(project: Project) extends AsyncFileListener {
 
   private val fileIndex = ProjectRootManager.getInstance(project).getFileIndex
