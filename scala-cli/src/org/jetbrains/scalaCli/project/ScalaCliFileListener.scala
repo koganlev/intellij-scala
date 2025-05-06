@@ -42,9 +42,9 @@ class ScalaCliFileListener(project: Project) extends AsyncFileListener {
     val deletionEvents = events.asScala.collect { case e: VFileDeleteEvent => e }
 
     val scalaCliProjectSettings = getScalaCliProjectSettings(project)
-    val shouldCreateListener = (creationEvents.nonEmpty || deletionEvents.nonEmpty) && scalaCliProjectSettings.nonEmpty
+    val createChangeApplier = (creationEvents.nonEmpty || deletionEvents.nonEmpty) && scalaCliProjectSettings.nonEmpty
 
-    if (!shouldCreateListener) return null
+    if (!createChangeApplier) return null
 
     new AsyncFileListener.ChangeApplier {
       private val affectedFiles = mutable.Buffer.empty[VirtualFile]
