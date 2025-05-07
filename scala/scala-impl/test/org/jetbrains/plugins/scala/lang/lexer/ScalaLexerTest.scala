@@ -13,16 +13,10 @@
  * limitations under the License.
  */
 
-package org.jetbrains.plugins.scala.lang.lexer;
+package org.jetbrains.plugins.scala.lang.lexer
 
-import junit.framework.Test;
-import junit.framework.TestCase;
-import org.jetbrains.annotations.NotNull;
+import java.nio.file.Path
 
-public class ScalaLexerTest extends TestCase {
-    @NotNull
-    public static Test suite() {
-        return new ScalaLexerTestBase("/lexer/data") {
-        };
-    }
+class ScalaLexerTest extends ScalaLexerTestBase {
+  override protected def relativeTestDataPath: Path = Path.of("lexer", "data")
 }

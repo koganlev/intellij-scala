@@ -34,14 +34,15 @@ abstract class NoSdkFileSetTestBase extends LightJavaCodeInsightFixtureTestCase 
 
   protected def relativeTestDataPath: Path
 
+  protected def baseTestDataPath: Path = TestUtils.getTestDataDir
+
   protected def language: Language = ScalaLanguage.INSTANCE
 
   protected def shouldPass: Boolean = true
 
-  private val testDirectoryPath: Path = Path.of(TestUtils.getTestDataPath) / relativeTestDataPath
-
   @unused("used reflectively by the @Parameters annotation")
-  private def testParameters: Array[AnyRef] =
+  private def testParameters: Array[AnyRef] = {
+    val testDirectoryPath: Path = baseTestDataPath / relativeTestDataPath
     findTestFiles(testDirectoryPath).map { path =>
       val testName = {
         val p = FileUtil.toSystemIndependentName(testDirectoryPath.relativize(path).toString)
@@ -50,6 +51,7 @@ abstract class NoSdkFileSetTestBase extends LightJavaCodeInsightFixtureTestCase 
       }
       Array(testName, path)
     }
+  }
 
   @Test
   @Parameters(method = "testParameters")
