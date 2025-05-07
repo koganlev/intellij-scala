@@ -1,13 +1,11 @@
 package org.jetbrains.plugins.scala.refactoring.introduceVariable
 
-import com.intellij.lang.Language
 import com.intellij.openapi.editor.{Editor, SelectionModel}
 import com.intellij.openapi.project.Project
 import com.intellij.psi.util.PsiTreeUtil.{findCommonParent, getParentOfType}
 import com.intellij.psi.{PsiElement, PsiFile}
-import org.jetbrains.plugins.scala.ScalaLanguage
+import org.jetbrains.plugins.scala.base.SdkFileSetTestBase
 import org.jetbrains.plugins.scala.extensions.PsiElementExt
-import org.jetbrains.plugins.scala.lang.actions.ActionTestBase
 import org.jetbrains.plugins.scala.lang.psi.api.ScalaFile
 import org.jetbrains.plugins.scala.lang.psi.api.base.types.ScTypeElement
 import org.jetbrains.plugins.scala.lang.psi.api.expr.{ScBlock, ScExpression}
@@ -15,45 +13,37 @@ import org.jetbrains.plugins.scala.lang.psi.api.toplevel.templates.ScTemplateBod
 import org.jetbrains.plugins.scala.lang.refactoring.introduceVariable.OccurrenceData.ReplaceOptions
 import org.jetbrains.plugins.scala.lang.refactoring.util._
 
-abstract class AbstractIntroduceVariableValidatorTestBase(kind: String)
-  extends ActionTestBase("/refactoring/introduceVariable/validator/" + kind) {
+import java.nio.file.Path
+
+abstract class AbstractIntroduceVariableValidatorTestBase(kind: String) extends SdkFileSetTestBase {
+  override protected def relativeTestDataPath: Path = Path.of("refactoring", "introduceVariable", "validator", kind)
 
   import AbstractIntroduceVariableValidatorTestBase._
 
-  protected def language: Language = ScalaLanguage.INSTANCE
+  protected var fixture: ScalaIntroduceVariableTestFixture = _
 
-  protected var myFixture: ScalaIntroduceVariableTestFixture = _
-
-  override def setUp(project: Project): Unit = {
-    super.setUp(project)
-    myFixture = new ScalaIntroduceVariableTestFixture(project, None, language = language)
-    myFixture.setUp()
+  override protected def setUp(): Unit = {
+    super.setUp()
+    fixture = new ScalaIntroduceVariableTestFixture(project, None, language)
+    fixture.setUp()
   }
 
-  override def tearDown(project: Project): Unit = {
-    myFixture.tearDown()
-    super.tearDown(project)
+  override protected def tearDown(): Unit = {
+    fixture.tearDown()
+    super.tearDown()
   }
 
-  protected override def transform(
-    testName: String,
-    testFileText: String,
-    project: Project
-  ): String = {
-    val (fileTextNew, options) = IntroduceVariableUtils.extractNameFromLeadingComment(testFileText)
-    myFixture.configureFromText(fileTextNew)
+  override protected def transform(testName: String, fileText: String): String = {
+    val (fileTextNew, options) = IntroduceVariableUtils.extractNameFromLeadingComment(fileText)
+    fixture.configureFromText(fileTextNew)
 
     val replaceAllOccurrences = options.replaceAllOccurrences.getOrElse(ReplaceOptions.DefaultInTests.replaceAllOccurrences)
 
-    doTest(replaceAllOccurrences, fileTextNew, project)
+    doTest(replaceAllOccurrences, fileTextNew)
   }
 
-  protected def doTest(
-    replaceAllOccurrences: Boolean,
-    fileText: String,
-    project: Project
-  ): String = {
-    val maybeValidator = getValidator(myFixture.psiFile)(project, myFixture.editor)
+  protected def doTest(replaceAllOccurrences: Boolean, fileText: String): String = {
+    val maybeValidator = getValidator(fixture.psiFile)(project, fixture.editor)
     val conflicts = maybeValidator.toSeq.flatMap(_.findConflicts(getName(fileText), replaceAllOccurrences))
     conflicts.map(_._2).toSet.mkString("\n")
   }
