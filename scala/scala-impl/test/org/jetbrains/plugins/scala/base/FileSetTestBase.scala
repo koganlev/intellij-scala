@@ -15,7 +15,7 @@ import org.jetbrains.plugins.scala.extensions.PathExt
 import org.jetbrains.plugins.scala.lang.formatting.settings.ScalaCodeStyleSettings
 import org.jetbrains.plugins.scala.util.TestUtils
 import org.jetbrains.plugins.scala.{FileSetTests, ScalaLanguage}
-import org.junit.Assert.{assertEquals, assertNotEquals, assertTrue}
+import org.junit.Assert.assertTrue
 import org.junit.Test
 import org.junit.experimental.categories.Category
 import org.junit.runner.RunWith
@@ -26,8 +26,13 @@ import java.util.regex.Pattern
 import scala.annotation.unused
 
 /**
- * This needs to be an abstract class, otherwise the @RunWith annotation will be ignored
- * and the test will be run as a JUnit 3 test, which will fail.
+ * Use this base class when writing file set tests
+ * (tests which create a test case for each test file in a test data directory)
+ * which do not need a Scala SDK to be configured to run.
+ * This significantly cuts down on test setup time.
+ *
+ * @note This needs to be an abstract class, otherwise the @RunWith annotation will be ignored,
+ *       and the test will be run as a JUnit 3 test, which will fail.
  */
 @RunWith(classOf[JUnitParamsRunner])
 @Category(Array(classOf[FileSetTests]))
@@ -52,7 +57,38 @@ abstract class NoSdkFileSetTestBase extends LightJavaCodeInsightFixtureTestCase 
   }
 }
 
-sealed trait FileSetTestBase { self: LightJavaCodeInsightFixtureTestCase =>
+/**
+ * Use this base class when writing file set tests
+ * (tests which create a test case for each test file in a test data directory)
+ * which need a Scala SDK to be configured to run.
+ *
+ * @note This needs to be an abstract class, otherwise the @RunWith annotation will be ignored,
+ *       and the test will be run as a JUnit 3 test, which will fail.
+ */
+@RunWith(classOf[JUnitParamsRunner])
+@Category(Array(classOf[FileSetTests]))
+abstract class SdkFileSetTestBase extends ScalaLightCodeInsightFixtureTestCase with FileSetTestBase {
+  override protected def project: Project = getProject
+
+  /**
+   * This method needs to be defined in a class, otherwise the @Parameters annotation will not be able to find it.
+   */
+  @unused("used reflectively by the @Parameters annotation")
+  private def testParameters: Array[AnyRef] = baseTestParameters
+
+  /**
+   * This @Test method needs to be defined in a class, otherwise the `JUnitParamsRunner` will not be able to find it
+   * and run it as a test.
+   */
+  @Test
+  @Parameters(method = "testParameters")
+  @TestCaseName(value = "{0}")
+  def sdkFileSetTest(@unused("used reflectively by the @TestCaseName annotation") testName: String, testFile: Path): Unit = {
+    baseFileSetTest(testFile)
+  }
+}
+
+sealed trait FileSetTestBase extends FailableTest { self: LightJavaCodeInsightFixtureTestCase =>
 
   protected def project: Project
 
@@ -61,8 +97,6 @@ sealed trait FileSetTestBase { self: LightJavaCodeInsightFixtureTestCase =>
   protected def baseTestDataPath: Path = TestUtils.getTestDataDir
 
   protected def language: Language = ScalaLanguage.INSTANCE
-
-  protected def shouldPass: Boolean = true
 
   protected def baseTestParameters: Array[AnyRef] = {
     val testDirectoryPath: Path = baseTestDataPath / relativeTestDataPath
@@ -95,11 +129,7 @@ sealed trait FileSetTestBase { self: LightJavaCodeInsightFixtureTestCase =>
     val actualResult = transform(testNameWithoutDot, inputRaw).trim
     val expectedResult = transformExpectedResult(expectedResultRaw).trim
 
-    val assertFn: (String, String) => Unit =
-      if (shouldPass) assertEquals
-      else assertNotEquals
-
-    assertFn(expectedResult, actualResult)
+    assertEqualsFailable(expectedResult, actualResult)
   }
 
   protected def transform(testName: String, fileText: String): String
@@ -109,7 +139,7 @@ sealed trait FileSetTestBase { self: LightJavaCodeInsightFixtureTestCase =>
   protected def createLightFile(@NonNls text: String): PsiFile =
     PsiFileFactory.getInstance(project).createFileFromText("dummy.scala", language, text)
 
-  private def parseTestFileText(text: String): List[String] =
+  protected def parseTestFileText(text: String): List[String] =
     FileSetTestBase.FilePartsSeparatorPattern.split(text, -1).toList
 
   private def findTestFiles(path: Path): Array[Path] =

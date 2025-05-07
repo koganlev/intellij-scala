@@ -2,24 +2,18 @@ package org.jetbrains.plugins.scala.annotator.element
 
 import com.intellij.openapi.module.Module
 import com.intellij.psi.PsiFile
-import junit.framework.Test
-import org.jetbrains.plugins.scala.FileSetTests
-import org.jetbrains.plugins.scala.annotator.{AnnotatorHolderExtendedMock, Message2, ScalaHighlightingTestLike}
-import org.jetbrains.plugins.scala.base.{ScalaFileSetTestCase, ScalaLightCodeInsightFixtureTestCase}
+import org.jetbrains.plugins.scala.annotator.{AnnotatorHolderExtendedMock, Message2}
+import org.jetbrains.plugins.scala.base.SdkFileSetTestBase
 import org.jetbrains.plugins.scala.editor.DocumentExt
-import org.jetbrains.plugins.scala.extensions.{IterableOnceExt, PsiElementExt, executeWriteActionCommand}
+import org.jetbrains.plugins.scala.extensions.{IterableOnceExt, PathExt, PsiElementExt, StringExt, executeWriteActionCommand}
 import org.jetbrains.plugins.scala.lang.psi.api.base.literals.ScStringLiteral
 import org.jetbrains.plugins.scala.project.settings.ScalaCompilerSettingsProfile
 import org.junit.Assert.assertEquals
-import org.junit.experimental.categories.Category
 
+import java.nio.charset.StandardCharsets
 import java.nio.file.Path
-import scala.jdk.CollectionConverters.ListHasAsScala
 
-abstract class ScStringLiteralAnnotatorTestBase(testDataPath: String)
-  extends ScalaFileSetTestCase(testDataPath) {
-
-  override protected def needsSdk: Boolean = true
+abstract class ScStringLiteralAnnotatorTestBase extends SdkFileSetTestBase {
 
   protected def addCompilerOptions(module: Module, additionalCompilerOptions: Seq[String]): Unit = {
     val profile = ScalaCompilerSettingsProfile.forModule(module)
@@ -27,20 +21,12 @@ abstract class ScStringLiteralAnnotatorTestBase(testDataPath: String)
     profile.setSettings(newSettings)
   }
 
-  override protected def constructTestCase(testFile: Path): Test =
-    new MyTest(testFile)
+  override protected def transform(testName: String, fileText: String): String = fileText
 
-  //noinspection JUnitMalformedDeclaration
-  @Category(Array(classOf[FileSetTests]))
-  private final class MyTest(override val myTestFile: Path)
-    extends ScalaLightCodeInsightFixtureTestCase
-      with ScalaLightCodeInsightFixtureTest_ForFileTestTests
-      with ScalaHighlightingTestLike {
-
-    override def fileBasedTest: ScalaFileSetTestCase = ScStringLiteralAnnotatorTestBase.this
-
-    override protected def runTestForTestFileText(testFileText: String): Unit = {
-      val fileParts = parseTestFileText(testFileText).asScala.toSeq
+  override protected def baseFileSetTest(testFile: Path): Unit = {
+    val testFileText = testFile.readAllBytesToString(StandardCharsets.UTF_8).withNormalizedSeparator
+    try {
+      val fileParts = parseTestFileText(testFileText)
       val input = fileParts.head
       val expectedMessagesText = if (fileParts.size > 1) fileParts(1) else ""
 
@@ -54,10 +40,10 @@ abstract class ScStringLiteralAnnotatorTestBase(testDataPath: String)
 
         val quickFixes = actualMessages.flatMap(_.fixes)
         executeWriteActionCommand() {
-          quickFixes.foreach(_.asIntention().invoke(getProject, getEditor, getFile))
-        }(getProject)
+          quickFixes.foreach(_.asIntention().invoke(project, getEditor, getFile))
+        }(project)
 
-        getEditor.getDocument.commit(getProject)
+        getEditor.getDocument.commit(project)
 
         assertEquals(
           "Text after applying quick fixes",
@@ -65,6 +51,13 @@ abstract class ScStringLiteralAnnotatorTestBase(testDataPath: String)
           getFile.getText
         )
       }
+    } catch {
+      case error: Throwable =>
+        // to be able to navigate to the original test file location on test failure
+        // (you can use Ctrl/Cmd + Click in the console)
+        // (note, might not work with Android plugin disabled, see IDEA-257969)
+        System.err.println(s"### Test file: ${testFile.toAbsolutePath}")
+        throw error
     }
   }
 
