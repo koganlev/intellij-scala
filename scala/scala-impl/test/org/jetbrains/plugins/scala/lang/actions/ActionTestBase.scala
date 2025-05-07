@@ -4,7 +4,7 @@ import com.intellij.openapi.actionSystem.{CommonDataKeys, CustomizedDataContext,
 import com.intellij.psi.PsiFile
 import org.jetbrains.plugins.scala.base.FileSetTestBase
 
-trait NewActionTestBase { self: FileSetTestBase =>
+trait ActionTestBase { self: FileSetTestBase =>
 
   protected final val CaretMarker = "<caret>"
 
@@ -17,7 +17,7 @@ trait NewActionTestBase { self: FileSetTestBase =>
   }
 }
 
-object NewActionTestBase {
+object ActionTestBase {
   def getDataContext(file: PsiFile): DataContext =
     CustomizedDataContext.withSnapshot(DataContext.EMPTY_CONTEXT, sink => {
       sink.set(CommonDataKeys.LANGUAGE, file.getLanguage)

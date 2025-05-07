@@ -4,7 +4,7 @@ package introduceVariable
 
 import com.intellij.lang.Language
 import org.jetbrains.plugins.scala.base.SdkFileSetTestBase
-import org.jetbrains.plugins.scala.lang.actions.NewActionTestBase
+import org.jetbrains.plugins.scala.lang.actions.ActionTestBase
 import org.jetbrains.plugins.scala.lang.formatting.settings.ScalaCodeStyleSettings
 import org.jetbrains.plugins.scala.util.TypeAnnotationSettings
 
@@ -20,7 +20,7 @@ class IntroduceVariableScala3Test extends IntroduceVariableTestBase {
   override protected def language: Language = Scala3Language.INSTANCE
 }
 
-abstract class IntroduceVariableTestBase extends SdkFileSetTestBase with NewActionTestBase {
+abstract class IntroduceVariableTestBase extends SdkFileSetTestBase with ActionTestBase {
   private var fixture: ScalaIntroduceVariableTestFixture = _
 
   override protected def setUp(): Unit = {

@@ -4,20 +4,16 @@ package actions
 package editor
 package enter
 
-import com.intellij.openapi.project.Project
-import junit.framework.{Test, TestCase}
+import org.jetbrains.plugins.scala.base.NoSdkFileSetTestBase
 
-class ChainedMethodCallEnterTest extends TestCase
+import java.nio.file.Path
 
-object ChainedMethodCallEnterTest {
-  val DATA_PATH = "/actions/editor/enter/align_method_call_chain/"
+class ChainedMethodCallEnterTest extends AbstractEnterActionTestBase {
+  override protected def relativeTestDataPath: Path = Path.of("actions", "editor", "enter", "align_method_call_chain")
 
-  def suite(): Test = new AbstractEnterActionTestBase(DATA_PATH) {
-    override protected def setSettings(project: Project): Unit = {
-      super.setSettings(project)
-      val settings = getCommonSettings(project)
-      settings.getIndentOptions.INDENT_SIZE = 2
-      settings.ALIGN_MULTILINE_CHAINED_METHODS = true
-    }
+  override protected def setUp(): Unit = {
+    super.setUp()
+    commonCodeStyleSettings.getIndentOptions.INDENT_SIZE = 2
+    commonCodeStyleSettings.ALIGN_MULTILINE_CHAINED_METHODS = true
   }
 }
