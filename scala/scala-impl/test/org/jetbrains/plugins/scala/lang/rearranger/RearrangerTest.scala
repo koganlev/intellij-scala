@@ -19,13 +19,13 @@ class RearrangerTest extends NoSdkFileSetTestBase {
       try rearrange(file)
       catch { case e: IncorrectOperationException => e.printStackTrace() }
     }
-    WriteCommandAction.runWriteCommandAction(getProject, runnable)
+    WriteCommandAction.runWriteCommandAction(project, runnable)
     file.getText
   }
 
   private def rearrange(file: PsiFile): Unit = {
     ArrangementEngine.getInstance().arrange(file, java.util.List.of(file.getTextRange))
-    val documentManager = PsiDocumentManager.getInstance(getProject)
+    val documentManager = PsiDocumentManager.getInstance(project)
     val document = documentManager.getDocument(file)
 
     assertNotNull("Wrong PsiFile type provided: the file has no document", document)

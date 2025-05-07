@@ -8,7 +8,7 @@ import org.jetbrains.plugins.scala.base.NoSdkFileSetTestBase
 abstract class LexerTestBase extends NoSdkFileSetTestBase {
 
   protected def createLexer: Lexer =
-    LanguageParserDefinitions.INSTANCE.forLanguage(language).createLexer(getProject)
+    LanguageParserDefinitions.INSTANCE.forLanguage(language).createLexer(project)
 
   protected def onToken(lexer: Lexer, tokenType: IElementType, builder: StringBuilder): Unit = {
     builder.append(tokenType.toString)

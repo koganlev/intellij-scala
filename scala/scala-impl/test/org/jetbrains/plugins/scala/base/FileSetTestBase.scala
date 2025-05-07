@@ -2,6 +2,7 @@ package org.jetbrains.plugins.scala.base
 
 import com.intellij.application.options.CodeStyle
 import com.intellij.lang.Language
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings
@@ -30,7 +31,30 @@ import scala.annotation.unused
  */
 @RunWith(classOf[JUnitParamsRunner])
 @Category(Array(classOf[FileSetTests]))
-abstract class NoSdkFileSetTestBase extends LightJavaCodeInsightFixtureTestCase {
+abstract class NoSdkFileSetTestBase extends LightJavaCodeInsightFixtureTestCase with FileSetTestBase {
+  override protected def project: Project = getProject
+
+  /**
+   * This method needs to be defined in a class, otherwise the @Parameters annotation will not be able to find it.
+   */
+  @unused("used reflectively by the @Parameters annotation")
+  private def testParameters: Array[AnyRef] = baseTestParameters
+
+  /**
+   * This @Test method needs to be defined in a class, otherwise the `JUnitParamsRunner` will not be able to find it
+   * and run it as a test.
+   */
+  @Test
+  @Parameters(method = "testParameters")
+  @TestCaseName(value = "{0}")
+  def noSdkFileSetTest(@unused("used reflectively by the @TestCaseName annotation") testName: String, testFile: Path): Unit = {
+    baseFileSetTest(testFile)
+  }
+}
+
+sealed trait FileSetTestBase { self: LightJavaCodeInsightFixtureTestCase =>
+
+  protected def project: Project
 
   protected def relativeTestDataPath: Path
 
@@ -40,8 +64,7 @@ abstract class NoSdkFileSetTestBase extends LightJavaCodeInsightFixtureTestCase 
 
   protected def shouldPass: Boolean = true
 
-  @unused("used reflectively by the @Parameters annotation")
-  private def testParameters: Array[AnyRef] = {
+  protected def baseTestParameters: Array[AnyRef] = {
     val testDirectoryPath: Path = baseTestDataPath / relativeTestDataPath
     findTestFiles(testDirectoryPath).map { path =>
       val testName = {
@@ -53,10 +76,7 @@ abstract class NoSdkFileSetTestBase extends LightJavaCodeInsightFixtureTestCase 
     }
   }
 
-  @Test
-  @Parameters(method = "testParameters")
-  @TestCaseName(value = "{0}")
-  def fileSetTest(@unused("used reflectively by the @TestCaseName annotation") testName: String, testFile: Path): Unit = {
+  protected def baseFileSetTest(testFile: Path): Unit = {
     val testName = testFile.getFileName.toString
     val fileText = StringUtil.convertLineSeparators(Files.readString(testFile, StandardCharsets.UTF_8))
     runTest(testName, fileText)
@@ -87,10 +107,10 @@ abstract class NoSdkFileSetTestBase extends LightJavaCodeInsightFixtureTestCase 
   protected def transformExpectedResult(text: String): String = text
 
   protected def createLightFile(@NonNls text: String): PsiFile =
-    PsiFileFactory.getInstance(getProject).createFileFromText("dummy.scala", language, text)
+    PsiFileFactory.getInstance(project).createFileFromText("dummy.scala", language, text)
 
   private def parseTestFileText(text: String): List[String] =
-    NoSdkFileSetTestBase.FilePartsSeparatorPattern.split(text, -1).toList
+    FileSetTestBase.FilePartsSeparatorPattern.split(text, -1).toList
 
   private def findTestFiles(path: Path): Array[Path] =
     if (path.isDirectory) path.children().toArray.flatMap(findTestFiles)
@@ -108,12 +128,12 @@ abstract class NoSdkFileSetTestBase extends LightJavaCodeInsightFixtureTestCase 
   }
 
   protected def scalaCodeStyleSettings: ScalaCodeStyleSettings =
-    ScalaCodeStyleSettings.getInstance(getProject)
+    ScalaCodeStyleSettings.getInstance(project)
 
   protected def commonCodeStyleSettings: CommonCodeStyleSettings =
-    CodeStyle.getSettings(getProject).getCommonSettings(ScalaLanguage.INSTANCE)
+    CodeStyle.getSettings(project).getCommonSettings(ScalaLanguage.INSTANCE)
 }
 
-private object NoSdkFileSetTestBase {
+private object FileSetTestBase {
   private final val FilePartsSeparatorPattern: Pattern = Pattern.compile("\\n?(?m)^-{4,}\\n?")
 }

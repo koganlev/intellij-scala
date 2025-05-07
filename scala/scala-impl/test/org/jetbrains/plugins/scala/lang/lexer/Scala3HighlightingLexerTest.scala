@@ -19,7 +19,7 @@ class Scala3HighlightingLexerTest extends ScalaLexerTestBase {
 
     ScalaFeaturePusher.setFeatures(virtualFile, ScalaFeatures.onlyByVersion(ScalaVersion.Latest.Scala_3))
 
-    val scalaSyntaxHighlighter = ScalaSyntaxHighlighterFactory.createScalaSyntaxHighlighter(getProject, virtualFile, language)
+    val scalaSyntaxHighlighter = ScalaSyntaxHighlighterFactory.createScalaSyntaxHighlighter(project, virtualFile, language)
     scalaSyntaxHighlighter.getHighlightingLexer
   }
 }

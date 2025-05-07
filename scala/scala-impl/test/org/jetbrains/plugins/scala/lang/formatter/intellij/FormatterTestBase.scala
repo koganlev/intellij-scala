@@ -14,7 +14,6 @@ abstract class FormatterTestBase extends NoSdkFileSetTestBase {
   }
 
   override protected def transform(testName: String, fileText: String): String = {
-    val project = getProject
     val psiFile = createLightFile(fileText)
     val runnable: Runnable = () => inWriteAction {
       try CodeStyleManager.getInstance(project).reformatText(psiFile, java.util.List.of(psiFile.getTextRange))

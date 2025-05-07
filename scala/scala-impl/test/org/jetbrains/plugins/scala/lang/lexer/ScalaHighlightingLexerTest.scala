@@ -24,7 +24,7 @@ class ScalaHighlightingLexerTest extends ScalaLexerTestBase {
   override protected def relativeTestDataPath: Path = Path.of("lexer", "highlighting")
 
   override protected def createLexer: Lexer = {
-    val scalaSyntaxHighlighter = ScalaSyntaxHighlighterFactory.createScalaSyntaxHighlighter(getProject, null, language)
+    val scalaSyntaxHighlighter = ScalaSyntaxHighlighterFactory.createScalaSyntaxHighlighter(project, null, language)
     scalaSyntaxHighlighter.getHighlightingLexer
   }
 }

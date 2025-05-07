@@ -16,13 +16,13 @@ class ScalaHighlightingLexerTest_XSourceFeatures extends ScalaLexerTestBase {
   override protected def createLexer: Lexer = {
     val virtualFile = new LightVirtualFile("dummy.scala", ScalaFileType.INSTANCE, "")
 
-    val module = ModuleManager.getInstance(getProject).getModules()(0)
+    val module = ModuleManager.getInstance(project).getModules()(0)
     addCompilerOptions(module, Seq("-Xsource:3", "-Xsource-features:unicode-escapes-raw"))
     module.putUserData(UserDataKeys.LightTestScalaVersion, ScalaVersion.Latest.Scala_2_13)
 
     ScalaFeaturePusher.setFeatures(virtualFile, module.features)
 
-    val scalaSyntaxHighlighter = ScalaSyntaxHighlighterFactory.createScalaSyntaxHighlighter(getProject, virtualFile, language)
+    val scalaSyntaxHighlighter = ScalaSyntaxHighlighterFactory.createScalaSyntaxHighlighter(project, virtualFile, language)
     scalaSyntaxHighlighter.getHighlightingLexer
   }
 

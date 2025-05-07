@@ -15,7 +15,6 @@ class DragSearchTest extends NoSdkFileSetTestBase with DefaultFileSetTestTransfo
   }
 
   override protected def transform(testName: String, fileText: String): String = {
-    val project = getProject
     val parserDefinition = LanguageParserDefinitions.INSTANCE.forLanguage(language)
     val psiBuilder = PsiBuilderFactory.getInstance().createBuilder(
       parserDefinition,
