@@ -57,7 +57,7 @@ sealed trait ConstraintSystem extends ConstraintsResult {
   def removeTypeParamIds(ids: Set[Long]): ConstraintSystem
 
   def substitutionBounds(canThrowSCE: Boolean, checkWeak: Boolean = true)
-                        (implicit context: ProjectContext): Option[ConstraintSystem.SubstitutionBounds]
+                        (implicit projectContext: ProjectContext, context: Context): Option[ConstraintSystem.SubstitutionBounds]
 }
 
 object ConstraintSystem {
@@ -91,7 +91,7 @@ object ConstraintSystem {
   }
 
   def unapply(constraints: ConstraintSystem)
-             (implicit context: ProjectContext): Option[ScSubstitutor] =
+             (implicit projectContext: ProjectContext, context: Context): Option[ScSubstitutor] =
     constraints.substitutionBounds(canThrowSCE = true).map {
       _.substitutor
     }
@@ -140,7 +140,7 @@ private final case class ConstraintSystemImpl(upperMap: LongMap[Set[ScType]],
     }
 
   override def substitutionBounds(canThrowSCE: Boolean, checkWeak: Boolean)
-                                 (implicit context: ProjectContext): Option[SubstitutionBounds] = {
+                                 (implicit projectContext: ProjectContext, context: Context): Option[SubstitutionBounds] = {
     def init(get: => Option[SubstitutionBounds])
             (set: Option[SubstitutionBounds] => Unit) = get match {
       case null =>
@@ -160,7 +160,7 @@ private final case class ConstraintSystemImpl(upperMap: LongMap[Set[ScType]],
   )
 
   private def substitutionBoundsImpl(canThrowSCE: Boolean, checkWeak: Boolean)
-                                    (implicit context: ProjectContext): Option[SubstitutionBounds] = {
+                                    (implicit projectContext: ProjectContext, context: Context): Option[SubstitutionBounds] = {
     var tvMap = LongMap.empty[ScType]
     var lMap = LongMap.empty[ScType]
     var uMap = LongMap.empty[ScType]
@@ -402,7 +402,7 @@ private final case class MultiConstraintSystem(impls: Set[ConstraintSystemImpl])
   }
 
   override def substitutionBounds(canThrowSCE: Boolean, checkWeak: Boolean)
-                                 (implicit context: ProjectContext): Option[ConstraintSystem.SubstitutionBounds] =
+                                 (implicit projectContext: ProjectContext, context: Context): Option[ConstraintSystem.SubstitutionBounds] =
     impls.iterator.flatMap {
       _.substitutionBounds(canThrowSCE, checkWeak)
     }.nextOption()

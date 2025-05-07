@@ -638,6 +638,8 @@ object InferUtil {
   ): (ScTypePolymorphicType, ApplicabilityCheckResult) = {
     implicit val projectContext: ProjectContext = retType.projectContext
 
+    implicit val context: Context = exprs.headOption.flatMap(_.asOptionOf[ScExpression]).map(Context(_)).getOrElse(Context.Empty)
+
     val typeParamIds = typeParams.map(_.typeParamId).toSet
     def hasRecursiveTypeParams(tpe: ScType): Boolean = tpe.hasRecursiveTypeParameters(typeParamIds)
 
