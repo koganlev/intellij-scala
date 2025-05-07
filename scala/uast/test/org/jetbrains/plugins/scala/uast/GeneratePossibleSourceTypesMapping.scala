@@ -15,6 +15,7 @@ import org.junit.Ignore
 import java.nio.file.{Files, Path, Paths}
 import java.text.SimpleDateFormat
 import java.util.Calendar
+import scala.annotation.nowarn
 import scala.jdk.CollectionConverters.IterableHasAsScala
 import scala.util.Try
 
@@ -122,6 +123,7 @@ object GeneratePossibleSourceTypesMapping {
     }
 
     @Ignore("for local running only")
+    @nowarn("cat=deprecation")
     class GatheringTestSuite(path: String, lang: Language, extensions: String*) extends ScalaFileSetTestCase(path, extensions: _*) {
 
       override protected def needsSdk(): Boolean = true

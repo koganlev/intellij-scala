@@ -13,6 +13,7 @@ import org.jetbrains.plugins.scala.lang.psi.impl.ScalaPsiElementFactory
 import org.jetbrains.plugins.scala.project.ScalaFeatures
 
 import java.nio.file.Path
+import scala.annotation.nowarn
 
 abstract class Scala3ImportedParserTestBase(
   override val config: Scala3ImportedParserTestConfig,
@@ -140,6 +141,7 @@ sealed trait ImportedParserTestUtil {
   }
 }
 
+@nowarn("cat=deprecation")
 private[imported] class Scala3ImportedParserTestBase_UsedAsScript(
   override val config: Scala3ImportedParserTestConfig,
   override val runOnSucceedDirectory: Boolean

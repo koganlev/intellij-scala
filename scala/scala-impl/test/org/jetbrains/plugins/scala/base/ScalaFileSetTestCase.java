@@ -52,6 +52,15 @@ import static com.intellij.openapi.util.text.StringUtil.startsWithChar;
 import static com.intellij.psi.impl.DebugUtil.psiToString;
 import static org.junit.Assert.*;
 
+/**
+ * This base class would have already been deleted, but unfortunately, we have a few hard-to-migrate scripts that
+ * use functionality from this class in interesting ways.
+ * <p>
+ * Please do not extend this class in new tests.
+ *
+ * @deprecated Use {@link NoSdkFileSetTestBase} and {@link SdkFileSetTestBase} instead.
+ */
+@Deprecated(forRemoval = true)
 public abstract class ScalaFileSetTestCase extends TestSuite {
 
     protected ScalaFileSetTestCase(@NotNull @NonNls String path, String... testFileExtensions) {
