@@ -17,9 +17,13 @@ object Context {
       opaqueTypeAlias.getContainingFile == place.getContainingFile &&
         place.parentsInFile.contains(opaqueTypeAlias.getParent)
     }
+
+    override def toString: String = place.toString
   }
 
   implicit object Empty extends Context {
     override def isInScopeOf(opaqueTypeAlias: ScTypeAliasDefinition): Boolean = true
+
+    override def toString: String = "<empty>"
   }
 }
