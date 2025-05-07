@@ -5,20 +5,37 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.impl.DebugUtil.psiToString
 import com.intellij.psi.{PsiElement, PsiErrorElement, PsiFile}
-import junit.framework.{Test, TestCase}
 import org.jetbrains.plugins.scala.Scala3Language
-import org.jetbrains.plugins.scala.base.ScalaFileSetTestCase
+import org.jetbrains.plugins.scala.base.{NoSdkFileSetTestBase, ScalaFileSetTestCase}
 import org.jetbrains.plugins.scala.extensions._
 import org.jetbrains.plugins.scala.lang.lexer.ScalaTokenTypes
 import org.jetbrains.plugins.scala.lang.psi.impl.ScalaPsiElementFactory
 import org.jetbrains.plugins.scala.project.ScalaFeatures
-import org.junit.Assert._
 
-import java.nio.file.Paths
+import java.nio.file.Path
 
-private[imported] class Scala3ImportedParserTestBase(config: Scala3ImportedParserTestConfig, runOnSucceedDirectory: Boolean)
-  extends ScalaFileSetTestCase("/" + (if (runOnSucceedDirectory) config.successDataDirectory else config.failDataDirectory)) {
-  override protected def getLanguage: Language = Scala3Language.INSTANCE
+abstract class Scala3ImportedParserTestBase(
+  override val config: Scala3ImportedParserTestConfig,
+  override val runOnSucceedDirectory: Boolean
+) extends NoSdkFileSetTestBase with ImportedParserTestUtil {
+
+  override protected def relativeTestDataPath: Path = {
+    val dir = if (runOnSucceedDirectory) config.successDataDirectory else config.failDataDirectory
+    Path.of(dir)
+  }
+
+  override protected def language: Language = Scala3Language.INSTANCE
+
+  override protected def transform(testName: String, fileText: String): String =
+    transformImpl(testName, fileText, project)
+}
+
+sealed trait ImportedParserTestUtil {
+  protected def config: Scala3ImportedParserTestConfig
+
+  protected def runOnSucceedDirectory: Boolean
+
+  protected def baseTestDataPath: Path
 
   protected def findErrorElements(fileText: String, project: Project): (Seq[PsiErrorElement], PsiFile) = {
     val lightFile = ScalaPsiElementFactory.createScalaFileFromText(
@@ -35,7 +52,7 @@ private[imported] class Scala3ImportedParserTestBase(config: Scala3ImportedParse
     errors -> lightFile
   }
 
-  protected override def transform(testName: String, fileText: String, project: Project): String = {
+  protected def transformImpl(testName: String, fileText: String, project: Project): String = {
     val (errors, lightFile) = findErrorElements(fileText, project)
     // TODO: also test that there no errors from annotator (type-agnostic)
     //  (we need to list all such annotators)
@@ -61,6 +78,7 @@ private[imported] class Scala3ImportedParserTestBase(config: Scala3ImportedParse
       //assertFalse(msg, hasErrorElements)
       assert(interlaced.isEmpty, "Following elements have conflicting ranges:\n" + {
         val maxStringLen = 50
+
         def clip(s: String): String = {
           if (s.length > maxStringLen) s.take(maxStringLen / 2 - 1) + ".." + s.takeRight(maxStringLen / 2 - 1)
           else s
@@ -78,11 +96,11 @@ private[imported] class Scala3ImportedParserTestBase(config: Scala3ImportedParse
     }
   }
 
-  def isStringPart(e: PsiElement): Boolean =
+  private def isStringPart(e: PsiElement): Boolean =
     ScalaTokenTypes.STRING_LITERAL_TOKEN_SET.contains(e.elementType)
 
-  def findInterlacedRanges(root: PsiElement, testName: String): Seq[(PsiElement, (TextRange, String))] = {
-    val ranges = RangeMap.fromFileOrEmpty(Paths.get(getTestDataPath, config.rangesDirectory, testName + ".ranges"))
+  protected def findInterlacedRanges(root: PsiElement, testName: String): Seq[(PsiElement, (TextRange, String))] = {
+    val ranges = RangeMap.fromFileOrEmpty(baseTestDataPath / Path.of(config.rangesDirectory, testName + ".ranges"))
     //val ignoredNames = Set("Import", "Export")
     for {
       e <- root.depthFirst()
@@ -94,10 +112,10 @@ private[imported] class Scala3ImportedParserTestBase(config: Scala3ImportedParse
     } yield e -> interlace
   }.toSeq
 
-  def textInRange(root: PsiElement, range: TextRange): String =
+  private def textInRange(root: PsiElement, range: TextRange): String =
     root.getText.substring(range.getStartOffset, range.getEndOffset)
 
-  def trimRanges(root: PsiElement, range: TextRange): TextRange = {
+  private def trimRanges(root: PsiElement, range: TextRange): TextRange = {
     val text = textInRange(root, range)
     val leadingWs = text.iterator.takeWhile(_.isWhitespace).size
     if (leadingWs == text.length) range
@@ -112,7 +130,7 @@ private[imported] class Scala3ImportedParserTestBase(config: Scala3ImportedParse
   // Example (:
   //   Scala3:  left +[right ;]
   //   We:     [left + right];
-  def isInterlaceBecauseOfSemicolon(intellijRange: TextRange, interlace: (TextRange, String)): Boolean = {
+  private def isInterlaceBecauseOfSemicolon(intellijRange: TextRange, interlace: (TextRange, String)): Boolean = {
     val (scala3Range, text) = interlace
 
     // adjust ranges
@@ -120,6 +138,16 @@ private[imported] class Scala3ImportedParserTestBase(config: Scala3ImportedParse
 
     !newScala3Range.isEmpty && (scala3Range interlaces intellijRange)
   }
+}
+
+private[imported] class Scala3ImportedParserTestBase_UsedAsScript(
+  override val config: Scala3ImportedParserTestConfig,
+  override val runOnSucceedDirectory: Boolean
+) extends ScalaFileSetTestCase("/" + (if (runOnSucceedDirectory) config.successDataDirectory else config.failDataDirectory))
+  with ImportedParserTestUtil {
+  override protected def getLanguage: Language = Scala3Language.INSTANCE
+
+  override protected def baseTestDataPath: Path = Path.of(getTestDataPath)
 
   override protected def shouldPass = true
 }
@@ -128,22 +156,10 @@ private[imported] class Scala3ImportedParserTestBase(config: Scala3ImportedParse
  * If these tests fails because you fixed parser stuff,
  * run [[Scala3ImportedParserTest_Move_Fixed_Tests]].
  */
-class Scala3ImportedParserTest_LTS extends TestCase
-object Scala3ImportedParserTest_LTS {
-  def suite(): Test = new Scala3ImportedParserTestBase(Scala3ImportedParserTestConfig.LTS, runOnSucceedDirectory = true)
-}
+class Scala3ImportedParserTest_LTS extends Scala3ImportedParserTestBase(Scala3ImportedParserTestConfig.LTS, runOnSucceedDirectory = true)
 
-class Scala3ImportedParserTest_LTS_Fail extends TestCase
-object Scala3ImportedParserTest_LTS_Fail {
-  def suite(): Test = new Scala3ImportedParserTestBase(Scala3ImportedParserTestConfig.LTS, runOnSucceedDirectory = false)
-}
+class Scala3ImportedParserTest_LTS_Fail extends Scala3ImportedParserTestBase(Scala3ImportedParserTestConfig.LTS, runOnSucceedDirectory = false)
 
-class Scala3ImportedParserTest_Newest extends TestCase
-object Scala3ImportedParserTest_Newest {
-  def suite(): Test = new Scala3ImportedParserTestBase(Scala3ImportedParserTestConfig.Newest, runOnSucceedDirectory = true)
-}
+class Scala3ImportedParserTest_Newest extends Scala3ImportedParserTestBase(Scala3ImportedParserTestConfig.Newest, runOnSucceedDirectory = true)
 
-class Scala3ImportedParserTest_Newest_Fail extends TestCase
-object Scala3ImportedParserTest_Newest_Fail {
-  def suite(): Test = new Scala3ImportedParserTestBase(Scala3ImportedParserTestConfig.Newest, runOnSucceedDirectory = false)
-}
+class Scala3ImportedParserTest_Newest_Fail extends Scala3ImportedParserTestBase(Scala3ImportedParserTestConfig.Newest, runOnSucceedDirectory = false)

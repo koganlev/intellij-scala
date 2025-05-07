@@ -7,7 +7,7 @@ import org.jetbrains.plugins.scala.extensions.{PathExt, PsiNamedElementExt}
 import org.jetbrains.plugins.scala.util.TestUtils
 import org.junit.Ignore
 
-import java.nio.file.{Files, Path, Paths, StandardCopyOption, StandardOpenOption}
+import java.nio.file.{Files, Path}
 
 @Ignore("for local running only")
 class Scala3ImportedParserTest_RegeneratePsi extends TestCase
@@ -31,7 +31,7 @@ object Scala3ImportedParserTest_RegeneratePsi {
 
   @Ignore("for local running only")
   class Scala3ImportedParserTest_RegeneratePsi(config: Scala3ImportedParserTestConfig)
-    extends Scala3ImportedParserTestBase(config, runOnSucceedDirectory = true) {
+    extends Scala3ImportedParserTestBase_UsedAsScript(config, runOnSucceedDirectory = true) {
 
     protected override def transform(testName: String, fileText: String, project: Project): String = {
       val (errors, file) = findErrorElements(fileText, project)

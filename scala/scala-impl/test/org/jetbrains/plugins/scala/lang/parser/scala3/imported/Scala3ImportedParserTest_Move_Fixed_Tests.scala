@@ -2,12 +2,12 @@ package org.jetbrains.plugins.scala.lang.parser.scala3.imported
 
 import com.intellij.openapi.project.Project
 import com.intellij.psi.impl.DebugUtil.psiToString
-import junit.framework.{Test, TestCase, TestSuite}
+import junit.framework.{TestCase, TestSuite}
 import org.jetbrains.plugins.scala.extensions.{PathExt, PsiNamedElementExt}
 import org.jetbrains.plugins.scala.util.TestUtils
 import org.junit.Ignore
 
-import java.nio.file.{Files, Path, Paths, StandardCopyOption, StandardOpenOption}
+import java.nio.file.{Files, Path, StandardCopyOption, StandardOpenOption}
 
 @Ignore("for local running only")
 class Scala3ImportedParserTest_Move_Fixed_Tests extends TestCase
@@ -31,7 +31,7 @@ object Scala3ImportedParserTest_Move_Fixed_Tests {
 
   @Ignore("for local running only")
   class Scala3ImportedParserTest_Move_Fixed_Tests(config: Scala3ImportedParserTestConfig)
-    extends Scala3ImportedParserTestBase(config, runOnSucceedDirectory = false) {
+    extends Scala3ImportedParserTestBase_UsedAsScript(config, runOnSucceedDirectory = false) {
 
     protected override def transform(testName: String, fileText: String, project: Project): String = {
       val (errors, file) = findErrorElements(fileText, project)
