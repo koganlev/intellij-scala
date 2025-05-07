@@ -631,4 +631,22 @@ class Scala3OpaqueTypeAliasTest extends ScalaLightCodeInsightFixtureTestCase {
          |""".stripMargin
     )
   }
+
+  def testScl22480(): Unit = {
+    checkTextHasNoErrors(
+      s"""
+         |trait Base
+         |case class Child(x: String) extends Base
+         |
+         |opaque type Id[+T <: Base] = Int
+         |
+         |def update[T <: Base](id: Id[T])(update: (Double, T) => T) = ()
+         |
+         |def foo(): Unit = {
+         |  val id: Id[Child] = ???
+         |  update(id)((x,child) => child.copy(x = ""))
+         |}
+         |""".stripMargin
+    )
+  }
 }

@@ -333,6 +333,9 @@ object Compatibility {
     shapesOnly:    Boolean,
   ): ApplicabilityCheckResult = {
     ProgressManager.checkCanceled()
+
+    implicit val context: Context = exprs.headOption.flatMap(_.asOptionOf[ScExpression]).map(Context(_)).getOrElse(Context.Empty)
+
     var constraintAccumulator = ConstraintSystem.empty
     val clashedAssignments    = clashedAssignmentsIn(args)
 
