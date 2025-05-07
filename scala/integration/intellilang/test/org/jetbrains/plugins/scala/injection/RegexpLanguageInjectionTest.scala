@@ -1,46 +1,47 @@
 package org.jetbrains.plugins.scala
 package injection
 
-import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.text.StringUtil
-import com.intellij.util.ThrowableRunnable
-import junit.framework.{TestCase, TestSuite}
+import junitparams.naming.TestCaseName
+import junitparams.{JUnitParamsRunner, Parameters}
 import org.intellij.lang.regexp.RegExpLanguage
+import org.jetbrains.plugins.scala.extensions.PathExt
 import org.junit.Assert._
+import org.junit.Test
 import org.junit.experimental.categories.Category
+import org.junit.runner.RunWith
 
-import java.io.File
+import java.nio.file.{Files, Path}
+import scala.annotation.unused
 
-class RegexpLanguageInjectionTest extends TestCase
+@RunWith(classOf[JUnitParamsRunner])
+@Category(Array(classOf[FileSetTests]))
+class RegexpLanguageInjectionTest extends ScalaLanguageInjectionTestBase {
 
-object RegexpLanguageInjectionTest {
+  private def regexTestDataDir: Path =
+    Path.of("scala", "integration", "intellilang", "testData", "language_injection", "regex")
 
-  //noinspection JUnitMalformedDeclaration
-  @Category(Array(classOf[FileSetTests]))
-  final class ActualTest(
-    testFile: File,
-    testName: String,
-    testIdx: Int,
-  ) extends ScalaLanguageInjectionTestBase {
+  @unused("used reflectively by the @Parameters annotation")
+  private def testParameters: Array[AnyRef] =
+    regexTestDataDir.children().toArray.flatMap(collectFileTests)
 
-    override def getTestName(lowercaseFirstLetter: Boolean): String = ""
-
-    override def getName: String = testName
-
-    override def runTestRunnable(testRunnable: ThrowableRunnable[Throwable]): Unit = {
-      val ParsedTestCase(input, expectedResult, testLine) = readTestCaseContent(testFile, testIdx)
-      printFileOnFailure(testFile, testLine) {
-        doRegexTest(input, expectedResult)
-      }
-    }
-
-    private def doRegexTest(text: String, injectedFileExpectedText: String): Unit = {
-      scalaInjectionTestFixture.doTest(RegExpLanguage.INSTANCE.getID, text, injectedFileExpectedText)
+  @Test
+  @Parameters(method = "testParameters")
+  @TestCaseName(value = "{0}")
+  def regexpLanguageInjectionTest(
+    @unused("used reflectively by the @TestCaseName annotation") testName: String,
+    testFile: Path,
+    testIdx: Int
+  ): Unit = {
+    val ParsedTestCase(input, expectedResult, testLine) = readTestCaseContent(testFile, testIdx)
+    printFileOnFailure(testFile, testLine) {
+      doRegexTest(input, expectedResult)
     }
   }
 
-  private val regexTestDataDir: File =
-    new File("./scala/integration/intellilang/testData/language_injection/regex")
+  private def doRegexTest(text: String, injectedFileExpectedText: String): Unit = {
+    scalaInjectionTestFixture.doTest(RegExpLanguage.INSTANCE.getID, text, injectedFileExpectedText)
+  }
 
   /**
    * Can include optional test name. First test can be without any header<br>
@@ -64,35 +65,23 @@ object RegexpLanguageInjectionTest {
 
   private val TestCaseInnerSeparator = "\\n---+\\r?\\n".r
 
-  final def suite: junit.framework.Test = {
-    // suite name will be automatically to set to class name by org.junit.runners.AllTests
-    val suite = new TestSuite()
-
-    val files = regexTestDataDir.listFiles()
-    val allTests = files.flatMap(collectFileTests)
-    allTests.foreach(suite.addTest)
-
-    suite
-  }
-
-  private def collectFileTests(file: File): Seq[ActualTest] = {
-    val commonPrefix = regexTestDataDir.getAbsolutePath
-
+  private def collectFileTests(file: Path): Array[AnyRef] = {
+    val commonPrefix = regexTestDataDir.toCanonicalPath.toString
     val testCases = readTestCasesRawContents(file, includeContent = false)
     testCases.zipWithIndex.map { case (RawTestCase(_, descriptionOpt, _), testIdx) =>
       val suffixWithIndex = if (testIdx == 0) "" else "-" + testIdx
       val suffixWithDescription = suffixWithIndex + descriptionOpt.fold("")(" " + _)
-      val testName = file.getAbsolutePath.stripPrefix(commonPrefix).stripPrefix(File.separator) + suffixWithDescription
-
-      new ActualTest(file, testName, testIdx)
-    }
+      val testName = file.toCanonicalPath.toString.stripPrefix(commonPrefix).stripPrefix(java.io.File.separator) + suffixWithDescription
+      Array(testName, file, testIdx)
+    }.toArray
   }
+
 
   // test line for easy navigating from failed tests
   private case class ParsedTestCase(before: String, expectedAfter: String, testLine: Int)
   private case class RawTestCase(content: String, description: Option[String], testLine: Int)
 
-  private def readTestCaseContent(testFile: File, testIdx: Int): ParsedTestCase = {
+  private def readTestCaseContent(testFile: Path, testIdx: Int): ParsedTestCase = {
     val testCaseText = readTestCaseRawContent(testFile, testIdx)
     val Array(input, expectedResult0) = TestCaseInnerSeparator.split(testCaseText.content)
 
@@ -103,14 +92,14 @@ object RegexpLanguageInjectionTest {
     ParsedTestCase(input, expectedResult, testCaseText.testLine)
   }
 
-  private def readTestCaseRawContent(testFile: File, testIdx: Int): RawTestCase = {
+  private def readTestCaseRawContent(testFile: Path, testIdx: Int): RawTestCase = {
     val testCases = readTestCasesRawContents(testFile)
     val head = testCases.drop(testIdx).headOption
     head.getOrElse(fail(s"no test with index $testIdx found in test file $testFile").asInstanceOf[Nothing])
   }
 
-  private def readTestCasesRawContents(testFile: File, includeContent: Boolean = true): Seq[RawTestCase] = {
-    val fileContent = StringUtil.convertLineSeparators(FileUtil.loadFile(testFile))
+  private def readTestCasesRawContents(testFile: Path, includeContent: Boolean = true): Seq[RawTestCase] = {
+    val fileContent = StringUtil.convertLineSeparators(Files.readString(testFile))
     val testCases = parseTestCases(fileContent, includeContent)
     assertTrue(s"no test cases found in test file $testFile", testCases.nonEmpty)
     testCases
@@ -142,9 +131,9 @@ object RegexpLanguageInjectionTest {
   }
 
   // print file path with line number to be able to Ctrl + Click in console to navigate to test file on failure (see IDEA-257969)
-  private def printFileOnFailure[T](file: File, line: Int)(body: => T) = try body catch {
+  private def printFileOnFailure[T](file: Path, line: Int)(body: => T) = try body catch {
     case error: Throwable =>
-      System.err.println(s"### Test file: ${file.getAbsolutePath}:${line + 1}") // line is 0-based
+      System.err.println(s"### Test file: ${file.toCanonicalPath}:${line + 1}") // line is 0-based
       throw error
   }
 }
