@@ -4,18 +4,14 @@ import com.intellij.compiler.CompilerMessageImpl
 import com.intellij.openapi.compiler.{CompilerMessage, CompilerMessageCategory}
 import org.jetbrains.plugins.scala.compiler.ScalaCompilerTestBase
 import org.jetbrains.plugins.scala.util.CompilerTestUtil.runWithErrorsFromCompiler
-import org.jetbrains.plugins.scala.util.GeneratedTestSuiteFactory
-import org.jetbrains.plugins.scala.util.GeneratedTestSuiteFactory.TestData
+import org.jetbrains.plugins.scala.util.GeneratedParameterizedTestFactory.TestData
 import org.junit.experimental.categories.Category
 
 import scala.jdk.CollectionConverters.IterableHasAsScala
 
 @Category(Array(classOf[CompilerHighlightingTests]))
 abstract class CheckTestDataTestBase(testData: Seq[TestData], minScalaVersion: ScalaVersion)
-  extends ScalaCompilerTestBase
-{
-  def this(factory: GeneratedTestSuiteFactory, minScalaVersion: ScalaVersion) =
-    this(factory.testData, minScalaVersion)
+  extends ScalaCompilerTestBase {
 
   override protected def supportedIn(version: ScalaVersion): Boolean = version >= minScalaVersion
 

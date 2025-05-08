@@ -1,18 +1,20 @@
 package org.jetbrains.plugins.scala.lang.typeInference
 
-import junit.framework.TestCase
-import org.jetbrains.plugins.scala.util.GeneratedTestSuiteFactory
-import org.jetbrains.plugins.scala.util.GeneratedTestSuiteFactory.SimpleTestData
+import org.jetbrains.plugins.scala.util.GeneratedParameterizedTestFactory.SimpleTestData
+import org.jetbrains.plugins.scala.util.{GeneratedHighlightingParameterizedTest, GeneratedParameterizedTestFactory}
 import org.jetbrains.plugins.scala.{ScalaVersion, TypecheckerTests}
 import org.junit.experimental.categories.Category
 
-
 // SCL-21799
 @Category(Array(classOf[TypecheckerTests]))
-class Scala3NamedPatternTest extends TestCase
+class Scala3NamedPatternTest extends GeneratedHighlightingParameterizedTest(ScalaVersion.Latest.Scala_3_7) {
+  override type TD = SimpleTestData
+
+  override def testData: Seq[SimpleTestData] = Scala3NamedPatternTest.testData
+}
 
 // TODO: add compiler checking test
-object Scala3NamedPatternTest extends GeneratedTestSuiteFactory.withHighlightingTest(ScalaVersion.Latest.Scala_3_7) {
+object Scala3NamedPatternTest {
   lazy val testData: Seq[SimpleTestData] = Seq(
     """// namedTuple
       |type Foo = (int: Int, bool: Boolean)
@@ -124,7 +126,7 @@ object Scala3NamedPatternTest extends GeneratedTestSuiteFactory.withHighlighting
        |val Foo(bar = _) = Foo(1, 2) // Error
        |
        |""".stripMargin,
-  ).map(testDataFromCode)
+  ).map(GeneratedParameterizedTestFactory.testDataFromCode)
 
   private def fooTester: String =
     """

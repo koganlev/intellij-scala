@@ -1,19 +1,37 @@
 package org.jetbrains.plugins.scala.lang.psi
 
-import junit.framework.{Test, TestCase}
 import org.jetbrains.plugins.scala.ScalaVersion
 import org.jetbrains.plugins.scala.extensions.PsiElementExt
-import org.jetbrains.plugins.scala.lang.psi.api.ScFile
 import org.jetbrains.plugins.scala.lang.psi.api.base.patterns.ScGivenPattern
 import org.jetbrains.plugins.scala.lang.psi.api.toplevel.ScNamedElement
 import org.jetbrains.plugins.scala.lang.psi.api.toplevel.typedef.ScGiven
-import org.jetbrains.plugins.scala.util.GeneratedTestSuiteFactory
-import org.jetbrains.plugins.scala.util.GeneratedTestSuiteFactory.SingleCodeTestData
+import org.jetbrains.plugins.scala.util.GeneratedParameterizedTestFactory.SingleCodeTestData
+import org.jetbrains.plugins.scala.util.GeneratedSimpleParameterizedTest
 
-class GenerateGivenNameTest extends TestCase
+class GenerateGivenNameTest extends GeneratedSimpleParameterizedTest(ScalaVersion.Latest.Scala_3_6) {
 
-object GenerateGivenNameTest extends GeneratedTestSuiteFactory {
-  override type TD = GivenNameTestData
+  override type TD = GenerateGivenNameTest.GivenNameTestData
+
+  override def runActualTest(td: TD): Unit = {
+    val tree = td.testCode.parse(this.scalaVersion)
+
+    tree.hasParseError shouldBe false
+
+    val givens: Seq[ScNamedElement] = tree.elements.collect {
+      case given: ScGiven => given
+      case pattern: ScGivenPattern => pattern
+    }.toSeq
+
+    givens.length shouldBe 1
+
+    val givenElement = givens.head
+    givenElement.name shouldBe td.expectedGivenName
+  }
+  
+  override def testData: Seq[TD] = GenerateGivenNameTest.testData
+}
+
+object GenerateGivenNameTest {
 
   /**
    * All test cases.
@@ -21,7 +39,7 @@ object GenerateGivenNameTest extends GeneratedTestSuiteFactory {
    * See CheckGenerateGivenNameTestDataTest, which uses the real scala compiler to check
    * if these testcases compile correctly.
    */
-  override lazy val testData: Seq[GivenNameTestData] = Seq(
+  lazy val testData: Seq[GivenNameTestData] = Seq(
     //////////////////// atoms /////////////////
     GivenNameTestData(
       """
@@ -412,23 +430,4 @@ object GenerateGivenNameTest extends GeneratedTestSuiteFactory {
            |""".stripMargin
     }
   }
-
-  override def makeActualTest(testData: GivenNameTestData): Test =
-    new SimpleActualTest(testData, ScalaVersion.Latest.Scala_3_6) {
-      override def runActualTest(): Unit = {
-        val tree = testData.testCode.parse(this.scalaVersion)
-
-        tree.hasParseError shouldBe false
-
-        val givens: Seq[ScNamedElement] = tree.elements.collect {
-          case given: ScGiven => given
-          case pattern: ScGivenPattern => pattern
-        }.toSeq
-
-        givens.length shouldBe 1
-
-        val givenElement = givens.head
-        givenElement.name shouldBe testData.expectedGivenName
-      }
-    }
 }

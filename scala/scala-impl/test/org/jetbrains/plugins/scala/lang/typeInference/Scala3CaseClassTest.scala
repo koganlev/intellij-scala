@@ -1,16 +1,19 @@
 package org.jetbrains.plugins.scala.lang.typeInference
 
-import junit.framework.TestCase
-import org.jetbrains.plugins.scala.util.GeneratedTestSuiteFactory
-import org.jetbrains.plugins.scala.util.GeneratedTestSuiteFactory.SimpleTestData
+import org.jetbrains.plugins.scala.util.GeneratedParameterizedTestFactory.SimpleTestData
+import org.jetbrains.plugins.scala.util.{GeneratedHighlightingParameterizedTest, GeneratedParameterizedTestFactory}
 import org.jetbrains.plugins.scala.{ScalaVersion, TypecheckerTests}
 import org.junit.experimental.categories.Category
 
 // SCL-21799
 @Category(Array(classOf[TypecheckerTests]))
-class Scala3CaseClassTest extends TestCase
+class Scala3CaseClassTest extends GeneratedHighlightingParameterizedTest(ScalaVersion.Latest.Scala_3_3) {
+  override type TD = SimpleTestData
 
-object Scala3CaseClassTest extends GeneratedTestSuiteFactory.withHighlightingTest(ScalaVersion.Latest.Scala_3_3) {
+  override def testData: Seq[SimpleTestData] = Scala3CaseClassTest.testData
+}
+
+object Scala3CaseClassTest {
   lazy val testData: Seq[SimpleTestData] = Seq(
     """
       |// testUnapplyMethod0Param
@@ -204,5 +207,5 @@ object Scala3CaseClassTest extends GeneratedTestSuiteFactory.withHighlightingTes
       |  }
       |}
       |""".stripMargin
-  ).map(testDataFromCode)
+  ).map(GeneratedParameterizedTestFactory.testDataFromCode)
 }

@@ -1,16 +1,19 @@
 package org.jetbrains.plugins.scala.lang.typeInference
 
-import junit.framework.TestCase
-import org.jetbrains.plugins.scala.util.GeneratedTestSuiteFactory
-import org.jetbrains.plugins.scala.util.GeneratedTestSuiteFactory.SimpleTestData
+import org.jetbrains.plugins.scala.util.GeneratedParameterizedTestFactory.SimpleTestData
+import org.jetbrains.plugins.scala.util.{GeneratedHighlightingParameterizedTest, GeneratedParameterizedTestFactory}
 import org.jetbrains.plugins.scala.{ScalaVersion, TypecheckerTests}
 import org.junit.experimental.categories.Category
 
 // SCL-21799
 @Category(Array(classOf[TypecheckerTests]))
-class Scala2UnapplySeqTest extends TestCase
+class Scala2UnapplySeqTest extends GeneratedHighlightingParameterizedTest(ScalaVersion.Latest.Scala_2_13) {
+  override type TD = SimpleTestData
 
-object Scala2UnapplySeqTest extends GeneratedTestSuiteFactory.withHighlightingTest(ScalaVersion.Latest.Scala_2_13) {
+  override def testData: Seq[SimpleTestData] = Scala2UnapplySeqTest.testData
+}
+
+object Scala2UnapplySeqTest {
   // https://www.scala-lang.org/files/archive/spec/2.13/08-pattern-matching.html#pattern-sequences
   lazy val testData: Seq[SimpleTestData] = Seq(
     s"""
@@ -136,7 +139,7 @@ object Scala2UnapplySeqTest extends GeneratedTestSuiteFactory.withHighlightingTe
       |
       |$tester_s_i_bs
       |""".stripMargin,
-  ).map(testDataFromCode)
+  ).map(GeneratedParameterizedTestFactory.testDataFromCode)
 
   private def tester_bs: String =
     """

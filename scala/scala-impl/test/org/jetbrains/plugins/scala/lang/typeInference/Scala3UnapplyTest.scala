@@ -1,16 +1,19 @@
 package org.jetbrains.plugins.scala.lang.typeInference
 
-import junit.framework.TestCase
-import org.jetbrains.plugins.scala.util.GeneratedTestSuiteFactory
-import org.jetbrains.plugins.scala.util.GeneratedTestSuiteFactory.SimpleTestData
+import org.jetbrains.plugins.scala.util.{GeneratedHighlightingParameterizedTest, GeneratedParameterizedTestFactory}
+import org.jetbrains.plugins.scala.util.GeneratedParameterizedTestFactory.SimpleTestData
 import org.jetbrains.plugins.scala.{ScalaVersion, TypecheckerTests}
 import org.junit.experimental.categories.Category
 
 // SCL-21799
 @Category(Array(classOf[TypecheckerTests]))
-class Scala3UnapplyTest extends TestCase
+class Scala3UnapplyTest extends GeneratedHighlightingParameterizedTest(ScalaVersion.Latest.Scala_3_3) {
+  override type TD = SimpleTestData
 
-object Scala3UnapplyTest extends GeneratedTestSuiteFactory.withHighlightingTest(ScalaVersion.Latest.Scala_3_3) {
+  override def testData: Seq[SimpleTestData] = Scala3UnapplyTest.testData
+}
+
+object Scala3UnapplyTest {
   // See https://docs.scala-lang.org/scala3/reference/changed-features/pattern-matching.html#
   lazy val testData: Seq[SimpleTestData] = Seq(
     // ============= Boolean Match =============
@@ -316,5 +319,5 @@ object Scala3UnapplyTest extends GeneratedTestSuiteFactory.withHighlightingTest(
       |  val _s: String = s
       |}
       |""".stripMargin
-  ).map(testDataFromCode)
+  ).map(GeneratedParameterizedTestFactory.testDataFromCode)
 }
