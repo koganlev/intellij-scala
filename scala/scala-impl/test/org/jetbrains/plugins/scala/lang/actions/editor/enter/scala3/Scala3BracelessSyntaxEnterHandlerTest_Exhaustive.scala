@@ -1,14 +1,18 @@
 package org.jetbrains.plugins.scala
 package lang.actions.editor.enter.scala3
 
-import com.intellij.openapi.project.Project
 import com.intellij.testFramework.EditorTestUtil
-import com.intellij.util.ThrowableRunnable
-import junit.framework.{Test, TestCase, TestSuite}
+import junitparams.naming.TestCaseName
+import junitparams.{JUnitParamsRunner, Parameters}
 import org.jetbrains.plugins.scala.extensions.StringExt
 import org.jetbrains.plugins.scala.lang.actions.editor.enter.scala3.Scala3TestDataBracelessCode._
 import org.jetbrains.plugins.scala.settings.ScalaCompileServerSettings
+import org.junit.Test
 import org.junit.experimental.categories.Category
+import org.junit.runner.RunWith
+
+import scala.annotation.unused
+import scala.collection.mutable
 
 // TODO: add tests for parameter default value after it's fixed in parser:
 //  https://youtrack.jetbrains.com/issue/SCL-16603#focus=Comments-27-4772356.0-0
@@ -24,7 +28,34 @@ import org.junit.experimental.categories.Category
 //  + with & without space after CARET in the starting position
 //  + with some content after caret (on each step)
 //  + with trimmed data & with extra spaces after it
-class Scala3BracelessSyntaxEnterHandlerTest_Exhaustive extends TestCase
+@RunWith(classOf[JUnitParamsRunner])
+@Category(Array(classOf[FileSetTests]))
+class Scala3BracelessSyntaxEnterHandlerTest_Exhaustive extends DoEditorStateTestOps {
+
+  import Scala3BracelessSyntaxEnterHandlerTest_Exhaustive._
+
+  override protected def setUp(): Unit = {
+    super.setUp()
+    ScalaCompileServerSettings.getInstance().COMPILE_SERVER_ENABLED = false
+    getScalaCodeStyleSettings.USE_SCALA3_INDENTATION_BASED_SYNTAX = true
+  }
+
+  @unused("used reflectively by the @Parameters annotation")
+  private def testParameters: Array[AnyRef] = createAllTests()
+
+  @Test
+  @Parameters(method = "testParameters")
+  @TestCaseName(value = "{0}")
+  def myTest(@unused("used reflectively by the @TestCaseName annotation") testName: String, testData: TestData): Unit = {
+    testData match {
+      case TestData.ExplicitEditorStates(editorStates) =>
+        doEditorStateTest(myFixture, editorStates)
+
+      case TestData.Generated(contextCode, codeToType) =>
+        checkIndentAfterTypingCode(contextCode, codeToType, myFixture)
+    }
+  }
+}
 
 object Scala3BracelessSyntaxEnterHandlerTest_Exhaustive {
 
@@ -37,8 +68,8 @@ object Scala3BracelessSyntaxEnterHandlerTest_Exhaustive {
     if (idx == 0) name else name + " | " + idx
   }
 
-  def suite: TestSuite = {
-    val rootSuite = new TestSuite()
+  private def createAllTests(): Array[AnyRef] = {
+    val buffer = mutable.ArrayBuffer.empty[NamedTestData]
 
     def makeUniqueTestName(parts: String*) = uniqueName(parts.mkString(" | "))
 
@@ -48,42 +79,38 @@ object Scala3BracelessSyntaxEnterHandlerTest_Exhaustive {
       makeUniqueTestName(nameParts: _*)
     }
 
-    def createTest(prefix: String, indented: String, wrapper: CodeWithDebugName, typed: CodeWithDebugName): ActualTest = {
+    def createTest(prefix: String, indented: String, wrapper: CodeWithDebugName, typed: CodeWithDebugName): NamedTestData = {
       val testName = buildTestName(prefix, indented, wrapper, typed)
-      val test = new ActualTest(TestData.Generated(indented, wrapper.code, typed.code))
-      test.setName(testName)
-      test
+      val testData = TestData.Generated(indented, wrapper.code, typed.code)
+      NamedTestData(testName, testData)
     }
 
-    def createTestWithName(context: String, typed: CodeWithDebugName, testNameBase: String): ActualTest = {
+    def createTestWithName(context: String, typed: CodeWithDebugName, testNameBase: String): NamedTestData = {
       val testName = makeUniqueTestName(testNameBase, typed.debugName)
-      val test = new ActualTest(TestData.Generated(context, typed.code))
-      test.setName(testName)
-      test
+      val testData = TestData.Generated(context, typed.code)
+      NamedTestData(testName, testData)
     }
 
-    def createTests(prefix: String, indented: Seq[String], wrapper: Seq[CodeWithDebugName], typed: Seq[CodeWithDebugName]): Iterable[ActualTest] =
+    def createTests(prefix: String, indented: Seq[String], wrapper: Seq[CodeWithDebugName], typed: Seq[CodeWithDebugName]): Iterable[NamedTestData] =
       for {
         indentedCode <- indented
         wrapperCode  <- wrapper
         typedCode    <- typed
       } yield createTest(prefix, indentedCode, wrapperCode, typedCode)
 
-    def createTestsInAllWrapperContexts(prefix: String, indentedBlockContexts: Seq[String], codeToType: Seq[CodeWithDebugName]): Iterable[ActualTest] =
+    def createTestsInAllWrapperContexts(prefix: String, indentedBlockContexts: Seq[String], codeToType: Seq[CodeWithDebugName]): Iterable[NamedTestData] =
       createTests(prefix, indentedBlockContexts, WrapperCodeContexts.AllContexts, codeToType)
 
-    def createEditorStatesTestsInAllWrapperContexts(editorStates: EditorStates): Iterable[ActualTest] =
+    def createEditorStatesTestsInAllWrapperContexts(editorStates: EditorStates): Iterable[NamedTestData] =
       createEditorStatesTestsInContexts(editorStates, WrapperCodeContexts.AllContexts)
 
-    def createEditorStatesTestsInContexts(editorStates: EditorStates, contexts: Seq[CodeWithDebugName]): Iterable[ActualTest] =
+    def createEditorStatesTestsInContexts(editorStates: EditorStates, contexts: Seq[CodeWithDebugName]): Iterable[NamedTestData] =
       for {
-        wrapperCode  <- contexts
+        wrapperCode <- contexts
       } yield {
         val testData = TestData.ExplicitEditorStates(editorStates, wrapperCode)
-        val test = new ActualTest(testData)
         val testName = makeUniqueTestName(testData.editorStates.debugName.getOrElse("unnamed"))
-        test.setName(testName)
-        test
+        NamedTestData(testName, testData)
       }
 
     val WCC = WrapperCodeContexts
@@ -94,12 +121,12 @@ object Scala3BracelessSyntaxEnterHandlerTest_Exhaustive {
     // Testing pressing Enter after different constructs which support indentation-based syntax
     //
     locally {
-      rootSuite ++= createTestsInAllWrapperContexts("AfterAssignOrArrowSign",IBC.AfterAssignOrArrowSign, CTT.BlockStatements :: CTT.BlockExpressions :: Nil)
-      rootSuite ++= createTestsInAllWrapperContexts("ForEnumeratorsAll", IBC.ForEnumeratorsAll, CTT.BlockStatements :: CTT.BlockExpressions :: Nil)
-      rootSuite ++= createTestsInAllWrapperContexts("ControlFlow", IBC.ControlFlow, CTT.BlockStatements :: CTT.BlockExpressions :: Nil)
-      rootSuite ++= createTestsInAllWrapperContexts("Extensions", IBC.Extensions, CTT.DefDef :: Nil)
-      rootSuite ++= createTestsInAllWrapperContexts("TemplateDefinitions", IBC.TemplateDefinitions, CTT.TemplateStat :: Nil)
-      rootSuite ++= createTestsInAllWrapperContexts("GivenWith", IBC.GivenWith, CTT.TemplateStat :: Nil)
+      buffer ++= createTestsInAllWrapperContexts("AfterAssignOrArrowSign",IBC.AfterAssignOrArrowSign, CTT.BlockStatements :: CTT.BlockExpressions :: Nil)
+      buffer ++= createTestsInAllWrapperContexts("ForEnumeratorsAll", IBC.ForEnumeratorsAll, CTT.BlockStatements :: CTT.BlockExpressions :: Nil)
+      buffer ++= createTestsInAllWrapperContexts("ControlFlow", IBC.ControlFlow, CTT.BlockStatements :: CTT.BlockExpressions :: Nil)
+      buffer ++= createTestsInAllWrapperContexts("Extensions", IBC.Extensions, CTT.DefDef :: Nil)
+      buffer ++= createTestsInAllWrapperContexts("TemplateDefinitions", IBC.TemplateDefinitions, CTT.TemplateStat :: Nil)
+      buffer ++= createTestsInAllWrapperContexts("GivenWith", IBC.GivenWith, CTT.TemplateStat :: Nil)
     }
 
     //
@@ -120,7 +147,7 @@ object Scala3BracelessSyntaxEnterHandlerTest_Exhaustive {
         val CaretWithPotentialSpacesAround = s"[ ]+$CARET[ ]+".r
         // Example: `def foo=  <caret>identifier
         val SpaceBeforeCaret = baseIndentedBlockContexts.map(CaretWithPotentialSpacesAround.replaceAllIn(_, s"   $CARET$codeAfterCaret"))
-        rootSuite ++= createTests(groupName, SpaceBeforeCaret, wrapperContexts, codeToType)
+        buffer ++= createTests(groupName, SpaceBeforeCaret, wrapperContexts, codeToType)
 
         if (!onlySpacesBeforeCaret) {
           // Example: `def foo=  <caret>  identifier
@@ -128,8 +155,8 @@ object Scala3BracelessSyntaxEnterHandlerTest_Exhaustive {
           // Example: `def foo=<caret>  identifier
           val SpaceAfterCaret = baseIndentedBlockContexts.map(CaretWithPotentialSpacesAround.replaceAllIn(_, s"$CARET   $codeAfterCaret"))
 
-          rootSuite ++= createTests(groupName, SpaceAroundCaret, wrapperContexts, codeToType)
-          rootSuite ++= createTests(groupName, SpaceAfterCaret, wrapperContexts, codeToType)
+          buffer ++= createTests(groupName, SpaceAroundCaret, wrapperContexts, codeToType)
+          buffer ++= createTests(groupName, SpaceAfterCaret, wrapperContexts, codeToType)
         }
       }
 
@@ -159,26 +186,26 @@ object Scala3BracelessSyntaxEnterHandlerTest_Exhaustive {
     //
     locally {
       import Scala3TestDataCaseClausesEditorStates._
-      rootSuite ++=
-        MatchCaseClausesAll.flatMap(createEditorStatesTestsInAllWrapperContexts).filterNot(test => {
+      buffer ++=
+        MatchCaseClausesAll.flatMap(createEditorStatesTestsInAllWrapperContexts).filterNot(namedTestData => {
           // TODO: unmute when this issue is fixed (including the comment)
           //  https://github.com/lampepfl/dotty/issues/11905
           //  https://github.com/lampepfl/dotty/issues/11905#issuecomment-808168436
           // (will require parser changes)
-          test.getName.contains("MatchCaseClausesWithEmptyBodyStates | InsideCaseClausesNonLast") ||
-            test.getName.contains("MatchCaseClausesWithNonEmptyBodyStates | InsideCaseClausesNonLast")
+          namedTestData.testName.contains("MatchCaseClausesWithEmptyBodyStates | InsideCaseClausesNonLast") ||
+            namedTestData.testName.contains("MatchCaseClausesWithNonEmptyBodyStates | InsideCaseClausesNonLast")
         })
-      rootSuite ++=
+      buffer ++=
         MatchCaseClausesAll_WithBraces.flatMap(createEditorStatesTestsInContexts(
           _, WCC.TopLevel :: WCC.NestedClassWithColonAndEndMarker_LastStatement :: Nil
         ))
-      rootSuite ++=
+      buffer ++=
         TryCatchCaseClausesAll.flatMap(createEditorStatesTestsInAllWrapperContexts)
     }
 
     locally {
       import CodeToType._
-      rootSuite ++= (BlockStatements :: DefDef :: TemplateStat :: BlankLines :: Nil).map { codeToType =>
+      buffer ++= (BlockStatements :: DefDef :: TemplateStat :: BlankLines :: Nil).map { codeToType =>
         createTestWithName(
           s"""{
              |  {$CARET
@@ -190,7 +217,9 @@ object Scala3BracelessSyntaxEnterHandlerTest_Exhaustive {
       }
     }
 
-    rootSuite
+    buffer.toArray.map {
+      case NamedTestData(testName, testData) => Array(testName, testData)
+    }
   }
 
   sealed trait TestData
@@ -216,31 +245,5 @@ object Scala3BracelessSyntaxEnterHandlerTest_Exhaustive {
     }
   }
 
-  implicit class TestSuiteOps(private val suite: TestSuite) extends AnyVal {
-    def ++=(tests: Iterable[Test]): Unit =
-      tests.foreach(suite.addTest)
-  }
-
-  //noinspection JUnitMalformedDeclaration
-  @Category(Array(classOf[FileSetTests]))
-  private final class ActualTest(testData: TestData) extends DoEditorStateTestOps {
-
-    private implicit def p: Project = getProject
-
-    override def setUp(): Unit = {
-      super.setUp()
-      ScalaCompileServerSettings.getInstance.COMPILE_SERVER_ENABLED = false
-      getScalaCodeStyleSettings.USE_SCALA3_INDENTATION_BASED_SYNTAX = true
-    }
-
-    override def runTestRunnable(testRunnable: ThrowableRunnable[Throwable]): Unit = {
-      testData match {
-        case TestData.ExplicitEditorStates(editorStates) =>
-          doEditorStateTest(myFixture, editorStates)
-
-        case TestData.Generated(contextCode, codeToType) =>
-          checkIndentAfterTypingCode(contextCode, codeToType, myFixture)
-      }
-    }
-  }
+  final case class NamedTestData(testName: String, testData: TestData)
 }
