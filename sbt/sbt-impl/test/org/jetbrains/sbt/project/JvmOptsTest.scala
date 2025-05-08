@@ -1,8 +1,8 @@
 package org.jetbrains.sbt.project
 
 import org.jetbrains.sbt.project.structure.JvmOpts
-import org.junit.jupiter.api.Assertions.assertEquals
-import org.junit.jupiter.api.Test
+import org.junit.Assert.assertEquals
+import org.junit.Test
 
 import java.nio.file.Files
 import scala.util.Using

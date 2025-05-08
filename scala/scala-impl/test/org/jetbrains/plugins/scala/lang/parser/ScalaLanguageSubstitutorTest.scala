@@ -1,7 +1,7 @@
 package org.jetbrains.plugins.scala.lang.parser
 
-import org.junit.jupiter.api.Assertions.{assertFalse, assertTrue}
-import org.junit.jupiter.api.Test
+import org.junit.Assert.{assertFalse, assertTrue}
+import org.junit.Test
 
 class ScalaLanguageSubstitutorTest {
 
@@ -13,7 +13,7 @@ class ScalaLanguageSubstitutorTest {
 
   private def assertIsRecognised(jarName: String): Unit = {
     val path = toPathInJar(jarName)
-    assertTrue(looksLikeScala3LibSourcesJar(path), s"Path isn't recognised as a scala3 library jar: $jarName")
+    assertTrue(s"Path isn't recognised as a scala3 library jar: $jarName", looksLikeScala3LibSourcesJar(path))
   }
 
   private def assertNotRecognised(jarName: String): Unit = {
@@ -22,7 +22,7 @@ class ScalaLanguageSubstitutorTest {
   }
 
   private def assertNotRecognisedPath(path: String): Unit = {
-    assertFalse(looksLikeScala3LibSourcesJar(path), s"Path shouldn't be recognised as a scala3 library jar: $path")
+    assertFalse(s"Path shouldn't be recognised as a scala3 library jar: $path", looksLikeScala3LibSourcesJar(path))
   }
 
   @Test

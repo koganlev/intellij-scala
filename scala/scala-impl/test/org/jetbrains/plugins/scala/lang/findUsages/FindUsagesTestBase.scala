@@ -1,16 +1,14 @@
 package org.jetbrains.plugins.scala.lang.findUsages
 
-import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.ex.ApplicationManagerEx
 import com.intellij.openapi.application.impl.NonBlockingReadActionImpl
 import com.intellij.openapi.util.{Segment, TextRange}
+import com.intellij.testFramework.UsefulTestCase.assertInstanceOf
 import com.intellij.usageView.UsageInfo
 import org.jetbrains.plugins.scala.base.ScalaFixtureTestCase
 import org.jetbrains.plugins.scala.extensions.StringExt
 import org.jetbrains.plugins.scala.findUsages.factory.{ScalaFindUsagesConfiguration, ScalaFindUsagesHandlerFactory}
 import org.jetbrains.plugins.scala.util.Markers
 import org.jetbrains.plugins.scala.util.assertions.CollectionsAssertions.assertCollectionEquals
-import org.junit.jupiter.api.Assertions
 
 import scala.jdk.CollectionConverters.CollectionHasAsScala
 import scala.reflect.ClassTag
@@ -79,7 +77,7 @@ abstract class FindUsagesTestBase extends ScalaFixtureTestCase with Markers {
     val factory = new ScalaFindUsagesHandlerFactory(getProject)
     val handler = factory.createFindUsagesHandler(myFixture.getElementAtCaret, forHighlightUsages = false)
     val dialog = handler.getFindUsagesDialog(true, false, false)
-    Assertions.assertInstanceOf(implicitly[ClassTag[T]].runtimeClass, dialog)
+    assertInstanceOf(dialog, implicitly[ClassTag[T]].runtimeClass)
     NonBlockingReadActionImpl.waitForAsyncTaskCompletion()
   }
 }

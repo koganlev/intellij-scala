@@ -2,8 +2,8 @@ package org.jetbrains.sbt
 
 import com.intellij.execution.configurations.ParametersList
 import org.jetbrains.plugins.scala.extensions.PathExt
-import org.junit.jupiter.api.Assertions.{assertEquals, assertTrue}
-import org.junit.jupiter.api.Test
+import org.junit.Assert.{assertEquals, assertTrue}
+import org.junit.Test
 
 import java.nio.file.Path
 
@@ -131,7 +131,7 @@ class SbtUtilTest {
     val allMinor = all.flatMap(_.generateAllMinorVersions).map(SbtVersion(_))
     allMinor.foreach { version =>
       val maybeFile = SbtUtil.getSbtStructureJar(version)
-      assertTrue(maybeFile.isDefined, s"Can't detect sbt-structure.jar for $version")
+      assertTrue(s"Can't detect sbt-structure.jar for $version", maybeFile.isDefined)
     }
   }
 }

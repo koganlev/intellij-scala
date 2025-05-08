@@ -1,11 +1,11 @@
 package org.jetbrains.plugins.scala.internal
 
-import org.jetbrains.plugins.scala.base.{ScalaLightCodeInsightFixtureTestCase, SharedTestProjectToken}
+import junit.framework.TestCase.assertEquals
+import org.jetbrains.plugins.scala.base.ScalaLightCodeInsightFixtureTestCase
 import org.jetbrains.plugins.scala.compiler.data.IncrementalityType
 import org.jetbrains.plugins.scala.project.settings.ScalaCompilerConfiguration
-import org.jetbrains.plugins.scala.settings.{ScalaCompileServerSettings, ScalaProjectSettings}
-import org.jetbrains.plugins.scala.util.{CompilerTestUtil, RevertableChange}
-import org.junit.jupiter.api.Assertions._
+import org.jetbrains.plugins.scala.settings.ScalaProjectSettings
+import org.jetbrains.plugins.scala.util.CompilerTestUtil
 
 class ScalaPluginAboutPopupDescriptionProviderTest extends ScalaLightCodeInsightFixtureTestCase {
 

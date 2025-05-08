@@ -5,8 +5,8 @@ import org.hamcrest.MatcherAssert.assertThat
 import org.jetbrains.sbt.PathTestUtil
 import org.jetbrains.sbt.project.structure.SbtOption._
 import org.jetbrains.sbt.project.structure.{SbtOption, SbtOpts}
-import org.junit.jupiter.api.Assertions.assertEquals
-import org.junit.jupiter.api.Test
+import org.junit.Assert.assertEquals
+import org.junit.Test
 
 import java.nio.file.Files
 import scala.util.Using

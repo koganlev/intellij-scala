@@ -2,22 +2,28 @@ package org.jetbrains.sbt.shell
 
 import org.jetbrains.sbt.project.settings.SbtExecutionSettings
 import org.jetbrains.sbt.{JvmMemorySize, SbtVersion}
-import org.junit.jupiter.api.Assertions.assertEquals
-import org.junit.jupiter.api.{Test, TestInfo}
+import org.junit.Assert.assertEquals
+import org.junit.rules.TestName
+import org.junit.{Rule, Test}
 
 import java.nio.file.Files
 import scala.util.Using
 
 class MaxJvmHeapParameterTest {
 
+  private val _name: TestName = new TestName()
+  @Rule def name: TestName = _name
+
   private val hiddenDefaultSize = JvmMemorySize.Megabytes(1500)
   private val hiddenDefaultParam = "-Xmx" + hiddenDefaultSize
   private val hardcoded = List("-Dsbt.supershell=false", "-Djdk.console=java.base")
 
-  private def buildParamSeq(userOpts: String*)(jvmOpts: String*)(implicit testInfo: TestInfo): Seq[String] = {
+  private def buildParamSeq(userOpts: String*)(jvmOpts: String*): Seq[String] = {
     import org.jetbrains.sbt.PathTestUtil._
 
-    Using.resource(Files.createTempDirectory(s"maxHeapJvmParamTest-${testInfo.getDisplayName}")) { workingDir =>
+    println(name.getMethodName)
+
+    Using.resource(Files.createTempDirectory(s"maxHeapJvmParamTest-${name.getMethodName}")) { workingDir =>
       if (jvmOpts.nonEmpty) {
         val jvmOptsFile = workingDir.resolve(".jvmopts")
         Files.writeString(jvmOptsFile, jvmOpts.mkString("\n"))
@@ -56,7 +62,7 @@ class MaxJvmHeapParameterTest {
    */
 
   @Test
-  def userSettingsSmallerThanHiddenDefault(implicit testInfo: TestInfo): Unit = {
+  def userSettingsSmallerThanHiddenDefault(): Unit = {
     assertEquals(
       hardcoded ++ Seq("-Xmx4g", "-Xms4g", "-Xmx1g"),
       buildParamSeq("-Xmx1g")("-Xmx4g", "-Xms4g")
@@ -64,7 +70,7 @@ class MaxJvmHeapParameterTest {
   }
 
   @Test
-  def userSettingsGreaterThanHiddenDefault(implicit testInfo: TestInfo): Unit = {
+  def userSettingsGreaterThanHiddenDefault(): Unit = {
     assertEquals(
       hardcoded ++ Seq("-Xmx4g", "-Xms4g", "-Xmx2g"),
       buildParamSeq("-Xmx2g")("-Xmx4g", "-Xms4g")
@@ -72,7 +78,7 @@ class MaxJvmHeapParameterTest {
   }
 
   @Test
-  def noSettings(implicit testInfo: TestInfo): Unit = {
+  def noSettings(): Unit = {
     assertEquals(
       hiddenDefaultParam +: hardcoded,
       buildParamSeq()()
@@ -80,7 +86,7 @@ class MaxJvmHeapParameterTest {
   }
 
   @Test
-  def noSettingsWithXmsSmallerThanDefaultParam(implicit testInfo: TestInfo): Unit = {
+  def noSettingsWithXmsSmallerThanDefaultParam(): Unit = {
     assertEquals(
       hiddenDefaultParam +: hardcoded :+ "-Xms1g",
       buildParamSeq("-Xms1g")()
@@ -88,7 +94,7 @@ class MaxJvmHeapParameterTest {
   }
 
   @Test
-  def noSettingsWithXmsGreaterThanDefaultParam(implicit testInfo: TestInfo): Unit = {
+  def noSettingsWithXmsGreaterThanDefaultParam(): Unit = {
     assertEquals(
       hardcoded :+ "-Xms2g",
       buildParamSeq("-Xms2g")()
