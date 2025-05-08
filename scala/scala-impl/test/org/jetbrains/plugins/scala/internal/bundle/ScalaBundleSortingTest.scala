@@ -1,18 +1,34 @@
 package org.jetbrains.plugins.scala.internal.bundle
 
+import junitparams.naming.TestCaseName
+import junitparams.{JUnitParamsRunner, Parameters}
 import org.jetbrains.plugins.scala.internal.bundle.ScalaBundleSorting._
 import org.jetbrains.plugins.scala.util.internal.I18nBundleContent
 import org.jetbrains.plugins.scala.util.internal.I18nBundleContent._
-import org.junit.jupiter.api.DynamicTest.dynamicTest
-import org.junit.jupiter.api.{DynamicTest, TestFactory}
+import org.junit.Test
+import org.junit.runner.RunWith
 
+import scala.annotation.unused
+
+@RunWith(classOf[JUnitParamsRunner])
 class ScalaBundleSortingTest {
 
-  @TestFactory
-  def bundleSortingTests(): Array[DynamicTest] =
+  @unused("used reflectively by the @Parameters annotation")
+  private def testParameters: Array[AnyRef] =
     ScalaBundleSorting.allModuleInfos.toArray.map { bundle =>
-      dynamicTest(bundle.bundleMessagesRelativePath.stripSuffix(".properties"), () => ScalaBundleSortingTest.checkDirectory(bundle))
+      val testName = bundle.bundleMessagesRelativePath.stripSuffix(".properties")
+      Array(testName, bundle)
     }
+
+  @Test
+  @Parameters(method = "testParameters")
+  @TestCaseName(value = "{0}")
+  def bundleSortingTest(
+    @unused("used reflectively by the @TestCaseName annotation") testName: String,
+    bundle: ModuleWithBundleInfo
+  ): Unit = {
+    ScalaBundleSortingTest.checkDirectory(bundle)
+  }
 }
 
 object ScalaBundleSortingTest {
