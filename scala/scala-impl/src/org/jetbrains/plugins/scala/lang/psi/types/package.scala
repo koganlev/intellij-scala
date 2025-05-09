@@ -174,7 +174,7 @@ package object types {
       case _: StdType => None
       case ParameterizedType(des, _) => des.extractClassSimple(visited)
       case ScProjectionType(_, c: PsiClass) => Some(c)
-      case ScProjectionType(_, ta: ScTypeAliasDefinition) if !visited.contains(ta) => ta.aliasedType.toOption match {
+      case ScProjectionType(_, ta: ScTypeAliasDefinition) if !visited.contains(ta) && !ta.isEffectivelyOpaque => ta.aliasedType.toOption match {
         case Some(t) => t.extractClassSimple(visited + ta.physical)
         case _ => None
       }

@@ -20,7 +20,7 @@ import org.jetbrains.plugins.scala.lang.psi.types.api.designator.{ScDesignatorTy
 import org.jetbrains.plugins.scala.lang.psi.types.api.{JavaArrayType, ParameterizedType, StdType, TypeParameterType}
 import org.jetbrains.plugins.scala.lang.psi.types.recursiveUpdate.ScSubstitutor
 import org.jetbrains.plugins.scala.lang.psi.types.result.TypeResult
-import org.jetbrains.plugins.scala.lang.psi.types.{AliasType, ScAbstractType, ScAndType, ScCompoundType, ScExistentialArgument, ScExistentialType, ScOrType, ScParameterizedType, ScType}
+import org.jetbrains.plugins.scala.lang.psi.types.{AliasType, Context, ScAbstractType, ScAndType, ScCompoundType, ScExistentialArgument, ScExistentialType, ScOrType, ScParameterizedType, ScType}
 import org.jetbrains.plugins.scala.lang.psi.{ElementScope, ScalaPsiUtil}
 import org.jetbrains.plugins.scala.lang.resolve.ScalaResolveState.ResolveStateExt
 import org.jetbrains.plugins.scala.lang.resolve.processor.BaseProcessor
@@ -277,11 +277,7 @@ object ImplicitProcessor {
       if (!visited.add(convertRawArgs(tp))) return
 
       tp match {
-        case AliasType(alias, _, Right(t)) =>
-          alias match {
-            case aDef: ScTypeAliasDefinition if aDef.isOpaque => ()
-            case _                                            => collectParts(t)
-          }
+        case AliasType(_, _, Right(t)) => collectParts(t)
         case _ => ()
       }
 
@@ -292,7 +288,7 @@ object ImplicitProcessor {
         case ScCompoundType(comps, _, _)           => collectPartsIterable(comps)
         case ScAndType(lhs, rhs)                   => collectParts(lhs); collectParts(rhs)
         case ScOrType(lhs, rhs)                    => collectParts(lhs); collectParts(rhs)
-        case ScDesignatorType(alias: ScTypeAliasDefinition) if alias.isOpaque        => parts += tp
+        case ScDesignatorType(alias: ScTypeAliasDefinition) if alias.isEffectivelyOpaque => parts += tp
         case ScDesignatorType(alias: ScTypeAliasDeclaration) if alias.isInScala3File => parts += tp
         case ParameterizedType(a: ScAbstractType, args) =>
           collectParts(a)
@@ -321,6 +317,7 @@ object ImplicitProcessor {
             case v: ScBindingPattern => collectPartsTypeResult(v.`type`().map(proj.actualSubst))
             case v: ScFieldId        => collectPartsTypeResult(v.`type`().map(proj.actualSubst))
             case v: ScParameter      => collectPartsTypeResult(v.`type`().map(proj.actualSubst))
+            case v: ScTypeAliasDefinition if v.isEffectivelyOpaque => parts += tp
             case v: ScTypeAliasDeclaration if v.isInScala3File => parts += tp
             case _                   =>
           }
@@ -362,7 +359,7 @@ object ImplicitProcessor {
 
     def workWithTypeAlias(alias: ScTypeAlias, subst: ScSubstitutor = ScSubstitutor.empty): Unit = alias match {
       case alias: ScTypeAliasDefinition =>
-        if (alias.isOpaque) {
+        if (alias.isEffectivelyOpaque) {
           for (fqn <- alias.qualifiedNameOpt;
                companionObject <- elementScope.getCachedObject(fqn)) {
             addResult(fqn, ScDesignatorType(companionObject))

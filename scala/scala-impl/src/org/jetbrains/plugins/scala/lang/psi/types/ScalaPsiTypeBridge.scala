@@ -251,7 +251,7 @@ trait ScalaPsiTypeBridge extends api.PsiTypeBridge {
   }
 
   private def expandIfAlias(scType: ScType): ScType = scType match {
-    case AliasType(_: ScTypeAliasDefinition, _, upper) =>
+    case AliasType(ta: ScTypeAliasDefinition, _, upper) if !ta.isOpaque =>
       upper match {
         case Failure(_) => projectContext.stdTypes.Any
         case Right(u)   => u
