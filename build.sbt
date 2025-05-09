@@ -1026,20 +1026,8 @@ def runInputTask(key: InputKey[?], input: String, inState: State, resultState: S
   }
 }
 
-lazy val runTestCategory = Command.single("runTestCategory") { (state, category) =>
-  val state1 = Command.process(
-    s"""set Seq(
-       |  Test / testFrameworks := Seq(TestFrameworks.JUnit),
-       |  Test / testOptions := Seq(Tests.Argument(TestFrameworks.JUnit, "-v", "-s", "-a", "+c", "+q", "--include-categories=$category", "--exclude-categories=$flakyTests"))
-       |)""".stripMargin,
-    state,
-    _ => ()
-  )
-  runInputTask(Test / testOnly, "", state1, state)
-  state
-}
-
-def runTestsInTC(category: String): String = s"runTestCategory $category"
+def runTestsInTC(category: String): String =
+  s"testOnly -- -v -s -a +c +q --include-categories=$category --exclude-categories=$flakyTests"
 
 addCommandAlias("runFileSetTests", runTestsInTC(fileSetTests))
 addCommandAlias("runCompilationTestsZinc", runTestsInTC(compilationTestsZinc))
@@ -1058,56 +1046,36 @@ addCommandAlias("runWorksheetEvaluationTests", runTestsInTC(worksheetEvaluationT
 addCommandAlias("runHighlightingTests", runTestsInTC(highlightingTests))
 addCommandAlias("runNightlyTests", runTestsInTC(randomTypingTests))
 
-lazy val runFlakyTests = Command.command("runFlakyTests") { state =>
-  val state1 = Command.process(
-    s"""set Seq(
-       |  Test / testFrameworks := Seq(TestFrameworks.JUnit),
-       |  Test / testOptions := Seq(Tests.Argument(TestFrameworks.JUnit, "-v", "-s", "-a", "+c", "+q", "--include-categories=$flakyTests"))
-       |)""".stripMargin,
-    state,
-    _ => ()
-  )
-  runInputTask(Test / testOnly, "", state1, state)
-}
+addCommandAlias("runFlakyTests", s"testOnly -v -s -a +c +q --include-categories=$flakyTests")
 
 //it's run during "Package" step on TC
 addCommandAlias("runBundleSortingTests", runTestsInTC(bundleSortingTests))
 
-lazy val runFastTestsCommand = Command.single("runFastTestsCommand") { (state, glob) =>
-  val categoriesToExclude = List(
-    fileSetTests,
-    compilationTestsZinc,
-    compilationTestsIDEA,
-    compilerHighlightingTests,
-    completionTests,
-    editorTests,
-    slowTests,
-    extremelySlowTests,
-    debuggerTests,
-    debuggerEvaluationTests,
-    scalacTests,
-    typecheckerTests,
-    testingSupportTests,
-    highlightingTests,
-    worksheetEvaluationTests,
-    randomTypingTests,
-    flakyTests
-  )
-  val state1 = Command.process(
-    s"""set Seq(
-       |  Test / testFrameworks := Seq(TestFrameworks.JUnit),
-       |  Test / testOptions := Seq(Tests.Argument(TestFrameworks.JUnit, "-v", "-s", "-a", "+c", "+q", "--exclude-categories=${categoriesToExclude.mkString(",")}"))
-       |)""".stripMargin,
-    state,
-    _ => ()
-  )
-  runInputTask(Test / testOnly, s" $glob", state1, state)
-}
+lazy val categoriesToExclude = List(
+  fileSetTests,
+  compilationTestsZinc,
+  compilationTestsIDEA,
+  compilerHighlightingTests,
+  completionTests,
+  editorTests,
+  slowTests,
+  extremelySlowTests,
+  debuggerTests,
+  debuggerEvaluationTests,
+  scalacTests,
+  typecheckerTests,
+  testingSupportTests,
+  highlightingTests,
+  worksheetEvaluationTests,
+  randomTypingTests,
+  flakyTests
+)
 
-addCommandAlias("runFastTests", "runFastTestsCommand *")
+def runFastTestsInTC(glob: String): String =
+  s"testOnly $glob -- -v -s -a +c +q --exclude-categories=${categoriesToExclude.mkString(",")}"
+
+addCommandAlias("runFastTests", runFastTestsInTC("*"))
 // subsets of tests to split the complete test run into smaller chunks
-addCommandAlias("runFastTestsComIntelliJ", "runFastTestsCommand com.intellij.*")
-addCommandAlias("runFastTestsOrgJetbrains", "runFastTestsCommand org.jetbrains.*")
-addCommandAlias("runFastTestsScala", "runFastTestsCommand scala.*")
-
-Global / commands ++= Seq(runTestCategory, runFlakyTests, runFastTestsCommand)
+addCommandAlias("runFastTestsComIntelliJ", runFastTestsInTC("com.intellij.*"))
+addCommandAlias("runFastTestsOrgJetbrains", runFastTestsInTC("org.jetbrains.*"))
+addCommandAlias("runFastTestsScala", runFastTestsInTC("scala.*"))
