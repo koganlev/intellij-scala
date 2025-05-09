@@ -309,7 +309,7 @@ package object types {
           val actualSubst = projType.actualSubst
           val actualElement = projType.actualElement
           actualElement match {
-            case definition: ScTypeAliasDefinition if needExpand(definition) && (!definition.isOpaque || context.isInScopeOf(definition)) =>
+            case definition: ScTypeAliasDefinition if needExpand(definition) && !definition.isEffectivelyOpaque =>
               definition.aliasedType.toOption match {
                 case Some(ParameterizedType(des, _)) if !needSubstitutor =>
                   extractFrom(actualSubst(des), visitedAliases + definition.physical)

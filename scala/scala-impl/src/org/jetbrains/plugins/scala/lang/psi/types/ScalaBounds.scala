@@ -156,7 +156,7 @@ trait ScalaBounds extends api.Bounds {
         case proj @ ScProjectionType(p, _) =>
           proj.actualElement match {
             case _: PsiClass => Some(p)
-            case t: ScTypeAliasDefinition if !t.isOpaque || context.isInScopeOf(t) =>
+            case t: ScTypeAliasDefinition if !t.isEffectivelyOpaque =>
               t.aliasedType.toOption match {
                 case None          => None
                 case Some(aliased) => projectionOptionImpl(proj.actualSubst(aliased), visited + tp)
@@ -164,7 +164,7 @@ trait ScalaBounds extends api.Bounds {
             case _: ScTypeAliasDeclaration => Some(p)
             case _                         => None
           }
-        case ScDesignatorType(t: ScTypeAliasDefinition) if !t.isOpaque || context.isInScopeOf(t) =>
+        case ScDesignatorType(t: ScTypeAliasDefinition) if !t.isEffectivelyOpaque =>
           t.aliasedType.toOption match {
             case None          => None
             case Some(aliased) => projectionOptionImpl(aliased, visited + tp)

@@ -22,10 +22,10 @@ final class ScParameterizedType private (override val designator: ScType, overri
   override protected def calculateAliasType(implicit context: Context): Option[AliasType] =
     designator match {
       case ScDesignatorType(ta: ScTypeAliasDefinition)
-        if ta.isOpaque && !context.isInScopeOf(ta)             => None
+        if ta.isEffectivelyOpaque                     => None
       case ScDesignatorType(ta: ScTypeAlias)                   => computeAliasType(ta, ta.lowerBound, ta.upperBound)
       case ScProjectionType.withActual(ta: ScTypeAliasDefinition, _)
-        if ta.isOpaque && !context.isInScopeOf(ta)             => None
+        if ta.isEffectivelyOpaque                     => None
       case ScProjectionType.withActual(ta: ScTypeAlias, subst) => computeAliasType(ta, ta.lowerBound, ta.upperBound, subst)
       case p: ScParameterizedType =>
         //@TODO: scala 3 only

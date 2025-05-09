@@ -122,7 +122,7 @@ private class BaseTypesIterator(tp: ScType)(implicit context: Context) extends I
       seenTypes += tp
 
       tp match {
-        case IsTypeAlias(ta, s) if !ta.isOpaque || context.isInScopeOf(ta) =>
+        case IsTypeAlias(ta, s) if !ta.isEffectivelyOpaque =>
           if (!visitedAliases.contains(ta)) {
             visitedAliases += ta.physical
             ta.aliasedType match {

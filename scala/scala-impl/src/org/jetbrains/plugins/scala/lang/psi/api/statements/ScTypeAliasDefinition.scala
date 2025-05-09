@@ -15,6 +15,8 @@ trait ScTypeAliasDefinition extends ScTypeAlias {
 
   def isOpaque: Boolean = hasModifierProperty("opaque")
 
+  def isEffectivelyOpaque(implicit context: Context): Boolean = isOpaque && !context.isInScopeOf(this)
+
   def aliasedTypeElement: Option[ScTypeElement]
 
   def aliasedType: TypeResult = cachedInUserData("aliasedType", this, BlockModificationTracker(this)) {
