@@ -1,18 +1,18 @@
 package org.jetbrains.plugins.scala.compiler.highlighting
 
-import org.junit.jupiter.api.Assertions.assertEquals
-import org.junit.jupiter.api.DynamicTest.dynamicTest
-import org.junit.jupiter.api.{DynamicTest, TestFactory}
+import junitparams.naming.TestCaseName
+import junitparams.{JUnitParamsRunner, Parameters}
+import org.junit.Assert.assertEquals
+import org.junit.Test
+import org.junit.runner.RunWith
 
+import scala.annotation.unused
+
+@RunWith(classOf[JUnitParamsRunner])
 class CompilerOptionsTest {
 
-  @TestFactory
-  def fatalWarningsTests(): Array[DynamicTest] = {
-    def assertFatalWarningsFlag(scalacOptions: Seq[String], expectedFlag: Boolean): Unit = {
-      val actualFlag = CompilerOptions.containsFatalWarnings(scalacOptions)
-      assertEquals(expectedFlag, actualFlag, s"Fatal warnings flag should be $expectedFlag for scalacOptions: $scalacOptions")
-    }
-
+  @unused("used reflectively by the @Parameters annotation")
+  private def fatalWarningsTestParameters: Array[AnyRef] = {
     case class FatalWarningsTestCase(displayName: String, scalacOptions: Seq[String], expectedFlag: Boolean)
 
     Array(
@@ -32,17 +32,24 @@ class CompilerOptionsTest {
         expectedFlag = false
       )
     ).map { case FatalWarningsTestCase(displayName, scalacOptions, expectedFlag) =>
-      dynamicTest(displayName, () => assertFatalWarningsFlag(scalacOptions, expectedFlag))
+      Array(displayName, scalacOptions, expectedFlag)
     }
   }
 
-  @TestFactory
-  def unusedImportsTests(): Array[DynamicTest] = {
-    def assertUnusedImportsFlag(scalacOptions: Seq[String], expectedFlag: Boolean): Unit = {
-      val actualFlag = CompilerOptions.containsUnusedImports(scalacOptions)
-      assertEquals(expectedFlag, actualFlag, s"Unused imports flag should be $expectedFlag for scalacOptions: $scalacOptions")
-    }
-
+  @Test
+  @Parameters(method = "fatalWarningsTestParameters")
+  @TestCaseName(value = "{0}")
+  def fatalWarningsTest(
+    @unused("used reflectively by the @TestCaseName annotation") testName: String,
+    scalacOptions: Seq[String],
+    expectedFlag: Boolean
+  ): Unit = {
+    val actualFlag = CompilerOptions.containsFatalWarnings(scalacOptions)
+    assertEquals(s"Fatal warnings flag should be $expectedFlag for scalacOptions: $scalacOptions", expectedFlag, actualFlag)
+  }
+  
+  @unused("used reflectively by the @Parameters annotation")
+  private def unusedImportsTestParameters: Array[AnyRef] = {
     case class UnusedImportsTestCase(displayName: String, scalacOptions: Seq[String], expectedFlag: Boolean)
 
     Array(
@@ -72,7 +79,19 @@ class CompilerOptionsTest {
         expectedFlag = true
       )
     ).map { case UnusedImportsTestCase(displayName, scalacOptions, expectedFlag) =>
-      dynamicTest(displayName, () => assertUnusedImportsFlag(scalacOptions, expectedFlag))
+      Array(displayName, scalacOptions, expectedFlag)
     }
+  }
+  
+  @Test
+  @Parameters(method = "unusedImportsTestParameters")
+  @TestCaseName(value = "{0}")
+  def unusedImportsTest(
+    @unused("used reflectively by the @TestCaseName annotation") testName: String,
+    scalacOptions: Seq[String],
+    expectedFlag: Boolean
+  ): Unit = {
+    val actualFlag = CompilerOptions.containsUnusedImports(scalacOptions)
+    assertEquals(s"Unused imports flag should be $expectedFlag for scalacOptions: $scalacOptions", expectedFlag, actualFlag)
   }
 }

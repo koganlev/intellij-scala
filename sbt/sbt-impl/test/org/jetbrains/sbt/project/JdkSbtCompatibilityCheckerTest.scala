@@ -4,8 +4,8 @@ import com.intellij.util.lang.JavaVersion
 import junitparams.{JUnitParamsRunner, Parameters}
 import org.jetbrains.sbt.SbtVersion
 import org.jetbrains.sbt.project.template.wizard.JdkSbtCompatibilityChecker
+import org.junit.Assert.assertEquals
 import org.junit.Test
-import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.runner.RunWith
 
 import scala.annotation.unused
