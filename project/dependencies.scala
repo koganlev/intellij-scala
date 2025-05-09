@@ -117,12 +117,7 @@ object Dependencies {
   val junitParams: ModuleID = "pl.pragmatists" % "JUnitParams" % junitParamsVersion
   val junitInterface: ModuleID = "com.github.sbt" % "junit-interface" % junitInterfaceVersion
 
-  /**
-   * Needs to be in sync with `"com.github.sbt.junit" % "sbt-jupiter-interface" % "version"` in project/plugins.sbt.
-   */
-  val jupiterInterface: ModuleID = "com.github.sbt.junit" % "jupiter-interface" % "0.13.3"
-
-  val jupiterParams: String => ModuleID = (version: String) =>"org.junit.jupiter" % "junit-jupiter-params" % version
+  val opentest4j: ModuleID = "org.opentest4j" % "opentest4j" % "1.3.0"
 
   val ivy2: ModuleID = "org.apache.ivy" % "ivy" % "2.5.3"
 

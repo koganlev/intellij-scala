@@ -1,5 +1,4 @@
 import CompilationCache.compilationCacheSettings
-import com.github.sbt.junit.jupiter.sbt.Import.JupiterKeys.junitJupiterVersion
 import org.jetbrains.sbtidea.Keys.*
 import org.jetbrains.sbtidea.packaging.PackagingKeys.*
 import sbt.Keys.*
@@ -92,8 +91,7 @@ object Common {
       Dependencies.junit % Test,
       Dependencies.junitParams % Test,
       Dependencies.junitInterface % Test,
-      Dependencies.jupiterInterface % Test,
-      Dependencies.jupiterParams(junitJupiterVersion.value) % Test,
+      Dependencies.opentest4j % Test
     ),
   ) ++ projectDirectoriesSettings ++
     compilationCacheSettings
