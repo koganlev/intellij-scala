@@ -28,25 +28,17 @@ package object types {
     private def projectContext = scType.projectContext
     private def stdTypes = projectContext.stdTypes
 
-    @deprecated def equiv_FORWARDER(`type`: ScType): Boolean = equiv(`type`)
-
     def equiv(`type`: ScType)(implicit context: Context): Boolean = {
       typeSystem.equiv(scType, `type`)
     }
-
-    @deprecated def equiv_FORWARDER(`type`: ScType, constraints: ConstraintSystem, falseUndef: Boolean): ConstraintsResult = equiv(`type`, constraints, falseUndef)
 
     def equiv(`type`: ScType, constraints: ConstraintSystem, falseUndef: Boolean = true)(implicit context: Context): ConstraintsResult = {
       typeSystem.equivInner(scType, `type`, constraints, falseUndef)
     }
 
-    @deprecated def conforms_FORWARDER(`type`: ScType): Boolean = conforms(`type`)
-
     def conforms(`type`: ScType)(implicit context: Context): Boolean = {
       typeSystem.conformsInner(`type`, scType).isRight
     }
-
-    @deprecated def weakConforms_FORWARDER(`type`: ScType): Boolean = weakConforms(`type`)
 
     def weakConforms(`type`: ScType)(implicit context: Context): Boolean = {
       typeSystem.conformsInner(`type`, scType, checkWeak = true).isRight
@@ -76,21 +68,15 @@ package object types {
       }
     }
 
-    @deprecated def conforms_FORWARDER(`type`: ScType, constraints: ConstraintSystem, checkWeak: Boolean): ConstraintsResult = conforms(`type`, constraints, checkWeak)
-
     def conforms(`type`: ScType,
                  constraints: ConstraintSystem,
                  checkWeak: Boolean = false)(implicit context: Context): ConstraintsResult = {
       typeSystem.conformsInner(`type`, scType, constraints = constraints, checkWeak = checkWeak)
     }
 
-    @deprecated def glb_FORWARDER(`type`: ScType, checkWeak: Boolean): ScType = glb(`type`, checkWeak)
-
     def glb(`type`: ScType, checkWeak: Boolean = false)(implicit context: Context): ScType = {
       typeSystem.glb(scType, `type`, checkWeak)
     }
-
-    @deprecated def lub_FORWARDER(`type`: ScType, checkWeak: Boolean): ScType = lub(`type`, checkWeak)
 
     def lub(`type`: ScType, checkWeak: Boolean = true)(implicit context: Context): ScType = {
       typeSystem.lub(scType, `type`, checkWeak)
@@ -170,8 +156,6 @@ package object types {
         .extractFrom(scType).map(_._1)
     }
 
-    @deprecated def extractClassType_FORWARDER: Option[(PsiClass, ScSubstitutor)] = extractClassType
-
     def extractClassType(implicit context: Context): Option[(PsiClass, ScSubstitutor)] = {
       new ClassTypeExtractor(needSubstitutor = true)
         .extractFrom(scType)
@@ -214,8 +198,6 @@ package object types {
 
     def removeAliasDefinitionsIn(place: PsiElement): ScType =
       removeAliasDefinitions()(Context(place))
-
-    @deprecated def removeAliasDefinitions_FORWARDER(expandableOnly: Boolean): ScType = removeAliasDefinitions(expandableOnly)
 
     def removeAliasDefinitions(expandableOnly: Boolean = false)(implicit context: Context): ScType = {
       def needExpand(ta: ScTypeAliasDefinition) = !expandableOnly || shouldExpand(ta)

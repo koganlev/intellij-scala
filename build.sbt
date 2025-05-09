@@ -81,8 +81,7 @@ lazy val scalaCommunity: sbt.Project =
       pluginXml,
       scalaCli % "test->test;compile->compile",
       javaDecompilerIntegration % "test->test", //add only test dependency to run tests from this module
-      scalastyleIntegration,
-      scalac2Patches % Provided,
+      scalastyleIntegration
     )
     .settings(MainProjectSettings)
     .settings(
@@ -355,18 +354,6 @@ lazy val packageSearchClient: sbt.Project =
       libraryDependencies ++= Dependencies.packageSearchDependencies,
     )
 
-lazy val scalac2Patches: sbt.Project =
-  Project("scalac2-patches", file("scalac-patches/scalac2-patches"))
-    .settings(
-      name := "scalac2-patches",
-      projectDirectoriesSettings,
-      scalaVersion := Versions.scalaVersion,
-      libraryDependencies ++= Seq(Dependencies.scalaCompiler),
-      packageMethod := PackagingMethod.Skip(),
-      intellijMainJars := Nil,
-      intellijTestJars := Nil
-    )
-
 lazy val scalaImpl: sbt.Project =
   newProject("scala-impl", file("scala/scala-impl"))
     .dependsOn(
@@ -417,7 +404,6 @@ lazy val scalaImpl: sbt.Project =
         Dependencies.scala3Library          -> None
       )
     )
-    .withCompilerPluginIn(scalac2Patches)
 
 /**
  * Encapsulates scala.meta, so that we don't have to depend on in directly in scala-impl

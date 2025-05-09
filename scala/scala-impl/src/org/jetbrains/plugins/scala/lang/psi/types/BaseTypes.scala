@@ -14,8 +14,6 @@ import scala.collection.mutable
 
 object BaseTypes {
 
-  @deprecated def iterator_FORWARDER(tp: ScType): Iterator[ScType] = iterator(tp)
-
   def iterator(tp: ScType)(implicit context: Context): Iterator[ScType] = new BaseTypesIterator(tp)
 
   def get(t: ScType): Seq[ScType] = reduce(iterator(t).toList)
