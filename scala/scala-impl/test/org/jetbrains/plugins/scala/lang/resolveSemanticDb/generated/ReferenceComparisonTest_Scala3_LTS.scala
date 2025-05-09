@@ -2844,7 +2844,7 @@ class ReferenceComparisonTest_Scala3_LTS extends ReferenceComparisonTestBase(org
   def test_targetName_override(): Unit = doTest("targetName-override", true)
   def test_tasty_named_arguments(): Unit = doTest("tasty-named-arguments", false)
   def test_tasty_parent_unapply(): Unit = doTest("tasty-parent-unapply", false)
-  def test_tasty_reflect_opaque_api_proto(): Unit = doTest("tasty-reflect-opaque-api-proto", false) // #opaque, #extension
+  def test_tasty_reflect_opaque_api_proto(): Unit = doTest("tasty-reflect-opaque-api-proto", true) // #opaque, #extension
   def test_tasty_tags_obscure(): Unit = doTest("tasty-tags-obscure", true)
   def test_tcpoly_boundedmonad(): Unit = doTest("tcpoly_boundedmonad", true)
   def test_tcpoly_bounds1(): Unit = doTest("tcpoly_bounds1", true) // #typeLambda
