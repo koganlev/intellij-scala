@@ -632,6 +632,20 @@ class Scala3OpaqueTypeAliasTest extends ScalaLightCodeInsightFixtureTestCase {
     )
   }
 
+  def testScl21568(): Unit = {
+    checkTextHasNoErrors(
+      s"""
+         |object Inside:
+         |  opaque type T = Nothing
+         |  object T:
+         |    extension (x: T)
+         |      def foo: Int = 123
+         |object Outside:
+         |  (??? : Inside.T).foo
+         |""".stripMargin
+    )
+  }
+
   def testScl22480(): Unit = {
     checkTextHasNoErrors(
       s"""
