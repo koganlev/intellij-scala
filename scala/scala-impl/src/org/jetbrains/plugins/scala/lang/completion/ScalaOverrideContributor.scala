@@ -6,7 +6,6 @@ import com.intellij.openapi.application.ex.ApplicationManagerEx
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.util.Iconable
-import com.intellij.openapi.util.registry.Registry
 import com.intellij.psi._
 import com.intellij.psi.filters._
 import com.intellij.psi.filters.position.{FilterPattern, LeftNeighbour}
@@ -256,21 +255,17 @@ object ScalaOverrideContributor {
       val performInsertRunnable: Runnable =
         () => DumbService.getInstance(project).withAlternativeResolveEnabled(insertRunnable)
 
-      if (Registry.is("run.refactorings.under.progress")) {
-        val title = ScalaBundle.message("overriding.member.title")
+      val title = ScalaBundle.message("overriding.member.title")
 
-        val performUnderProgress: java.util.function.Consumer[ProgressIndicator] = { indicator =>
-          indicator.setIndeterminate(false)
-          indicator.setFraction(0)
-          performInsertRunnable.run()
-        }
-
-        //noinspection ApiStatus
-        ApplicationManagerEx.getApplicationEx.runWriteActionWithCancellableProgressInDispatchThread(
-          title, project, null, performUnderProgress)
-      } else {
+      val performUnderProgress: java.util.function.Consumer[ProgressIndicator] = { indicator =>
+        indicator.setIndeterminate(false)
+        indicator.setFraction(0)
         performInsertRunnable.run()
       }
+
+      //noinspection ApiStatus
+      ApplicationManagerEx.getApplicationEx.runWriteActionWithCancellableProgressInDispatchThread(
+        title, project, null, performUnderProgress)
     }
 
     private def doHandleInsert(context: InsertionContext, item: LookupElement): Unit = {
