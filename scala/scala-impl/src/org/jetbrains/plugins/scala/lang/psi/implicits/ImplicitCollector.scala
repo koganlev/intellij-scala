@@ -7,6 +7,7 @@ import com.intellij.util.SlowOperations
 import org.jetbrains.plugins.scala.caches.measure
 import org.jetbrains.plugins.scala.extensions._
 import org.jetbrains.plugins.scala.lang.macros.evaluator.{MacroContext, ScalaMacroEvaluator}
+import org.jetbrains.plugins.scala.lang.psi.ElementScope
 import org.jetbrains.plugins.scala.lang.psi.api.InferUtil
 import org.jetbrains.plugins.scala.lang.psi.api.InferUtil.SafeCheckException
 import org.jetbrains.plugins.scala.lang.psi.api.statements._
@@ -148,7 +149,8 @@ class ImplicitCollector(
     )
 
   private val project = place.getProject
-  private implicit def ctx: ProjectContext = project
+  private implicit def projectContext: ProjectContext = project
+  private implicit def context: Context = Context(place)
 
   private val targetClass: Option[PsiClass]         = tp.extractClass
   private lazy val targetFunctionArity: Option[Int] = targetClass.flatMap(extractTargetFunctionArity)
@@ -780,6 +782,8 @@ class ImplicitCollector(
     withLocalTypeInference: Boolean,
     checkFast:              Boolean,
   ): Option[ScalaResolveResult] = measure("ImplicitCollector.checkFunctionByType") {
+    implicit val elementScope: ElementScope = c.element.elementScope
+
     val fun                 = c.element.asInstanceOf[ScFunction]
     val exportedInExtension = c.exportedInExtension
 
@@ -808,7 +812,7 @@ class ImplicitCollector(
       case Some(undefined0: ScType) =>
 
         val undefined = undefined0 match {
-          case Scala3Conversion(argType, resType) if isImplicitConversion => FunctionType(resType, Seq(argType))(fun.elementScope)
+          case Scala3Conversion(argType, resType) if isImplicitConversion => FunctionType(resType, Seq(argType))
           case _                                                          => undefined0
         }
 
@@ -820,7 +824,7 @@ class ImplicitCollector(
               checkExtensionConformance(place, undefined, pt)
             else
               checkWeakConformance(place, undefined, pt)
-          } else undefined.conforms(tp, ConstraintSystem.empty)(Context(place))
+          } else undefined.conforms(tp, ConstraintSystem.empty)
 
         if (undefinedConforms.isRight) {
           if (checkFast) Option(c)
@@ -845,16 +849,19 @@ class ImplicitCollector(
   }
 
   private def checkExtensionConformance(place: PsiElement, tpe: ScType, pt: ScType): ConstraintsResult = {
+    implicit val elementScope: ElementScope = place.elementScope
+    implicit val context: Context = Context(place)
+
     val conformanceResult =
       for {
         (extensionArg, _) <- extractFunction1TypeArgs(tpe, strict = false)
         (ptArg, _)        <- extractFunction1TypeArgs(pt)
       } yield {
-        val conforms = ptArg.conforms(extensionArg, ConstraintSystem.empty)(Context(place))
+        val conforms = ptArg.conforms(extensionArg, ConstraintSystem.empty)
 
         if (conforms.isRight) conforms
         else {
-          val conversionType = FunctionType(extensionArg, Seq(ptArg))(place.elementScope)
+          val conversionType = FunctionType(extensionArg, Seq(ptArg))
 
           val implicitCollector = new ImplicitCollector(
             place,
@@ -964,17 +971,20 @@ class ImplicitCollector(
     }
   }
 
-  private def checkWeakConformance(place: PsiElement, tpe: ScType, pt: ScType): ConstraintsResult =
+  private def checkWeakConformance(place: PsiElement, tpe: ScType, pt: ScType): ConstraintsResult = {
+    implicit val context: Context = Context(place)
+
     extractFunction1TypeArgs(tpe, strict = false) match {
       case Some((tpeArg, tpeRes)) =>
         extractFunction1TypeArgs(pt) match {
           case Some((ptArg, ptRes)) =>
-            ptArg.conforms(tpeArg, ConstraintSystem.empty, checkWeak = true)(Context(place)) match {
-              case cs: ConstraintSystem => tpeRes.conforms(ptRes, cs)(Context(place))
+            ptArg.conforms(tpeArg, ConstraintSystem.empty, checkWeak = true) match {
+              case cs: ConstraintSystem => tpeRes.conforms(ptRes, cs)
               case left                 => left
             }
           case _ => ConstraintsResult.Left
         }
       case _ => ConstraintsResult.Left
     }
+  }
 }

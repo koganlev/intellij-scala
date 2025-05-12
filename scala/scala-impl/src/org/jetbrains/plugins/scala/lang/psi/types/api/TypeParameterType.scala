@@ -13,6 +13,8 @@ class TypeParameterType private (val typeParameter: TypeParameter)
 
   override implicit def projectContext: ProjectContext = psiTypeParameter
 
+  protected implicit def thisContext: Context = Context(psiTypeParameter)
+
   def typeParameters: Seq[TypeParameter] = typeParameter.typeParameters
 
   val arguments: Seq[TypeParameterType] = typeParameters.map(new TypeParameterType(_))
@@ -47,8 +49,8 @@ class TypeParameterType private (val typeParameter: TypeParameter)
           /** see
            * [[org.jetbrains.plugins.scala.lang.psi.implicits.ImplicitCollector#maskTypeParametersInExtensions]]
            */
-          if (isMaskedExtensionTypeParameter(this, that)
-            || isMaskedExtensionTypeParameter(that, this))
+          if (isMaskedExtensionTypeParameter(this, that)(context)
+            || isMaskedExtensionTypeParameter(that, this)(context))
             constraints
           else ConstraintsResult.Left
         }
@@ -70,7 +72,7 @@ class TypeParameterType private (val typeParameter: TypeParameter)
 }
 
 object TypeParameterType {
-  private def isMaskedExtensionTypeParameter(lhs: TypeParameterType, rhs: TypeParameterType): Boolean =
+  private def isMaskedExtensionTypeParameter(lhs: TypeParameterType, rhs: TypeParameterType)(implicit context: Context): Boolean =
     lhs.psiTypeParameter match {
       case _: DummyLightTypeParam => lhs.lowerType.equiv(rhs) && lhs.upperType.equiv(rhs)
       case _                      => false

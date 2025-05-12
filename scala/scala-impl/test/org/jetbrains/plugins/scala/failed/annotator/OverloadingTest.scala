@@ -9,7 +9,7 @@ import org.jetbrains.plugins.scala.base.ScalaLightCodeInsightFixtureTestCase
 import org.jetbrains.plugins.scala.lang.psi.api.base.types.{ScTypeElement, ScTypeElementExt}
 import org.jetbrains.plugins.scala.lang.psi.api.expr.{ScBlockExpr, ScExpression}
 import org.jetbrains.plugins.scala.lang.psi.api.statements.ScPatternDefinition
-import org.jetbrains.plugins.scala.lang.psi.types.ScTypeExt
+import org.jetbrains.plugins.scala.lang.psi.types.{Context, ScTypeExt}
 import org.jetbrains.plugins.scala.lang.psi.types.api.presentation.TypePresentation
 import org.jetbrains.plugins.scala.util.assertions.MatcherAssertions
 import org.junit.Assert._
@@ -52,6 +52,8 @@ abstract class OverloadingTestBase extends ScalaLightCodeInsightFixtureTestCase 
   // TODO Why do we have this custom _implementation_ in a _test_?
   // TODO Use TypeMismatchError.register
   private def checkConformance(expression: ScExpression, typeElement: ScTypeElement, holder: ScalaAnnotationHolder): Unit = {
+    implicit val context: Context = Context(expression)
+
     expression.getTypeAfterImplicitConversion().tr.foreach { actual =>
       val expected = typeElement.calcType
       if (!actual.conforms(expected)) {

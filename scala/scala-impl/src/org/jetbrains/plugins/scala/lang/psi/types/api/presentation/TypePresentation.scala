@@ -8,7 +8,7 @@ import org.jetbrains.plugins.scala.lang.psi.api.statements.{ScTypeAliasDeclarati
 import org.jetbrains.plugins.scala.lang.psi.api.toplevel.ScPackaging
 import org.jetbrains.plugins.scala.lang.psi.api.toplevel.typedef.{ScMember, ScObject, ScTypeDefinition}
 import org.jetbrains.plugins.scala.lang.psi.types.api.presentation.TypePresentation._
-import org.jetbrains.plugins.scala.lang.psi.types.{ScType, ScTypeExt, TypePresentationContext}
+import org.jetbrains.plugins.scala.lang.psi.types.{Context, ScType, ScTypeExt, TypePresentationContext}
 import org.jetbrains.plugins.scala.lang.refactoring.util.ScalaNamesUtil
 import org.jetbrains.plugins.scala.settings.ScalaApplicationSettings.{getInstance => ScalaApplicationSettings}
 
@@ -18,10 +18,10 @@ trait TypePresentation {
     `type`: ScType,
     nameRenderer: NameRenderer,
     options: PresentationOptions = PresentationOptions.Default
-  )(implicit context: TypePresentationContext): String
+  )(implicit tpc: TypePresentationContext, context: Context): String
 
   final def presentableText(`type`: ScType, withPrefix: Boolean = true)
-                           (implicit context: TypePresentationContext): String = {
+                           (implicit tpc: TypePresentationContext, context: Context): String = {
     val renderer = new NameRenderer {
       override def renderName(e: PsiNamedElement): String = e match {
         case c: PsiClass if withPrefix => ScalaPsiUtil.nameWithPrefixIfNeeded(c)
@@ -34,10 +34,10 @@ trait TypePresentation {
         case e                              => e.name + "."
       }
     }
-    typeText(`type`, renderer, PresentationOptions.Default)(context)
+    typeText(`type`, renderer, PresentationOptions.Default)(tpc, context)
   }
 
-  final def canonicalText(`type`: ScType, context: TypePresentationContext): String = {
+  final def canonicalText(`type`: ScType, tpc: TypePresentationContext): String = {
     val renderer: NameRenderer = new NameRenderer {
       override def renderName(e: PsiNamedElement): String = renderNameImpl(e, withPoint = false)
       override def renderNameWithPoint(e: PsiNamedElement): String = renderNameImpl(e, withPoint = true)
@@ -69,7 +69,7 @@ trait TypePresentation {
         if (res.nonEmpty && withPoint) res + "." else res
       }
     }
-    typeText(`type`, renderer, PresentationOptions(renderStdTypes = ScalaApplicationSettings.PRECISE_TEXT, canonicalForm = true))(context)
+    typeText(`type`, renderer, PresentationOptions(renderStdTypes = ScalaApplicationSettings.PRECISE_TEXT, canonicalForm = true))(tpc, Context.Empty)
   }
 }
 

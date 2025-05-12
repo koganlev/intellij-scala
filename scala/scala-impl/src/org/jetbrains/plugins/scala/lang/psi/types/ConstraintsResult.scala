@@ -46,11 +46,11 @@ sealed trait ConstraintSystem extends ConstraintsResult {
 
   def withTypeParamId(id: Long): ConstraintSystem
 
-  def withLower(id: Long, lower: ScType, variance: Variance = Contravariant): ConstraintSystem
+  def withLower(id: Long, lower: ScType, variance: Variance = Contravariant)(implicit context: Context): ConstraintSystem
 
-  def withUpper(id: Long, upper: ScType, variance: Variance = Covariant): ConstraintSystem
+  def withUpper(id: Long, upper: ScType, variance: Variance = Covariant)(implicit context: Context): ConstraintSystem
 
-  def +(constraints: ConstraintSystem): ConstraintSystem
+  def +(constraints: ConstraintSystem)(implicit context: Context): ConstraintSystem
 
   def isApplicable(id: Long): Boolean
 
@@ -114,7 +114,7 @@ private final case class ConstraintSystemImpl(upperMap: LongMap[Set[ScType]],
 
   override def isEmpty: Boolean = upperMap.isEmpty && lowerMap.isEmpty
 
-  override def +(constraints: ConstraintSystem): ConstraintSystem = constraints match {
+  override def +(constraints: ConstraintSystem)(implicit context: Context): ConstraintSystem = constraints match {
     case ConstraintSystemImpl(otherUpperMap, otherLowerMap, otherAdditionalIds) => ConstraintSystemImpl(
       upperMap.merge(otherUpperMap)(isAny),
       lowerMap.merge(otherLowerMap)(isNothing),
@@ -127,13 +127,13 @@ private final case class ConstraintSystemImpl(upperMap: LongMap[Set[ScType]],
     additionalIds = additionalIds + id
   )
 
-  override def withLower(id: Long, rawLower: ScType, variance: Variance): ConstraintSystem =
+  override def withLower(id: Long, rawLower: ScType, variance: Variance)(implicit context: Context): ConstraintSystem =
     computeLower(variance, rawLower) match {
       case None => this
       case Some(lower) => copy(lowerMap = lowerMap.update(id, lower))
     }
 
-  override def withUpper(id: Long, rawUpper: ScType, variance: Variance): ConstraintSystem =
+  override def withUpper(id: Long, rawUpper: ScType, variance: Variance)(implicit context: Context): ConstraintSystem =
     computeUpper(variance, rawUpper) match {
       case None => this
       case Some(upper) => copy(upperMap = upperMap.update(id, upper))
@@ -285,22 +285,22 @@ private object ConstraintSystemImpl {
     }
   }
 
-  private def computeUpper(variance: Variance, rawUpper: ScType): Option[ScType]  =
+  private def computeUpper(variance: Variance, rawUpper: ScType)(implicit context: Context): Option[ScType]  =
     updateUpper(variance, rawUpper)
       .unpackedType
       .ifNot(isAny)
 
-  private def computeLower(variance: Variance, rawLower: ScType): Option[ScType] =
+  private def computeLower(variance: Variance, rawLower: ScType)(implicit context: Context): Option[ScType] =
     updateLower(variance, rawLower)
       .unpackedType
       .ifNot(isNothing)
 
-  private def isAny(`type`: ScType) = {
+  private def isAny(`type`: ScType)(implicit context: Context) = {
     import `type`.projectContext
     `type`.equiv(Any)
   }
 
-  private def isNothing(`type`: ScType) = {
+  private def isNothing(`type`: ScType)(implicit context: Context) = {
     import `type`.projectContext
     `type`.equiv(Nothing)
   }
@@ -393,11 +393,11 @@ private final case class MultiConstraintSystem(impls: Set[ConstraintSystemImpl])
     _.withTypeParamId(id)
   }
 
-  override def withLower(id: Long, lower: ScType, variance: Variance): ConstraintSystem = map {
+  override def withLower(id: Long, lower: ScType, variance: Variance)(implicit context: Context): ConstraintSystem = map {
     _.withLower(id, lower, variance)
   }
 
-  override def withUpper(id: Long, upper: ScType, variance: Variance): ConstraintSystem = map {
+  override def withUpper(id: Long, upper: ScType, variance: Variance)(implicit context: Context): ConstraintSystem = map {
     _.withUpper(id, upper, variance)
   }
 
@@ -411,7 +411,7 @@ private final case class MultiConstraintSystem(impls: Set[ConstraintSystemImpl])
     _.removeTypeParamIds(ids)
   }
 
-  override def +(constraints: ConstraintSystem): ConstraintSystem = {
+  override def +(constraints: ConstraintSystem)(implicit context: Context): ConstraintSystem = {
     val otherImpls = constraints match {
       case impl: ConstraintSystemImpl => Set(impl)
       case MultiConstraintSystem(otherSubstitutors) => otherSubstitutors

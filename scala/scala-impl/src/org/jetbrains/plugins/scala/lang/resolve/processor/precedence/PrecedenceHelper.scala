@@ -5,6 +5,7 @@ import com.intellij.util.containers.SmartHashSet
 import it.unimi.dsi.fastutil.Hash
 import it.unimi.dsi.fastutil.objects.ObjectOpenCustomHashSet
 import org.jetbrains.plugins.scala.lang.psi.ScalaPsiUtil
+import org.jetbrains.plugins.scala.lang.psi.types.Context
 import org.jetbrains.plugins.scala.lang.resolve.ScalaResolveResult
 
 import java.util
@@ -12,6 +13,8 @@ import java.util
 trait PrecedenceHelper {
 
   protected def getPlace: PsiElement
+
+  protected implicit def context: Context = Context(getPlace)
 
   protected val precedenceTypes: PrecedenceTypes = PrecedenceTypes.forElement(getPlace)
   protected lazy val placePackageName: String = Option(ScalaPsiUtil.getPlacePackageName(getPlace)).getOrElse("")

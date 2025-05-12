@@ -18,7 +18,7 @@ import org.jetbrains.plugins.scala.lang.psi.api.statements.{ScDeclaration, ScEnu
 import org.jetbrains.plugins.scala.lang.psi.api.toplevel.typedef._
 import org.jetbrains.plugins.scala.lang.psi.impl.toplevel.typedef.TypeDefinitionMembers
 import org.jetbrains.plugins.scala.lang.psi.implicits.ImplicitCollector
-import org.jetbrains.plugins.scala.lang.psi.types.{PhysicalMethodSignature, ScType, TermSignature, TypePresentationContext, ValueClassType}
+import org.jetbrains.plugins.scala.lang.psi.types.{Context, PhysicalMethodSignature, ScType, TermSignature, TypePresentationContext, ValueClassType}
 import org.jetbrains.plugins.scala.lang.resolve.ScalaResolveResult
 import org.jetbrains.plugins.scala.overrideImplement.{ScMethodMember, ScalaOIUtil, ScalaTypedMember}
 import org.jetbrains.plugins.scala.{NlsString, ScalaBundle, overrideImplement}
@@ -246,6 +246,8 @@ object ScTemplateDefinitionAnnotator extends ElementAnnotator[ScTemplateDefiniti
   def annotateIllegalInheritance(element: ScTemplateDefinition)
                                 (implicit holder: ScalaAnnotationHolder): Unit = {
     implicit val tpc: TypePresentationContext = TypePresentationContext(element)
+    implicit val context: Context = Context(element)
+
     element.selfTypeElement.flatMap(_.`type`().toOption).
       orElse(element.`type`().toOption)
       .foreach { ownType =>

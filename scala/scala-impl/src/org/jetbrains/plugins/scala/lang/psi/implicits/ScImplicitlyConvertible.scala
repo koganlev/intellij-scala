@@ -2,6 +2,7 @@ package org.jetbrains.plugins.scala.lang.psi.implicits
 
 import com.intellij.psi._
 import org.jetbrains.plugins.scala.caches.{BlockModificationTracker, cachedWithRecursionGuard}
+import org.jetbrains.plugins.scala.lang.psi.ElementScope
 import org.jetbrains.plugins.scala.lang.psi.api.expr.ScExpression
 import org.jetbrains.plugins.scala.lang.psi.types._
 import org.jetbrains.plugins.scala.lang.psi.types.api._
@@ -10,7 +11,10 @@ import org.jetbrains.plugins.scala.lang.psi.types.api._
   * Utility class for implicit conversions.
  */
 object ScImplicitlyConvertible {
-  def findImplicitConversions(place: ScExpression, fromUnderscore: Boolean): Seq[PsiNamedElement] =
+  def findImplicitConversions(place: ScExpression, fromUnderscore: Boolean): Seq[PsiNamedElement] = {
+    implicit val elementScope: ElementScope = place.elementScope
+    implicit val context: Context = Context(place)
+
     findPlaceType(place, fromUnderscore).toSeq.flatMap { placeType =>
       val regulars =
         cachedWithRecursionGuard(
@@ -52,6 +56,7 @@ object ScImplicitlyConvertible {
 
       (regulars ++ companions).map(_.element).toSeq
     }
+  }
 
   private def findPlaceType(place: ScExpression, fromUnderscore: Boolean): Option[ScType] =
     place.getTypeWithoutImplicits(fromUnderscore = fromUnderscore).toOption

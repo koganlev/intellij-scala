@@ -17,7 +17,7 @@ import org.jetbrains.plugins.scala.lang.psi.types.ComparingUtil.{isNeverSubClass
 import org.jetbrains.plugins.scala.lang.psi.types.api.designator.DesignatorOwner
 import org.jetbrains.plugins.scala.lang.psi.types.api.presentation.TypePresentation
 import org.jetbrains.plugins.scala.lang.psi.types.api.{Any, AnyVal, NamedTupleType, Nothing, Null, TupleType, TypeParameterType, arrayType}
-import org.jetbrains.plugins.scala.lang.psi.types.{ScAbstractType, ScParameterizedType, ScType, ScalaType, TypePresentationContext}
+import org.jetbrains.plugins.scala.lang.psi.types.{Context, ScAbstractType, ScParameterizedType, ScType, ScalaType, TypePresentationContext}
 import org.jetbrains.plugins.scala.lang.resolve.ScalaResolveResult
 import org.jetbrains.plugins.scala.project.ProjectContext
 import org.jetbrains.plugins.scala.{NlsString, ScalaBundle}
@@ -58,8 +58,9 @@ object ScPatternAnnotator extends ElementAnnotator[ScPattern] {
     */
   private def checkPatternType(_patType: ScType, exprType: ScType, pattern: ScPattern)
                               (implicit holder: ScalaAnnotationHolder): Unit = {
-    implicit val ctx: ProjectContext = pattern
+    import pattern.{projectContext, elementScope}
     implicit val tpc: TypePresentationContext = TypePresentationContext(pattern)
+    implicit val context: Context = Context(pattern)
 
     val dealiased = ScalaType.expandAliases(exprType).getOrElse(exprType)
     val exTp      = widen(dealiased)
@@ -296,8 +297,7 @@ object ScPatternAnnotator extends ElementAnnotator[ScPattern] {
 
   // TODO Should be in ScPattern, not in the annotator?
   @tailrec
-  def matchesPattern(matching: ScType, matched: ScType): Boolean = {
-
+  def matchesPattern(matching: ScType, matched: ScType)(implicit context: Context): Boolean = {
     matching.weakConforms(matched) || ((matching, matched) match {
       case (arrayType(arg1), arrayType(arg2)) => matchesPattern(arg1, arg2)
       case (_, parameterized: ScParameterizedType) =>
@@ -310,7 +310,8 @@ object ScPatternAnnotator extends ElementAnnotator[ScPattern] {
   // TODO Should be in ScPattern, not in the annotator?
   //computes type of the pattern itself, shouldn't rely on expected type
   def patternType(pattern: ScPattern): Option[ScType] = {
-    import pattern.projectContext
+    import pattern.{projectContext, elementScope}
+    implicit val context: Context = Context(pattern)
 
     def constrPatternType(patternRef: ScStableCodeReference): Option[ScType] = {
       patternRef.bind() match {

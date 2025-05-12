@@ -88,7 +88,7 @@ trait ScalaConformance extends api.Conformance with TypeVariableUnification {
     l:           ScType,
     r:           ScType,
     constraints: ConstraintSystem
-  ): ConstraintsResult = {
+  )(implicit context: Context): ConstraintsResult = {
     val lo = lhs.lowerType
 
     if (!lhs.lowerType.equiv(lhs)) {
@@ -1573,7 +1573,7 @@ trait ScalaConformance extends api.Conformance with TypeVariableUnification {
 
 private object ScalaConformance {
   private[psi] object HKAbstract {
-    def unapply(tpe: ParameterizedType): Boolean = tpe match {
+    def unapply(tpe: ParameterizedType)(implicit context: Context): Boolean = tpe match {
       case ParameterizedType(abs: ScAbstractType, tArgs) =>
         import abs.projectContext
         abs.upper.equiv(Any) && tArgs.forall {

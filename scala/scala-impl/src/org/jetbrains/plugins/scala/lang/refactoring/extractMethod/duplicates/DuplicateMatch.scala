@@ -11,7 +11,7 @@ import org.jetbrains.plugins.scala.lang.psi.api.toplevel.ScTypedDefinition
 import org.jetbrains.plugins.scala.lang.psi.impl.toplevel.synthetic.ScSyntheticFunction
 import org.jetbrains.plugins.scala.lang.psi.types.api.designator.DesignatorOwner
 import org.jetbrains.plugins.scala.lang.psi.types.result._
-import org.jetbrains.plugins.scala.lang.psi.types.{ScType, ScTypeExt}
+import org.jetbrains.plugins.scala.lang.psi.types.{Context, ScType, ScTypeExt}
 import org.jetbrains.plugins.scala.lang.refactoring.extractMethod.duplicates.DuplicatesUtil._
 import org.jetbrains.plugins.scala.lang.refactoring.extractMethod.{ExtractMethodOutput, ExtractMethodParameter}
 
@@ -84,6 +84,8 @@ class DuplicateMatch(pattern: DuplicatePattern, val candidates: Seq[PsiElement])
   }
 
   private def typesEquiv(expr1: ScExpression, expr2: ScExpression) = {
+    implicit val context: Context = Context(expr1)
+
     (expr1.`type`(), expr2.`type`()) match {
       case (Right(t1), Right(t2)) =>
         def extractFromSingletonType(t: ScType) = t match {

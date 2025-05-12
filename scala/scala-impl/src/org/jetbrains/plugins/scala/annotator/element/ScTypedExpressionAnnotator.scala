@@ -33,11 +33,13 @@ object ScTypedExpressionAnnotator extends ElementAnnotator[ScTypedExpression] {
 
   // SCL-15544
   private def checkUpcasting(expression: ScExpression, typeElement: ScTypeElement)
-                            (implicit holder: ScalaAnnotationHolder, context: TypePresentationContext): Unit = {
+                            (implicit holder: ScalaAnnotationHolder, tpc: TypePresentationContext): Unit = {
+    implicit val context: Context = Context(expression)
+
     expression.getTypeAfterImplicitConversion().tr.foreach { actual =>
       val expected = typeElement.calcType
 
-      if (!actual.conforms(expected)(Context(expression))) {
+      if (!actual.conforms(expected)) {
         val ranges = mismatchRangesIn(typeElement, actual)
         // TODO add messange to the whole element, but higlight separate parts?
         // TODO fine-grained tooltip
@@ -55,7 +57,9 @@ object ScTypedExpressionAnnotator extends ElementAnnotator[ScTypedExpression] {
   }
 
   // SCL-15481
-  def mismatchRangesIn(expected: ScTypeElement, actual: ScType)(implicit context: TypePresentationContext): Seq[TextRange] = {
+  def mismatchRangesIn(expected: ScTypeElement, actual: ScType)(implicit tpc: TypePresentationContext): Seq[TextRange] = {
+    implicit val context: Context = Context(expected)
+
     val diff = TypeDiff.forExpected(expected.calcType, actual)
 
     if (expected.textMatches(asString(diff))) { // make sure that presentations match

@@ -9,7 +9,7 @@ import org.jetbrains.plugins.scala.lang.psi.api.toplevel.typedef.{ScClass, ScMem
 import org.jetbrains.plugins.scala.lang.psi.impl.base.ScStringLiteralImpl
 import org.jetbrains.plugins.scala.lang.psi.types.api.FunctionTypeFactory.{extractMember, extractParameterizedType}
 import org.jetbrains.plugins.scala.lang.psi.types.api.designator.ScDesignatorType
-import org.jetbrains.plugins.scala.lang.psi.types.{AliasType, ScLiteralType, ScParameterizedType, ScType, ScalaType, api}
+import org.jetbrains.plugins.scala.lang.psi.types.{AliasType, Context, ScLiteralType, ScParameterizedType, ScType, ScalaType, api}
 import org.jetbrains.plugins.scala.project.ProjectContext
 
 import scala.annotation.tailrec
@@ -22,9 +22,9 @@ sealed trait FunctionTypeFactory[D <: ScTypeDefinition, T] {
 
   val TypeName: String
 
-  def apply(t: T)(implicit scope: ElementScope): ValueType
+  def apply(t: T)(implicit scope: ElementScope, context: Context): ValueType
 
-  def unapply(`type`: ScType): Option[T] =
+  def unapply(`type`: ScType)(implicit context: Context): Option[T] =
     extractParameterizedType(`type`).flatMap {
       case pTy if extractQualifiedName(pTy.designator).exists(_.startsWith(TypeName)) =>
         val args = pTy.typeArguments
@@ -35,7 +35,7 @@ sealed trait FunctionTypeFactory[D <: ScTypeDefinition, T] {
     }
 
   protected final def apply(parameters: Seq[ScType], suffix: String)
-                           (implicit scope: ElementScope, tag: ClassTag[D]): ValueType =
+                           (implicit scope: ElementScope, context: Context, tag: ClassTag[D]): ValueType =
     scope.getCachedClass(TypeName + suffix).collect {
       case definition: D => ScParameterizedType(ScalaType.designator(definition), parameters).asInstanceOf[ValueType]
     }.getOrElse(api.Nothing)
@@ -45,7 +45,7 @@ sealed trait FunctionTypeFactory[D <: ScTypeDefinition, T] {
 
 object FunctionTypeFactory {
   @tailrec
-  private[api] def extractParameterizedType(`type`: ScType, depth: Int = 100): Option[ParameterizedType] = `type` match {
+  private[api] def extractParameterizedType(`type`: ScType, depth: Int = 100)(implicit context: Context): Option[ParameterizedType] = `type` match {
     case _ if depth == 0 => None //hack for https://youtrack.jetbrains.com/issue/SCL-6880 to avoid infinite loop.
     case AliasLowerBound(lower) => extractParameterizedType(lower, depth - 1)
     case paramType: ParameterizedType => Some(paramType)
@@ -63,7 +63,7 @@ object FunctionTypeFactory {
 
   private[this] object AliasLowerBound {
 
-    def unapply(`type`: ScType): Option[ScType] = `type` match {
+    def unapply(`type`: ScType)(implicit context: Context): Option[ScType] = `type` match {
       case AliasType(_: ScTypeAliasDefinition, Right(lower), _) => Option(lower)
       case _                                                    => None
     }
@@ -71,7 +71,7 @@ object FunctionTypeFactory {
 }
 
 trait FunctionTypeBase extends FunctionTypeFactory[ScTrait, (ScType, Seq[ScType])] {
-  override def apply(pair: (ScType, Seq[ScType]))(implicit scope: ElementScope): ValueType = {
+  override def apply(pair: (ScType, Seq[ScType]))(implicit scope: ElementScope, context: Context): ValueType = {
     val (returnType, parameters) = pair
     apply(parameters :+ returnType, parameters.length.toString)
   }
@@ -84,13 +84,13 @@ trait FunctionTypeBase extends FunctionTypeFactory[ScTrait, (ScType, Seq[ScType]
 object FunctionType extends FunctionTypeBase {
   override val TypeName = "scala.Function"
 
-  def isFunctionType(`type`: ScType): Boolean = unapply(`type`).isDefined
+  def isFunctionType(`type`: ScType)(implicit context: Context): Boolean = unapply(`type`).isDefined
 }
 
 object ContextFunctionType extends FunctionTypeBase {
   override val TypeName: String = "scala.ContextFunction"
 
-  def isContextFunctionType(tpe: ScType): Boolean = unapply(tpe).isDefined
+  def isContextFunctionType(tpe: ScType)(implicit context: Context): Boolean = unapply(tpe).isDefined
 }
 
 object PartialFunctionType extends FunctionTypeFactory[ScTrait, (ScType, ScType)] {
@@ -98,7 +98,7 @@ object PartialFunctionType extends FunctionTypeFactory[ScTrait, (ScType, ScType)
   override val TypeName = "scala.PartialFunction"
 
   override def apply(pair: (ScType, ScType))
-                    (implicit scope: ElementScope): ValueType = {
+                    (implicit scope: ElementScope, context: Context): ValueType = {
     val (returnType, parameter) = pair
     apply(Seq(parameter, returnType), "")
   }
@@ -112,14 +112,14 @@ object PartialFunctionType extends FunctionTypeFactory[ScTrait, (ScType, ScType)
 //noinspection ScalaUnusedSymbol
 object TupleType {
   def apply(types: Seq[ScType], context: PsiElement): ScType =
-    apply(types, scala3 = context.isInScala3File)(context.elementScope)
+    apply(types, scala3 = context.isInScala3File)(context.elementScope, Context(context))
 
-  def apply(types: Seq[ScType], scala3: Boolean)(implicit scope: ElementScope): ScType = {
+  def apply(types: Seq[ScType], scala3: Boolean)(implicit scope: ElementScope, context: Context): ScType = {
     if (scala3 && types.sizeIs > TupleN.maxTupleN) TupleHList(types)
     else TupleN(types)
   }
 
-  def unapply(`type`: ScType): Option[Seq[ScType]] = {
+  def unapply(`type`: ScType)(implicit context: Context): Option[Seq[ScType]] = {
     extractTupleTypes(`type`, scopeIfTailIsExpected = None).collect {
       case (types, None) => types
     }
@@ -131,7 +131,7 @@ object TupleType {
    * @param `type` the tuple type
    * @param scopeIfTailIsExpected An optimization. If no tail is expected, we do not check whether the remaining types are <: Tuple
    */
-  private[api] def extractTupleTypes(`type`: ScType, scopeIfTailIsExpected: Option[ElementScope]): Option[(Seq[ScType], Option[ScType])] = {
+  private[api] def extractTupleTypes(`type`: ScType, scopeIfTailIsExpected: Option[ElementScope])(implicit context: Context): Option[(Seq[ScType], Option[ScType])] = {
     extractParameterizedType(`type`) match {
       case Some(pTy) =>
         extractMember(pTy.designator).flatMap { tupleClass =>
@@ -170,7 +170,7 @@ object TupleType {
         }
       case None  =>
         if (TupleHList.isEmptyTupleHList(`type`)) Some(Seq.empty -> None)
-        else if (scopeIfTailIsExpected.exists(TupleHList.isTupleHList(`type`)(_))) Some(Seq.empty -> Some(`type`))
+        else if (scopeIfTailIsExpected.exists(TupleHList.isTupleHList(`type`)(_, context))) Some(Seq.empty -> Some(`type`))
         else None
     }
   }
@@ -187,13 +187,13 @@ object TupleType {
      * If tail is None, this is a normal tuple constructor
      * If tail is Some, this returns a Scala3 tuple which ends in tail (alá types(0) *: ... *: types(n-1) *: tail)
      */
-    def apply(types: Seq[ScType], tail: Option[ScType])(implicit scope: ElementScope): ScType =
+    def apply(types: Seq[ScType], tail: Option[ScType])(implicit scope: ElementScope, context: Context): ScType =
       tail match {
         case None => TupleType(types, scala3 = true)
         case Some(tail) => TupleHList(types, tail)
       }
 
-    def unapply(`type`: ScType)(implicit scope: ElementScope): Option[(Seq[ScType], Option[ScType])] =
+    def unapply(`type`: ScType)(implicit scope: ElementScope, context: Context): Option[(Seq[ScType], Option[ScType])] =
       extractTupleTypes(`type`, scopeIfTailIsExpected = Some(scope))
   }
 
@@ -209,19 +209,19 @@ object TupleType {
       case _ => None
     }
 
-    def isTupleN(`type`: ScType): Boolean =
+    def isTupleN(`type`: ScType)(implicit context: Context): Boolean =
       `type`.extractDesignated(expandAliases = true).exists {
         case obj: ScTypeDefinition => obj.qualifiedNameOpt.exists(isTupleNFqn)
         case _ => false
       }
-    def tupleNArity(`type`: ScType): Option[Int] =
+    def tupleNArity(`type`: ScType)(implicit context: Context): Option[Int] =
       `type`.extractDesignated(expandAliases = true).flatMap {
         case obj: ScTypeDefinition => obj.qualifiedNameOpt.flatMap(tupleNArity)
         case _ => None
       }
 
     override def apply(types: Seq[ScType])
-                      (implicit scope: ElementScope): ValueType =
+                      (implicit scope: ElementScope, context: Context): ValueType =
       apply(types, types.length.toString)
 
     override protected def unapplyCollector: PartialFunction[Seq[ScType], Seq[ScType]] = {
@@ -251,7 +251,7 @@ object TupleType {
      *
      * aka: types(0) *: types(1) *: ... *: types(N-1) *: tail.getOrElse(EmptyTuple)
      */
-    def apply(types: Seq[ScType], tail: Option[ScType])(implicit scope: ElementScope): ScType = {
+    def apply(types: Seq[ScType], tail: Option[ScType])(implicit scope: ElementScope, context: Context): ScType = {
       (
         tail.orElse(emptyTupleObject.map(ScalaType.designator)),
         consClass
@@ -266,18 +266,18 @@ object TupleType {
       }
     }
 
-    def unapply(`type`: ScType)(implicit scope: ElementScope): Option[(Seq[ScType], Option[ScType])] = withTail.unapply(`type`)
+    def unapply(`type`: ScType)(implicit scope: ElementScope, context: Context): Option[(Seq[ScType], Option[ScType])] = withTail.unapply(`type`)
 
-    def isEmptyTupleHList(`type`: ScType): Boolean =
+    def isEmptyTupleHList(`type`: ScType)(implicit context: Context): Boolean =
       `type`.extractDesignated(expandAliases = true).exists {
         case obj: ScObject => obj.qualifiedNameOpt.contains(EmptyTupleClassFqn)
         case _ => false
       }
 
-    def isCons(`type`: ScType): Boolean =
+    def isCons(`type`: ScType)(implicit context: Context): Boolean =
       `type`.extractClass.exists(_.qualifiedName == ConsClassFqn)
 
-    def isTupleHList(`type`: ScType)(implicit scope: ElementScope): Boolean =
+    def isTupleHList(`type`: ScType)(implicit scope: ElementScope, context: Context): Boolean =
       tupleBaseClass.exists { tupleClass =>
         `type`.conforms(ScDesignatorType(tupleClass))
       }
@@ -298,7 +298,7 @@ object NamedTupleType extends FunctionTypeFactory[ScClass, Seq[(ScType, ScType)]
 //  }
 
   override def apply(elements: Seq[(ScType, ScType)])
-                    (implicit scope: ElementScope): ValueType = {
+                    (implicit scope: ElementScope, context: Context): ValueType = {
     val (names, types) = elements.unzip
     scope.scalaNamedTupleType match {
       case Some(x) =>
@@ -334,14 +334,14 @@ object NamedTupleType extends FunctionTypeFactory[ScClass, Seq[(ScType, ScType)]
 
     def unapply(scType: ScType): Option[String] = from(scType)
 
-    def from(ty: ScType): Option[String] =
+    def from(ty: ScType)(implicit context: Context): Option[String] =
       getLiteralType(ty).flatMap(_.value match {
         case ScStringLiteralImpl.Value(string) => Some(string)
         case _ => None
       })
 
     object WithLiteral {
-      def unapply(ty: ScType): Option[(String, ScLiteralType)] =
+      def unapply(ty: ScType)(implicit context: Context): Option[(String, ScLiteralType)] =
         getLiteralType(ty).flatMap(lit => lit.value match {
           case ScStringLiteralImpl.Value(string) => Some(string -> lit)
           case _ => None
@@ -349,7 +349,7 @@ object NamedTupleType extends FunctionTypeFactory[ScClass, Seq[(ScType, ScType)]
     }
 
     @tailrec
-    private def getLiteralType(ty: ScType): Option[ScLiteralType] = ty match {
+    private def getLiteralType(ty: ScType)(implicit context: Context): Option[ScLiteralType] = ty match {
       case lit: ScLiteralType => Some(lit)
       case _ if ty.isAliasType => getLiteralType(ty.removeAliasDefinitions())
       case _ => None

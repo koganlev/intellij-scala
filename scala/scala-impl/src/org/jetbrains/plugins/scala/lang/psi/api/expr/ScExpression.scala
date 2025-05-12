@@ -173,7 +173,7 @@ trait ScExpression extends ScBlockStatement
 
         (expected, initialType.toOption) match {
           case (Some(expType), Some(tp))
-            if !tp.conforms(expType)(Context(this)) =>
+            if !tp.conforms(expType) =>
             //do not try implicit conversions for shape check or already correct type
 
             // isSAMEnabled is checked in tryAdaptTypeToSAM, but we can cut it right here
@@ -211,8 +211,7 @@ object ScExpression {
 
   implicit class Ext(private val expr: ScExpression) extends AnyVal {
     private implicit def elementScope: ElementScope = expr.elementScope
-
-    private def project = elementScope.projectContext
+    private implicit def context: Context = Context(expr)
 
     def contextFunctionParameters: Seq[Seq[LightContextFunctionParameter]] =
       expr match {
@@ -459,7 +458,7 @@ object ScExpression {
      * E is not already a context function literal, E is converted to a context function literal by rewriting it to
      * (x_1: T1, ..., x_n: Tn) ?=> E
      */
-    final def synthesizeContextFunctionType(pt: Option[ScType], expr: ScExpression)(implicit scope: ElementScope): ScType =
+    final def synthesizeContextFunctionType(pt: Option[ScType], expr: ScExpression)(implicit scope: ElementScope, context: Context): ScType =
       scType match {
         case cft @ ContextFunctionType(_, _) => cft
         case _ =>
@@ -493,7 +492,7 @@ object ScExpression {
     final def untupleFunction(
       expr: ScExpression,
       pt:   Option[ScType]
-    ): ScType =
+    )(implicit context: Context): ScType =
       if (expr.isInScala3Module && SAMUtil.isFunctionalExpression(expr))
         scType match {
           case FunctionType(resTpe, paramTypes) =>
@@ -508,7 +507,7 @@ object ScExpression {
         }
       else scType
 
-    private def parameterTypesMatch(params: Seq[ScType], ptParams: Seq[ScType]): Boolean =
+    private def parameterTypesMatch(params: Seq[ScType], ptParams: Seq[ScType])(implicit context: Context): Boolean =
       ptParams.corresponds(params)(_.conforms(_))
 
     /**
@@ -521,7 +520,8 @@ object ScExpression {
       expr:        ScExpression,
       expectedTpe: Option[ScType]
     ): ScType = {
-      implicit val scope: ElementScope = expr.elementScope
+      implicit val elementScope: ElementScope = expr.elementScope
+      implicit val context: Context = Context(expr)
 
       def flattenParamTypes(t: ScType): Seq[ScType] = t match {
         case TupleType(comps) => comps
@@ -561,6 +561,8 @@ object ScExpression {
       fromUnderscore: Boolean,
       expected:       ScType
     ): Option[ScType] = {
+      implicit val context: Context = Context(expr)
+
       @scala.annotation.tailrec
       def checkForSAM(tp: ScType): Option[ScType] =
         tp match {
@@ -586,13 +588,15 @@ object ScExpression {
       }
     }
 
-    private def shouldApplyContextParameters(pt: ScType): Boolean =
+    private def shouldApplyContextParameters(pt: ScType)(implicit context: Context): Boolean =
       (scType, pt) match {
         case (ContextFunctionType(_, _), ContextFunctionType(_, _)) => false
         case _                                                      => true
       }
 
-    def updateWithExpected(expr: ScExpression, expectedType: Option[ScType], fromUnderscore: Boolean): ScType =
+    def updateWithExpected(expr: ScExpression, expectedType: Option[ScType], fromUnderscore: Boolean): ScType = {
+      implicit val context: Context = Context(expr)
+
       if (shouldUpdateImplicitParams(expr) && expectedType.forall(shouldApplyContextParameters)) {
         try {
           val updatedWithExpected =
@@ -614,8 +618,11 @@ object ScExpression {
             expr.updateWithImplicitParameters(scType, checkExpectedType = false, fromUnderscore)
         }
       } else scType
+    }
 
     def dropMethodTypeEmptyParams(expr: ScExpression, expectedType: Option[ScType]): ScType = {
+      implicit val context: Context = Context(expr)
+
       val (retType, typeParams) = scType match {
         case ScTypePolymorphicType(ScMethodType(rt, params, _), tps) if params.isEmpty => (rt, Some(tps))
         case ScMethodType(rt, params, _) if params.isEmpty                             => (rt, None)
@@ -644,7 +651,8 @@ object ScExpression {
   }
 
   private def shape(expression: ScExpression, ignoreAssign: Boolean = false): Option[ScType] = {
-    import expression.projectContext
+    import expression.{projectContext, elementScope}
+    implicit val context: Context = Context(expression)
 
     def shapeIgnoringAssign(maybeExpression: Option[ScExpression]) = maybeExpression.flatMap {
       shape(_, ignoreAssign = true)
@@ -666,7 +674,7 @@ object ScExpression {
           case (i, tp) => (Seq.fill(i)(Any), tp)
         }.map {
           case (argumentsTypes, maybeResultType) =>
-            FunctionType(maybeResultType.getOrElse(Nothing), argumentsTypes)(expression.elementScope)
+            FunctionType(maybeResultType.getOrElse(Nothing), argumentsTypes)
         }
     }
   }

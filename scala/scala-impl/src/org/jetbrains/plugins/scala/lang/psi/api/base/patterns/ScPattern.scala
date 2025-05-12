@@ -48,8 +48,7 @@ trait ScPattern extends ScalaPsiElement with Typeable {
 
 object ScPattern {
   implicit class Ext(private val pattern: ScPattern) extends AnyVal {
-
-    import pattern.{elementScope, projectContext}
+    import pattern.{elementScope, projectContext, thisContext}
 
     def expectedType: Option[ScType] = cachedInUserData("expectedType", pattern, BlockModificationTracker(pattern)) {
       _expectedType
@@ -335,6 +334,8 @@ object ScPattern {
   }
 
   private[this] case class ApplyBasedExtractor(place: PsiElement) {
+    private implicit def context: Context = Context(place)
+
     def unapply(tpe: ScType): Option[ScType] =
       for {
         apply <- findMember(CommonNames.Apply, tpe, place, parameterless = false)

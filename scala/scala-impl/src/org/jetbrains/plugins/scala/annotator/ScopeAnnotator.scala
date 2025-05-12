@@ -18,7 +18,7 @@ import org.jetbrains.plugins.scala.lang.psi.api.toplevel.{ScEarlyDefinitions, Sc
 import org.jetbrains.plugins.scala.lang.psi.types.api.designator.{ScDesignatorType, ScProjectionType}
 import org.jetbrains.plugins.scala.lang.psi.types.api.{JavaArrayType, ParameterizedType, StdTypes, TypeParameterType, arrayType}
 import org.jetbrains.plugins.scala.lang.psi.types.result.Typeable
-import org.jetbrains.plugins.scala.lang.psi.types.{ScLiteralType, ScParameterizedType, ScType}
+import org.jetbrains.plugins.scala.lang.psi.types.{Context, ScLiteralType, ScParameterizedType, ScType}
 import org.jetbrains.plugins.scala.lang.refactoring.util.ScalaNamesUtil
 
 import scala.collection.immutable.ArraySeq
@@ -149,8 +149,9 @@ trait ScopeAnnotator extends ElementAnnotator[ScalaPsiElement] {
     val result = Set.newBuilder[ScFunction]
     for {
       (a, ai) <- elements.iterator.zipWithIndex
+      element = a
       b <- elements.iterator.drop(ai + 1)
-      if a.parametersTypes.zip(b.parametersTypes).forall { case (a, b) => a equiv b }
+      if a.parametersTypes.zip(b.parametersTypes).forall { case (a, b) => a.equiv(b)(Context(element)) }
     } result ++= Seq(a, b)
 
     result.result().iterator

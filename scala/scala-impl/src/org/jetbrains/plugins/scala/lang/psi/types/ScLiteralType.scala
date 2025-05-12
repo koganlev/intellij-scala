@@ -54,6 +54,8 @@ object ScLiteralType {
     import recursiveUpdate.AfterUpdate.{ProcessSubtypes, ReplaceWith, Stop}
 
     def isSingleton(param: ScTypeParam) = param.upperBound.exists {
+      implicit val context: Context = Context(param)
+
       _.conforms(Singleton(param.projectContext))
     }
 

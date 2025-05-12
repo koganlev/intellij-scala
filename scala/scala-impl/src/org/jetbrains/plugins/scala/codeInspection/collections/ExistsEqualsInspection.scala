@@ -3,7 +3,7 @@ package org.jetbrains.plugins.scala.codeInspection.collections
 import org.jetbrains.plugins.scala.codeInspection.ScalaInspectionBundle
 import org.jetbrains.plugins.scala.lang.psi.api.expr.{ScExpression, ScMethodCall, ScReferenceExpression}
 import org.jetbrains.plugins.scala.lang.psi.impl.ScalaPsiElementFactory
-import org.jetbrains.plugins.scala.lang.psi.types.ScTypeExt
+import org.jetbrains.plugins.scala.lang.psi.types.{Context, ScTypeExt}
 import org.jetbrains.plugins.scala.lang.psi.types.result._
 import org.jetbrains.plugins.scala.project.ProjectContext
 
@@ -27,6 +27,8 @@ object ExistsEquals extends SimplificationType {
   override def hint: String = ScalaInspectionBundle.message("exists.equals.hint")
 
   def canBeReplacedWithContains(qual: ScExpression, arg: ScExpression): Boolean = {
+    implicit val context: Context = Context(qual)
+
     if (qual == null) return false
 
     val exprText = s"(${qual.getText}).contains(${arg.getText})"

@@ -13,7 +13,7 @@ import org.jetbrains.plugins.scala.lang.psi.api.toplevel.ScTypeParametersOwner
 import org.jetbrains.plugins.scala.lang.psi.impl.expr.ApplyOrUpdateInvocation
 import org.jetbrains.plugins.scala.lang.psi.impl.toplevel.synthetic.ScSyntheticFunction
 import org.jetbrains.plugins.scala.lang.psi.types.api.{PsiTypeParametersExt, TypeParameter, TypeParameterType}
-import org.jetbrains.plugins.scala.lang.psi.types.{DefaultTypeParameterMismatch, TypePresentationContext}
+import org.jetbrains.plugins.scala.lang.psi.types.{Context, DefaultTypeParameterMismatch, TypePresentationContext}
 import org.jetbrains.plugins.scala.lang.resolve.ScalaResolveResult
 
 
@@ -28,6 +28,8 @@ object ScGenericCallAnnotator extends ElementAnnotator[ScGenericCall] {
     else Seq.empty
 
   override def annotate(genCall: ScGenericCall, typeAware: Boolean)(implicit holder: ScalaAnnotationHolder): Unit = {
+    implicit val context: Context = Context(genCall)
+
     if (typeAware) {
       for {
         ref <- genCall.referencedExpr.asOptionOf[ScReferenceExpression]

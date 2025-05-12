@@ -18,6 +18,8 @@ trait Signature {
 
   def namedElement: PsiNamedElement
 
+  protected implicit def thisContext: Context = Context(namedElement)
+
   /**
     * Sometimes one element generate several signatures with different names.
     * Setter method for a `var` is a typical example.

@@ -31,6 +31,8 @@ object SmartSuperTypeUtil {
     if (areClassesEquivalent(leftClass, rightClass))  None
     else if (!isInheritorDeep(leftClass, rightClass)) None
     else {
+      implicit val context: Context = Context(rightClass)
+
       var resTpe: ScType = null
 
       traverseSuperTypes(leftClass, substitutor, (tpe, cls, _) => {

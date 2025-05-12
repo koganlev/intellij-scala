@@ -37,7 +37,7 @@ final class ScProjectionType private(val projected: ScType,
 
   override private[types] def designatorSingletonType: Option[ScType] = super.designatorSingletonType.map(actualSubst)
 
-  private def actualImpl(projected: ScType, updateWithProjectionSubst: Boolean): Option[(PsiNamedElement, ScSubstitutor)] = cachedWithRecursionGuard("actualImpl", element, Option.empty[(PsiNamedElement, ScSubstitutor)], BlockModificationTracker(element), (projected, updateWithProjectionSubst)) {
+  private def actualImpl(projected: ScType, updateWithProjectionSubst: Boolean)(implicit context: Context): Option[(PsiNamedElement, ScSubstitutor)] = cachedWithRecursionGuard("actualImpl", element, Option.empty[(PsiNamedElement, ScSubstitutor)], BlockModificationTracker(element), (projected, updateWithProjectionSubst)) {
     val resolvePlace = {
       def fromClazz(definition: ScTypeDefinition): PsiElement =
         definition.extendsBlock.templateBody
@@ -141,7 +141,7 @@ final class ScProjectionType private(val projected: ScType,
     }
   }
 
-  private def actual(updateWithProjectionSubst: Boolean = true): (PsiNamedElement, ScSubstitutor) =
+  private def actual(updateWithProjectionSubst: Boolean = true)(implicit context: Context): (PsiNamedElement, ScSubstitutor) =
     actualImpl(projected, updateWithProjectionSubst).getOrElse(element, ScSubstitutor.empty)
 
   def actualElement: PsiNamedElement = actual()._1
@@ -304,7 +304,7 @@ object ScProjectionType {
   }
 
   class withActual(updateWithProjectionSubst: Boolean) {
-    def unapply(proj: ScProjectionType): Option[(PsiNamedElement, ScSubstitutor)] =
+    def unapply(proj: ScProjectionType)(implicit context: Context): Option[(PsiNamedElement, ScSubstitutor)] =
       Option(proj.actual(updateWithProjectionSubst))
   }
 }

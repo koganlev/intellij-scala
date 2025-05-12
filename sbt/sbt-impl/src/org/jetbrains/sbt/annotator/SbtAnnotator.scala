@@ -72,6 +72,8 @@ object SbtAnnotator {
     expressionType: ScType,
     allowedTypes: String*
   ): Boolean = {
+    implicit val context: Context = Context(expression)
+
     val maybeExpectedType = for {
       typeName <- allowedTypes
       typeElement = ScalaPsiElementFactory.createTypeElementFromText(typeName, expression.getContext, expression)

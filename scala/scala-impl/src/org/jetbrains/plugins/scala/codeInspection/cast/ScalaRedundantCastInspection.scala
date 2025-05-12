@@ -7,13 +7,14 @@ import com.intellij.openapi.util.TextRange
 import org.jetbrains.plugins.scala.codeInspection.{AbstractFixOnTwoPsiElements, PsiElementVisitorSimple, ScalaInspectionBundle}
 import org.jetbrains.plugins.scala.extensions.{ElementText, PsiElementExt}
 import org.jetbrains.plugins.scala.lang.psi.api.expr.{ScExpression, ScGenericCall}
-import org.jetbrains.plugins.scala.lang.psi.types.{ScTypeExt, TypePresentationContext}
+import org.jetbrains.plugins.scala.lang.psi.types.{Context, ScTypeExt, TypePresentationContext}
 
 class ScalaRedundantCastInspection extends LocalInspectionTool {
 
   override def buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): PsiElementVisitorSimple = {
     case call: ScGenericCall =>
       implicit val tpc: TypePresentationContext = TypePresentationContext(call)
+      implicit val context: Context = Context(call)
 
       call.referencedExpr.children.toList match {
         case List(left: ScExpression, ElementText("."), ElementText("asInstanceOf")) =>

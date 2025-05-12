@@ -228,7 +228,7 @@ object ScExistentialType {
   private def equivImpl(left : ScExistentialType,
                         right: ScExistentialType,
                         constraints: ConstraintSystem,
-                        falseUndef: Boolean): ConstraintsResult = {
+                        falseUndef: Boolean)(implicit context: Context): ConstraintsResult = {
 
     val rightToLeft: java.util.Map[ScExistentialArgument, ScExistentialArgument] = {
       val byNameStrategy: Hash.Strategy[ScExistentialArgument] = new Hash.Strategy[ScExistentialArgument] {

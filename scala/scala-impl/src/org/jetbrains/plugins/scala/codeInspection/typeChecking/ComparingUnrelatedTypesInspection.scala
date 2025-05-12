@@ -46,7 +46,7 @@ object ComparingUnrelatedTypesInspection {
   }
 
   // see this check in scalac: https://github.com/scala/scala/blob/8c86b7d7136839538cca0ff8fca50f59437564c0/src/compiler/scala/tools/nsc/typechecker/RefChecks.scala#L968
-  private def checkComparability(type1: ScType, type2: ScType, isBuiltinOperation: => Boolean): Comparability = {
+  private def checkComparability(type1: ScType, type2: ScType, isBuiltinOperation: => Boolean)(implicit context: Context): Comparability = {
     val stdTypes = type1.projectContext.stdTypes
     import stdTypes._
 
@@ -109,7 +109,7 @@ object ComparingUnrelatedTypesInspection {
     }
   }
 
-  private def undefinedTypeAlias(`type`: ScType) = `type` match {
+  private def undefinedTypeAlias(`type`: ScType)(implicit context: Context) = `type` match {
     case AliasType(_, Right(lower), Right(upper)) => !lower.equiv(upper)
     case _                                        => false
   }
@@ -134,6 +134,8 @@ class ComparingUnrelatedTypesInspection extends LocalInspectionTool {
   override def buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): PsiElementVisitorSimple = {
     case e if e.isInScala3File => () // TODO Handle Scala 3 code (`CanEqual` instances, etc.), SCL-19722
     case MethodRepr(expr, Some(left), Some(oper), Seq(right)) if isComparingFunctions(oper.refName) =>
+      implicit val context: Context = Context(expr)
+
       // "blub" == 3
       val needHighlighting = oper.resolve() match {
         case _: ScSyntheticFunction => true
@@ -152,7 +154,9 @@ class ComparingUnrelatedTypesInspection extends LocalInspectionTool {
           case _ =>
         }
       }
-    case MethodRepr(_, Some(baseExpr), Some(ref @ ResolvesTo(fun: ScFunction)), Seq(arg, _*)) if mayNeedHighlighting(fun) =>
+    case MethodRepr(expr, Some(baseExpr), Some(ref @ ResolvesTo(fun: ScFunction)), Seq(arg, _*)) if mayNeedHighlighting(fun) =>
+      implicit val context: Context = Context(expr)
+
       // Seq("blub").contains(3)
       for {
         ParameterizedType(_, Seq(elemType)) <- receiverType(baseExpr, ref).map(_.tryExtractDesignatorSingleton)
@@ -164,6 +168,8 @@ class ComparingUnrelatedTypesInspection extends LocalInspectionTool {
         holder.registerProblem(arg, message)
       }
     case IsInstanceOfCall(call) =>
+      implicit val context: Context = Context(call)
+
       // "blub".isInstanceOf[Integer]
       val qualType = call.referencedExpr match {
         case ScReferenceExpression.withQualifier(q) => q.`type`().map(_.tryExtractDesignatorSingleton).toOption

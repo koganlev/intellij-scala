@@ -52,6 +52,7 @@ object ScalaAfterNewCompletionContributor {
       val place = positionFromParameters(parameters)
       val types = expectedTypes(place, parentExprClass)
       implicit val project: Project = place.getProject
+      implicit val placeContext: Context = Context(place)
 
       val props = for {
         expectedType <- types
@@ -91,6 +92,8 @@ object ScalaAfterNewCompletionContributor {
       .orElse(expectedTypeInUniversalApply(place, context))
 
   private def expectedTypeConstructor[E <: ScExpression](place: PsiElement, parentExprClass: Class[E]): Option[PropsConstructor] = {
+    implicit val context: Context = Context(place)
+
     val types = expectedTypes(place, parentExprClass)
     Some((clazz: PsiClass) => {
       val (actualType, hasSubstitutionProblem) = appropriateType(clazz, types)
@@ -125,7 +128,7 @@ object ScalaAfterNewCompletionContributor {
         }.toMap
     }
 
-  private[this] def appropriateType(clazz: PsiClass, types: Seq[ScType]): (ScType, Boolean) = {
+  private[this] def appropriateType(clazz: PsiClass, types: Seq[ScType])(implicit context: Context): (ScType, Boolean) = {
     val (designatorType, parameters) = classComponents(clazz)
     val maybeParameter = parameters match {
       case Seq(head) => Some(head)
@@ -202,7 +205,7 @@ object ScalaAfterNewCompletionContributor {
 
   private def collectProps(`type`: ScType)
                           (isAccessible: PsiClass => Boolean)
-                          (implicit project: Project): Seq[LookupElementProps] = {
+                          (implicit project: Project, context: Context): Seq[LookupElementProps] = {
     val inheritors = `type`.extractClass.toSeq
       .flatMap(findInheritors)
       .filter { clazz =>
@@ -262,7 +265,7 @@ object ScalaAfterNewCompletionContributor {
 
   private[this] def findAppropriateType(types: Seq[ScType],
                                         designatorType: ScDesignatorType,
-                                        parameters: Iterable[PsiTypeParameter]): Option[(ScType, Boolean)] = {
+                                        parameters: Iterable[PsiTypeParameter])(implicit context: Context): Option[(ScType, Boolean)] = {
     if (types.isEmpty) return None
 
     val undefinedTypes = parameters.map(UndefinedType(_))

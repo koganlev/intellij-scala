@@ -134,6 +134,8 @@ class ExpectedTypesImpl extends ExpectedTypes {
     alternatives: Seq[ScType],
     e:            PsiElement
   ): Option[ParameterType] = {
+    implicit val context: Context = Context(e)
+
     def equiv(ltpe: ScType, rtpe: ScType): Boolean = {
       val comparingAbstractTypes = ltpe.is[ScAbstractType] && rtpe.is[ScAbstractType]
       ltpe.equiv(rtpe, ConstraintSystem.empty, falseUndef = !comparingAbstractTypes).isRight
@@ -242,6 +244,7 @@ class ExpectedTypesImpl extends ExpectedTypes {
   override def expectedExprTypes(expr: ScExpression, withResolvedFunction: Boolean = false,
                                  fromUnderscore: Boolean = true): Array[ParameterType] = {
     import expr.projectContext
+    implicit val context: Context = Context(expr)
 
     val sameInContext = expr.getDeepSameElementInContext
 
@@ -288,6 +291,8 @@ class ExpectedTypesImpl extends ExpectedTypes {
       else argExprs.indexWhere(_ == sameInContext).max(0)
 
     def expectedTypesForArg(invocation: MethodInvocation): Array[ParameterType] = {
+      implicit val context: Context = Context(invocation)
+
       val argExprs = invocation.argumentExpressions
       val invoked  = invocation.getEffectiveInvokedExpr
 
@@ -591,6 +596,7 @@ class ExpectedTypesImpl extends ExpectedTypes {
     isDynamicNamed:  Boolean                  = false,
     stripTypeArgs:   Boolean                  = false
   ): Option[ParameterType] = {
+    implicit val context: Context = Context(expr)
 
     def fromMethodTypeParams(
       params: Seq[Parameter],

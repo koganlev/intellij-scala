@@ -13,7 +13,7 @@ import org.jetbrains.plugins.scala.lang.psi.api.toplevel.{ScNamedElement, ScType
 import org.jetbrains.plugins.scala.lang.psi.types.api.TypeParameterType
 import org.jetbrains.plugins.scala.lang.psi.types.api.designator.{ScProjectionType, ScThisType}
 import org.jetbrains.plugins.scala.lang.psi.types.result.Typeable
-import org.jetbrains.plugins.scala.lang.psi.types.{ScParameterizedType, ScType}
+import org.jetbrains.plugins.scala.lang.psi.types.{Context, ScParameterizedType, ScType}
 
 /**
  * Utility to scrape all types that escape through public members of a given type definition. The current use
@@ -23,6 +23,7 @@ import org.jetbrains.plugins.scala.lang.psi.types.{ScParameterizedType, ScType}
 private[declarationRedundancy] object SymbolEscaping {
 
   def elementIsSymbolWhichEscapesItsDefiningScopeWhenItIsPrivate(element: ScNamedElement): Boolean = {
+    implicit val context: Context = Context(element)
 
     def getEscapeInfosOfContainingClassAndCompanion(containingClass: Option[ScTemplateDefinition]) = {
       val containingTypeDef = containingClass.filterByType[ScTypeDefinition]

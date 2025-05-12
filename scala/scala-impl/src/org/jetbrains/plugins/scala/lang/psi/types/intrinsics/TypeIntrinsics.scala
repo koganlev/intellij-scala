@@ -9,12 +9,12 @@ import org.jetbrains.plugins.scala.lang.psi.api.statements.params.ScParameter
 import org.jetbrains.plugins.scala.lang.psi.types.api.designator.{ScDesignatorType, ScProjectionType}
 import org.jetbrains.plugins.scala.lang.psi.types.recursiveUpdate.ScSubstitutor
 import org.jetbrains.plugins.scala.lang.psi.types.result.Typeable
-import org.jetbrains.plugins.scala.lang.psi.types.{ScExistentialType, ScType}
+import org.jetbrains.plugins.scala.lang.psi.types.{Context, ScExistentialType, ScType}
 
 import scala.annotation.{switch, tailrec}
 
 object TypeIntrinsics {
-  def apply(designator: ScType, arguments: Seq[ScType], substitutor: ScSubstitutor): Option[ScType] = designator match {
+  def apply(designator: ScType, arguments: Seq[ScType], substitutor: ScSubstitutor)(implicit context: Context): Option[ScType] = designator match {
     case ScProjectionType.withActual(alias: ScTypeAlias, _) =>
       implicit def project: Project = designator.projectContext.project
 

@@ -60,7 +60,7 @@ final case class ScTypePolymorphicType private (
   /**
     * See [[scala.tools.nsc.typechecker.Infer.Inferencer#protoTypeArgs]]
     */
-  def argsProtoTypeSubst(pt: ScType): ScSubstitutor = {
+  def argsProtoTypeSubst(pt: ScType)(implicit context: Context): ScSubstitutor = {
     val maybeTypeParts = internalType match {
       case ScMethodType(retTpe, params, _) => Option((retTpe, params.map(_.paramType)))
       case FunctionType(retTpe, params)    => Option((retTpe, params))
@@ -112,7 +112,7 @@ final case class ScTypePolymorphicType private (
   def undefinedSubstitutor: ScSubstitutor =
     ScSubstitutor.bind(typeParameters)(UndefinedType(_))
 
-  def abstractOrLowerTypeSubstitutor: ScSubstitutor = {
+  def abstractOrLowerTypeSubstitutor(implicit context: Context): ScSubstitutor = {
     //approximation of logic from scala.tools.nsc.typechecker.Infer.Inferencer#exprTypeArgs#variance
     val forVarianceCheck = internalType match {
       case mt: ScMethodType if mt.isImplicit => mt.copy(result = Any)(mt.elementScope)
@@ -130,7 +130,7 @@ final case class ScTypePolymorphicType private (
     }
   }
 
-  def typeParameterOrLowerSubstitutor: ScSubstitutor =
+  def typeParameterOrLowerSubstitutor(implicit context: Context): ScSubstitutor =
     ScSubstitutor.bind(typeParameters) { tp =>
       val lowerType: ScType = if (hasRecursiveTypeParameters(tp.lowerType)) Nothing else tp.lowerType
 

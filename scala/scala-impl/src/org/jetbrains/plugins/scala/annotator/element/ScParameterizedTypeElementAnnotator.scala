@@ -16,7 +16,7 @@ import org.jetbrains.plugins.scala.lang.psi.types.api.{ParameterizedType, TypePa
 import org.jetbrains.plugins.scala.lang.psi.types.recursiveUpdate.AfterUpdate.{ProcessSubtypes, Stop}
 import org.jetbrains.plugins.scala.lang.psi.types.recursiveUpdate.ScSubstitutor
 import org.jetbrains.plugins.scala.lang.psi.types.result.TypeResult
-import org.jetbrains.plugins.scala.lang.psi.types.{ScExistentialArgument, ScExistentialType, ScType, TypePresentationContext, extractTypeParameters}
+import org.jetbrains.plugins.scala.lang.psi.types.{Context, ScExistentialArgument, ScExistentialType, ScType, TypePresentationContext, extractTypeParameters}
 
 object ScParameterizedTypeElementAnnotator extends ElementAnnotator[ScParameterizedTypeElement] {
 
@@ -26,6 +26,8 @@ object ScParameterizedTypeElementAnnotator extends ElementAnnotator[ScParameteri
   )(implicit
     holder: ScalaAnnotationHolder
   ): Unit = {
+    implicit val context: Context = Context(element)
+
     if (!typeAware) return
 
     val prefixType = element.typeElement.getTypeNoConstructor.toOption
@@ -69,7 +71,8 @@ object ScParameterizedTypeElementAnnotator extends ElementAnnotator[ScParameteri
     isForContextBound:      Boolean = false
   )(implicit
     tpc:    TypePresentationContext,
-    holder: ScalaAnnotationHolder
+    holder: ScalaAnnotationHolder,
+    context: Context
   ): Unit = {
 
     if (args.length < params.length) {
@@ -155,7 +158,8 @@ object ScParameterizedTypeElementAnnotator extends ElementAnnotator[ScParameteri
     substitute:             ScSubstitutor,
   )(implicit
     holder: ScalaAnnotationHolder,
-    tpc:    TypePresentationContext
+    tpc:    TypePresentationContext,
+    context: Context
   ): Unit = {
     lazy val argTyText = argTy.presentableText
 
@@ -217,6 +221,8 @@ object ScParameterizedTypeElementAnnotator extends ElementAnnotator[ScParameteri
     holder: ScalaAnnotationHolder,
     tpc:    TypePresentationContext
   ): Unit = {
+    implicit val context: Context = Context(param.psiTypeParameter)
+
     val paramTyParams = param.typeParameters
 
     val expectedTyConstr = (param.name, paramTyParams)

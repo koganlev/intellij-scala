@@ -8,7 +8,7 @@ import org.jetbrains.plugins.scala.codeInspection.methodSignature.JavaAccessorEm
 import org.jetbrains.plugins.scala.extensions._
 import org.jetbrains.plugins.scala.lang.psi.api.expr.{ScMethodCall, ScReferenceExpression}
 import org.jetbrains.plugins.scala.lang.psi.impl.ScalaPsiElementFactory
-import org.jetbrains.plugins.scala.lang.psi.types.{ScType, ScTypeExt, result}
+import org.jetbrains.plugins.scala.lang.psi.types.{Context, ScType, ScTypeExt, result}
 import org.jetbrains.plugins.scala.lang.resolve.ScalaResolveResult
 import org.jetbrains.plugins.scala.lang.resolve.processor.CollectMethodsProcessor
 
@@ -38,9 +38,13 @@ object JavaAccessorEmptyParenCallInspection {
       .forall(_.size <= 1)
 
   private def hasSameType(call: ScMethodCall,
-                          place: ScReferenceExpression) = (call, place) match {
-    case (result.Typeable(left), result.Typeable(right)) => left.equiv(right)
-    case _ => false
+                          place: ScReferenceExpression) = {
+    implicit val context: Context = Context(call)
+
+    (call, place) match {
+      case (result.Typeable(left), result.Typeable(right)) => left.equiv(right)
+      case _ => false
+    }
   }
 
   private def createQuickFix(call: ScMethodCall): AbstractFixOnPsiElement[ScMethodCall] =

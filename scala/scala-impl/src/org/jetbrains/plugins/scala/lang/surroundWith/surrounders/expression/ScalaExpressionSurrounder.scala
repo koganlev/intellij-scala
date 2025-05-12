@@ -10,7 +10,7 @@ import org.jetbrains.plugins.scala.lang.psi.ScalaPsiUtil
 import org.jetbrains.plugins.scala.lang.psi.api.expr._
 import org.jetbrains.plugins.scala.lang.psi.api.statements._
 import org.jetbrains.plugins.scala.lang.psi.impl.ScalaPsiElementFactory
-import org.jetbrains.plugins.scala.lang.psi.types.api
+import org.jetbrains.plugins.scala.lang.psi.types.{Context, api}
 import org.jetbrains.plugins.scala.lang.surroundWith.ScalaModCommandSurrounder
 import org.jetbrains.plugins.scala.project.ProjectContext
 
@@ -96,7 +96,10 @@ abstract class ScalaExpressionSurrounder extends ScalaModCommandSurrounder {
   }
 
   protected final def isBooleanExpression(element: PsiElement): Boolean = element match {
-    case expr: ScExpression => expr.getTypeIgnoreBaseType.getOrAny.conforms(api.Boolean(expr.getProject))
+    case expr: ScExpression =>
+      implicit val context: Context = Context(expr)
+
+      expr.getTypeIgnoreBaseType.getOrAny.conforms(api.Boolean(expr.getProject))
     case _ => false
   }
 }

@@ -7,6 +7,7 @@ import org.jetbrains.plugins.scala.lang.psi.ScalaPsiUtil
 import org.jetbrains.plugins.scala.lang.psi.api.expr.ScReferenceExpression
 import org.jetbrains.plugins.scala.lang.psi.api.statements.{ScPatternDefinition, ScValueOrVariable, ScVariableDefinition}
 import org.jetbrains.plugins.scala.lang.psi.api.toplevel.typedef.{ScClass, ScObject, ScTemplateDefinition}
+import org.jetbrains.plugins.scala.lang.psi.types.Context
 import org.jetbrains.plugins.scala.lang.resolve.ScalaResolveResult
 
 final class FieldFromDelayedInitInspection extends LocalInspectionTool {
@@ -15,6 +16,8 @@ final class FieldFromDelayedInitInspection extends LocalInspectionTool {
 
   override def buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): PsiElementVisitorSimple = {
     case ref: ScReferenceExpression =>
+      implicit val context: Context = Context(ref)
+
       for {
         FieldInDelayedInit(delayedInitClass) <- ref.bind()
         parents = parentDefinitions(ref)
@@ -28,7 +31,7 @@ object FieldFromDelayedInitInspection {
 
   private object FieldInDelayedInit {
 
-    def unapply(result: ScalaResolveResult): Option[ScTemplateDefinition] =
+    def unapply(result: ScalaResolveResult)(implicit context: Context): Option[ScTemplateDefinition] =
       result.fromType.flatMap { scType =>
         result.getElement.nameContext match {
           case LazyVal(_) => None
@@ -36,7 +39,7 @@ object FieldFromDelayedInitInspection {
             Option(definition.asInstanceOf[ScValueOrVariable].containingClass).collect {
               case scalaClass: ScClass => scalaClass
               case scalaObject: ScObject => scalaObject
-            }.filter(conformsToTypeFromClass(scType, "scala.DelayedInit")(_))
+            }.filter(conformsToTypeFromClass(scType, "scala.DelayedInit")(_, context))
           case _ => None
         }
       }

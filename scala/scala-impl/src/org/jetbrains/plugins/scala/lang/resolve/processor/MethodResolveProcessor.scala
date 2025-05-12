@@ -194,7 +194,7 @@ object MethodResolveProcessor {
     shapesOnly:             Boolean
   ): ApplicabilityCheckResult = {
 
-    implicit val ctx: ProjectContext = c.element
+    implicit val projectContext: ProjectContext = c.element
     implicit val context: Context = Context(place)
 
     val problems = Seq.newBuilder[ApplicabilityProblem]

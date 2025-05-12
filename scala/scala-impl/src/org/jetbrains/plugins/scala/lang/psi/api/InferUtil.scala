@@ -77,6 +77,7 @@ object InferUtil {
     implicitRecursionDepth:     Int     = 0,
   ): (ScType, Option[Seq[ScalaResolveResult]], ConstraintSystem) = {
     implicit val elementScope: ElementScope = place.elementScope
+    implicit val context: Context = Context(place)
 
     var implicitParameters: Option[Seq[ScalaResolveResult]] = None
     var updatedType                                         = tpe
@@ -218,7 +219,8 @@ object InferUtil {
     abstractSubstitutor:        ScSubstitutor = ScSubstitutor.empty
   ): (Seq[Parameter], Seq[Compatibility.Expression], Seq[ScalaResolveResult]) = {
 
-    implicit val project: ProjectContext = place.getProject
+    implicit val projectContext: ProjectContext = place.getProject
+    implicit val context: Context = Context(place)
 
     val inferredParams = ArraySeq.newBuilder[Parameter]
     val exprs          = ArraySeq.newBuilder[Compatibility.Expression]
@@ -249,7 +251,7 @@ object InferUtil {
         val srr = results.head
         if (canThrowSCE && !srr.isApplicable()) throw new SafeCheckException
 
-        val evaluator = ScalaMacroEvaluator.getInstance(project)
+        val evaluator = ScalaMacroEvaluator.getInstance(projectContext)
 
         val resultType =
           evaluator.checkMacro(
@@ -299,7 +301,7 @@ object InferUtil {
     (inferredParams.result(), exprs.result(), resolveResults.result())
   }
 
-  private def compilerGeneratedInstance(tp: ScType): Option[ScalaResolveResult] =
+  private def compilerGeneratedInstance(tp: ScType)(implicit context: Context): Option[ScalaResolveResult] =
     tp.removeAliasDefinitions() match {
       case p @ ParameterizedType(_, params) =>
         p.extractClass.collect {
@@ -318,7 +320,7 @@ object InferUtil {
     }
 
 
-  private def areEligible(params: Seq[ScType], typeFqn: String): Boolean =
+  private def areEligible(params: Seq[ScType], typeFqn: String)(implicit context: Context): Boolean =
     (typeFqn, params) match {
       case (ValueOf, Seq(t))              => eligibleForValueOf(t)
       case (ConformsWitness, Seq(t1, t2)) => t1.conforms(t2)
@@ -381,8 +383,10 @@ object InferUtil {
                                     expectedType: Option[ScType],
                                     expr: PsiElement,
                                     canThrowSCE: Boolean): ScType = {
-    implicit val ctx: ProjectContext = expr
-    val Unit = ctx.stdTypes.Unit
+    implicit val projectContext: ProjectContext = expr
+    implicit val context: Context = Context(expr)
+
+    val Unit = projectContext.stdTypes.Unit
 
     val shouldTruncateImplicitParameters = expectedType match {
       case Some(ContextFunctionType(_, _)) => false
@@ -613,7 +617,7 @@ object InferUtil {
     shouldUndefineParameters: Boolean = true,
     canThrowSCE:              Boolean = false,
     filterTypeParams:         Boolean = true
-  ): ScTypePolymorphicType =
+  )(implicit context: Context): ScTypePolymorphicType =
     localTypeInferenceWithApplicabilityExt(
       retType,
       params,
@@ -635,10 +639,8 @@ object InferUtil {
     canThrowSCE:              Boolean = false,
     filterTypeParams:         Boolean = true,
     paramSubst:               Option[ScSubstitutor] = None
-  ): (ScTypePolymorphicType, ApplicabilityCheckResult) = {
+  )(implicit context: Context): (ScTypePolymorphicType, ApplicabilityCheckResult) = {
     implicit val projectContext: ProjectContext = retType.projectContext
-
-    implicit val context: Context = exprs.headOption.flatMap(_.asOptionOf[ScExpression]).map(Context(_)).getOrElse(Context.Empty)
 
     val typeParamIds = typeParams.map(_.typeParamId).toSet
     def hasRecursiveTypeParams(tpe: ScType): Boolean = tpe.hasRecursiveTypeParameters(typeParamIds)

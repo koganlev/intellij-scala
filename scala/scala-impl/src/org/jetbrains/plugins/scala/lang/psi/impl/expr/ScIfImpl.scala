@@ -77,9 +77,9 @@ class ScIfImpl(node: ASTNode) extends ScExpressionImplBase(node) with ScIf with 
     (thenExpression, elseExpression) match {
       case (Some(t), Some(e)) => for (tt <- t.`type`();
                                       et <- e.`type`()) yield {
-        tt.lub(et)(Context(this)) // TODO Union type in Scala 3, SCL-23806
+        tt.lub(et) // TODO Union type in Scala 3, SCL-23806
       }
-      case (Some(t), None) => t.`type`().map(_.lub(Unit)(Context(this)))
+      case (Some(t), None) => t.`type`().map(_.lub(Unit))
       case _ => Failure(ScalaBundle.message("nothing.to.type"))
     }
   }

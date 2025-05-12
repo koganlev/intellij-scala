@@ -17,7 +17,7 @@ import org.jetbrains.plugins.scala.lang.psi.api.toplevel.ScNamedElement
 import org.jetbrains.plugins.scala.lang.psi.api.toplevel.typedef.{ScMember, ScObject, ScTrait}
 import org.jetbrains.plugins.scala.lang.psi.impl.ScalaPsiElementFactory
 import org.jetbrains.plugins.scala.lang.psi.impl.toplevel.typedef.{MixinNodes, TypeDefinitionMembers}
-import org.jetbrains.plugins.scala.lang.psi.types.Signature
+import org.jetbrains.plugins.scala.lang.psi.types.{Context, Signature}
 import org.jetbrains.plugins.scala.lang.refactoring.util.ScalaNamesUtil
 import org.jetbrains.plugins.scala.project.UserDataHolderExt
 
@@ -159,6 +159,8 @@ object RenameSuperMembersUtil {
 
   @NotNull
   def allSuperMembers(named: ScNamedElement, withSelfType: Boolean): Seq[PsiNamedElement] = {
+    implicit val context: Context = Context(named)
+
     val member = named.nameContext match {
       case m: ScMember => m
       case _ => return Seq.empty
@@ -183,6 +185,8 @@ object RenameSuperMembersUtil {
 
   @NotNull
   def allSuperTypes(named: ScNamedElement, withSelfType: Boolean): Seq[PsiNamedElement] = {
+    implicit val context: Context = Context(named)
+
     val typeAlias = named.nameContext match {
       case t: ScTypeAlias => t
       case _ => return Seq()

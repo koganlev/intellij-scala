@@ -13,7 +13,7 @@ final case class ScOrType private (lhs: ScType, rhs: ScType) extends ScalaType w
   override implicit def projectContext: ProjectContext = lhs.projectContext
 
   //@TODO
-  def join: ScType = lhs.lub(rhs)
+  def join(implicit context: Context): ScType = lhs.lub(rhs)
 
   override def equivInner(
     r:           ScType,

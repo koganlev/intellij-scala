@@ -6,7 +6,7 @@ import org.jetbrains.plugins.scala.lang.psi.api.toplevel.typedef.ScObject
 import org.jetbrains.plugins.scala.lang.psi.types.api.ParameterizedType
 import org.jetbrains.plugins.scala.lang.psi.types.api.designator.{ScDesignatorType, ScProjectionType}
 import org.jetbrains.plugins.scala.lang.psi.types.recursiveUpdate.AfterUpdate.{ProcessSubtypes, ReplaceWith}
-import org.jetbrains.plugins.scala.lang.psi.types.{ScAbstractType, ScCompoundType, ScExistentialArgument, ScExistentialType, ScType}
+import org.jetbrains.plugins.scala.lang.psi.types.{Context, ScAbstractType, ScCompoundType, ScExistentialArgument, ScExistentialType, ScType}
 import org.jetbrains.plugins.scala.project.ProjectContext
 import org.jetbrains.plugins.scala.util.UnloadableThreadLocal
 
@@ -23,7 +23,7 @@ class DivergenceInfo private (val coreType: ScType) {
       coveringSet == other.coveringSet
   }
 
-  def equivOrDominates(other: DivergenceInfo): Boolean = {
+  def equivOrDominates(other: DivergenceInfo)(implicit context: Context): Boolean = {
     coreType.conforms(other.coreType) || this.dominates(other)
   }
 }
@@ -80,6 +80,8 @@ object DivergenceChecker {
   }
 
   def withDivergenceCheck[T](element: PsiElement, tp: ScType, onDivergence: => T)(body: => T): T = {
+    implicit val context: Context = Context(element)
+
     val info = DivergenceInfo(tp)
     val stack = threadLocalStack.value
 

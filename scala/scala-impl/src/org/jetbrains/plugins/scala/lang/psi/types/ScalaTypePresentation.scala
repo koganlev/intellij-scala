@@ -34,7 +34,7 @@ trait ScalaTypePresentation extends TypePresentation {
     `type`: ScType,
     nameRenderer: NameRenderer,
     options: PresentationOptions
-  )(implicit context: TypePresentationContext): String = {
+  )(implicit tpc: TypePresentationContext, context: Context): String = {
     val textEscaper: TextEscaper = nameRenderer
     val boundsRenderer = new TypeBoundsRenderer(textEscaper)
 
@@ -84,7 +84,7 @@ trait ScalaTypePresentation extends TypePresentation {
         if (options.renderProjectionTypeName) nameRenderer.renderName(e)
         else nameRenderer.escapeName(refName)
 
-      if (context.nameResolvesTo(refName + typeTailForProjection, e))
+      if (tpc.nameResolvesTo(refName + typeTailForProjection, e))
         // if the reference can be resolved from the context, we do not render a redundant context prefix
         escapedName + typeTailForProjection
       else
@@ -117,7 +117,7 @@ trait ScalaTypePresentation extends TypePresentation {
       val componentsText = if (comps.isEmpty || comps == Seq(projectContext.stdTypes.AnyRef)) Nil else Seq(comps.map {
         case tp@FunctionType(_, _) => "(" + innerTypeText(tp) + ")"
         case tp => innerTypeText(tp)
-      }.mkString(context.compoundTypeSeparatorText))
+      }.mkString(tpc.compoundTypeSeparatorText))
 
       val declsTexts = (signatureMap ++ typeMap).flatMap {
         case (s: TermSignature, returnType: ScType) if s.namedElement.is[ScFunction] =>
@@ -188,7 +188,7 @@ trait ScalaTypePresentation extends TypePresentation {
       }
 
       def placeholder(wildcard: ScExistentialArgument) =
-        existentialArgWithBounds(wildcard, if (context.compoundTypeWithAndToken) "?" else "_")
+        existentialArgWithBounds(wildcard, if (tpc.compoundTypeWithAndToken) "?" else "_")
 
       def namedExistentials(wildcards: Seq[ScExistentialArgument]) =
         wildcards.map { wildcard =>
@@ -224,7 +224,7 @@ trait ScalaTypePresentation extends TypePresentation {
 
       private def mayUseSimpleName(named: PsiNamedElement): Boolean = {
         val simpleName = named.name
-        simpleName == nameRenderer.renderName(named) || context.nameResolvesTo(simpleName, named)
+        simpleName == nameRenderer.renderName(named) || tpc.nameResolvesTo(simpleName, named)
       }
 
       private def annotated(named: PsiNamedElement) = named match {

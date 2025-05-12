@@ -7,7 +7,7 @@ import org.jetbrains.plugins.scala.lang.psi.ElementScope
 import org.jetbrains.plugins.scala.lang.psi.api.expr.ScExpression
 import org.jetbrains.plugins.scala.lang.psi.api.statements.ScFunction
 import org.jetbrains.plugins.scala.lang.psi.api.toplevel.typedef.ScGivenAliasDefinition
-import org.jetbrains.plugins.scala.lang.psi.types.ScType
+import org.jetbrains.plugins.scala.lang.psi.types.{Context, ScType}
 import org.jetbrains.plugins.scala.lang.psi.types.api.{Any, FunctionType, Nothing, TypeParameter}
 import org.jetbrains.plugins.scala.lang.psi.types.recursiveUpdate.ScSubstitutor
 import org.jetbrains.plugins.scala.lang.resolve.ScalaResolveState.ResolveStateExt
@@ -82,7 +82,9 @@ object ImplicitConversionResolveResult {
   )(build:              ResolverStateBuilder => ResolverStateBuilder
   )(implicit
     place: PsiElement
-  ): Unit =
+  ): Unit = {
+    implicit val context: Context = Context(place)
+
     for {
       expressionType <- precalculatedType
       if !expressionType.equiv(Nothing) // do not proceed with nothing type, due to performance problems.
@@ -111,6 +113,7 @@ object ImplicitConversionResolveResult {
             substituted = result.implicitDependentSubstitutor(result.`type`)
           } processor.processType(substituted, place, state)
       }
+  }
 
   def applicable(candidate: ScalaResolveResult, `type`: ScType, place: PsiElement): Option[ImplicitConversionResolveResult] = {
     val substitutor = candidate.substitutor

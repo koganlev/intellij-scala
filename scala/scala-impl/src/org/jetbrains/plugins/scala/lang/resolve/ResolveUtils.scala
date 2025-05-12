@@ -448,6 +448,7 @@ object ResolveUtils {
         BlockModificationTracker(expr),
         (call, tp, shapesOnly, withImplicits)
       ) {
+        implicit val context: Context = Context(call)
 
         val cands =
           ScalaPsiUtil.processTypeForUpdateOrApplyCandidates(

@@ -24,6 +24,8 @@ class UnnecessaryPartialFunctionInspection extends LocalInspectionTool {
 
   override def buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): PsiElementVisitorSimple = {
     case expression: ScBlockExpr =>
+      implicit val context: Context = Context(expression)
+
       def isNotPartialFunction(expectedType: ScType) =
         findPartialFunctionType(holder.getFile).exists(!expectedType.conforms(_))
 

@@ -44,6 +44,8 @@ object PatternTypeInference {
     pattern:       ScPattern,
     scrutineeType: ScType
   ): Either[ScSubstitutor, (ScType, ScSubstitutor)] = {
+    implicit val context: Context = Context(pattern)
+
     val noTypeInference = Left(ScSubstitutor.empty)
 
     def emptySubst(tpe: ScType): Either[ScSubstitutor, (ScType, ScSubstitutor)] =
@@ -134,6 +136,8 @@ object PatternTypeInference {
     pattern:       ScPattern,
     scrutineeType: ScType
   ): ScSubstitutor = {
+    implicit val context: Context = Context(pattern)
+
     val noTopLevelTypeVariables = scrutineeType.removeAliasDefinitionsIn(pattern).recursiveUpdate {
       case abs: ScAbstractType    if !abs.upper.isAny     => ReplaceWith(abs.upper) //arguments inside are considered bound
       case tpt: TypeParameterType if !tpt.upperType.isAny => ReplaceWith(tpt.upperType)
@@ -257,7 +261,7 @@ object PatternTypeInference {
     patType:       ScType,
     scrutineeType: ScType,
     constraints:   ConstraintSystem
-  ): ConstraintsResult = {
+  )(implicit context: Context): ConstraintsResult = {
     import SmartSuperTypeUtil.TraverseSupers
     val scrutineeBaseBuilder = Map.newBuilder[PsiClass, ScSubstitutor]
     val patternBaseBuilder   = Map.newBuilder[PsiClass, ScSubstitutor]
@@ -347,10 +351,8 @@ object PatternTypeInference {
     shouldSolveForMaxType: Boolean,
     tvars:                 Seq[TypeParameter],
     enclosingTypeParams:   Seq[TypeParameter]
-  )(implicit
-    ctx: ProjectContext
-  ): Option[ScSubstitutor] = {
-    import ctx.stdTypes
+  )(implicit projectContext: ProjectContext, context: Context): Option[ScSubstitutor] = {
+    import projectContext.stdTypes
 
     constraints match {
       case ConstraintsResult.Left => None

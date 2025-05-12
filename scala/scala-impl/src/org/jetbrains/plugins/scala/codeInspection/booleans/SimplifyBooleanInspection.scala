@@ -9,7 +9,7 @@ import org.jetbrains.plugins.scala.lang.psi.api.base.ScLiteral
 import org.jetbrains.plugins.scala.lang.psi.api.expr._
 import org.jetbrains.plugins.scala.lang.psi.impl.ScalaPsiElementFactory.{createExpressionFromText, createExpressionWithContextFromText}
 import org.jetbrains.plugins.scala.lang.psi.types.result._
-import org.jetbrains.plugins.scala.lang.psi.types.{ScTypeExt, api}
+import org.jetbrains.plugins.scala.lang.psi.types.{Context, ScTypeExt, api}
 import org.jetbrains.plugins.scala.lang.refactoring.util.ScalaRefactoringUtil.getShortText
 import org.jetbrains.plugins.scala.project.ProjectContext
 
@@ -69,6 +69,8 @@ object SimplifyBooleanUtil {
 
   def isOfBooleanType(expr: ScExpression): Boolean = {
     import expr.projectContext
+    implicit val context: Context = Context(expr)
+
     expr.`type`().getOrAny.weakConforms(api.Boolean)
   }
 

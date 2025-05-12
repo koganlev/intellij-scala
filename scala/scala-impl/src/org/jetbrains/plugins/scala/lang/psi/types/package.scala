@@ -44,8 +44,8 @@ package object types {
       typeSystem.conformsInner(`type`, scType, checkWeak = true).isRight
     }
 
-    def conformanceSubstitutor(`type`: ScType): Option[ScSubstitutor] = {
-      implicit val context: ProjectContext = `type`.projectContext
+    def conformanceSubstitutor(`type`: ScType)(implicit context: Context): Option[ScSubstitutor] = {
+      implicit val projectContext: ProjectContext = `type`.projectContext
       conforms(`type`, ConstraintSystem.empty) match {
         case ConstraintSystem(substitutor) => Some(substitutor)
         case _                             => None
@@ -53,7 +53,7 @@ package object types {
     }
 
     /** see scala.tools.nsc.typechecker.Infer.Inferencer#isConservativelyCompatible from scalac */
-    def isConservativelyCompatible(pt: ScType): ConstraintsResult = {
+    def isConservativelyCompatible(pt: ScType)(implicit context: Context): ConstraintsResult = {
       def tryConformanceNoParams(fullResults: ConstraintsResult): ConstraintsResult = scType match {
         case ScMethodType(retTpe, ps, _) if ps.isEmpty => retTpe.conforms(pt, ConstraintSystem.empty, checkWeak = true)
         case FunctionType(retTpe, ps)    if ps.isEmpty => retTpe.conforms(pt, ConstraintSystem.empty, checkWeak = true)
@@ -118,7 +118,7 @@ package object types {
       * This method is important for parameters expected type.
       * There shouldn't be any abstract type in this expected type.
       **/
-    def removeAbstracts: ScType = scType.updateLeaves {
+    def removeAbstracts(implicit context: Context): ScType = scType.updateLeaves {
       case a: ScAbstractType => a.simplifyType
     }
 
@@ -146,12 +146,12 @@ package object types {
       * @param expandAliases need to expand alias or not
       * @return element and substitutor
       */
-    def extractDesignatedType(expandAliases: Boolean): Option[(PsiNamedElement, ScSubstitutor)] = {
+    def extractDesignatedType(expandAliases: Boolean)(implicit context: Context): Option[(PsiNamedElement, ScSubstitutor)] = {
       new DesignatorExtractor(expandAliases, needSubstitutor = true)
         .extractFrom(scType)
     }
 
-    def extractDesignated(expandAliases: Boolean): Option[PsiNamedElement] = {
+    def extractDesignated(expandAliases: Boolean)(implicit context: Context): Option[PsiNamedElement] = {
       new DesignatorExtractor(expandAliases, needSubstitutor = false)
         .extractFrom(scType).map(_._1)
     }
@@ -161,7 +161,7 @@ package object types {
         .extractFrom(scType)
     }
 
-    def extractClass: Option[PsiClass] = {
+    def extractClass(implicit context: Context): Option[PsiClass] = {
       new ClassTypeExtractor(needSubstitutor = false)
         .extractFrom(scType).map(_._1)
     }
@@ -169,7 +169,7 @@ package object types {
     //performance critical method!
     //may return None even if extractClass is not empty
     @scala.annotation.tailrec
-    final def extractClassSimple(visited: Set[ScTypeAlias] = Set.empty): Option[PsiClass] = scType match {
+    final def extractClassSimple(visited: Set[ScTypeAlias] = Set.empty)(implicit context: Context): Option[PsiClass] = scType match {
       case ScDesignatorType(c: PsiClass) => Some(c)
       case _: StdType => None
       case ParameterizedType(des, _) => des.extractClassSimple(visited)
@@ -182,14 +182,14 @@ package object types {
     }
 
     //performance critical method!
-    def canBeSameOrInheritor(t: ScType): Boolean = checkSimpleClasses(t,
+    def canBeSameOrInheritor(t: ScType)(implicit context: Context): Boolean = checkSimpleClasses(t,
       (c1, c2) => c1.sameOrInheritor(c2)
     )
 
     //performance critical method!
-    def canBeSameClass(t: ScType): Boolean = checkSimpleClasses(t, areClassesEquivalent)
+    def canBeSameClass(t: ScType)(implicit context: Context): Boolean = checkSimpleClasses(t, areClassesEquivalent)
 
-    private def checkSimpleClasses(t: ScType, condition: (PsiClass, PsiClass) => Boolean) = {
+    private def checkSimpleClasses(t: ScType, condition: (PsiClass, PsiClass) => Boolean)(implicit context: Context) = {
       (scType.extractClassSimple(), t.extractClassSimple()) match {
         case (Some(c1), Some(c2)) if !condition(c1, c2) => false
         case _ => true

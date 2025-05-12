@@ -13,7 +13,7 @@ import org.jetbrains.plugins.scala.lang.psi.impl.ScalaPsiManager
 import org.jetbrains.plugins.scala.lang.psi.impl.toplevel.typedef.TypeDefinitionMembers
 import org.jetbrains.plugins.scala.lang.psi.types.api.{FunctionType, ParameterizedType, Variance}
 import org.jetbrains.plugins.scala.lang.psi.types.recursiveUpdate.ScSubstitutor
-import org.jetbrains.plugins.scala.lang.psi.types.{PhysicalMethodSignature, ScExistentialArgument, ScExistentialType, ScParameterizedType, ScType, ScTypeExt}
+import org.jetbrains.plugins.scala.lang.psi.types.{Context, PhysicalMethodSignature, ScExistentialArgument, ScExistentialType, ScParameterizedType, ScType, ScTypeExt}
 import org.jetbrains.plugins.scala.project._
 
 
@@ -66,6 +66,8 @@ object SAMUtil {
   }
 
   private[this] def hasValidConstructorAndSelfType(cls: PsiClass): Boolean = {
+    implicit val context: Context = Context(cls)
+
     def selfTypeValid(tdef: ScTemplateDefinition): Boolean =
       tdef.selfType match {
         case Some(selfParam: ScParameterizedType) =>
@@ -109,6 +111,8 @@ object SAMUtil {
     def toSAMType(expected: ScType, element: PsiElement): Option[ScType] = {
       // @TODO: ContextFunctions for method with implicit/using parameters
       implicit val scope: ElementScope = element.elementScope
+      implicit val context: Context = Context(element)
+
       val languageLevel                = element.scalaLanguageLevelOrDefault
 
       expected.extractClassType.flatMap {

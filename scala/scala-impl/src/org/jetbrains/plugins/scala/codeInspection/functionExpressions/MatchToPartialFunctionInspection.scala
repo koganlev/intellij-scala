@@ -18,7 +18,7 @@ import org.jetbrains.plugins.scala.lang.lexer.ScalaTokenTypes
 import org.jetbrains.plugins.scala.lang.psi.api.base.patterns._
 import org.jetbrains.plugins.scala.lang.psi.api.expr._
 import org.jetbrains.plugins.scala.lang.psi.impl.ScalaPsiElementFactory._
-import org.jetbrains.plugins.scala.lang.psi.types.ScTypeExt
+import org.jetbrains.plugins.scala.lang.psi.types.{Context, ScTypeExt}
 import org.jetbrains.plugins.scala.project.ProjectContext
 
 import scala.jdk.CollectionConverters._
@@ -45,11 +45,14 @@ object MatchToPartialFunctionInspection {
   @Nls
   private[functionExpressions] val DESCRIPTION = ScalaInspectionBundle.message("convert.match.statement.to.pattern.matching.function")
 
-  private def isValid(function: ScFunctionExpr): Boolean =
+  private def isValid(function: ScFunctionExpr): Boolean = {
+    implicit val context: Context = Context(function)
+
     (function.parameters.head.typeElement.isEmpty ||
       function.`type`().toOption.zip(function.expectedType()).exists {
         case (actual, expected) => actual.equiv(expected)
       }) && checkSameResolve(function)
+  }
 
   private def checkSameResolve(expression: ScExpression): Boolean = {
     val arg = expression.getParent match {

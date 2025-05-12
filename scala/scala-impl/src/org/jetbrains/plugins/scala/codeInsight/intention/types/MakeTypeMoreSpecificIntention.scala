@@ -13,7 +13,7 @@ import org.jetbrains.plugins.scala.lang.psi.api.statements.params.ScParameter
 import org.jetbrains.plugins.scala.lang.psi.api.statements.{ScFunctionDefinition, ScPatternDefinition, ScVariableDefinition}
 import org.jetbrains.plugins.scala.lang.psi.impl.ScalaPsiElementFactory
 import org.jetbrains.plugins.scala.lang.psi.types.api.presentation.ScTypeText
-import org.jetbrains.plugins.scala.lang.psi.types.{BaseTypes, ScType, ScTypeExt, TypePresentationContext}
+import org.jetbrains.plugins.scala.lang.psi.types.{BaseTypes, Context, ScType, ScTypeExt, TypePresentationContext}
 
 class MakeTypeMoreSpecificIntention extends AbstractTypeAnnotationIntention {
 
@@ -63,6 +63,8 @@ class MakeTypeMoreSpecificIntention extends AbstractTypeAnnotationIntention {
   override protected def invocationStrategy(maybeEditor: Option[Editor]): Strategy = new Strategy {
 
     private def doTemplate(te: ScTypeElement, declaredType: ScType, dynamicType: ScType, context: PsiElement): Unit = {
+      implicit val elementContext: Context = Context(context)
+
       val types = computeBaseTypes(declaredType, dynamicType).sortWith((t1, t2) => t1.conforms(t2))
       if (types.size == 1) {
         val replaced = te.replace(ScalaPsiElementFactory.createTypeElementFromText(types.head.canonicalText, te.getContext, te))
@@ -118,7 +120,7 @@ object MakeTypeMoreSpecificIntention {
   private[types] val FamilyName: String =
     message("make.type.more.specific")
 
-  private def computeBaseTypes(declaredType: ScType, dynamicType: ScType): Seq[ScType] = {
+  private def computeBaseTypes(declaredType: ScType, dynamicType: ScType)(implicit context: Context): Seq[ScType] = {
     val baseTypes = dynamicType +: BaseTypes.get(dynamicType)
     baseTypes.filter(_.conforms(declaredType))
       .filter(!_.equiv(declaredType))
@@ -129,7 +131,11 @@ object MakeTypeMoreSpecificIntention {
       declared <- declTypeOpt
       expr <- exprOpt
       tp <- expr.`type`().toOption
-    } yield computeBaseTypes(declared, tp)
+    } yield {
+      implicit val context: Context = Context(expr)
+
+      computeBaseTypes(declared, tp)
+    }
 
     baseTypes.exists(_.nonEmpty)
   }

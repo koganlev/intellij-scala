@@ -18,7 +18,7 @@ import org.jetbrains.plugins.scala.lang.psi.api.statements.{ScEnumCase, ScExpres
 import org.jetbrains.plugins.scala.lang.psi.impl.ScalaPsiElementFactory
 import org.jetbrains.plugins.scala.lang.psi.types.api.designator.ScDesignatorType
 import org.jetbrains.plugins.scala.lang.psi.types.api.presentation.TypePresentation
-import org.jetbrains.plugins.scala.lang.psi.types.{ScalaTypePresentation, TypePresentationContext}
+import org.jetbrains.plugins.scala.lang.psi.types.{Context, ScalaTypePresentation, TypePresentationContext}
 import org.jetbrains.plugins.scala.lang.refactoring.ScalaNamesValidator.isIdentifier
 import org.jetbrains.plugins.scala.lang.refactoring.util.ScalaNamesUtil.{isOperatorName, qualifiedName, splitName}
 import org.jetbrains.plugins.scala.lang.resolve.ResolveTargets._
@@ -455,6 +455,8 @@ object TypeAdjuster {
   }
 
   private def availableTypeAliasFor(clazz: PsiClass, position: PsiElement, useTypeAliases: Boolean): Option[ScTypeAliasDefinition] = {
+    implicit val context: Context = Context(position)
+
     if (!useTypeAliases) None
     else {
       val clazzTy = ScDesignatorType(clazz)
@@ -508,6 +510,7 @@ object TypeAdjuster {
                                       replacement: String,
                                       resolve: Option[PsiElement],
                                       override val pathsToImport: List[String] = Nil) extends ReplacementInfo {
+    private implicit def context: Context = Context(place)
 
     def updateTarget(target: PsiNamedElement): SimpleInfo = {
       def prefixAndPath(qualifiedName: String, prefixLength: Int): Option[(String, Some[String])] =

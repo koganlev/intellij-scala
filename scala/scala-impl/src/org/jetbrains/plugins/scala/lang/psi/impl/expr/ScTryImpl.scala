@@ -42,7 +42,7 @@ class ScTryImpl(node: ASTNode) extends ScExpressionImplBase(node) with ScTry wit
         case Seq(ScalaResolveResult(function: ScFunction, substitutor)) =>
           function.returnType
             .map(substitutor)
-            .map(tryBlockType.lub(_)(Context(this))) // TODO Union type in Scala 3, SCL-23806
+            .map(tryBlockType.lub(_)) // TODO Union type in Scala 3, SCL-23806
         case _ => Right(tryBlockType)
       }
     }).getOrElse(Failure(ScalaBundle.message("nothing.to.type")))

@@ -10,7 +10,7 @@ import org.jetbrains.plugins.scala.lang.psi.api.statements.ScExpressionExt
 import org.jetbrains.plugins.scala.lang.psi.api.toplevel.ScEarlyDefinitions
 import org.jetbrains.plugins.scala.lang.psi.api.toplevel.templates.ScTemplateBody
 import org.jetbrains.plugins.scala.lang.psi.types.result._
-import org.jetbrains.plugins.scala.lang.psi.types.{ScType, api}
+import org.jetbrains.plugins.scala.lang.psi.types.{Context, ScType, api}
 import org.jetbrains.plugins.scala.project.ProjectContext
 
 import scala.collection.immutable.ArraySeq
@@ -30,7 +30,7 @@ final class UnitInMapInspection extends OperationOnCollectionInspection {
         quickFixes = if (isFixable(call)) Seq(new ChangeReferenceNameQuickFix(ref))
         else Seq.empty
 
-        if hasUnitReturnType(expression, argumentType)(call.projectContext)
+        if hasUnitReturnType(expression, argumentType)
       } holder.registerProblem(
         expression,
         ScalaInspectionBundle.message("expression.unit.return.in.map"),
@@ -62,8 +62,9 @@ object UnitInMapInspection {
   }
 
   private def hasUnitReturnType(expression: ScExpression,
-                                argumentType: ScType)
-                               (implicit context: ProjectContext) =
+                                argumentType: ScType) = {
+    implicit val context: Context = Context(expression)
+
     expression.getTextLength > 0 &&
       expression.isPhysical &&
       expression.`type`().exists {
@@ -72,6 +73,7 @@ object UnitInMapInspection {
             argumentType.equiv(scType)
         case scType => isUnitLike(scType)
       }
+  }
 
   private def isUnitLike(ty: ScType): Boolean =
     ty.isUnit || isUnitObjectType(ty)

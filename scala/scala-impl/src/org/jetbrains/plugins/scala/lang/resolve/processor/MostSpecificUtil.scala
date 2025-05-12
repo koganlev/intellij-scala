@@ -24,7 +24,8 @@ import org.jetbrains.plugins.scala.project.ProjectContext
 import scala.collection.mutable
 
 case class MostSpecificUtil(place: PsiElement, length: Int) {
-  implicit def ctx: ProjectContext = place
+  private implicit def projectContext: ProjectContext = place
+  private implicit def context: Context = Context(place)
 
   def mostSpecificForResolveResult(applicable: Set[ScalaResolveResult]): Option[ScalaResolveResult] =
     mostSpecificGeneric(applicable.map(r =>

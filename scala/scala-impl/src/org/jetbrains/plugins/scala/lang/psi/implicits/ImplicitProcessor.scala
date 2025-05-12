@@ -186,14 +186,15 @@ object ImplicitProcessor {
     scope:                GlobalSearchScope,
     includePackagePrefix: Boolean
   )(implicit
-    context: ProjectContext
+    projectContext: ProjectContext,
+    context: Context
   ): Seq[ScType] = {
     val implicitObjectsCache = ScalaPsiManager.instance.collectImplicitObjectsCache
     val cacheKey             = (`type`, scope, includePackagePrefix)
 
     implicitObjectsCache.get(cacheKey) match {
       case null =>
-        val implicitObjects = findImplicitObjectsImpl(`type`, includePackagePrefix)(ElementScope(context.project, scope))
+        val implicitObjects = findImplicitObjectsImpl(`type`, includePackagePrefix)(ElementScope(projectContext.project, scope), context)
         implicitObjectsCache.put(cacheKey, implicitObjects)
         implicitObjects
       case cached => cached
@@ -204,7 +205,8 @@ object ImplicitProcessor {
     `type`:               ScType,
     includePackagePrefix: Boolean
   )(implicit
-    elementScope: ElementScope
+    elementScope: ElementScope,
+    context: Context
   ): Seq[ScType] = {
     val visited = mutable.HashSet.empty[ScType]
     val parts   = mutable.Queue.empty[ScType]
@@ -346,7 +348,7 @@ object ImplicitProcessor {
     collectParts(`type`)
     val res = mutable.HashMap.empty[String, Seq[ScType]]
 
-    def addResult(fqn: String, tp: ScType): Unit = {
+    def addResult(fqn: String, tp: ScType)(implicit context: Context): Unit = {
       res.get(fqn) match {
         case Some(s) =>
           if (s.forall(!_.equiv(tp))) {
@@ -357,7 +359,7 @@ object ImplicitProcessor {
       }
     }
 
-    def workWithTypeAlias(alias: ScTypeAlias, subst: ScSubstitutor = ScSubstitutor.empty): Unit = alias match {
+    def workWithTypeAlias(alias: ScTypeAlias, subst: ScSubstitutor = ScSubstitutor.empty)(implicit context: Context): Unit = alias match {
       case alias: ScTypeAliasDefinition =>
         if (alias.isEffectivelyOpaque) {
           for (fqn <- alias.qualifiedNameOpt;
@@ -375,7 +377,7 @@ object ImplicitProcessor {
       case _ =>
     }
 
-    def collectObjects(tp: ScType): Unit =
+    def collectObjects(tp: ScType)(implicit context: Context): Unit =
       tp match {
         case _ if tp.isAny =>
         case tp: StdType if stdTypes.contains(tp.name) =>

@@ -19,7 +19,7 @@ import org.jetbrains.plugins.scala.lang.psi.api.expr.ScAssignment
 import org.jetbrains.plugins.scala.lang.psi.api.statements._
 import org.jetbrains.plugins.scala.lang.psi.api.toplevel.imports.ScImportExpr
 import org.jetbrains.plugins.scala.lang.psi.impl.expr.ScInterpolatedExpressionPrefix
-import org.jetbrains.plugins.scala.lang.psi.types.{ScType, ScTypeExt, ScalaType, TypePresentationContext}
+import org.jetbrains.plugins.scala.lang.psi.types.{Context, ScType, ScTypeExt, ScalaType, TypePresentationContext}
 import org.jetbrains.plugins.scala.lang.refactoring.util.ScalaNamesUtil
 import org.jetbrains.plugins.scala.settings.ScalaProjectSettings
 import org.jetbrains.plugins.scala.settings.ScalaProjectSettings.ScalaCollectionHighlightingLevel
@@ -85,6 +85,8 @@ object ScalaColorSchemeAnnotator {
     refElement: ScReference,
     resolvedElement: => PsiElement
   )(implicit holder: ScalaAnnotationHolder): Unit = {
+    implicit val context: Context = Context(refElement)
+
     def annotateCollectionByType(resolvedType: ScType): Unit = {
       val resolvedTypeName = resolvedType.presentableText(TypePresentationContext.emptyContext)
 

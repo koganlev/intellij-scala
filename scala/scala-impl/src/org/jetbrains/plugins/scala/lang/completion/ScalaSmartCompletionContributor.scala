@@ -350,7 +350,8 @@ object ScalaSmartCompletionContributor {
                           originalPlace: PsiElement,
                           isSmart: Boolean)
                          (implicit place: PsiElement): Unit = {
-    implicit val project: Project = place.getProject
+    implicit val projectContext: Project = place.getProject
+    implicit val context: Context = Context(place)
 
     if (typez.isEmpty || typez.forall(_ == Nothing)) return
 
@@ -760,6 +761,8 @@ object ScalaSmartCompletionContributor {
       }.toMap
 
       def seekAbstracts(te: ScTypeElement)(implicit tpc: TypePresentationContext): Unit = {
+        implicit val context: Context = Context(te)
+
         val visitor = new ScalaRecursiveElementVisitor {
 
           override def visitSimpleTypeElement(simple: ScSimpleTypeElement): Unit = for {

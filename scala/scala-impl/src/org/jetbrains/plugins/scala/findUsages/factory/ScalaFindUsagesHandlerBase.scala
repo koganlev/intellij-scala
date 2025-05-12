@@ -6,6 +6,7 @@ import com.intellij.psi.{PsiElement, PsiMethod}
 import org.jetbrains.plugins.scala.lang.psi.ScalaPsiUtil
 import org.jetbrains.plugins.scala.lang.psi.api.statements.ScFunctionDefinition
 import org.jetbrains.plugins.scala.lang.psi.api.toplevel.typedef.ScClass
+import org.jetbrains.plugins.scala.lang.psi.types.Context
 import org.jetbrains.plugins.scala.lang.psi.types.api.designator.ScDesignatorType
 
 class ScalaFindUsagesHandlerBase(
@@ -19,6 +20,8 @@ class ScalaFindUsagesHandlerBase(
     applyMethods.filter {
       case f: ScFunctionDefinition if f.isApplyMethod => f.isSynthetic
       case f: ScFunctionDefinition =>
+        implicit val context: Context = Context(f)
+
         val returnType = f.returnType.toOption
         returnType.exists(_.equiv(ScDesignatorType(cls)))
       case _ => false

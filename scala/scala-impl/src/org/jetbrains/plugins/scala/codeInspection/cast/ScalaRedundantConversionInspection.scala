@@ -10,7 +10,7 @@ import org.jetbrains.plugins.scala.extensions._
 import org.jetbrains.plugins.scala.lang.psi.api.expr.{ScExpression, ScPostfixExpr, ScReferenceExpression, ScUnderscoreSection}
 import org.jetbrains.plugins.scala.lang.psi.impl.ScalaPsiElementFactory
 import org.jetbrains.plugins.scala.lang.psi.impl.toplevel.synthetic.ScSyntheticFunction
-import org.jetbrains.plugins.scala.lang.psi.types.{ScTypeExt, TypePresentationContext}
+import org.jetbrains.plugins.scala.lang.psi.types.{Context, ScTypeExt, TypePresentationContext}
 
 class ScalaRedundantConversionInspection extends LocalInspectionTool {
 
@@ -24,6 +24,8 @@ class ScalaRedundantConversionInspection extends LocalInspectionTool {
 
   private def process(element: PsiElement, left: ScExpression, target: PsiElement, offset: Int, holder: ProblemsHolder): Unit = {
     implicit val tpc: TypePresentationContext = TypePresentationContext(element)
+    implicit val context: Context = Context(element)
+
     target match {
       case f: ScSyntheticFunction if f.name.startsWith("to") =>
         for {
@@ -35,7 +37,7 @@ class ScalaRedundantConversionInspection extends LocalInspectionTool {
               (f.getTypeParameterList == null || f.getTypeParameterList.getTypeParameters.isEmpty) =>
         for {
           leftType <- left.`type`().toOption
-          if conformsToTypeFromClass(leftType, "java.lang.String")(element)
+          if conformsToTypeFromClass(leftType, "java.lang.String")(element, context)
         } registerProblem(element, left, "java.lang.String", offset, holder)
       case _ =>
     }

@@ -8,6 +8,7 @@ import org.jetbrains.plugins.scala.lang.psi.api.expr.{ScExpression, ScReferenceE
 import org.jetbrains.plugins.scala.lang.psi.api.statements.ScMacroDefinition
 import org.jetbrains.plugins.scala.lang.psi.api.toplevel.ScNamedElement
 import org.jetbrains.plugins.scala.lang.psi.api.toplevel.typedef.{ScMember, ScTypeDefinition}
+import org.jetbrains.plugins.scala.lang.psi.types.Context
 import org.jetbrains.plugins.scala.lang.psi.types.result.Typeable
 
 import scala.ref.WeakReference
@@ -91,7 +92,9 @@ private final class ElementUsageWithKnownReference private(
    */
   private def isIndirectReferenceToImplicitClassExtensionMethodFromWithinThatClass(typeDef: ScTypeDefinition): Boolean = {
 
-    def firstChildIsNonThisTypedExpression(refExpr: ScReferenceExpression): Boolean =
+    def firstChildIsNonThisTypedExpression(refExpr: ScReferenceExpression): Boolean = {
+      implicit val context: Context = Context(refExpr)
+
       refExpr.getFirstChild match {
         case e: ScExpression =>
           (e.`type`(), typeDef.`type`()) match {
@@ -100,6 +103,7 @@ private final class ElementUsageWithKnownReference private(
           }
         case _ => false
       }
+    }
 
     typeDef.hasModifierPropertyScala("implicit") &&
       reference.getElement.asOptionOf[ScReferenceExpression].exists { refExpr =>
@@ -126,18 +130,22 @@ private final class ElementUsageWithKnownReference private(
      * This method returns `true` for an `ElementUsage` where `b` in `val b` is our target,
      * and `Bar.b` is our reference to that target.
      */
-    def referenceIsExpressionWhoseFirstChildHasTargetContainerType = refElement match {
-      case refExpr: ScReferenceExpression if refExpr.children.size > 1 =>
-        val firstChild = refExpr.getFirstChild
-        val firstChildType = firstChild.asOptionOfUnsafe[Typeable].flatMap(_.`type`().toOption)
-        val targetContainerType = targetContainer.flatMap(_.`type`().toOption)
+    def referenceIsExpressionWhoseFirstChildHasTargetContainerType = {
+      implicit val context: Context = Context(refElement)
 
-        (firstChildType, targetContainerType) match {
-          case (Some(t1), Some(t2)) => t1.equiv(t2)
-          case _ => false
-        }
+      refElement match {
+        case refExpr: ScReferenceExpression if refExpr.children.size > 1 =>
+          val firstChild = refExpr.getFirstChild
+          val firstChildType = firstChild.asOptionOfUnsafe[Typeable].flatMap(_.`type`().toOption)
+          val targetContainerType = targetContainer.flatMap(_.`type`().toOption)
 
-      case _ => false
+          (firstChildType, targetContainerType) match {
+            case (Some(t1), Some(t2)) => t1.equiv(t2)
+            case _ => false
+          }
+
+        case _ => false
+      }
     }
 
     def isReferenceToImportedCompanionObjectMember: Boolean =

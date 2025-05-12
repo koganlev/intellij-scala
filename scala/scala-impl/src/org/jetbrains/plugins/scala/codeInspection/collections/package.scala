@@ -164,6 +164,7 @@ package object collections {
   object returnsBoolean {
     def unapply(expr: ScExpression): Boolean = {
       import expr.projectContext
+      implicit val context: Context = Context(expr)
 
       expr.`type`() match {
         case Right(result) =>
@@ -466,7 +467,7 @@ package object collections {
         case element: Typeable => isExpressionOfType(fqns: _*)(element)
         case _ => false
       }
-    case Typeable(scType) => fqns.exists(conformsToTypeFromClass(scType, _)(scType.projectContext))
+    case Typeable(scType) => fqns.exists(conformsToTypeFromClass(scType, _)(scType.projectContext, Context.Empty))
     case _                => false
   }
 

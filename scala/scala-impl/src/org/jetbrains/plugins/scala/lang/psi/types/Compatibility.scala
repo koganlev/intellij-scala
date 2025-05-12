@@ -68,10 +68,11 @@ object Compatibility {
       tpe: ScType,
       place: Option[PsiElement] = None
     )(implicit
-      ctx: ProjectContext
+      projectContext: ProjectContext,
+      context: Context
     ): Expression = OfType(tpe, place)
 
-    def apply(tpe: ScType, place: PsiElement)(implicit ctx: ProjectContext): Expression =
+    def apply(tpe: ScType, place: PsiElement)(implicit projectContext: ProjectContext, context: Context): Expression =
       apply(tpe, Option(place))
 
     def unapply(e: Expression): Option[ScExpression] = e match {
@@ -79,7 +80,7 @@ object Compatibility {
       case _ => None
     }
 
-    final case class OfType(tpe: ScType, place: Option[PsiElement])(implicit ctx: ProjectContext) extends Expression {
+    final case class OfType(tpe: ScType, place: Option[PsiElement])(implicit projectContext: ProjectContext, context: Context) extends Expression {
       private def default: ExpressionTypeResult = ExpressionTypeResult(Right(tpe))
 
       override def getTypeAfterImplicitConversion(
@@ -123,7 +124,8 @@ object Compatibility {
   }
 
   implicit class PsiElementExt(private val place: PsiElement) extends AnyVal {
-    implicit def elementScope: ElementScope = ElementScope(place)
+    private implicit def elementScope: ElementScope = ElementScope(place)
+    private implicit def context: Context = Context(place)
 
     final def tryAdaptTypeToSAM(
       tp:             ScType,
@@ -331,10 +333,9 @@ object Compatibility {
     args:          Seq[Expression],
     withImplicits: Boolean,
     shapesOnly:    Boolean,
-  ): ApplicabilityCheckResult = {
-    ProgressManager.checkCanceled()
+  )(implicit context: Context): ApplicabilityCheckResult = {
 
-    implicit val context: Context = exprs.headOption.flatMap(_.asOptionOf[ScExpression]).map(Context(_)).getOrElse(Context.Empty)
+    ProgressManager.checkCanceled()
 
     var constraintAccumulator = ConstraintSystem.empty
     val clashedAssignments    = clashedAssignmentsIn(args)
@@ -702,6 +703,8 @@ object Compatibility {
   )(implicit
     ctx: ProjectContext
   ): ApplicabilityCheckResult = {
+    implicit val context: Context = Context(constrInvocation)
+
     val nonEmptyArgClause =
       if (argClauses.isEmpty) Seq(Seq.empty)
       else                    argClauses.map(_.exprs)

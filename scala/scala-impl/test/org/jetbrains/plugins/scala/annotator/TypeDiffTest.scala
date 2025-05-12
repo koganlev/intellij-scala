@@ -10,7 +10,7 @@ import org.jetbrains.plugins.scala.extensions.{IteratorExt, PsiElementExt}
 import org.jetbrains.plugins.scala.lang.psi.api.ScalaFile
 import org.jetbrains.plugins.scala.lang.psi.api.expr.ScTypedExpression
 import org.jetbrains.plugins.scala.lang.psi.types.result.Failure
-import org.jetbrains.plugins.scala.lang.psi.types.{ScType, TypePresentationContext}
+import org.jetbrains.plugins.scala.lang.psi.types.{Context, ScType, TypePresentationContext}
 import org.junit.Assert._
 import org.junit.experimental.categories.Category
 
@@ -647,7 +647,7 @@ class TypeDiffTest extends ScalaFixtureTestCase {
       case Node(diffs @_*) => "<" + diffs.map(asString).mkString + ">"
       case _ => ???
     }
-    assertEquals(structure, asString(TypeDiff.parse(typesIn(context, tpe).head)(TypePresentationContext.emptyContext)))
+    assertEquals(structure, asString(TypeDiff.parse(typesIn(context, tpe).head)(TypePresentationContext.emptyContext, Context.Empty)))
   }
 
   private def assertDiffsAre(context: String, expectedDiff1: String, expectedDiff2: String, verifyPresentation: Boolean = true): Unit = {

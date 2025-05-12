@@ -12,12 +12,14 @@ import org.jetbrains.plugins.scala.lang.psi.types.api.TypeParameterType
 import org.jetbrains.plugins.scala.lang.psi.types.api.designator.{ScDesignatorType, ScProjectionType}
 import org.jetbrains.plugins.scala.lang.psi.types.recursiveUpdate.ScSubstitutor
 import org.jetbrains.plugins.scala.lang.psi.types.result.Failure
-import org.jetbrains.plugins.scala.lang.psi.types.{TypePresentationContext, extractTypeParameters}
+import org.jetbrains.plugins.scala.lang.psi.types.{Context, TypePresentationContext, extractTypeParameters}
 
 object ScTypeBoundsOwnerAnnotator extends ElementAnnotator[ScTypeBoundsOwner] {
 
   override def annotate(element: ScTypeBoundsOwner, typeAware: Boolean)
                        (implicit holder: ScalaAnnotationHolder): Unit = {
+    implicit val context: Context = Context(element)
+
     if (!typeAware) return
 
     val typeParamClause  = PsiTreeUtil.getParentOfType(element, classOf[ScTypeParamClause]).toOption

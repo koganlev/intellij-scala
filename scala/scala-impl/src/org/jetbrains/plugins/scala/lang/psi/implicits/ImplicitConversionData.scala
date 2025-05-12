@@ -16,7 +16,7 @@ import org.jetbrains.plugins.scala.lang.psi.stubs.index.ImplicitConversionIndex
 import org.jetbrains.plugins.scala.lang.psi.types.api.{Any, FunctionType, StdTypes}
 import org.jetbrains.plugins.scala.lang.psi.types.recursiveUpdate.ScSubstitutor
 import org.jetbrains.plugins.scala.lang.psi.types.result.Typeable
-import org.jetbrains.plugins.scala.lang.psi.types.{ConstraintSystem, ConstraintsResult, ScParameterizedType, ScType}
+import org.jetbrains.plugins.scala.lang.psi.types.{ConstraintSystem, ConstraintsResult, Context, ScParameterizedType, ScType}
 import org.jetbrains.plugins.scala.lang.psi.{ElementScope, ScalaPsiUtil}
 import org.jetbrains.plugins.scala.lang.resolve.ScalaResolveResult
 import org.jetbrains.plugins.scala.project.ProjectContext
@@ -36,6 +36,8 @@ abstract class ImplicitConversionData {
   override def toString: String = element.name
 
   def isApplicable(fromType: ScType, place: PsiElement): Option[ImplicitConversionApplication] = {
+    implicit val context: Context = Context(place)
+
     // to prevent infinite recursion
     if (PsiTreeUtil.isContextAncestor(element.nameContext, place, false))
       return None
@@ -103,6 +105,8 @@ object ImplicitConversionData {
     ImplicitConversionData(globalConversion.function, globalConversion.substitutor)
 
   def apply(element: PsiNamedElement, substitutor: ScSubstitutor): Option[ImplicitConversionData] = {
+    implicit val context: Context = Context(element)
+
     ProgressManager.checkCanceled()
 
     element match {
@@ -151,7 +155,7 @@ object ImplicitConversionData {
     rawCheck.map(_.withSubstitutor(substitutor))
   }
 
-  private def fromElementWithFunctionType(named: PsiNamedElement with Typeable, substitutor: ScSubstitutor): Option[ImplicitConversionData] = {
+  private def fromElementWithFunctionType(named: PsiNamedElement with Typeable, substitutor: ScSubstitutor)(implicit context: Context): Option[ImplicitConversionData] = {
     val rawCheck: Option[ImplicitConversionData] = cachedInUserData("fromElementWithFunctionType.rawCheck", named, ModTracker.libraryAware(named), Tuple1(named)) {
       for {
         function1Type <- named.elementScope.cachedFunction1Type
@@ -186,8 +190,9 @@ object ImplicitConversionData {
 
   private class ElementWithFunctionTypeData(override val element: PsiNamedElement with Typeable,
                                             rawElementType: ScType,
-                                            override val substitutor: ScSubstitutor = ScSubstitutor.empty)
-    extends ImplicitConversionData {
+                                            override val substitutor: ScSubstitutor = ScSubstitutor.empty) extends ImplicitConversionData {
+    private implicit def context: Context = Context(element)
+
     private def stdTypes = StdTypes.instance(element.getProject)
 
     private lazy val functionTypeParams: Option[(ScType, ScType)] = {

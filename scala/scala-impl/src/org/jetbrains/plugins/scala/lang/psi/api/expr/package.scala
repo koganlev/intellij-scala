@@ -1,6 +1,6 @@
 package org.jetbrains.plugins.scala.lang.psi.api
 import org.jetbrains.plugins.scala.lang.psi.api.base.literals.ScIntegerLiteral
-import org.jetbrains.plugins.scala.lang.psi.types.ScType
+import org.jetbrains.plugins.scala.lang.psi.types.{Context, ScType}
 import org.jetbrains.plugins.scala.lang.psi.types.api.designator.ScDesignatorType
 import org.jetbrains.plugins.scala.lang.psi.types.api.{StdType, StdTypes, ValType}
 import org.jetbrains.plugins.scala.project.ProjectContext
@@ -11,7 +11,8 @@ package object expr {
     valueType: ScType,
     expected:  ScType
   )(implicit
-    project: ProjectContext
+    project: ProjectContext,
+    context: Context
   ): Boolean = {
     val (l, r) =
       (getStdType(valueType), getStdType(expected)) match {
@@ -40,6 +41,8 @@ package object expr {
   )(implicit
     project: ProjectContext
   ): ScType = {
+    implicit val context: Context = Context(expr)
+
     val narrowing = isNumericNarrowing(expr, expected)
     if (narrowing.isDefined)
       narrowing.get
@@ -56,6 +59,7 @@ package object expr {
   )(implicit
     ctx: ProjectContext
   ): Option[ScType] = {
+    implicit val context: Context = Context(expr)
 
     def isByte(v: Long) = v >= scala.Byte.MinValue && v <= scala.Byte.MaxValue
 
@@ -98,7 +102,8 @@ package object expr {
   private def getStdType(
     t: ScType
   )(implicit
-    project: ProjectContext
+    project: ProjectContext,
+    context: Context
   ): Option[StdType] = {
     val stdTypes  = project.stdTypes
     val dealiased = t.widenIfLiteral.removeAliasDefinitions()

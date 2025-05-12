@@ -165,6 +165,8 @@ abstract class BaseProcessor(val kinds: Set[ResolveTargets.Value])
   )(implicit
     recState: RecursionState
   ): Boolean = {
+    implicit val context: Context = Context(place)
+
     ProgressManager.checkCanceled()
 
     t match {

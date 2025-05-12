@@ -32,6 +32,8 @@ object ScExpressionAnnotator extends ElementAnnotator[ScExpression] {
 
   private[annotator] def annotateImpl(element: ScExpression, typeAware: Boolean, fromBlock: Boolean = false)
                                      (implicit holder: ScalaAnnotationHolder): Unit = {
+    implicit val context: Context = Context(element)
+
     // TODO Annotating ScUnderscoreSection is technically correct, but reveals previously hidden red code in ScalacTestdataHighlightingTest.tuples_1.scala
     // TODO see visitUnderscoreExpression in ScalaAnnotator
     //  EDIT: the only failing test was scala/scala-impl/testdata/scalacTests/pos/t3864/tuples_1.scala
@@ -87,12 +89,16 @@ object ScExpressionAnnotator extends ElementAnnotator[ScExpression] {
   // TODO Can `type` do this automatically?
   def adjusted(tpe: ScType, expected: Option[ScType]): ScType = if (expected.exists(_.is[ScLiteralType])) tpe else tpe.widenIfLiteral
 
-  def isAggregate(e: ScExpression): Boolean = e match {
-    case ScIf(_, thenExpr, elseExpr) =>
-      thenExpr.exists(_.`type`().exists(thenType => elseExpr.exists(_.`type`().exists(elseType => adjusted(thenType, e.expectedType()).equiv(adjusted(elseType, e.expectedType()))))))
-    case ScMatch(_, Seq(firstCase, otherCases @ _*)) if otherCases.nonEmpty && firstCase.resultExpr.isDefined && otherCases.forall(_.resultExpr.isDefined)=>
-      firstCase.expr.exists(_.`type`().exists(t0 => otherCases.forall(_.expr.exists(_.`type`().exists(tn => adjusted(t0, e.expectedType()).equiv(adjusted(tn, e.expectedType())))))))
-    case _ => false
+  def isAggregate(e: ScExpression): Boolean = {
+    implicit val context: Context = Context(e)
+
+    e match {
+      case ScIf(_, thenExpr, elseExpr) =>
+        thenExpr.exists(_.`type`().exists(thenType => elseExpr.exists(_.`type`().exists(elseType => adjusted(thenType, e.expectedType()).equiv(adjusted(elseType, e.expectedType()))))))
+      case ScMatch(_, Seq(firstCase, otherCases @ _*)) if otherCases.nonEmpty && firstCase.resultExpr.isDefined && otherCases.forall(_.resultExpr.isDefined)=>
+        firstCase.expr.exists(_.`type`().exists(t0 => otherCases.forall(_.expr.exists(_.`type`().exists(tn => adjusted(t0, e.expectedType()).equiv(adjusted(tn, e.expectedType())))))))
+      case _ => false
+    }
   }
 
   def isAggregatePart(e: ScExpression): Boolean = e match {
@@ -109,7 +115,8 @@ object ScExpressionAnnotator extends ElementAnnotator[ScExpression] {
   )(implicit
     holder: ScalaAnnotationHolder
   ): Unit = {
-    implicit val ctx: ProjectContext = element
+    implicit val projectContext: ProjectContext = element
+    implicit val context: Context = Context(element)
 
     @tailrec
     def isInArgumentPosition(expr: ScExpression): Boolean =

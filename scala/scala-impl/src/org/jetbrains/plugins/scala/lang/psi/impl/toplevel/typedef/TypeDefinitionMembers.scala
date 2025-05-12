@@ -97,7 +97,7 @@ object TypeDefinitionMembers {
   def getSignatures(tp: ScAndType): TermNodes.Map =
     ScalaPsiManager.instance(tp.projectContext).getSignatures(tp)
 
-  def getSelfTypeSignatures(clazz: PsiClass): TermNodes.Map = {
+  def getSelfTypeSignatures(clazz: PsiClass)(implicit context: Context): TermNodes.Map = {
     @annotation.tailrec
     def extractFromThisType(clsType: ScType, thisType: ScType): TermNodes.Map = thisType match {
       case c: ScCompoundType       => getSignatures(c, Option(clsType))
@@ -120,7 +120,7 @@ object TypeDefinitionMembers {
     }
   }
 
-  def getSelfTypeTypes(clazz: PsiClass): TypeNodes.Map = {
+  def getSelfTypeTypes(clazz: PsiClass)(implicit context: Context): TypeNodes.Map = {
     clazz match {
       case td: ScTypeDefinition =>
         td.selfType match {

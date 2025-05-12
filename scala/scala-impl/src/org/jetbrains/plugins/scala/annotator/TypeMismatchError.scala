@@ -10,7 +10,7 @@ import org.jetbrains.plugins.scala.annotator.hints.onlyErrorStripeAttributes
 import org.jetbrains.plugins.scala.annotator.quickfix.{EnableTypeMismatchHints, ReportHighlightingErrorQuickFix}
 import org.jetbrains.plugins.scala.lang.psi.api.expr.ScBlockExpr
 import org.jetbrains.plugins.scala.lang.psi.types.api.presentation.TypePresentation
-import org.jetbrains.plugins.scala.lang.psi.types.{ScLiteralType, ScType, TypePresentationContext}
+import org.jetbrains.plugins.scala.lang.psi.types.{Context, ScLiteralType, ScType, TypePresentationContext}
 import org.jetbrains.plugins.scala.settings.ScalaProjectSettings
 import org.jetbrains.plugins.scala.{ScalaBundle, isUnitTestMode}
 
@@ -21,7 +21,8 @@ private object TypeMismatchError {
               (formatMessage: (String, String) => String)
               (implicit holder: ScalaAnnotationHolder): Unit = {
     val annotatedElement = elementAt(element, blockLevel)
-    implicit val context: TypePresentationContext = TypePresentationContext(annotatedElement)
+    implicit val tpc: TypePresentationContext = TypePresentationContext(annotatedElement)
+    implicit val context: Context = Context(element)
 
     // TODO update the test data, SCL-15483
     val adjustedActualType = (expectedType, actualType) match {

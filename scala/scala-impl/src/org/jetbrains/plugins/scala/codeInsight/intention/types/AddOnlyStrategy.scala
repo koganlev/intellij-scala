@@ -19,7 +19,7 @@ import org.jetbrains.plugins.scala.lang.psi.impl.ScalaPsiElementFactory._
 import org.jetbrains.plugins.scala.lang.psi.impl.toplevel.typedef.TypeDefinitionMembers
 import org.jetbrains.plugins.scala.lang.psi.types.api.presentation.ScTypeText
 import org.jetbrains.plugins.scala.lang.psi.types.api.{FunctionType, StdTypes}
-import org.jetbrains.plugins.scala.lang.psi.types.{BaseTypes, ScType, TermSignature, TypePresentationContext}
+import org.jetbrains.plugins.scala.lang.psi.types.{BaseTypes, Context, ScType, TermSignature, TypePresentationContext}
 import org.jetbrains.plugins.scala.lang.refactoring._
 import org.jetbrains.plugins.scala.project.ProjectContext
 import org.jetbrains.plugins.scala.settings.annotations.Implementation
@@ -162,6 +162,8 @@ object AddOnlyStrategy {
   }
 
   def typesForMember(element: ScMember): Seq[TypeForAnnotation] = {
+    implicit val projectContext: ProjectContext = element.projectContext
+    implicit val context: Context = Context(element)
 
     def signatureType(sign: TermSignature): Option[ScType] = {
       val substitutor = sign.substitutor
@@ -231,7 +233,6 @@ object AddOnlyStrategy {
         // except, of course, the computed type is a type alias then better let the user choose
         Seq(st)
       case Seq() =>
-        implicit val projectContext: ProjectContext = element.getProject
         Seq(TypeForAnnotation(StdTypes.instance.Any, element))
       case oneOrBoth => oneOrBoth
     }

@@ -9,7 +9,7 @@ import org.jetbrains.plugins.scala.lang.completion.{CaptureExt, ScalaCompletionC
 import org.jetbrains.plugins.scala.lang.parser
 import org.jetbrains.plugins.scala.lang.psi.api.base.patterns._
 import org.jetbrains.plugins.scala.lang.psi.api.expr._
-import org.jetbrains.plugins.scala.lang.psi.types.ScType
+import org.jetbrains.plugins.scala.lang.psi.types.{Context, ScType}
 import org.jetbrains.plugins.scala.lang.surroundWith.surrounders.expression.ScalaPsiElementExt
 
 final class ExhaustiveMatchCompletionContributor extends ScalaCompletionContributor {
@@ -82,22 +82,26 @@ object ExhaustiveMatchCompletionContributor {
   ](keywordLookupString: String = ScalaKeyword.CASE) extends ClauseCompletionProvider[E] {
 
     override final protected def addCompletions(expression: E, result: CompletionResultSet)
-                                               (implicit parameters: ClauseCompletionParameters): Unit = for {
-      PatternGenerationStrategy(strategy) <- targetType(expression)(parameters.place)
-      if strategy.canBeExhaustive
+                                               (implicit parameters: ClauseCompletionParameters): Unit = {
+      implicit val context: Context = Context(expression)
 
-      lookupElement = buildLookupElement(
-        keywordLookupString,
-        createInsertHandler(strategy)
-      ) {
-        case (_, presentation: LookupElementPresentation) =>
-          presentation.setItemText(keywordLookupString)
-          presentation.setItemTextBold(true)
+      for {
+        PatternGenerationStrategy(strategy) <- targetType(expression)(parameters.place)
+        if strategy.canBeExhaustive
 
-          presentation.setTailText(" ", true)
-          presentation.appendTailText(rendererTailText, true)
-      }
-    } result.addElement(lookupElement)
+        lookupElement = buildLookupElement(
+          keywordLookupString,
+          createInsertHandler(strategy)
+        ) {
+          case (_, presentation: LookupElementPresentation) =>
+            presentation.setItemText(keywordLookupString)
+            presentation.setItemTextBold(true)
+
+            presentation.setTailText(" ", true)
+            presentation.appendTailText(rendererTailText, true)
+        }
+      } result.addElement(lookupElement)
+    }
 
     protected def targetType(expression: E)
                             (implicit place: PsiElement): Option[ScType]

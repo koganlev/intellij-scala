@@ -9,7 +9,7 @@ import org.jetbrains.plugins.scala.extensions.{PsiElementExt, PsiMethodExt, PsiT
 import org.jetbrains.plugins.scala.lang.psi.api.toplevel.ScModifierListOwner
 import org.jetbrains.plugins.scala.lang.psi.api.toplevel.typedef.{ScClass, ScTypeDefinition}
 import org.jetbrains.plugins.scala.lang.psi.impl.ScalaPsiManager
-import org.jetbrains.plugins.scala.lang.psi.types.{ScParameterizedType, ScTypeExt, ScalaType}
+import org.jetbrains.plugins.scala.lang.psi.types.{Context, ScParameterizedType, ScTypeExt, ScalaType}
 import org.jetbrains.plugins.scala.project.ProjectContext
 import org.jetbrains.plugins.scala.testingSupport.test.CustomTestRunnerBasedStateProvider.TestFrameworkRunnerInfo
 import org.jetbrains.plugins.scala.testingSupport.test._
@@ -60,7 +60,8 @@ object ScalaTestRunConfiguration {
   }
 
   private def lackConfigMapConstructor(clazz: PsiClass): Boolean = {
-    implicit val project: ProjectContext = clazz.projectContext
+    implicit val projectContext: ProjectContext = clazz.projectContext
+    implicit val context: Context = Context(clazz)
 
     val constructors = clazz match {
       case c: ScClass => c.secondaryConstructors.filter(_.isConstructor).toList ::: c.constructor.toList
@@ -75,7 +76,7 @@ object ScalaTestRunConfiguration {
               val params = con.parameters
               val firstParam = params.head
               val psiManager = ScalaPsiManager.instance
-              val mapPsiClass = psiManager.getCachedClass(ProjectScope.getAllScope(project), "scala.collection.immutable.Map").orNull
+              val mapPsiClass = psiManager.getCachedClass(ProjectScope.getAllScope(projectContext), "scala.collection.immutable.Map").orNull
               val mapClass = ScalaType.designator(mapPsiClass)
               val paramClass = firstParam.getType.toScType()
               val conformanceType = paramClass match {

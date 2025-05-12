@@ -66,14 +66,14 @@ trait ScType extends ProjectContextOwner {
   def typeDepth: Int = 1
 
   @Nls
-  def presentableText(implicit context: TypePresentationContext): String =
+  def presentableText(implicit tpc: TypePresentationContext): String =
     typeSystem.presentableText(this)
 
   def canonicalText: String = canonicalText(TypePresentationContext.emptyContext)
 
-  def canonicalText(context: TypePresentationContext): String = typeSystem.canonicalText(this, context)
+  def canonicalText(tpc: TypePresentationContext): String = typeSystem.canonicalText(this, tpc)
 
-  def typeText(nameRenderer: NameRenderer, options: PresentationOptions)(implicit context: TypePresentationContext): String =
+  def typeText(nameRenderer: NameRenderer, options: PresentationOptions)(implicit tpc: TypePresentationContext): String =
     typeSystem.typeText(this, nameRenderer, options)
 }
 

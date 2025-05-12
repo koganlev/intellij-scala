@@ -9,7 +9,7 @@ import org.jetbrains.plugins.scala.ScalaBundle
 import org.jetbrains.plugins.scala.lang.psi.api.expr.ScExpression
 import org.jetbrains.plugins.scala.lang.psi.api.toplevel.typedef.ScClass
 import org.jetbrains.plugins.scala.lang.psi.impl.ScalaPsiElementFactory.createExpressionFromText
-import org.jetbrains.plugins.scala.lang.psi.types.ScTypeExt
+import org.jetbrains.plugins.scala.lang.psi.types.{Context, ScTypeExt}
 import org.jetbrains.plugins.scala.lang.psi.types.api.ParameterizedType
 import org.jetbrains.plugins.scala.lang.psi.types.result.TypeResult
 
@@ -20,6 +20,8 @@ final class WrapInOptionQuickFix(expr: ScExpression, expectedType: TypeResult, e
   override def getFamilyName: String = ScalaBundle.message("wrap.in.option.name")
 
   override def isAvailable(project: Project, editor: Editor, file: PsiFile): Boolean = {
+    implicit val context: Context = Context(expr)
+
     WrapInOptionQuickFix.isAvailable(expectedType, exprType)
   }
 
@@ -37,7 +39,7 @@ final class WrapInOptionQuickFix(expr: ScExpression, expectedType: TypeResult, e
 
 object WrapInOptionQuickFix {
 
-  def isAvailable(expectedType: TypeResult, exprType: TypeResult): Boolean = {
+  def isAvailable(expectedType: TypeResult, exprType: TypeResult)(implicit context: Context): Boolean = {
     var result = false
     for {
       scType <- exprType

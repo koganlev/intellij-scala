@@ -124,6 +124,7 @@ class ConvertibleToMethodValueInspection extends LocalInspectionTool {
   }
 
   private def isSuitableForReplace(oldExpr: ScExpression, newExprText: String): Boolean = {
+    implicit val context: Context = Context(oldExpr)
 
     val newExpr = createExpressionWithContextFromText(newExprText, oldExpr.getContext, oldExpr)
     oldExpr.expectedType(fromUnderscore = false) match {

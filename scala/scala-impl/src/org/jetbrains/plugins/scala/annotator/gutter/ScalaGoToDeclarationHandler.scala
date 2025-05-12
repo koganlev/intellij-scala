@@ -21,6 +21,7 @@ import org.jetbrains.plugins.scala.lang.psi.api.statements.{ScEnumCase, ScFuncti
 import org.jetbrains.plugins.scala.lang.psi.api.toplevel.ScNamedElement
 import org.jetbrains.plugins.scala.lang.psi.api.toplevel.imports.{ScImportSelector, ScImportSelectors}
 import org.jetbrains.plugins.scala.lang.psi.api.toplevel.typedef._
+import org.jetbrains.plugins.scala.lang.psi.types.Context
 import org.jetbrains.plugins.scala.lang.psi.types.result.Typeable
 import org.jetbrains.plugins.scala.lang.resolve.ScalaResolveResult
 import org.jetbrains.plugins.scala.lang.resolve.processor.DynamicResolveProcessor
@@ -131,6 +132,8 @@ object ScalaGoToDeclarationHandler {
   private def getGotoDeclarationTargetsForGivenImport(maybeParent: Option[PsiElement]): Array[PsiElement] =
     maybeParent match {
       case Some(selector: ScImportSelector) if selector.isGivenSelector =>
+        implicit val context: Context = Context(selector)
+
         val reference = selector
           .parentImportExpression
           .reference

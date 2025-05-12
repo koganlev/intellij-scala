@@ -10,7 +10,7 @@ import org.jetbrains.plugins.scala.annotator.quickfix.ReportHighlightingErrorQui
 import org.jetbrains.plugins.scala.extensions._
 import org.jetbrains.plugins.scala.lang.psi.api.expr.{ScBlockExpr, ScFunctionExpr, ScParenthesisedExpr, ScTypedExpression}
 import org.jetbrains.plugins.scala.lang.psi.api.statements.params.ScParameter
-import org.jetbrains.plugins.scala.lang.psi.types.ScType
+import org.jetbrains.plugins.scala.lang.psi.types.{Context, ScType}
 import org.jetbrains.plugins.scala.lang.psi.types.api.{FunctionType, TupleType}
 import org.jetbrains.plugins.scala.lang.psi.types.api.FunctionType.isFunctionType
 import org.jetbrains.plugins.scala.project.ProjectPsiElementExt
@@ -46,11 +46,14 @@ object ScFunctionExprAnnotator extends ElementAnnotator[ScFunctionExpr] {
     }
   }
 
-  private def isImplicitlyConverted(literal: ScFunctionExpr) =
+  private def isImplicitlyConverted(literal: ScFunctionExpr) = {
+    implicit val context: Context = Context(literal)
+
     (literal.`type`().toOption, literal.getTypeWithoutImplicits().toOption) match {
       case (Some(t1), Some(t2)) if t1.equiv(t2) => false
       case _ => true
     }
+  }
 
   private def expectedFunctionTypeOf(literal: ScFunctionExpr) = literal.expectedType() match {
     case Some(t @ FunctionType(_, _)) => Some(t)
@@ -123,6 +126,8 @@ object ScFunctionExprAnnotator extends ElementAnnotator[ScFunctionExpr] {
   )(implicit
     holder: ScalaAnnotationHolder
   ): Boolean = {
+    implicit val context: Context = Context(ctx)
+
     var typeMismatch                = false
     val expectedTypesAfterUntupling = untupledExpectedType(ctx, parameters, expectedTypes).getOrElse(expectedTypes)
 

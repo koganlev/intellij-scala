@@ -22,7 +22,7 @@ import org.jetbrains.plugins.scala.lang.psi.types.api.presentation.{NameRenderer
 import org.jetbrains.plugins.scala.lang.psi.types.api.{ContextFunctionType, FunctionType, NamedTupleType, ParameterizedType, StdType, TupleType, TypeParameter, TypeParameterType, WildcardType}
 import org.jetbrains.plugins.scala.lang.psi.types.nonvalue.{ScMethodType, ScTypePolymorphicType}
 import org.jetbrains.plugins.scala.lang.psi.types.recursiveUpdate.ScSubstitutor
-import org.jetbrains.plugins.scala.lang.psi.types.{ScAbstractType, ScAndType, ScCompoundType, ScExistentialArgument, ScExistentialType, ScLiteralType, ScMatchType, ScOrType, ScType, TypePresentationContext}
+import org.jetbrains.plugins.scala.lang.psi.types.{Context, ScAbstractType, ScAndType, ScCompoundType, ScExistentialArgument, ScExistentialType, ScLiteralType, ScMatchType, ScOrType, ScType, TypePresentationContext}
 import org.jetbrains.plugins.scala.lang.refactoring.util.ScalaNamesUtil
 import org.jetbrains.plugins.scala.project.ProjectContext
 
@@ -84,7 +84,7 @@ private [documentationProvider] class ScalaDocTypeRenderer(
     case ScOrType(lhs, rhs) =>
       s"${render(lhs)} $renderedOr ${render(rhs)}"
     case mt@ScMethodType(retType, params, _) =>
-      render(FunctionType(retType, params.map(_.paramType))(mt.elementScope))
+      render(FunctionType(retType, params.map(_.paramType))(mt.elementScope, Context.Empty))
     case ScLiteralType(value, _) =>
       nameRenderer.escapeName(value.presentation)
     case ScMatchType(scrutinee, cases) =>

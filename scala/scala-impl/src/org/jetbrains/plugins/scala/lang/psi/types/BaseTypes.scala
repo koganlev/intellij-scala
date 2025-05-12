@@ -16,9 +16,9 @@ object BaseTypes {
 
   def iterator(tp: ScType)(implicit context: Context): Iterator[ScType] = new BaseTypesIterator(tp)
 
-  def get(t: ScType): Seq[ScType] = reduce(iterator(t).toList)
+  def get(t: ScType)(implicit context: Context): Seq[ScType] = reduce(iterator(t).toList)
 
-  private def reduce(types: Seq[ScType]): Seq[ScType] = {
+  private def reduce(types: Seq[ScType])(implicit context: Context): Seq[ScType] = {
     val res = new mutable.HashMap[PsiClass, ScType]
     @nowarn("cat=deprecation")
     object all extends mutable.HashMap[PsiClass, mutable.Set[ScType]] with mutable.MultiMap[PsiClass, ScType]

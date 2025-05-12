@@ -160,6 +160,8 @@ object ScalaPsiUtil {
    * Checks if thisClass subsumes base, i.e if base is thisClass or a super class of it (with self type)
    */
   def thisSubsumes(thisClass: PsiClass, base: PsiClass): Boolean = {
+    implicit val context: Context = Context(thisClass)
+
     object TypeOfThis {
       def unapply(td: ScTemplateDefinition): Option[ScType] =
         td.selfType.map(_.glb(td.getTypeWithProjections().getOrAny))
@@ -589,6 +591,8 @@ object ScalaPsiUtil {
     TermSignature(x.name, Seq.empty, ScSubstitutor.empty, x, None, exportedInfo = None)
 
   def superValsSignatures(x: PsiNamedElement, withSelfType: Boolean = false): Seq[TermSignature] = {
+    implicit val context: Context = Context(x)
+
     val empty = Seq.empty
     val typed: ScTypedDefinition = x match {
       case x: ScTypedDefinition => x
@@ -645,6 +649,7 @@ object ScalaPsiUtil {
 
   def superTypeSignatures(element: PsiNamedElement,
                           withSelfType: Boolean = false): Seq[TypeSignature] = {
+    implicit val context: Context = Context(element)
 
     val clazz: ScTemplateDefinition = element.nameContext match {
       case e@(_: ScTypeAlias | _: ScTrait | _: ScClass) if e.getParent.is[ScTemplateBody] => e.asInstanceOf[ScMember].containingClass
@@ -1294,11 +1299,13 @@ object ScalaPsiUtil {
     }
 
     private def expectedFunctionalTypeKind(expr: ScExpression): Option[ExpectedFunctionalTypeKind] = {
+      implicit val context: Context = Context(expr)
+
       val expectedType = pt.orElse(expr.expectedType(fromUnderscore = false))
       expectedType.flatMap(expectedFunctionalTypeKind(_, expr))
     }
 
-    private def expectedFunctionalTypeKind(expectedType: ScType, expr: ScExpression): Option[ExpectedFunctionalTypeKind] =
+    private def expectedFunctionalTypeKind(expectedType: ScType, expr: ScExpression)(implicit context: Context): Option[ExpectedFunctionalTypeKind] =
       expectedType match {
         case FunctionType(_, _) =>
           Some(ExpectedTypeKind.Function)
@@ -1661,6 +1668,8 @@ object ScalaPsiUtil {
   //reference in assignment is resolved to var, but actually there is a "_=" method which is applied
   //todo: resolve reference correctly instead of hacking annotator
   def isUnderscoreEq(assign: ScAssignment, actualType: ScType): Boolean = {
+    implicit val context: Context = Context(assign)
+
     assign.leftExpression match {
       case Resolved(pat: ScBindingPattern, _) =>
         pat.containingClass match {
