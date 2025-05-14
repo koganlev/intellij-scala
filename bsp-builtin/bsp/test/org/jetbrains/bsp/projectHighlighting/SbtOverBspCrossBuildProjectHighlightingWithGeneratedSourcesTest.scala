@@ -139,7 +139,6 @@ class SbtOverBspCrossBuildProjectHighlightingWithGeneratedSourcesTest extends Sb
 
       val `upstreamPureJS` = new myModule("upstreamPureJS") {
         standardRootsForPureModule(this, "upstreamPure", "js")
-        sources += "%PROJECT_ROOT%/upstreamPure/.js/src/main/scala"
       }
       val `upstreamPureJVM` = new myModule("upstreamPureJVM") {
         standardRootsForPureModule(this, "upstreamPure", "jvm")

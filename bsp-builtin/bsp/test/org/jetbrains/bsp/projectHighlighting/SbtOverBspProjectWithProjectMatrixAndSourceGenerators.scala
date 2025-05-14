@@ -8,6 +8,19 @@ import org.jetbrains.sbt.project.utils.ProjectStructureComparisonContext
 import org.jetbrains.sbt.project.utils.ProjectStructureComparisonContext.AssertionFailStrategy.CollectErrors
 import org.jetbrains.sbt.project.{CollectingNotificationsListener, ExactMatch, ProjectStructureDsl, ProjectStructureMatcher}
 
+/**
+ * ! IMPORTANT
+ *
+ * Modules created with the `module` type instead of the custom `myModule` type
+ * have duplicate content roots shared with other modules. The `module` type is used
+ * to avoid adding empty content roots or sources since, in our tests, attributes
+ * that are not defined are not tested.
+ *
+ * Once the https://youtrack.jetbrains.com/issue/SCL-20966 issue is fixed,
+ * these modules should also use the `myModule` type, and their corresponding custom
+ * content roots/sources should be added accordingly.
+ */
+
 class SbtOverBspProjectWithProjectMatrixAndSourceGenerators
   extends SbtOverBspProjectHighlightingLocalProjectsTestBase
     with ProjectStructureMatcher
@@ -202,54 +215,29 @@ class SbtOverBspProjectWithProjectMatrixAndSourceGenerators
         )
       }
 
-      val upstreamUpstream2SharedTest = new myModule("(upstream+upstream2)(-+_)(test+11+12)-test (shared)") {
-        standardRootsForSharedModuleJVM(this, "upstream", "test", "2.11", "2.12", "2.13")
-        contentRoots ++= Seq(
-          "%PROJECT_ROOT%/upstream/target/jvm-2.12/resource_managed/test",
-          "%PROJECT_ROOT%/upstream/target/jvm-2.13/resource_managed/test"
-        )
-      }
+      val upstreamUpstream2SharedTest = new module("(upstream+upstream2)(-+_)(test+11+12)-test (shared)")
       val upstreamUpstream2Shared = new myModule("(upstream+upstream2)_(11+12) (shared)") {
         standardRootsForSharedModuleJVM(this, "upstream", "main", "2.11", "2.12", "2.13")
       }
 
-      val upstream = new myModule("upstream") {
-        standardRootsForMatrixModule(this, "upstream", "2.13")
-      }
-      val upstream2_11 = new myModule("upstream2_11") {
-        standardRootsForMatrixModule(this, "upstream", "2.11")
-        contentRoots += s"%PROJECT_ROOT%/upstream/target/jvm-2.11/resource_managed/test"
-      }
-      val upstream2_12 = new myModule("upstream2_12") {
-        standardRootsForMatrixModule(this, "upstream", "2.12")
-      }
+      val upstream = new module("upstream")
+      val upstream2_11 = new module("upstream2_11")
+      val upstream2_12 = new module("upstream2_12")
 
-      val downstreamDownstream2SharedTest = new myModule("(downstream+downstream2)(-+_)(test+11+12)-test (shared)") {
-        standardRootsForSharedModuleJVM(this, "downstream", "test", "2.11", "2.12", "2.13")
-        contentRoots += "%PROJECT_ROOT%/downstream/target/jvm-2.13/resource_managed/test"
-      }
+      val downstreamDownstream2SharedTest = new module("(downstream+downstream2)(-+_)(test+11+12)-test (shared)")
       val downstreamDownstream2Shared = new myModule("(downstream+downstream2)_(11+12) (shared)") {
         standardRootsForSharedModuleJVM(this, "downstream", "main", "2.11", "2.12", "2.13")
       }
 
-      val downstream = new myModule("downstream") {
-        standardRootsForMatrixModule(this, "downstream", "2.13")
-      }
-      val downstream2_11 = new myModule("downstream2_11") {
-        standardRootsForMatrixModule(this, "downstream", "2.11")
-        contentRoots += "%PROJECT_ROOT%/downstream/target/jvm-2.11/resource_managed/test"
-      }
-      val downstream2_12 = new myModule("downstream2_12") {
-        standardRootsForMatrixModule(this, "downstream", "2.12")
-        contentRoots += "%PROJECT_ROOT%/downstream/target/jvm-2.12/resource_managed/test"
-      }
+      val downstream = new module("downstream")
+      val downstream2_11 = new module("downstream2_11")
+      val downstream2_12 = new module("downstream2_12")
 
       val upstreamBothShared = new myModule("upstreamBoth(Platforms+Platforms2)_(11+12) (shared)") {
         standardRootsForSharedModuleJVM(this, "upstreamBothPlatforms", "main")
       }
-      val upstreamBothSharedTest = new myModule("upstreamBoth(Platforms+Platforms2)(-+_)(test+11+12)-test (shared)") {
-        standardRootsForSharedModuleJVM(this, "upstreamBothPlatforms", "test")
-      }
+      val upstreamBothSharedTest = new module("upstreamBoth(Platforms+Platforms2)(-+_)(test+11+12)-test (shared)")
+
       val upstreamBothSharedJS2 = new myModule("upstreamBoth(Platforms2+Platforms)(_+JS2)(11+_)11 (shared)") {
         standardRootsForSharedModule(this, "upstreamBothPlatforms", "main", "2.11")
       }
@@ -259,119 +247,60 @@ class SbtOverBspProjectWithProjectMatrixAndSourceGenerators
       val upstreamBothSharedJS_JS2_11_12 = new myModule("upstreamBoth(Platforms+Platforms2)(_+JS+JS2)(11+12+_)(11+12) (shared)") {
         standardRootsForSharedModuleBothPlatformsAndVersions(this, "upstreamBothPlatforms", "main")
       }
-      val upstreamBothSharedTestJS_JS2_11_12 = new myModule("upstreamBoth(Platforms+Platforms2)(-+_+JS+JS2)(test+11+12+-+_)(-+test+11+12)(test+-)test (shared)") {
-        standardRootsForSharedModuleBothPlatformsAndVersions(this, "upstreamBothPlatforms", "test")
-        contentRoots += "%PROJECT_ROOT%/upstreamBothPlatforms/target/js-2.11/resource_managed/test"
-      }
-      val upstreamBothShared_JS2_12 = new myModule("upstreamBoth(Platforms2+Platforms)(_+JS2)(12+_)12 (shared)") {
-        standardRootsForSharedModule(this, "upstreamBothPlatforms", "main", "2.12")
-      }
-      val upstreamBothSharedTest_JS2_12 = new myModule("upstreamBoth(Platforms2+Platforms)(_+JS2)(12+_)(-+12)(test+-)test (shared)") {
-        standardRootsForSharedModule(this, "upstreamBothPlatforms", "test", "2.12")
-      }
+      val upstreamBothSharedTestJS_JS2_11_12 = new module("upstreamBoth(Platforms+Platforms2)(-+_+JS+JS2)(test+11+12+-+_)(-+test+11+12)(test+-)test (shared)")
+
+      val upstreamBothShared_JS2_12 = new module("upstreamBoth(Platforms2+Platforms)(_+JS2)(12+_)12 (shared)")
+      val upstreamBothSharedTest_JS2_12 = new module("upstreamBoth(Platforms2+Platforms)(_+JS2)(12+_)(-+12)(test+-)test (shared)")
       val upstreamBothPlatformsSharedJS = new myModule("upstreamBothPlatformsJS (shared)") {
         standardRootsForSharedModule(this, "upstreamBothPlatforms", "main", "2.13")
       }
-      val upstreamBothPlatformsSharedTestJS = new myModule("upstreamBothPlatforms(-+JS)(test+-)test (shared)") {
-        standardRootsForSharedModule(this, "upstreamBothPlatforms", "test", "2.13")
-        contentRoots += "%PROJECT_ROOT%/upstreamBothPlatforms/target/jvm-2.13/resource_managed/test"
-      }
+      val upstreamBothPlatformsSharedTestJS = new module("upstreamBothPlatforms(-+JS)(test+-)test (shared)")
       val upstreamBothPlatformsSharedJSJS2 = new myModule("upstreamBothPlatforms(JS+JS2)_(11+12) (shared)") {
         standardRootsForSharedModuleJS(this, "upstreamBothPlatforms", "main")
       }
-      val upstreamBothPlatformsSharedTestJSJS2 = new myModule("upstreamBothPlatforms(JS+JS2)(-+_)(test+11+12)-test (shared)") {
-        standardRootsForSharedModuleJS(this, "upstreamBothPlatforms", "test")
-      }
+      val upstreamBothPlatformsSharedTestJSJS2 = new module("upstreamBothPlatforms(JS+JS2)(-+_)(test+11+12)-test (shared)")
 
-      val upstreamBothPlatforms = new myModule("upstreamBothPlatforms") {
-        standardRootsForMatrixModuleAndPlatform(this, "upstreamBothPlatforms", "2.13", "jvm")
-      }
-      val upstreamBothPlatforms2_11 = new myModule("upstreamBothPlatforms2_11") {
-        standardRootsForMatrixModuleAndPlatform(this, "upstreamBothPlatforms", "2.11", "jvm")
-        contentRoots += "%PROJECT_ROOT%/upstreamBothPlatforms/target/jvm-2.11/resource_managed/test"
-      }
-      val upstreamBothPlatforms2_12 = new myModule("upstreamBothPlatforms2_12") {
-        standardRootsForMatrixModuleAndPlatform(this, "upstreamBothPlatforms", "2.12", "jvm")
-        contentRoots += "%PROJECT_ROOT%/upstreamBothPlatforms/target/jvm-2.12/resource_managed/test"
-      }
-      val upstreamBothPlatformsJS = new myModule("upstreamBothPlatformsJS") {
-        standardRootsForMatrixModuleAndPlatform(this, "upstreamBothPlatforms", "2.13", "js")
-        contentRoots += "%PROJECT_ROOT%/upstreamBothPlatforms/target/js-2.13/resource_managed/test"
-      }
-      val upstreamBothPlatformsJS2_11 = new myModule("upstreamBothPlatformsJS2_11") {
-        standardRootsForMatrixModuleAndPlatform(this, "upstreamBothPlatforms", "2.11", "js")
-      }
-      val upstreamBothPlatformsJS2_12 = new myModule("upstreamBothPlatformsJS2_12") {
-        standardRootsForMatrixModuleAndPlatform(this, "upstreamBothPlatforms", "2.12", "js")
-        contentRoots += "%PROJECT_ROOT%/upstreamBothPlatforms/target/js-2.12/resource_managed/test"
-      }
+      val upstreamBothPlatforms = new module("upstreamBothPlatforms")
+      val upstreamBothPlatforms2_11 = new module("upstreamBothPlatforms2_11")
+
+      val upstreamBothPlatforms2_12 = new module("upstreamBothPlatforms2_12")
+      val upstreamBothPlatformsJS = new module("upstreamBothPlatformsJS")
+      val upstreamBothPlatformsJS2_11 = new module("upstreamBothPlatformsJS2_11")
+      val upstreamBothPlatformsJS2_12 = new module("upstreamBothPlatformsJS2_12")
 
       val downstreamBothShared = new myModule("downstreamBoth(Platforms+Platforms2)_(11+12) (shared)") {
         standardRootsForSharedModuleJVM(this, "downstreamBothPlatforms", "main")
       }
-      val downstreamBothSharedTest = new myModule("downstreamBoth(Platforms+Platforms2)(-+_)(test+11+12)-test (shared)") {
-        standardRootsForSharedModuleJVM(this, "downstreamBothPlatforms", "test")
-      }
+      val downstreamBothSharedTest = new module("downstreamBoth(Platforms+Platforms2)(-+_)(test+11+12)-test (shared)")
       val downstreamBothSharedJS2 = new myModule("downstreamBoth(Platforms2+Platforms)(_+JS2)(11+_)11 (shared)") {
         standardRootsForSharedModule(this, "downstreamBothPlatforms", "main", "2.11")
       }
-      val downstreamBothSharedTestJS2 = new myModule("downstreamBoth(Platforms2+Platforms)(_+JS2)(11+_)(-+11)(test+-)test (shared)") {
-        standardRootsForSharedModule(this, "downstreamBothPlatforms", "test", "2.11")
-        contentRoots ++= Seq(
-          "%PROJECT_ROOT%/downstreamBothPlatforms/target/jvm-2.11/resource_managed/test",
-          "%PROJECT_ROOT%/downstreamBothPlatforms/target/js-2.11/resource_managed/test"
-        )
-      }
+      val downstreamBothSharedTestJS2 = new module("downstreamBoth(Platforms2+Platforms)(_+JS2)(11+_)(-+11)(test+-)test (shared)")
+
       val downstreamBothSharedJS_JS2_11_12 = new myModule("downstreamBoth(Platforms+Platforms2)(_+JS+JS2)(11+12+_)(11+12) (shared)") {
         standardRootsForSharedModuleBothPlatformsAndVersions(this, "downstreamBothPlatforms", "main")
       }
-      val downstreamBothSharedTestJS_JS2_11_12 = new myModule("downstreamBoth(Platforms+Platforms2)(-+_+JS+JS2)(test+11+12+-+_)(-+test+11+12)(test+-)test (shared)") {
-        standardRootsForSharedModuleBothPlatformsAndVersions(this, "downstreamBothPlatforms", "test")
-      }
+      val downstreamBothSharedTestJS_JS2_11_12 = new module("downstreamBoth(Platforms+Platforms2)(-+_+JS+JS2)(test+11+12+-+_)(-+test+11+12)(test+-)test (shared)")
       val downstreamBothShared_JS2_12 = new myModule("downstreamBoth(Platforms2+Platforms)(_+JS2)(12+_)12 (shared)") {
         standardRootsForSharedModule(this, "downstreamBothPlatforms", "main", "2.12")
       }
-      val downstreamBothSharedTest_JS2_12 = new myModule("downstreamBoth(Platforms2+Platforms)(_+JS2)(12+_)(-+12)(test+-)test (shared)") {
-        standardRootsForSharedModule(this, "downstreamBothPlatforms", "test", "2.12")
-        contentRoots += "%PROJECT_ROOT%/downstreamBothPlatforms/target/jvm-2.12/resource_managed/test"
-      }
+      val downstreamBothSharedTest_JS2_12 = new module("downstreamBoth(Platforms2+Platforms)(_+JS2)(12+_)(-+12)(test+-)test (shared)")
 
-      val downstreamBothPlatforms = new myModule("downstreamBothPlatforms") {
-        standardRootsForMatrixModuleAndPlatform(this, "downstreamBothPlatforms", "2.13", "jvm")
-      }
-      val downstreamBothPlatforms2_12 = new myModule("downstreamBothPlatforms2_12") {
-        standardRootsForMatrixModuleAndPlatform(this, "downstreamBothPlatforms", "2.12", "jvm")
-      }
-      val downstreamBothPlatforms2_11 = new myModule("downstreamBothPlatforms2_11") {
-        standardRootsForMatrixModuleAndPlatform(this, "downstreamBothPlatforms", "2.11", "jvm")
-      }
-      val downstreamBothPlatformsJS = new myModule("downstreamBothPlatformsJS") {
-        standardRootsForMatrixModuleAndPlatform(this, "downstreamBothPlatforms", "2.13", "js")
-      }
-      val downstreamBothPlatformsJS2_11 = new myModule("downstreamBothPlatformsJS2_11") {
-        standardRootsForMatrixModuleAndPlatform(this, "downstreamBothPlatforms", "2.11", "js")
-      }
-      val downstreamBothPlatformsJS2_12 = new myModule("downstreamBothPlatformsJS2_12") {
-        standardRootsForMatrixModuleAndPlatform(this, "downstreamBothPlatforms", "2.12", "js")
-        contentRoots += "%PROJECT_ROOT%/downstreamBothPlatforms/target/js-2.12/resource_managed/test"
-      }
+      val downstreamBothPlatforms = new module("downstreamBothPlatforms")
+      val downstreamBothPlatforms2_12 = new module("downstreamBothPlatforms2_12")
+      val downstreamBothPlatforms2_11 = new module("downstreamBothPlatforms2_11")
+      val downstreamBothPlatformsJS = new module("downstreamBothPlatformsJS")
+      val downstreamBothPlatformsJS2_11 = new module("downstreamBothPlatformsJS2_11")
+      val downstreamBothPlatformsJS2_12 = new module("downstreamBothPlatformsJS2_12")
 
       val downstreamBothPlatformSharedJSJS2 = new myModule("downstreamBothPlatforms(JS+JS2)_(11+12) (shared)") {
         standardRootsForSharedModuleJS(this, "downstreamBothPlatforms", "main")
       }
-      val downstreamBothPlatformSharedTestJSJS2 = new myModule("downstreamBothPlatforms(JS+JS2)(-+_)(test+11+12)-test (shared)") {
-        standardRootsForSharedModuleJS(this, "downstreamBothPlatforms", "test")
-      }
+      val downstreamBothPlatformSharedTestJSJS2 = new module("downstreamBothPlatforms(JS+JS2)(-+_)(test+11+12)-test (shared)")
       val downstreamBothPlatformSharedJS = new myModule("downstreamBothPlatformsJS (shared)") {
         standardRootsForSharedModule(this, "downstreamBothPlatforms", "main", "2.13")
       }
-      val downstreamBothPlatformSharedTestJS = new myModule("downstreamBothPlatforms(-+JS)(test+-)test (shared)") {
-        standardRootsForSharedModule(this, "downstreamBothPlatforms", "test", "2.13")
-        contentRoots ++= Seq(
-          "%PROJECT_ROOT%/downstreamBothPlatforms/target/js-2.13/resource_managed/test",
-          "%PROJECT_ROOT%/downstreamBothPlatforms/target/jvm-2.13/resource_managed/test"
-        )
-      }
+      val downstreamBothPlatformSharedTestJS = new module("downstreamBothPlatforms(-+JS)(test+-)test (shared)")
 
       downstream.dependsOn(upstream, upstream, downstreamDownstream2Shared, downstreamDownstream2SharedTest)
       downstream2_11.dependsOn(upstream2_11, upstream2_11, downstreamDownstream2Shared, downstreamDownstream2SharedTest)
@@ -405,7 +334,7 @@ class SbtOverBspProjectWithProjectMatrixAndSourceGenerators
       downstreamBothPlatformSharedJS.dependsOn(upstreamBothPlatforms, upstreamBothPlatforms, upstreamBothPlatformsJS, upstreamBothPlatformsJS)
       downstreamBothPlatformSharedJSJS2.dependsOn(upstreamBothPlatformsJS, upstreamBothPlatformsJS, upstreamBothPlatformsJS2_11, upstreamBothPlatformsJS2_11, upstreamBothPlatformsJS2_12, upstreamBothPlatformsJS2_12)
 
-      val upstreamModules: Seq[myModule] = Seq(
+      val upstreamModules: Seq[module] = Seq(
         upstream, upstream2_11, upstream2_12,
         upstreamBothShared, upstreamBothSharedTest, upstreamBothSharedJS2, upstreamBothSharedTestJS2,
         upstreamBothSharedJS_JS2_11_12, upstreamBothSharedTestJS_JS2_11_12,
@@ -416,7 +345,7 @@ class SbtOverBspProjectWithProjectMatrixAndSourceGenerators
         upstreamBothPlatformsSharedTestJS, upstreamBothPlatformsSharedTestJSJS2
       )
 
-      val downstreamModules: Seq[myModule] = Seq(
+      val downstreamModules: Seq[module] = Seq(
         downstream, downstream2_11, downstream2_12,
         downstreamBothShared, downstreamBothSharedTest, downstreamBothSharedJS2,
         downstreamBothSharedTestJS2, downstreamBothSharedJS_JS2_11_12,
