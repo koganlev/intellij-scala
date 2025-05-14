@@ -529,7 +529,7 @@ lazy val scalaCompilerPlugin_2_13: sbt.Project =
 
 lazy val scalaCompilerPlugin_3_3: sbt.Project =
   newPlainScalaProject("compiler-plugin-3_3", file("scala/compiler-plugin/scala-3.3")).settings(
-    scalaVersion := "3.3.4", libraryDependencies += "org.scala-lang" %% "scala3-compiler" % "3.3.4", Compile / scalacOptions := Seq("--release", "8"),
+    scalaVersion := "3.3.6", libraryDependencies += "org.scala-lang" %% "scala3-compiler" % "3.3.6", Compile / scalacOptions := Seq("--release", "8"),
     packageMethod := PackagingMethod.Standalone("lib/jps/compiler-plugin-3.3.jar"),
   )
 
