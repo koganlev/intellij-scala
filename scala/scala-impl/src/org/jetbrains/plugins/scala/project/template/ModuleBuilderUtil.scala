@@ -1,6 +1,7 @@
 package org.jetbrains.plugins.scala.project.template
 
 import com.intellij.ide.util.EditorHelper
+import com.intellij.openapi.application.{ModalityState, ReadAction}
 import com.intellij.openapi.externalSystem.ExternalSystemModulePropertyManager
 import com.intellij.openapi.externalSystem.importing.ImportSpecBuilder
 import com.intellij.openapi.externalSystem.model.ProjectSystemId
@@ -16,7 +17,8 @@ import com.intellij.openapi.roots.{ContentEntry, ModifiableRootModel}
 import com.intellij.openapi.startup.StartupManager
 import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.openapi.vfs.{LocalFileSystem, VirtualFile}
-import com.intellij.psi.PsiManager
+import com.intellij.psi.{PsiFile, PsiManager}
+import com.intellij.util.concurrency.AppExecutorUtil
 import org.jetbrains.annotations.{ApiStatus, Nullable}
 import org.jetbrains.jps.model.java.{JavaResourceRootType, JavaSourceRootType}
 import org.jetbrains.plugins.scala.extensions._
@@ -98,19 +100,37 @@ object ModuleBuilderUtil {
     }
   }
 
+  /**
+   * A three-step non-blocking read action sequence for opening files after project creation.
+   *
+   *   1. An action is registered to run after the new project is opened.
+   *      After a behavioural change in the platform in 252, we are no longer allowed to interact with
+   *      the PSI in any way inside this action.
+   *      It seems that this causes a freeze in the UI.
+   *   1. The first action kicks-off a non-blocking read action to query all `PsiFile` instances
+   *      which correspond to the provided `VirtualFile` instances as an argument.
+   *      The run action part runs on a background thread but scheduled as a separate computation.
+   *      That way, the PSI access is outside the first action.
+   *   1. Finally, the non-blocking read action finishes by scheduling a computation on the UI thread.
+   *      Here, the queried `PsiFile` instances are opened in editors.
+   */
   def openFilesInEditor(files: Seq[VirtualFile], project: Project): Unit = {
     if (files.isEmpty) return
-    val psiManager = PsiManager.getInstance(project)
-    StartupManager.getInstance(project).runAfterOpened(() =>
-      files.foreach { file =>
-        val psiFile = inReadAction { psiManager.findFile(file) }
-        if (psiFile != null) {
-          invokeLater {
-            EditorHelper.openInEditor(psiFile)
-          }
-        }
-      }
-    )
+    //noinspection ApiStatus
+    StartupManager.getInstance(project).runAfterOpened(() => openFiles(files, project))
+  }
+
+  private def openFiles(files: Seq[VirtualFile], project: Project): Unit = {
+    if (project.isDisposed) return
+
+    ReadAction
+      .nonBlocking[Array[PsiFile]](() => {
+        val manager = PsiManager.getInstance(project)
+        files.flatMap(vf => Option(manager.findFile(vf))).toArray
+      })
+      .expireWhen(() => project.isDisposed)
+      .finishOnUiThread(ModalityState.nonModal(), EditorHelper.openFilesInEditor(_))
+      .submit(AppExecutorUtil.getAppExecutorService)
   }
 
   private def doSetupRootModel(
