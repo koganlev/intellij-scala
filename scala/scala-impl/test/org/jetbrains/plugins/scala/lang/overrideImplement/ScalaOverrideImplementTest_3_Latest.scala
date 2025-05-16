@@ -1188,4 +1188,29 @@ class ScalaOverrideImplementTest_3_Latest extends ScalaOverrideImplementTestBase
       """(using context1: Int)(target: String)(using context2: Long) myExt2(using context3: Float)(param1: String, param2: String)(using context4: Double): String""",
     )
   }
+
+  def testOpaqueTypeAlias(): Unit = runTest("foo",
+    s"""
+       |object Inside {
+       |  opaque type T = Int
+       |}
+       |import Inside.T
+       |trait Foo {
+       |  def foo(x: Int): Unit
+       |}
+       |class Bar extends Foo {
+       |  $CARET_TAG
+       |}""".stripMargin,
+    s"""
+       |object Inside {
+       |  opaque type T = Int
+       |}
+       |import Inside.T
+       |trait Foo {
+       |  def foo(x: Int): Unit
+       |}
+       |class Bar extends Foo {
+       |  override def foo(x: Int): Unit = $SELECTION_START_TAG???$SELECTION_END_TAG
+       |}""".stripMargin,
+    isImplement = true)
 }
