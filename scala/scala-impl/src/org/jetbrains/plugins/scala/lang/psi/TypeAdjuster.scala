@@ -476,7 +476,7 @@ object TypeAdjuster {
 
         override protected def execute(namedElement: PsiNamedElement)
                                       (implicit state: ResolveState): Boolean = namedElement match {
-          case ta: ScTypeAliasDefinition if ta.isAliasFor(clazz) &&
+          case ta: ScTypeAliasDefinition if !ta.isEffectivelyOpaque && ta.isAliasFor(clazz) &&
             !TypePresentation.shouldExpand(ta) && !ta.isDeprecated =>
 
             collected = Some(ta)
