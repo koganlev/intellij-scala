@@ -21,9 +21,16 @@ object Context {
     override def toString: String = place.toString
   }
 
-  implicit object Empty extends Context {
+  object Empty extends Context {
     override def isInScopeOf(opaqueTypeAlias: ScTypeAliasDefinition): Boolean = true
 
     override def toString: String = "<empty>"
+  }
+
+//  @deprecated("Provide Context(element) or use EmptyContext")
+  implicit val Default: Context = new Context {
+    override def isInScopeOf(opaqueTypeAlias: ScTypeAliasDefinition): Boolean = true
+
+    override def toString: String = "<default>"
   }
 }
