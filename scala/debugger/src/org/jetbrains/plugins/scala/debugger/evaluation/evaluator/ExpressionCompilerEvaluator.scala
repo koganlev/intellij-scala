@@ -15,6 +15,7 @@ import org.jetbrains.jps.incremental.scala.{Client, DummyClient, MessageKind}
 import org.jetbrains.plugins.scala.NlsString
 import org.jetbrains.plugins.scala.compiler.data.ExpressionEvaluationArguments
 import org.jetbrains.plugins.scala.compiler.{CompileServerLauncher, CompilerManagerUtil, RemoteServerRunner}
+import org.jetbrains.plugins.scala.debugger.evaluation.evaluator.ExpressionCompilerEvaluator.filteredScalacOptions
 import org.jetbrains.plugins.scala.debugger.evaluation.{EvaluationException, ExpressionCompilerResolverListener}
 import org.jetbrains.plugins.scala.debugger.{DebuggerBundle, ScalaPositionManager}
 import org.jetbrains.plugins.scala.extensions.{PathExt, inReadAction}
@@ -67,7 +68,7 @@ private[evaluation] final class ExpressionCompilerEvaluator(codeFragment: PsiEle
         module.scalaCompilerClasspath ++
           enumerator.getClassesRoots.map(_.getCanonicalPath).map(stripJarPathSuffix).map(Path.of(_)) ++
           expressionCompilerJar
-      val scalacOptions = ScalaCompilerSettings.forModule(module).getOptionsAsStrings(module.hasScala3)
+      val scalacOptions = filteredScalacOptions(ScalaCompilerSettings.forModule(module).getOptionsAsStrings(module.hasScala3))
       val source = Path.of(position.getFile.getVirtualFile.getCanonicalPath)
       val line = position.getLine + 1
       val expression = codeFragment.getText
@@ -199,4 +200,11 @@ private[evaluation] final class ExpressionCompilerEvaluator(codeFragment: PsiEle
     val urlClassLoaderConstructor = urlClassLoaderType.concreteMethodByName("<init>", "([Ljava/net/URL;Ljava/lang/ClassLoader;)V")
     urlClassLoaderType.newInstance(thread, urlClassLoaderConstructor, List(array, classLoader).asJava, ObjectReference.INVOKE_SINGLE_THREADED).asInstanceOf[ClassLoaderReference]
   }
+}
+
+private object ExpressionCompilerEvaluator {
+  private final val IgnoredScalacOptions: Array[String] = Array("-Werror", "-Xfatal-warnings")
+
+  private def filteredScalacOptions(scalacOptions: Seq[String]): Seq[String] =
+    scalacOptions.filterNot(IgnoredScalacOptions.contains)
 }
