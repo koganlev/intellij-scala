@@ -387,17 +387,17 @@ package object collections {
     }
   }
 
-  private def isOfClassFrom(expr: ScExpression, patterns: Seq[String]): Boolean = {
+  private def isOfClassFrom(expr: ScExpression, patterns: Seq[String])(implicit context: Context): Boolean = {
     val typ = expr.`type`().toOption
     typ.exists(isOfClassFrom(_, patterns))
   }
 
-  private def isOfClassFrom(`type`: ScType, patterns: Seq[String]): Boolean = {
+  private def isOfClassFrom(`type`: ScType, patterns: Seq[String])(implicit context: Context): Boolean = {
     val typeExtracted = `type`.tryExtractDesignatorSingleton
     isOfClassFromForExtractedType(typeExtracted, patterns)
   }
 
-  private def isOfClassFromForExtractedType(typeExtracted: ScType, patterns: Seq[String]): Boolean = {
+  private def isOfClassFromForExtractedType(typeExtracted: ScType, patterns: Seq[String])(implicit context: Context): Boolean = {
     val clazz = typeExtracted.extractClass
     clazz.exists(qualifiedNameFitToPatterns(_, patterns))
   }
@@ -406,21 +406,29 @@ package object collections {
     Option(clazz).flatMap(c => Option(c.qualifiedName))
       .exists(ScalaNamesUtil.nameFitToPatterns(_, patterns, strict = false))
 
-  def isOption(`type`: ScType): Boolean = isOfClassFrom(`type`, likeOptionClasses)
+  def isOption(`type`: ScType)(implicit context: Context): Boolean = isOfClassFrom(`type`, likeOptionClasses)
 
-  def isOption(expr: ScExpression): Boolean = isOfClassFrom(expr, likeOptionClasses)
+  def isOption(expr: ScExpression): Boolean = {
+    implicit val context: Context = Context(expr)
 
-  def isArray(expr: ScExpression): Boolean = expr match {
-    case Typeable(JavaArrayType(_)) => true
-    case _ =>
-      val typ = expr.`type`().toOption
-      typ.exists { t =>
-        val typeExtracted = t.tryExtractDesignatorSingleton
-        isArray(typeExtracted) || isIArray(typeExtracted)
-      }
+    isOfClassFrom(expr, likeOptionClasses)
   }
 
-  private def isArray(typeExtracted: ScType): Boolean =
+  def isArray(expr: ScExpression): Boolean = {
+    implicit val context: Context = Context(expr)
+
+    expr match {
+      case Typeable(JavaArrayType(_)) => true
+      case _ =>
+        val typ = expr.`type`().toOption
+        typ.exists { t =>
+          val typeExtracted = t.tryExtractDesignatorSingleton
+          isArray(typeExtracted) || isIArray(typeExtracted)
+        }
+    }
+  }
+
+  private def isArray(typeExtracted: ScType)(implicit context: Context): Boolean =
     isOfClassFromForExtractedType(typeExtracted, ArraySeq("scala.Array"))
 
   private def isIArray(typeExtracted: ScType): Boolean =

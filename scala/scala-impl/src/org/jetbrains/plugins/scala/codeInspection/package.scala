@@ -82,7 +82,7 @@ package object codeInspection {
         .exists(scType.conforms)
     }
 
-  private[this] def createParameterizedType(clazz: PsiClass) = {
+  private[this] def createParameterizedType(clazz: PsiClass)(implicit context: Context) = {
     val designatorType = ScDesignatorType(clazz)
     clazz.getTypeParameters match {
       case Array() => designatorType

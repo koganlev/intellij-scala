@@ -330,7 +330,7 @@ object InferUtil {
       case _                              => false
     }
 
-  private def eligibleForMirror(tpe: ScType): Boolean = {
+  private def eligibleForMirror(tpe: ScType)(implicit context: Context): Boolean = {
     tpe.extractDesignated(expandAliases = true) match {
       case Some(des) => des match {
         case obj: ScObject                   => obj.isCase
@@ -349,7 +349,7 @@ object InferUtil {
     }
   }
 
-  private def eligibleForValueOf(t: ScType): Boolean = {
+  private def eligibleForValueOf(t: ScType)(implicit context: Context): Boolean = {
     t.removeAliasDefinitions().inferValueType match {
       case _: ScLiteralType         => true
       case _ if t.isUnit            => true

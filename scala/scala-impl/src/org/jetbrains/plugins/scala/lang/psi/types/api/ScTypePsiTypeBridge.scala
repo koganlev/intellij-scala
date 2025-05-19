@@ -111,7 +111,7 @@ trait PsiTypeBridge {
 }
 
 object ExtractClass {
-  def unapply(`type`: ScType): Option[PsiClass] =
+  def unapply(`type`: ScType)(implicit context: Context): Option[PsiClass] =
     `type`.extractClass
 }
 

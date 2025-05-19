@@ -8,7 +8,7 @@ import com.intellij.psi.util.PsiTreeUtil
 import org.jetbrains.plugins.scala.extensions.{ObjectExt, PsiClassExt, PsiElementExt}
 import org.jetbrains.plugins.scala.lang.psi.api.expr.ScExpression
 import org.jetbrains.plugins.scala.lang.psi.types.api.ExtractClass
-import org.jetbrains.plugins.scala.lang.psi.types.{ScType, api}
+import org.jetbrains.plugins.scala.lang.psi.types.{Context, ScType, api}
 import org.jetbrains.plugins.scala.lang.surroundWith.surrounders.expression.ScalaExpressionSurrounder
 
 import java.{util => ju}
@@ -63,20 +63,25 @@ object AncestorSelector {
   val AnyExpression: Condition[PsiElement] = (_: PsiElement).is[ScExpression]
 
   val AnyRefExpression: Condition[PsiElement] = expressionTypeCondition {
-    case (expression, scType) => scType.conforms(api.AnyRef(expression))
+    case (expression, scType) => scType.conforms(api.AnyRef(expression))(Context(expression))
   }
 
   val BooleanExpression: Condition[PsiElement] = expressionTypeCondition {
-    case (expression, scType) => scType.conforms(api.Boolean(expression))
+    case (expression, scType) => scType.conforms(api.Boolean(expression))(Context(expression))
   }
 
-  def isSameOrInheritor(fqns: String*): Condition[PsiElement] = expressionTypeCondition {
-    case (expression, ExtractClass(clazz)) =>
-      val elementScope = expression.elementScope
-      fqns.flatMap(elementScope.getCachedClass)
-        .exists(clazz.sameOrInheritor)
-    case _ => false
-  }
+  def isSameOrInheritor(fqns: String*): Condition[PsiElement] =
+    expressionTypeCondition { (expression, scType) =>
+      implicit val context: Context = Context(expression)
+
+      (expression, scType) match {
+        case (expression, ExtractClass(clazz)) =>
+          val elementScope = expression.elementScope
+          fqns.flatMap(elementScope.getCachedClass)
+            .exists(clazz.sameOrInheritor)
+        case _ => false
+      }
+    }
 
   private[this] def expressionTypeCondition(isValid: (ScExpression, ScType) => Boolean): Condition[PsiElement] = {
     case expression: ScExpression => expression.getTypeIgnoreBaseType.exists {

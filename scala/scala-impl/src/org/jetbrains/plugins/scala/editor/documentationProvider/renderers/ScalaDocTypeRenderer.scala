@@ -32,7 +32,7 @@ private [documentationProvider] class ScalaDocTypeRenderer(
   originalElement: Option[PsiElement],
   nameRenderer: NameRenderer,
   substitutor: Option[ScSubstitutor]
-)(implicit projectContext: ProjectContext) extends TypeRenderer {
+)(implicit projectContext: ProjectContext, context: Context) extends TypeRenderer {
   private lazy val boundsRenderer = new TypeBoundsRenderer(nameRenderer)
 
   private implicit val presentableContext: TypePresentationContext =
@@ -355,14 +355,17 @@ private [documentationProvider] object ScalaDocTypeRenderer {
     }
   }
 
-  def apply(originalElement: Option[PsiElement])(implicit projectContext: ProjectContext): TypeRenderer =
+  def apply(originalElement: Option[PsiElement])(implicit projectContext: ProjectContext, context: Context): TypeRenderer =
     new ScalaDocTypeRenderer(originalElement, nameRenderer, None)
 
-  def forAnnotations(originalElement: Option[PsiElement])(implicit projectContext: ProjectContext): TypeRenderer =
+  def forAnnotations(originalElement: Option[PsiElement])(implicit projectContext: ProjectContext, context: Context): TypeRenderer =
     new ScalaDocTypeRenderer(originalElement, annotationsRenderer, None)
 
-  def forQuickInfo(originalElement: PsiElement, substitutor: ScSubstitutor)(implicit projectContext: ProjectContext): TypeRenderer =
+  def forQuickInfo(originalElement: PsiElement, substitutor: ScSubstitutor)(implicit projectContext: ProjectContext): TypeRenderer = {
+    implicit val context: Context = Context(originalElement)
+
     new ScalaDocTypeRenderer(Some(originalElement), quickInfoNameRenderer, Some(substitutor)) {
       override protected def renderWithAttrKey(name: String, attrKey: TextAttributesKey): String = escapeHtml4(name)
     }
+  }
 }

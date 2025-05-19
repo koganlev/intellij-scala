@@ -4,13 +4,16 @@ import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiClass
 import org.jetbrains.plugins.scala.extensions._
 import org.jetbrains.plugins.scala.lang.psi.api.toplevel.typedef.{ScObject, ScTemplateDefinition, ScTrait}
-import org.jetbrains.plugins.scala.lang.psi.types.ScType
+import org.jetbrains.plugins.scala.lang.psi.types.{Context, ScType}
 
 // TODO move to annotator or to ScTemplateDefinition
 package object template {
 
-  def superRefs(definition: ScTemplateDefinition): Seq[(TextRange, PsiClass)] =
+  def superRefs(definition: ScTemplateDefinition): Seq[(TextRange, PsiClass)] = {
+    implicit val context: Context = Context(definition)
+
     collectSuperRefs(definition)(_.extractClass)
+  }
 
   def collectSuperRefs[T](definition: ScTemplateDefinition)
                          (extractor: ScType => Option[T]): Seq[(TextRange, T)] =

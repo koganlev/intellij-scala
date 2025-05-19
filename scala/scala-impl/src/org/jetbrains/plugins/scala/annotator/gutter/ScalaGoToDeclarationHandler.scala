@@ -138,7 +138,7 @@ object ScalaGoToDeclarationHandler {
           .parentImportExpression
           .reference
         val resolved = reference.flatMap(_.resolve().toOption)
-        val maybeTypeDef = resolved.flatMap(extractTypeDef)
+        val maybeTypeDef = resolved.flatMap(extractTypeDef(_))
 
         maybeTypeDef.map { templateDefinition =>
           selector.givenTypeElement match {
@@ -270,9 +270,11 @@ object ScalaGoToDeclarationHandler {
     case element           => element
   }
 
-  private def extractTypeDef(element: PsiElement): Option[ScTemplateDefinition] = element match {
-    case td: ScTemplateDefinition => Some(td)
-    case Typeable(tpe)            => tpe.extractClass.filterByType[ScTemplateDefinition]
-    case _                        => None
+  private def extractTypeDef(element: PsiElement)(implicit context: Context): Option[ScTemplateDefinition] = {
+    element match {
+      case td: ScTemplateDefinition => Some(td)
+      case Typeable(tpe)            => tpe.extractClass.filterByType[ScTemplateDefinition]
+      case _                        => None
+    }
   }
 }

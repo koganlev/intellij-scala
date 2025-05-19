@@ -12,6 +12,7 @@ import org.jetbrains.plugins.scala.lang.dfa.utils.ScalaDfaConstants.Packages.App
 import org.jetbrains.plugins.scala.lang.dfa.utils.ScalaDfaTypeUtils.scTypeToDfType
 import org.jetbrains.plugins.scala.lang.psi.api.statements.params.ScClassParameter
 import org.jetbrains.plugins.scala.lang.psi.api.toplevel.typedef.ScClass
+import org.jetbrains.plugins.scala.lang.psi.types.Context
 
 object ClassesSpecialSupport {
 
@@ -31,15 +32,19 @@ object ClassesSpecialSupport {
     caseClassInfo.orElse(regularClassInfo)
   }
 
-  private def findReturnedCaseClassIfFactoryApplyCall(invocationInfo: InvocationInfo): Option[ScClass] = for {
-    invokedElement <- invocationInfo.invokedElement
-    invokedName <- invokedElement.simpleName
-    if invokedName == Apply
-    returnedClass <- invokedElement.returnType.extractClass.flatMap(scalaClass)
-    if isPsiClassCase(returnedClass) && returnedClass.parameters.size == invocationInfo.properArguments.flatten.size
-    containingObject <- containingScalaObject(invokedElement.psiElement)
-    if containingObject.isSynthetic && containingObject.name == returnedClass.name
-  } yield returnedClass
+  private def findReturnedCaseClassIfFactoryApplyCall(invocationInfo: InvocationInfo): Option[ScClass] = {
+    implicit val context: Context = Context(invocationInfo.place)
+
+    for {
+      invokedElement <- invocationInfo.invokedElement
+      invokedName <- invokedElement.simpleName
+      if invokedName == Apply
+      returnedClass <- invokedElement.returnType.extractClass.flatMap(scalaClass)
+      if isPsiClassCase(returnedClass) && returnedClass.parameters.size == invocationInfo.properArguments.flatten.size
+      containingObject <- containingScalaObject(invokedElement.psiElement)
+      if containingObject.isSynthetic && containingObject.name == returnedClass.name
+    } yield returnedClass
+  }
 
   private def findReturnedClassIfConstructorCall(invocationInfo: InvocationInfo): Option[ScClass] = for {
     invokedElement <- invocationInfo.invokedElement

@@ -156,11 +156,11 @@ object TypeDiff {
 
   // TODO Move to ParameterizedType.scala / FunctionType.scala?
   private object InfixType {
-    def unapply(tpe: ScType): Option[(ScType, ScType, ScType)] = Some(tpe) collect {
+    def unapply(tpe: ScType)(implicit context: Context): Option[(ScType, ScType, ScType)] = Some(tpe) collect {
       case ParameterizedType(d, Seq(l, r)) if isInfix(d) => (l, d, r)
     }
 
-    private def isInfix(designatorType: ScType) = {
+    private def isInfix(designatorType: ScType)(implicit context: Context) = {
       val designator = designatorType.extractDesignated(expandAliases = false)
       designator.exists(it => ScalaNamesUtil.isOperatorName(it.name)) || designator.exists {
         case aClass: PsiClass => aClass.getAnnotations.map(_.getQualifiedName).contains("scala.annotation.showAsInfix")

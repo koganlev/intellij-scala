@@ -14,7 +14,7 @@ import org.jetbrains.plugins.scala.lang.psi.implicits.ImplicitCollector
 import org.jetbrains.plugins.scala.lang.psi.stubs.index.{ImplicitInstanceIndex, ScGivenIndex}
 import org.jetbrains.plugins.scala.lang.psi.stubs.util.ScalaInheritors.withStableInheritorsNames
 import org.jetbrains.plugins.scala.lang.psi.types.api.FunctionType
-import org.jetbrains.plugins.scala.lang.psi.types.{ScAndType, ScCompoundType, ScType}
+import org.jetbrains.plugins.scala.lang.psi.types.{Context, ScAndType, ScCompoundType, ScType}
 import org.jetbrains.plugins.scala.lang.resolve.ScalaResolveResult
 import org.jetbrains.plugins.scala.settings.ScalaApplicationSettings
 import org.jetbrains.plugins.scala.util.CommonQualifiedNames.{AnyFqn, AnyRefFqn, JavaLangObjectFqn}
@@ -97,6 +97,8 @@ object ImportImplicitInstanceFix {
   }
 
   private def findCompatibleInstances(typeToSearch: ScType, owner: ImplicitArgumentsOwner): Set[GlobalImplicitInstance] = {
+    implicit val context: Context = Context(owner)
+
     //this happens for view bounds, let's skip this for now
     if (isScalaFunction1Type(typeToSearch))
       return Set.empty
@@ -113,6 +115,8 @@ object ImportImplicitInstanceFix {
   private def compatibleInstances(`type`: ScType,
                                   scope: GlobalSearchScope,
                                   place: ImplicitArgumentsOwner): Set[GlobalImplicitInstance] = {
+    implicit val context: Context = Context(place)
+
     val collector = new ImplicitCollector(place, `type`, `type`, None, false, fullInfo = true)
 
     val types = `type` match {
@@ -152,7 +156,7 @@ object ImportImplicitInstanceFix {
   private def implicitTypeToSearch(parameter: ScalaResolveResult): Option[ScType] =
     parameter.implicitSearchState.map(_.tp)
 
-  private def isScalaFunction1Type(scType: ScType): Boolean =
+  private def isScalaFunction1Type(scType: ScType)(implicit context: Context): Boolean =
     scType match {
       case FunctionType(_, _) => true
       case _ => false

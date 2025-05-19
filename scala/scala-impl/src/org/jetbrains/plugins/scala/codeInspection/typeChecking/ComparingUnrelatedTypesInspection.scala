@@ -115,12 +115,12 @@ object ComparingUnrelatedTypesInspection {
   }
 
   @tailrec
-  private def extractActualType(`type`: ScType): ScType = `type` match {
+  private def extractActualType(`type`: ScType)(implicit context: Context): ScType = `type` match {
     case AliasType(_, _, Right(rhs)) => extractActualType(rhs)
     case _                           => `type`.widen
   }
 
-  private def hasNonDefaultEquals(ty: ScType): Boolean = {
+  private def hasNonDefaultEquals(ty: ScType)(implicit context: Context): Boolean = {
     ty.extractClassSimple().exists { ty =>
       ty.findMethodsByName("equals", true).exists { m =>
         !m.containingClass.isJavaLangObject && !m.isInstanceOf[ScSyntheticFunction] && MethodUtils.isEquals(m)

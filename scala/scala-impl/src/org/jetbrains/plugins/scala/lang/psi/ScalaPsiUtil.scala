@@ -195,6 +195,7 @@ object ScalaPsiUtil {
    */
   def tupled(s: Seq[Expression], context: PsiElement): Option[Seq[Expression]] = {
     implicit val scope: ElementScope = context.elementScope
+    implicit val elementContext: Context = Context(context)
 
     val maybeType = s match {
       case Seq() => Some(Unit)
@@ -1182,8 +1183,11 @@ object ScalaPsiUtil {
   def isByNameArgument(expr: ScExpression): Boolean =
     isCanonicalArg(expr) && parameterOf(expr).exists(_.isByName)
 
-  def isArgumentOfFunctionType(expr: ScExpression): Boolean =
+  def isArgumentOfFunctionType(expr: ScExpression): Boolean = {
+    implicit val context: Context = Context(expr)
+
     isCanonicalArg(expr) && parameterOf(expr).exists(p => FunctionType.isFunctionType(p.paramType))
+  }
 
   class MethodValueExtractor(pt: Option[ScType]) {
     def unapply(expr: ScExpression): Option[PsiMethod] = {
@@ -1537,6 +1541,8 @@ object ScalaPsiUtil {
   }
 
   def importAliasFor(element: PsiElement, refPosition: PsiElement): Option[ScReference] = {
+    implicit val context: Context = Context(refPosition)
+
     val importAliases = availableImportAliases(refPosition)
     val suitableAliases = importAliases.collect {
       case (aliasRef, aliasName)

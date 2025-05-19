@@ -46,7 +46,7 @@ class UnnecessaryPartialFunctionInspection extends LocalInspectionTool {
     case _ =>
   }
 
-  private def findType(file: PsiFile, className: String, parameterTypes: PsiClass => Seq[ScType]): Option[ValueType] = {
+  private def findType(file: PsiFile, className: String, parameterTypes: PsiClass => Seq[ScType])(implicit context: Context): Option[ValueType] = {
     implicit val ctx: ProjectContext = file
     ScalaPsiManager.instance
       .getCachedClass(file.resolveScope, className)

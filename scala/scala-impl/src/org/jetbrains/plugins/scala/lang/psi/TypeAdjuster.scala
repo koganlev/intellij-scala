@@ -175,6 +175,8 @@ object TypeAdjuster {
       private[this] val Target = "this."
 
       def unapply(info: SimpleInfo): Option[ReplacementInfo] = {
+        implicit val context: Context = Context(info.place)
+
         val SimpleInfo(place, replacement, resolve, _) = info
 
         replacement.indexOf(Target) match {
@@ -198,6 +200,8 @@ object TypeAdjuster {
     object withExpandableTypeAlias {
 
       def unapply(info: SimpleInfo): Option[ReplacementInfo] = {
+        implicit val context: Context = Context(info.place)
+
         val SimpleInfo(place, replacement, _, _) = info
 
         val replacementType = newTypeElem(replacement, place).calcType
@@ -347,6 +351,8 @@ object TypeAdjuster {
       case simple: SimpleInfo =>
         simple.place match {
           case e@CanBeInfixType() =>
+            implicit val context: Context = Context(simple.place)
+
             ToRewrite(e)
 
             val mappings = infos

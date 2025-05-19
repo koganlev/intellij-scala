@@ -348,6 +348,8 @@ object ScPattern {
   }
 
   private[this] case class SeqLikeType(place: PsiElement) {
+    private implicit def context: Context = Context(place)
+
     private[this] val seqFqn = place.scalaSeqFqn
 
     def unapply(tpe: ScType): Option[ScType] = {
@@ -359,7 +361,9 @@ object ScPattern {
     }
   }
 
-  private[this] def extractedType(returnTpe: ScType, place: PsiElement): Option[ScType] =
+  private[this] def extractedType(returnTpe: ScType, place: PsiElement): Option[ScType] = {
+    implicit val context: Context = Context(place)
+
     returnTpe match {
       case ParameterizedType(ExtractClass(cls), Seq(arg))
           if cls.qualifiedName == "scala.Option" || cls.qualifiedName == "scala.Some" =>
@@ -370,6 +374,7 @@ object ScPattern {
           extracted <- findMember("get", other, place)
         } yield extracted
     }
+  }
 
   /*
    * Checks if `tpe` conforms to the following interface and returns T1
@@ -417,7 +422,7 @@ object ScPattern {
         .flatMap(_.constructor)
         .exists(_.effectiveFirstParameterSection.length == 1)
 
-  private def isProduct(tpe: ScType): Boolean = {
+  private def isProduct(tpe: ScType)(implicit context: Context): Boolean = {
     val productFqn = "scala.Product"
     val baseTpes = Iterator(tpe) ++ BaseTypes.iterator(tpe)
     baseTpes.exists {
@@ -499,7 +504,7 @@ object ScPattern {
         override def selectorType: ScType = selType
       }
 
-      def productWithSelector(pTypes: Seq[ScType], selType: ScType): Unapply = new Unapply {
+      def productWithSelector(pTypes: Seq[ScType], selType: ScType)(implicit context: Context): Unapply = new Unapply {
         override val productTypes: Seq[ScType] = pTypes
         override def supportsNamedPatterns: Boolean = namedPatternTypesCalculator.isDefined
         override def namedPatternTypes(place: PsiElement): MapView[String, Option[ScType]] =
@@ -574,6 +579,8 @@ object ScPattern {
    * See https://docs.scala-lang.org/scala3/reference/changed-features/pattern-matching.html#
    */
   private[this] def scala3UnapplyExtractorMatches(tpe: ScType, place: PsiElement): LazyList[ExtractorMatch.Unapply] = {
+    implicit val context: Context = Context(place)
+
     import ExtractorMatch.Unapply
     def withAutoTupling(unapply: Unapply): Seq[Unapply] =
       unapply.productTypes match {
@@ -637,6 +644,8 @@ object ScPattern {
   }
 
   private def scala2UnapplyExtractorMatches(tpe: ScType, place: PsiElement, fun: ScFunction): LazyList[ExtractorMatch.Unapply] = {
+    implicit val context: Context = Context(place)
+
     import ExtractorMatch.Unapply
     /*
      * Scala 2 boolean match
@@ -708,6 +717,8 @@ object ScPattern {
    * See https://docs.scala-lang.org/scala3/reference/changed-features/pattern-matching.html#
    */
   private[this] def scala3UnapplySeqMatches(tpe: ScType, place: PsiElement): LazyList[ExtractorMatch.UnapplySeq] = {
+    implicit val context: Context = Context(place)
+
     // v is the V from https://docs.scala-lang.org/scala3/reference/changed-features/pattern-matching.html#
     def inner(v: ScType, extract: Boolean): LazyList[ExtractorMatch.UnapplySeq] = {
       /**
@@ -753,7 +764,9 @@ object ScPattern {
     inner(tpe, extract = true)
   }
 
-  private def scala2UnapplySeqMatches(tpe: ScType, place: PsiElement): LazyList[ExtractorMatch.UnapplySeq] =
+  private def scala2UnapplySeqMatches(tpe: ScType, place: PsiElement): LazyList[ExtractorMatch.UnapplySeq] = {
+    implicit val context: Context = Context(place)
+
     extractedType(tpe, place) match {
       case None => LazyList.empty
       case Some(extractorType) =>
@@ -787,6 +800,7 @@ object ScPattern {
 
         memberBased ++ extractorMatch
     }
+  }
 
   def unapplySeqExtractorMatches(returnTpe: ScType, place: PsiElement, fun: ScFunction): LazyList[ExtractorMatch.UnapplySeq] = {
     if (place.isInScala3File) scala3UnapplySeqMatches(returnTpe, place)

@@ -190,6 +190,8 @@ trait ScopeAnnotator extends ElementAnnotator[ScalaPsiElement] {
   }
 
   private def erasedReturnType(f: ScFunction, isInStructuralType: Boolean, forPresentableText: Boolean): String = {
+    implicit val context: Context = Context(f)
+
     if (!isInStructuralType) {
       val returnType = f.returnType.getOrAny.removeAliasDefinitions()
       erased(returnType, forPresentableText).canonicalText
@@ -197,7 +199,7 @@ trait ScopeAnnotator extends ElementAnnotator[ScalaPsiElement] {
     else ""
   }
 
-  private def erased(t: ScType, forPresentableText: Boolean): ScType = {
+  private def erased(t: ScType, forPresentableText: Boolean)(implicit context: Context): ScType = {
     val stdTypes = StdTypes.instance(t.projectContext)
 
     t.updateRecursively {
@@ -236,6 +238,8 @@ trait ScopeAnnotator extends ElementAnnotator[ScalaPsiElement] {
     eraseParamType: Boolean,
     forPresentableText: Boolean
   ): String = {
+    implicit val context: Context = Context(p)
+
     val `=>` = if (p.isCallByNameParameter) " => " else ""
     val `*` = if (p.isRepeatedParameter) "*" else ""
 

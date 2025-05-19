@@ -98,9 +98,13 @@ object ParameterlessAccessInspection {
 
   private object HasFunctionType {
 
-    def unapply(expression: ScExpression): Option[Seq[ScType]] = expression match {
-      case result.Typeable(api.FunctionType(_, seq)) => Some(seq)
-      case _ => None
+    def unapply(expression: ScExpression): Option[Seq[ScType]] = {
+      implicit val context: Context = Context(expression)
+
+      expression match {
+        case result.Typeable(api.FunctionType(_, seq)) => Some(seq)
+        case _ => None
+      }
     }
   }
 }

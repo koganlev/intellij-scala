@@ -13,7 +13,7 @@ import org.jetbrains.plugins.scala.lang.psi.api.expr.ScExpression
 import org.jetbrains.plugins.scala.lang.psi.api.statements.ScFunction
 import org.jetbrains.plugins.scala.lang.psi.api.toplevel.typedef.ScTypeDefinition
 import org.jetbrains.plugins.scala.lang.psi.api.{ScalaFile, ScalaPsiElement}
-import org.jetbrains.plugins.scala.lang.psi.types.ScType
+import org.jetbrains.plugins.scala.lang.psi.types.{Context, ScType}
 import org.jetbrains.plugins.scala.lang.psi.types.result.Typeable
 
 import java.awt.Toolkit
@@ -69,16 +69,20 @@ final class CopyTypeAction extends AnAction(ScalaBundle.message("copy.scala.type
     val startOffset = selectionModel.getSelectionStart
     val endOffset = selectionModel.getSelectionEnd
 
-    def preprocessType(ty: ScType): ScType =
+    def preprocessType(ty: ScType)(implicit context: Context): ScType =
       ty.removeAliasDefinitions().tryExtractDesignatorSingleton
 
     getSelectedElement(startOffset, endOffset, file)
       .flatMap {
         case e: ScExpression =>
+          implicit val context: Context = Context(e)
+
           e.getTypeWithoutImplicits(ignoreBaseType = true)
             .toOption
             .map(e -> preprocessType(_))
         case e =>
+          implicit val context: Context = Context(e)
+
           e.`type`().toOption.map(e -> preprocessType(_))
       }
   }

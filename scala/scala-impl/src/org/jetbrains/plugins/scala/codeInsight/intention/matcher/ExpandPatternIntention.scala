@@ -17,7 +17,7 @@ import org.jetbrains.plugins.scala.lang.psi.api.base.types.ScTypeElement
 import org.jetbrains.plugins.scala.lang.psi.api.toplevel.typedef.ScClass
 import org.jetbrains.plugins.scala.lang.psi.impl.ScalaPsiElementFactory.createPatternFromText
 import org.jetbrains.plugins.scala.lang.psi.types.api.TupleType
-import org.jetbrains.plugins.scala.lang.psi.types.{ScType, ScTypeExt}
+import org.jetbrains.plugins.scala.lang.psi.types.{Context, ScType, ScTypeExt}
 
 /**
   * Expands reference or wildcard pattern to a constructor/tuple pattern.
@@ -60,7 +60,9 @@ class ExpandPatternIntention extends PsiElementBaseIntentionAction {
     }
   }
 
-  private def findReferencePattern(element: PsiElement): Option[(ScPattern, String)] =
+  private def findReferencePattern(element: PsiElement): Option[(ScPattern, String)] = {
+    implicit val context: Context = Context(element)
+
     element.parents
       .takeWhile(_.is[ScPattern, ScTypeElement, ScTypePattern, ScReference])
       .flatMap {
@@ -78,8 +80,9 @@ class ExpandPatternIntention extends PsiElementBaseIntentionAction {
         case _ => None
       }
       .nextOption()
+  }
 
-  private def nestedPatternText(expectedType: ScType): Option[String] = {
+  private def nestedPatternText(expectedType: ScType)(implicit context: Context): Option[String] = {
     expectedType match {
       case TupleType(comps) =>
         import org.jetbrains.plugins.scala.lang.refactoring.namesSuggester.NameSuggester.suggestNamesByType

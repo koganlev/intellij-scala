@@ -344,6 +344,8 @@ object ScTemplateDefinitionAnnotator extends ElementAnnotator[ScTemplateDefiniti
   // TODO package private
   def annotateObjectCreationImpossible(element: ScTemplateDefinition)
                                       (implicit holder: ScalaAnnotationHolder): Unit = {
+    implicit val context: Context = Context(element)
+
     if (!element.is[ScNewTemplateDefinition, ScObject] || element.is[ScEnumSingletonCase]) return
 
     //(1: text range to use for error highlighting, 2: corresponding class

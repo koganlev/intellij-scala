@@ -17,7 +17,7 @@ import org.jetbrains.plugins.scala.lang.psi.api.statements.params.{ScParameter, 
 import org.jetbrains.plugins.scala.lang.psi.api.toplevel.ScTypedDefinition
 import org.jetbrains.plugins.scala.lang.psi.types.api.{Any, ExtractClass}
 import org.jetbrains.plugins.scala.lang.psi.types.result._
-import org.jetbrains.plugins.scala.lang.psi.types.{ScType, ScTypeExt}
+import org.jetbrains.plugins.scala.lang.psi.types.{Context, ScType, ScTypeExt}
 import org.jetbrains.plugins.scala.lang.refactoring.namesSuggester.NameSuggester
 import org.jetbrains.plugins.scala.project.ProjectContext
 import org.jetbrains.plugins.scala.util.TypeAnnotationUtil
@@ -145,6 +145,8 @@ object CreateFromUsageUtil {
 
 object InstanceOfClass {
   def unapply(elem: PsiElement): Option[PsiClass] = {
+    implicit val context: Context = Context(elem)
+
     elem match {
       case ScExpression.Type(TypeAsClass(psiClass)) => Some(psiClass)
       case ResolvesTo(typed: ScTypedDefinition) =>
@@ -158,7 +160,7 @@ object InstanceOfClass {
 }
 
 object TypeAsClass {
-  def unapply(scType: ScType): Option[PsiClass] = scType match {
+  def unapply(scType: ScType)(implicit context: Context): Option[PsiClass] = scType match {
     case ExtractClass(aClass) => Some(aClass)
     case t: ScType => t.extractDesignatorSingleton.flatMap(_.extractClass)
     case _ => None

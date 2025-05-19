@@ -25,6 +25,8 @@ object ScFunctionExprAnnotator extends ElementAnnotator[ScFunctionExpr] {
 
   private[annotator] def annotateImpl(literal: ScFunctionExpr, typeAware: Boolean, fromBlock: Boolean = false)
                                      (implicit holder: ScalaAnnotationHolder): Unit = {
+    implicit val context: Context = Context(literal)
+
     if (!typeAware || isImplicitlyConverted(literal))
       return
 
@@ -55,10 +57,14 @@ object ScFunctionExprAnnotator extends ElementAnnotator[ScFunctionExpr] {
     }
   }
 
-  private def expectedFunctionTypeOf(literal: ScFunctionExpr) = literal.expectedType() match {
-    case Some(t @ FunctionType(_, _)) => Some(t)
-    case Some(t) => toSAMType(t, literal)
-    case _ => None
+  private def expectedFunctionTypeOf(literal: ScFunctionExpr) = {
+    implicit val context: Context = Context(literal)
+
+    literal.expectedType() match {
+      case Some(t @ FunctionType(_, _)) => Some(t)
+      case Some(t) => toSAMType(t, literal)
+      case _ => None
+    }
   }
 
   private def missingParametersIn(literal: ScFunctionExpr, parameters: Iterable[ScParameter], expectedTypes: Iterable[ScType])
@@ -83,13 +89,16 @@ object ScFunctionExprAnnotator extends ElementAnnotator[ScFunctionExpr] {
     ctx:           PsiElement,
     parameters:    Iterable[ScParameter],
     expectedTypes: Iterable[ScType]
-  ): Option[Seq[ScType]] =
+  ): Option[Seq[ScType]] = {
+    implicit val context: Context = Context(ctx)
+
     if (ctx.isInScala3Module && expectedTypes.size == 1)
       expectedTypes.head match {
         case TupleType(components) if components.size == parameters.size => Option(components)
         case _                                                           => None
       }
     else None
+  }
 
   private def tooManyParametersIn(
     literal: ScFunctionExpr,
@@ -161,6 +170,8 @@ object ScFunctionExprAnnotator extends ElementAnnotator[ScFunctionExpr] {
   }
 
   private def resultTypeMismatchIn(literal: ScFunctionExpr)(implicit holder: ScalaAnnotationHolder): Unit = {
+    implicit val context: Context = Context(literal)
+
     val typeAscription = literal match {
       case Parent((_: ScParenthesisedExpr | _: ScBlockExpr) & Parent(ta: ScTypedExpression)) => Some(ta)
       case _ => None

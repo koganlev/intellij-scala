@@ -87,7 +87,7 @@ object PatternTypeInference {
   /**
    * Do component-wise pattern type inference and return combined substitutor.
    */
-  private def doForTuplePattern(tuplePattern: ScTuplePattern, scrutineeType: ScType): ScSubstitutor = {
+  private def doForTuplePattern(tuplePattern: ScTuplePattern, scrutineeType: ScType)(implicit context: Context): ScSubstitutor = {
     val patterns = tuplePattern.patternList.toSeq.flatMap(_.patterns)
 
     scrutineeType match {
@@ -108,7 +108,7 @@ object PatternTypeInference {
   /**
    * Do component-wise pattern type inference and return combined substitutor.
    */
-  private def doForNamedTuplePattern(tuplePattern: ScNamedTuplePattern, scrutineeType: ScType): ScSubstitutor = {
+  private def doForNamedTuplePattern(tuplePattern: ScNamedTuplePattern, scrutineeType: ScType)(implicit context: Context): ScSubstitutor = {
     scrutineeType match {
       case NamedTupleType(comps) =>
         val patternComponents = tuplePattern.components.flatMap(comp => comp.subPattern.map(comp.name -> _))
