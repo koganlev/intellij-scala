@@ -1,5 +1,7 @@
 package org.jetbrains.plugins.scala.lang.psi.types.api
 
+import com.intellij.openapi.components.Service
+import com.intellij.openapi.project.Project
 import org.jetbrains.plugins.scala.extensions._
 import org.jetbrains.plugins.scala.lang.psi.light.LightContextFunctionParameter
 import org.jetbrains.plugins.scala.lang.psi.types.ScType
@@ -17,7 +19,7 @@ trait ParameterizedType extends ValueType {
   val typeArguments: Seq[ScType]
 
   def substitutor: ScSubstitutor =
-    substitutorCache.computeIfAbsent(this, _ => substitutorInner)
+    substitutorCache(projectContext.project).computeIfAbsent(this, _ => substitutorInner)
 
   protected def substitutorInner: ScSubstitutor
 
@@ -53,8 +55,14 @@ trait ParameterizedType extends ValueType {
 }
 
 object ParameterizedType {
-  val substitutorCache: ConcurrentMap[ParameterizedType, ScSubstitutor] =
-    new ConcurrentHashMap[ParameterizedType, ScSubstitutor]()
+
+  def substitutorCache(project: Project): ConcurrentMap[ParameterizedType, ScSubstitutor] =
+    project.getService(classOf[SubstitutorCacheService]).substitutorCache
+
+  @Service(Array(Service.Level.PROJECT))
+  private final class SubstitutorCacheService {
+    val substitutorCache: ConcurrentMap[ParameterizedType, ScSubstitutor] = new ConcurrentHashMap()
+  }
 
   def apply(designator: ScType, typeArguments: Seq[ScType]): ScType =
     designator.typeSystem.parameterizedType(designator, typeArguments)
