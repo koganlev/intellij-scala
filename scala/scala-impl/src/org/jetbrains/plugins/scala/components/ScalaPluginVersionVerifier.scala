@@ -4,7 +4,6 @@ import com.intellij.ide.plugins.cl.PluginClassLoader
 import com.intellij.ide.plugins.{org => _, _}
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.extensions.PluginId
-import org.jetbrains.plugins.scala.extensions.invokeLater
 
 object ScalaPluginVersionVerifier {
 
@@ -52,15 +51,4 @@ object ScalaPluginVersionVerifier {
   def scalaPluginId: PluginId = getPluginDescriptor.getPluginId
 
   private[components] val LOG = Logger.getInstance("#org.jetbrains.plugins.scala.components.ScalaPluginVersionVerifier")
-}
-
-class ScalaPluginVersionVerifierActivity extends RunOnceStartupActivity {
-  override def doRunActivity(): Unit = {
-    invokeLater {
-      ScalaPluginUpdater.askUpdatePluginBranchIfNeeded()
-      ScalaPluginUpdater.postCheckIdeaCompatibility()
-    }
-  }
-
-  override protected def doCleanup(): Unit = {}
 }
