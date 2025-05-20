@@ -39,7 +39,7 @@ import org.jetbrains.plugins.scala.lang.psi.light.PsiClassWrapper
 import org.jetbrains.plugins.scala.lang.psi.stubs.index.{ScPackageObjectFqnIndex, ScPackagingFqnIndex, ScStableTypeAliasFqnIndex, ScalaIndexKeys}
 import org.jetbrains.plugins.scala.lang.psi.types._
 import org.jetbrains.plugins.scala.lang.psi.types.api.designator.ScProjectionType
-import org.jetbrains.plugins.scala.lang.psi.types.api.{Any, ParameterizedType, TypeParameterType}
+import org.jetbrains.plugins.scala.lang.psi.types.api.{Any, ParameterizedType}
 import org.jetbrains.plugins.scala.lang.refactoring.util.ScalaNamesUtil._
 import org.jetbrains.plugins.scala.lang.resolve.SyntheticClassProducer
 import org.jetbrains.plugins.scala.project.ProjectContext
@@ -534,7 +534,9 @@ class ScalaPsiManager(implicit val project: Project) extends Disposable {
 
   private def clearCaches(): Unit = {
     new ProjectContext(project).typeSystem.clearCache()
-    ParameterizedType.substitutorCache.clear()
+    if (!project.isDisposed) {
+      ParameterizedType.substitutorCache(project).clear()
+    }
     PropertyMethods.clearCache()
     collectImplicitObjectsCache.clear()
     implicitCollectorCache.clear()
