@@ -3,11 +3,13 @@ package org.jetbrains.plugins.scala.util
 import com.intellij.concurrency.JobScheduler
 import com.intellij.diagnostic.PerformanceWatcher
 import com.intellij.ide.IdeEventQueue
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.{ApplicationManager, ModalityState, TransactionGuard}
+import com.intellij.openapi.components.Service
 import com.intellij.openapi.progress._
-import org.jetbrains.plugins.scala.components.RunOnceStartupActivity
+import com.intellij.openapi.project.Project
 import org.jetbrains.plugins.scala.extensions._
-import org.jetbrains.plugins.scala.util.UIFreezingGuard._
+import org.jetbrains.plugins.scala.startup.ProjectActivity
 
 import java.awt.Event
 import java.awt.event.MouseEvent
@@ -16,19 +18,31 @@ import java.util.concurrent.{ScheduledFuture, TimeUnit}
 import scala.annotation.nowarn
 import scala.util.control.NoStackTrace
 
-class UIFreezingGuard extends RunOnceStartupActivity {
+private final class UIFreezingGuard extends ProjectActivity {
+  override def execute(project: Project): Unit = {
+    // Application-level services are initialised exactly once.
+    ApplicationManager.getApplication.getService(classOf[UIFreezingGuard.AppService])
+  }
+}
 
-  private val periodMs = 10
-  private var periodicTask: ScheduledFuture[_] = _
+object UIFreezingGuard {
 
-  override def doRunActivity(): Unit = {
-    if (pceEnabled) {
-      periodicTask =
+  @Service(Array(Service.Level.APP))
+  private final class AppService extends Disposable {
+    private final val periodMs = 10
+    private var periodicTask: ScheduledFuture[_] =
+      if (pceEnabled)
         JobScheduler.getScheduler.scheduleWithFixedDelay(() => cancelOnUserInput(), periodMs, periodMs, TimeUnit.MILLISECONDS)
+      else
+        null
+
+    override def dispose(): Unit = {
+      if (periodicTask ne null) {
+        periodicTask.cancel(false)
+        periodicTask = null
+      }
     }
   }
-
-  override protected def doCleanup(): Unit = periodicTask.cancel(false)
 
   private def cancelOnUserInput(): Unit = {
     val timestamp = progress.timestamp
@@ -36,9 +50,6 @@ class UIFreezingGuard extends RunOnceStartupActivity {
       progress.cancel(timestamp)
     }
   }
-}
-
-object UIFreezingGuard {
 
   private val pceEnabled = System.getProperty("idea.ProcessCanceledException") != "disabled"
 
@@ -85,6 +96,7 @@ object UIFreezingGuard {
   def isAlreadyGuarded: Boolean = isEdt && isGuarded || !isEdt
 
   private def isWriteAction: Boolean = ApplicationManager.getApplication.isWriteAccessAllowed
+
   private def isTransaction: Boolean = {
     (TransactionGuard.getInstance().getContextTransaction != null): @nowarn("cat=deprecation")
   }
@@ -93,6 +105,7 @@ object UIFreezingGuard {
     val indicator = ProgressManager.getInstance().getProgressIndicator
     indicator != progress
   }
+
   private def hasModalityState: Boolean = ModalityState.current() != ModalityState.nonModal()
 
   private def canInterrupt: Boolean = !isWriteAction && !isTransaction && !isUnderProgress && !hasModalityState
