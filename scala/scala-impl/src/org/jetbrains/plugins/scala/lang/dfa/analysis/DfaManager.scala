@@ -4,8 +4,10 @@ import com.intellij.codeInspection.dataFlow.interpreter.{ReachabilityCountingInt
 import com.intellij.codeInspection.dataFlow.jvm.JvmDfaMemoryStateImpl
 import com.intellij.codeInspection.dataFlow.lang.ir.{ControlFlow, DfaInstructionState}
 import com.intellij.codeInspection.dataFlow.value.DfaValueFactory
+import com.intellij.openapi.components.Service
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.progress.ProcessCanceledException
+import com.intellij.openapi.project.Project
 import org.jetbrains.plugins.scala.caches.{ModTracker, cached}
 import org.jetbrains.plugins.scala.lang.dfa.analysis.framework.{ScalaDfaListener, ScalaDfaResult}
 import org.jetbrains.plugins.scala.lang.dfa.analysis.invocations.interprocedural.AnalysedMethodInfo
@@ -20,11 +22,9 @@ import scala.util.control.NonFatal
 
 object DfaManager {
   private val log = Logger.getInstance(getClass)
-  private val cachedDfaResults =
-    cached("DfaManager.dfaCaches", ModTracker.anyScalaPsiChange, () => new ConcurrentHashMap[ScFunctionDefinition, Future[Option[ScalaDfaResult]]]())
 
   def getDfaResultFor(fun: ScFunctionDefinition): Future[Option[ScalaDfaResult]] = {
-    val cache = cachedDfaResults()
+    val cache = dfaCache(fun.getProject)
     val promise = Promise[Option[ScalaDfaResult]]()
 
     Option(cache.putIfAbsent(fun, promise.future))
@@ -93,4 +93,19 @@ object DfaManager {
 
   case class ScalaDfaException(fun: ScFunctionDefinition, cfg: String, cause: Throwable)
     extends Exception(s"Failed to analyze function ${fun.name}, cfg:\n$cfg", cause)
+
+  private def dfaCache(project: Project): ConcurrentHashMap[ScFunctionDefinition, Future[Option[ScalaDfaResult]]] =
+    project.getService(classOf[DfaCacheService]).cache
+
+  @Service(Array(Service.Level.PROJECT))
+  private final class DfaCacheService(project: Project) {
+    private val cachedDfaResults: () => ConcurrentHashMap[ScFunctionDefinition, Future[Option[ScalaDfaResult]]] =
+      cached(
+        "DfaManager.dfaCaches",
+        ModTracker.physicalPsiChange(project),
+        () => new ConcurrentHashMap[ScFunctionDefinition, Future[Option[ScalaDfaResult]]]()
+      )
+
+    def cache: ConcurrentHashMap[ScFunctionDefinition, Future[Option[ScalaDfaResult]]] = cachedDfaResults()
+  }
 }
