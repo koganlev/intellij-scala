@@ -319,7 +319,7 @@
             <className>org.jetbrains.plugins.scala.codeInsight.intention.recursion.AddTailRecursionAnnotationIntention</className>
         </intentionAction>
 
-        <postStartupActivity implementation="org.jetbrains.plugins.scala.codeInsight.implicits.ShowImplicitHintsAction$ConfigureShortcuts"/>
+        <postStartupActivity implementation="org.jetbrains.plugins.scala.codeInsight.implicits.ConfigureShortcutsProjectActivity"/>
         <postStartupActivity implementation="org.jetbrains.plugins.scala.codeInsight.hints.XRayModeTip"/>
         <postStartupActivity implementation="org.jetbrains.plugins.scala.codeInsight.implicits.MouseHandler" />
 
