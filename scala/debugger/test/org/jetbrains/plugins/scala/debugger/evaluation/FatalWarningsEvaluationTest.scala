@@ -2,7 +2,7 @@ package org.jetbrains.plugins.scala.debugger.evaluation
 
 import com.intellij.openapi.module.Module
 import org.jetbrains.plugins.scala.ScalaVersion
-import org.jetbrains.plugins.scala.project.ModuleExt
+import org.jetbrains.plugins.scala.project.settings.ScalaCompilerSettingsProfile
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
@@ -37,7 +37,7 @@ abstract class FatalWarningsEvaluationTestBase extends EvaluationTestBase {
   }
 
   private def addCompilerOptions(module: Module, additionalCompilerOptions: Seq[String]): Unit = {
-    val profile = module.scalaCompilerSettingsProfile
+    val profile = ScalaCompilerSettingsProfile.forModule(module)
     val newSettings = profile.getSettings.copy(additionalCompilerOptions = additionalCompilerOptions)
     profile.setSettings(newSettings)
   }
