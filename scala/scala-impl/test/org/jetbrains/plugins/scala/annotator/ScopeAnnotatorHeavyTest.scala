@@ -261,17 +261,14 @@ class ScopeAnnotatorHeavyTest_Scala_3 extends ScopeAnnotatorHeavyTest {
         |  def clash2(a: IArray[IArray[Box[Bar]]]): IArray[IArray[Box[Bar]]] = ???
         |}
         |""".stripMargin,
-      """Error(clash1,clash1(IArray[Box])IArray[Box] is already defined in the scope)
-        |Error(clash1,clash1(IArray[Box])IArray[Box] is already defined in the scope)
-        |Error(clash2,clash2(IArray[IArray[Box]])IArray[IArray[Box]] is already defined in the scope)
-        |Error(clash2,clash2(IArray[IArray[Box]])IArray[IArray[Box]] is already defined in the scope)
+      """Error(clash1,clash1((Array[_$1]) forSome {type _$1 <: Box})(Array[_$1]) forSome {type _$1 <: Box} is already defined in the scope)
+        |Error(clash1,clash1((Array[_$1]) forSome {type _$1 <: Box})(Array[_$1]) forSome {type _$1 <: Box} is already defined in the scope)
+        |Error(clash2,clash2((Array[_$1]) forSome {type _$1 <: (Array[_$1]) forSome {type _$1 <: Box}})(Array[_$1]) forSome {type _$1 <: (Array[_$1]) forSome {type _$1 <: Box}} is already defined in the scope)
+        |Error(clash2,clash2((Array[_$1]) forSome {type _$1 <: (Array[_$1]) forSome {type _$1 <: Box}})(Array[_$1]) forSome {type _$1 <: (Array[_$1]) forSome {type _$1 <: Box}} is already defined in the scope)
         |""".stripMargin,
     )
 
-  //TODO: once true opaque types support is implemented (SCL-20887),
-  // we need to unmute this test (remove return) we should reconsider SCL-22062 (it should work for custom array type aliases as well)
   def testNoTypeErasureForArray_CustomOpaqueTypeAlias(): Unit = {
-    return
     assertErrorsText(
       """class Foo
         |class Bar
@@ -299,18 +296,15 @@ class ScopeAnnotatorHeavyTest_Scala_3 extends ScopeAnnotatorHeavyTest {
         |  def clash2(a: MyArray[MyArray[Box[Bar]]]): MyArray[MyArray[Box[Bar]]] = ???
         |}
         |""".stripMargin,
-      """Error(clash1,clash1(MyArray[Box])MyArray[Box] is already defined in the scope)
-        |Error(clash1,clash1(MyArray[Box])MyArray[Box] is already defined in the scope)
-        |Error(clash2,clash2(MyArray[MyArray[Box]])MyArray[MyArray[Box]] is already defined in the scope)
-        |Error(clash2,clash2(MyArray[MyArray[Box]])MyArray[MyArray[Box]] is already defined in the scope)
+      """Error(clash1,clash1(Array[Box])Array[Box] is already defined in the scope)
+        |Error(clash1,clash1(Array[Box])Array[Box] is already defined in the scope)
+        |Error(clash2,clash2(Array[Array[Box]])Array[Array[Box]] is already defined in the scope)
+        |Error(clash2,clash2(Array[Array[Box]])Array[Array[Box]] is already defined in the scope)
         |""".stripMargin,
     )
   }
 
-  //TODO: once true opaque types support is implemented (SCL-20887),
-  // we need to unmute this test (remove return) we should reconsider SCL-22062 (it should work for custom array type aliases as well)
   def testNoTypeErasureForArray_CustomOpaqueTypeAlias_Existential(): Unit = {
-    return
     assertErrorsText(
       """class Foo
         |class Bar
@@ -338,16 +332,15 @@ class ScopeAnnotatorHeavyTest_Scala_3 extends ScopeAnnotatorHeavyTest {
         |  def clash2(a: MyIArray[MyIArray[Box[Bar]]]): MyIArray[MyIArray[Box[Bar]]] = ???
         |}
         |""".stripMargin,
-      """Error(clash1,clash1(MyIArray[Box])MyIArray[Box] is already defined in the scope)
-        |Error(clash1,clash1(MyIArray[Box])MyIArray[Box] is already defined in the scope)
-        |Error(clash2,clash2(MyIArray[MyIArray[Box]])MyIArray[MyIArray[Box]] is already defined in the scope)
-        |Error(clash2,clash2(MyIArray[MyIArray[Box]])MyIArray[MyIArray[Box]] is already defined in the scope)
+      """Error(clash1,clash1((Array[_$1]) forSome {type _$1 <: Box})(Array[_$1]) forSome {type _$1 <: Box} is already defined in the scope)
+        |Error(clash1,clash1((Array[_$1]) forSome {type _$1 <: Box})(Array[_$1]) forSome {type _$1 <: Box} is already defined in the scope)
+        |Error(clash2,clash2((Array[_$1]) forSome {type _$1 <: (Array[_$1]) forSome {type _$1 <: Box}})(Array[_$1]) forSome {type _$1 <: (Array[_$1]) forSome {type _$1 <: Box}} is already defined in the scope)
+        |Error(clash2,clash2((Array[_$1]) forSome {type _$1 <: (Array[_$1]) forSome {type _$1 <: Box}})(Array[_$1]) forSome {type _$1 <: (Array[_$1]) forSome {type _$1 <: Box}} is already defined in the scope)
         |""".stripMargin,
     )
   }
 
-  //TODO: once true opaque types support is implemented (SCL-20887),
-  // we need to unmute this test (remove return) we should reconsider SCL-22062 (it should work for custom array type aliases as well)
+  //TODO: we need to unmute this test
   def testNoTypeErasureForArray_CustomAbstractType_Existential(): Unit = {
     return
     assertErrorsText(

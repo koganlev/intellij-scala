@@ -5,5 +5,7 @@ trait Type {
 
   type Alias = Int
 
-  /**/opaque /**/type Opaque/**/ = Int/**/
+  /**/opaque /**/type Opaque/**/ = String/**/
+
+  opaque type OpaqueReifiable = Int
 }

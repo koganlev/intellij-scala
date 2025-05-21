@@ -568,6 +568,38 @@ class Scala3OpaqueTypeAliasTest extends ScalaLightCodeInsightFixtureTestCase {
     )
   }
 
+  def testErasure(): Unit = {
+    checkHasErrorAroundCaret(
+      s"""
+         |object Inside:
+         |  opaque type T = Int
+         |object Outside:
+         |  def foo(x: Int): Unit = ???
+         |  def ${CARET}foo(x: Inside.T): Unit = ???
+         |""".stripMargin
+    )
+  }
+
+  def testErasureIArray1(): Unit = {
+    checkHasErrorAroundCaret(
+      s"""
+         |object Outside:
+         |  def foo(x: Array[_ <: Int]): Unit = ???
+         |  def ${CARET}foo(x: IArray[Int]): Unit = ???
+         |""".stripMargin
+    )
+  }
+
+  def testErasureIArray2(): Unit = {
+    checkTextHasNoErrors(
+      s"""
+         |object Outside:
+         |  def foo(x: Array[_ <: Int]): Unit = ???
+         |  def foo(x: IArray[String]): Unit = ???
+         |""".stripMargin
+    )
+  }
+
   def testCachingEquivalence1(): Unit = {
     checkHasErrorAroundCaret(
       s"""

@@ -1,7 +1,7 @@
 package org.jetbrains.plugins.scala.tasty.reader
 
 import Node.{Node1, Node2, Node3}
-import TreePrinter.Keywords
+import TreePrinter.{Keywords, ReifiableTypes}
 
 import dotty.tools.tasty.TastyBuffer.Addr
 import dotty.tools.tasty.TastyFormat.*
@@ -195,7 +195,8 @@ class TreePrinter(privateMembers: Boolean = false, infixTypes: Boolean = false, 
     textOfAnnotationIn(sb, indent, node, "\n")
     sb ++= indent
     modifiersIn(sb, if (isObject) node.prevSibling.getOrElse(node) else node,
-      if (isGivenClass) Set(GIVEN) else (if (isEnum) Set(ABSTRACT, SEALED, CASE, FINAL) else (if (isTypeMember) Set.empty else Set(OPAQUE))), isParameter = false, definition)
+      if (isGivenClass) Set(GIVEN) else (if (isEnum) Set(ABSTRACT, SEALED, CASE, FINAL) else Set.empty), isParameter = false, definition)
+    val modifiersEnd = sb.length
     if (isImplicitClass) {
       sb ++= "implicit "
     }
@@ -248,17 +249,20 @@ class TreePrinter(privateMembers: Boolean = false, infixTypes: Boolean = false, 
       if (bounds.isDefined) {
         boundsIn(sb, bounds.get)
       } else {
-        if (!node.contains(OPAQUE)) { // TODO Enable when opaque types are implemented, #SCL-21516
+        val tpe = repr.children.findLast(it => it.isTypeTree || it.isSharedType).orElse(repr.children.find(_.is(TYPEBOUNDS)).flatMap(_.children.headOption)) match {
+          case Some(t) =>
+            simple(textOfType(t))
+          case None =>
+            simple("") // TODO implement
+        }
+        if (!node.contains(OPAQUE)) {
           sb ++= " = "
-          if (node.contains(OPAQUE)) {
-            sb ++= "\"" + CompiledCode + "\""
-          } else {
-            repr.children.findLast(it => it.isTypeTree || it.isSharedType).orElse(repr.children.find(_.is(TYPEBOUNDS)).flatMap(_.children.headOption)) match {
-              case Some(t) =>
-                sb ++= simple(textOfType(t))
-              case None =>
-                sb ++= simple("") // TODO implement
-            }
+          sb ++= tpe
+        } else {
+          if (ReifiableTypes(tpe) || tpe.startsWith("_root_.scala.Array[")) {
+            sb.insert(modifiersEnd, "opaque ")
+            sb ++= " = "
+            sb ++= tpe
           }
         }
       }
@@ -1062,9 +1066,6 @@ class TreePrinter(privateMembers: Boolean = false, infixTypes: Boolean = false, 
     if (node.contains(TRANSPARENT)) {
       sb ++= "transparent "
     }
-    if (node.contains(OPAQUE) && !excluding(OPAQUE)) {
-      //sb ++= "opaque " // TODO Enable when opaque types are implemented, #SCL-21516
-    }
     if (node.contains(INLINE)) {
       sb ++= "inline "
     }
@@ -1181,5 +1182,15 @@ private object TreePrinter {
     "while",
     "with",
     "yield",
+  )
+
+  private val ReifiableTypes = Set(
+    "_root_.scala.Byte",
+    "_root_.scala.Short",
+    "_root_.scala.Int",
+    "_root_.scala.Long",
+    "_root_.scala.Float",
+    "_root_.scala.Double",
+    "_root_.scala.Char",
   )
 }
