@@ -12,12 +12,13 @@ import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.{VfsUtil, VirtualFile}
-import kotlin.jvm.functions.Function1
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.scala.actions.ShowTypeInfoAction
 import org.jetbrains.plugins.scala.extensions.{CharSeqExt, inWriteAction}
+import org.jetbrains.plugins.scala.lang.formatting.settings.ScalaCodeStyleSettings
 
 import java.lang.{Integer => JInt}
+import kotlin.jvm.functions.Function1
 import scala.jdk.CollectionConverters.{ListHasAsScala, MapHasAsJava}
 
 package object buildSystem {
@@ -52,8 +53,11 @@ package object buildSystem {
       packagePrefix = packagePrefix
     ).asJava
 
+    val useIndentationBasedSyntax = isScala3 && ScalaCodeStyleSettings.getInstance(project).USE_SCALA3_INDENTATION_BASED_SYNTAX
+
     val samples = templatesAndFiles(
       isScala3 = isScala3,
+      useIndentationBasedSyntax = useIndentationBasedSyntax,
       withOnboardingTips = withOnboardingTips,
       shouldRenderOnboardingTips = shouldRenderOnboardingTips,
       advancedTipsEnabled = advancedTipsEnabled
@@ -96,32 +100,35 @@ package object buildSystem {
       .getOrElse(throw new IllegalStateException("Unable to create src directory"))
 
   private def templatesAndFiles(isScala3: Boolean,
+                                useIndentationBasedSyntax: Boolean,
                                 withOnboardingTips: Boolean,
                                 shouldRenderOnboardingTips: Boolean,
-                                advancedTipsEnabled: Boolean): Seq[Sample] =
+                                advancedTipsEnabled: Boolean): Seq[Sample] = {
+    val braces = if (useIndentationBasedSyntax) "" else "-braces"
+
     (isScala3, withOnboardingTips, shouldRenderOnboardingTips, advancedTipsEnabled) match {
       case (true, true, true, true) =>
         Seq(
-          Sample("scala3-xray-tips-rendered.scala", "InlayHintsAndXRay.scala"),
+          Sample(s"scala3-xray-tips$braces-rendered.scala", "InlayHintsAndXRay.scala"),
           Sample("scala3-collections-tips-rendered.scala", "collections.scala"),
-          Sample("scala3-main-tips-rendered.scala", "main.scala", """println(s"i = $i")"""),
+          Sample(s"scala3-main-tips$braces-rendered.scala", "main.scala", """println(s"i = $i")"""),
         )
       case (true, true, true, false) =>
         Seq(
-          Sample("scala3-main-tips-rendered.scala", "main.scala", """println(s"i = $i")"""),
+          Sample(s"scala3-main-tips$braces-rendered.scala", "main.scala", """println(s"i = $i")"""),
         )
       case (true, true, false, true) =>
         Seq(
-          Sample("scala3-xray-tips.scala", "InlayHintsAndXRay.scala"),
+          Sample(s"scala3-xray-tips$braces.scala", "InlayHintsAndXRay.scala"),
           Sample("scala3-collections-tips.scala", "collections.scala"),
-          Sample("scala3-main-tips.scala", "main.scala", """println(s"i = $i")"""),
+          Sample(s"scala3-main-tips$braces.scala", "main.scala", """println(s"i = $i")"""),
         )
       case (true, true, false, false) =>
         Seq(
-          Sample("scala3-main-tips.scala", "main.scala", """println(s"i = $i")"""),
+          Sample(s"scala3-main-tips$braces.scala", "main.scala", """println(s"i = $i")"""),
         )
       case (true, false, _, _) =>
-        Seq(Sample("scala3-main.scala", "main.scala", """println(s"i = $i")"""))
+        Seq(Sample(s"scala3-main$braces.scala", "main.scala", """println(s"i = $i")"""))
       case (false, true, true, true) =>
         Seq(
           Sample("scala2-xray-tips-rendered.scala", "InlayHintsAndXRay.scala"),
@@ -145,6 +152,7 @@ package object buildSystem {
       case (false, false, _, _) =>
         Seq(Sample("scala2-main.scala", "Main.scala", """println(s"i = $i")"""))
     }
+  }
 
   private def onboardingTipsVariables(withOnboardingTips: Boolean,
                                       shouldRenderOnboardingTips: Boolean,
