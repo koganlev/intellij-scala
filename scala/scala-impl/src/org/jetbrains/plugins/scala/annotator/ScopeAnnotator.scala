@@ -15,10 +15,10 @@ import org.jetbrains.plugins.scala.lang.psi.api.statements.params.{ScClassParame
 import org.jetbrains.plugins.scala.lang.psi.api.toplevel.templates.ScTemplateBody
 import org.jetbrains.plugins.scala.lang.psi.api.toplevel.typedef.{ScClass, ScConstructorOwner, ScEnum, ScObject, ScTemplateDefinition, ScTypeDefinition}
 import org.jetbrains.plugins.scala.lang.psi.api.toplevel.{ScEarlyDefinitions, ScNamedElement, ScTypedDefinition}
-import org.jetbrains.plugins.scala.lang.psi.types.api.designator.{ScDesignatorType, ScProjectionType}
+import org.jetbrains.plugins.scala.lang.psi.types.api.designator.ScProjectionType
 import org.jetbrains.plugins.scala.lang.psi.types.api.{JavaArrayType, ParameterizedType, StdTypes, TypeParameterType, arrayType}
 import org.jetbrains.plugins.scala.lang.psi.types.result.Typeable
-import org.jetbrains.plugins.scala.lang.psi.types.{Context, ScLiteralType, ScParameterizedType, ScType}
+import org.jetbrains.plugins.scala.lang.psi.types.{Context, ScLiteralType, ScType}
 import org.jetbrains.plugins.scala.lang.refactoring.util.ScalaNamesUtil
 
 import scala.collection.immutable.ArraySeq
@@ -190,16 +190,14 @@ trait ScopeAnnotator extends ElementAnnotator[ScalaPsiElement] {
   }
 
   private def erasedReturnType(f: ScFunction, isInStructuralType: Boolean, forPresentableText: Boolean): String = {
-    implicit val context: Context = Context(f)
-
     if (!isInStructuralType) {
-      val returnType = f.returnType.getOrAny.removeAliasDefinitions()
+      val returnType = f.returnType.getOrAny.removeAliasDefinitions()(Context.Empty)
       erased(returnType, forPresentableText).canonicalText
     }
     else ""
   }
 
-  private def erased(t: ScType, forPresentableText: Boolean)(implicit context: Context): ScType = {
+  private def erased(t: ScType, forPresentableText: Boolean): ScType = {
     val stdTypes = StdTypes.instance(t.projectContext)
 
     t.updateRecursively {
@@ -213,11 +211,6 @@ trait ScopeAnnotator extends ElementAnnotator[ScalaPsiElement] {
       // array types are not erased
       case arrayType(inner) =>
         JavaArrayType(erased(inner, forPresentableText))
-      case pt@ParameterizedType(ScDesignatorType(ta: ScTypeAlias), Seq(arg)) if ta.qualifiedNameOpt.contains("scala.IArray") =>
-        if (forPresentableText) //use IArray instead of Array when presenting text
-          ScParameterizedType(pt.designator, pt.typeArguments.map(erased(_, forPresentableText)))
-        else
-          JavaArrayType(erased(arg, forPresentableText))
       case pt: ParameterizedType => pt.designator
       case tpt: TypeParameterType => tpt.upperType
       case stdTypes.Any | stdTypes.AnyVal => stdTypes.AnyRef
@@ -238,16 +231,11 @@ trait ScopeAnnotator extends ElementAnnotator[ScalaPsiElement] {
     eraseParamType: Boolean,
     forPresentableText: Boolean
   ): String = {
-    implicit val context: Context = Context(p)
-
     val `=>` = if (p.isCallByNameParameter) " => " else ""
     val `*` = if (p.isRepeatedParameter) "*" else ""
 
     val paramType = p.`type`().getOrAny
-    // We need opaque types RHS to distinguish array types (e.g. IArray, see SCL-22062).
-    // However, when we show the type in the error tooltip,
-    // we don't expand opaque types because for user RHS is an implementation detail.
-    val paramTypeExpanded = paramType.removeAliasDefinitions()
+    val paramTypeExpanded = paramType.removeAliasDefinitions()(Context.Empty)
     val erasedType =
       if (eraseParamType) erased(paramTypeExpanded, forPresentableText)
       else paramTypeExpanded
