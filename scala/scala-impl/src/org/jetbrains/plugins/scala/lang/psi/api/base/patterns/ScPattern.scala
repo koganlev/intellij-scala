@@ -198,7 +198,7 @@ object ScPattern {
       byName:                Option[String],
     ): Option[ScType] = {
       val bind =
-        ExpandedExtractorResolveProcessor.resolveActualUnapply(ref)
+        ExpandedExtractorResolveProcessor.resolveActualUnapply(ref, expected)
 
       bind match {
         case Some(ScalaResolveResult(fun: ScFunction, _))

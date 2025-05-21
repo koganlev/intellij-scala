@@ -82,7 +82,7 @@ class ExpandedExtractorResolveProcessor(
 }
 
 object ExpandedExtractorResolveProcessor {
-  def resolveActualUnapply(patRef: ScStableCodeReference): Option[ScalaResolveResult] =
+  def resolveActualUnapply(patRef: ScStableCodeReference, expectedType: Option[ScType]): Option[ScalaResolveResult] =
     patRef.bind() match {
       case Some(ScalaResolveResult(_: ScBindingPattern | _: ScParameter, _)) =>
         val resolve =
@@ -91,11 +91,7 @@ object ExpandedExtractorResolveProcessor {
               patRef,
               patRef.refName,
               patRef.getKinds(incomplete = false),
-              patRef.getContext match {
-                case inf: ScInfixPattern          => inf.expectedType
-                case constr: ScConstructorPattern => constr.expectedType
-                case _                            => None
-              }
+              expectedType,
             )
           )
 
