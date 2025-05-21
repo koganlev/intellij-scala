@@ -7,14 +7,15 @@ import org.jetbrains.plugins.scala.ScalaBundle
 import org.jetbrains.plugins.scala.lang.psi.api.base.patterns._
 import org.jetbrains.plugins.scala.lang.psi.api.base.{ScPrimaryConstructor, ScStableCodeReference}
 import org.jetbrains.plugins.scala.lang.psi.api.statements.ScFunction
-import org.jetbrains.plugins.scala.lang.psi.api.statements.ScFunction.CommonNames
 import org.jetbrains.plugins.scala.lang.psi.api.statements.params.ScParameter
 import org.jetbrains.plugins.scala.lang.psi.api.toplevel.typedef.ScClass
 import org.jetbrains.plugins.scala.lang.psi.impl.ScalaPsiElementImpl
+import org.jetbrains.plugins.scala.lang.psi.impl.base.patterns.ScConstructorPatternImpl.calcType
 import org.jetbrains.plugins.scala.lang.psi.impl.expr.PatternTypeInference
 import org.jetbrains.plugins.scala.lang.psi.types.recursiveUpdate.ScSubstitutor
 import org.jetbrains.plugins.scala.lang.psi.types.result._
 import org.jetbrains.plugins.scala.lang.resolve.ScalaResolveResult
+import org.jetbrains.plugins.scala.project.ProjectContext
 
 class ScConstructorPatternImpl(node: ASTNode) extends ScalaPsiElementImpl (node) with ScPatternImpl with ScConstructorPattern {
 
@@ -25,23 +26,22 @@ class ScConstructorPatternImpl(node: ASTNode) extends ScalaPsiElementImpl (node)
   override def isIrrefutableForImpl(t: Option[ScType]): Boolean =
     ScConstructorPatternImpl.isIrrefutable(t, ref, subpatterns)
 
-  override def `type`(): TypeResult =
-    ref.bind() match {
-      case Some(ScalaResolveResult(fun: ScFunction, _)) if
-        (fun.name == CommonNames.Unapply || fun.name == CommonNames.UnapplySeq) &&
-          fun.parameters.count(!_.isImplicit) == 1 =>
+  override def `type`(): TypeResult = calcType(this, ref, this.expectedType)
+}
 
+object ScConstructorPatternImpl {
+  def calcType(pattern: ScPattern, ref: ScStableCodeReference, expectedType: => Option[ScType])(implicit projectContext: ProjectContext): TypeResult =
+    ref.bind() match {
+      case Some(ScalaResolveResult(fun: ScFunction, _)) if fun.isUnapplyMethod && fun.parameters.count(!_.isImplicit) == 1 =>
         val subst =
-          this.expectedType.fold(
+          expectedType.fold(
             ScSubstitutor.empty
-          )(PatternTypeInference.doTypeInference(this, _))
+          )(PatternTypeInference.doTypeInference(pattern, _))
 
         fun.paramClauses.clauses.head.parameters.head.`type`().map(subst)
       case _ => Failure(ScalaBundle.message("cannot.resolve.unknown.symbol"))
     }
-}
 
-object ScConstructorPatternImpl {
   def isIrrefutable(typeOpt: Option[ScType], ref: ScStableCodeReference, subpatterns: Seq[ScPattern]): Boolean = {
     implicit val context: Context = Context(ref)
 
