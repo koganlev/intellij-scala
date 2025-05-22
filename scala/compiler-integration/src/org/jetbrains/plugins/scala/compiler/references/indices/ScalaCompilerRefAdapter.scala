@@ -34,7 +34,7 @@ object ScalaCompilerRefAdapter extends JavaCompilerRefAdapterCompat {
     def ownerId(member: PsiMember): Option[Int] =
       for {
         owner     <- member.containingClass.toOption
-        ownerName <- ClassUtil.getJVMClassName(owner).toOption
+        ownerName <- ClassUtil.getBinaryClassName(owner).toOption
         id        <- tryEnumerate(enumerator, ownerName)
       } yield id
 
@@ -60,7 +60,7 @@ object ScalaCompilerRefAdapter extends JavaCompilerRefAdapterCompat {
         } yield new CompilerRef.JavaCompilerMethodRef(owner, name, parametersCount(method))
       case aClass: PsiClass =>
         for {
-          name <- ClassUtil.getJVMClassName(aClass).toOption
+          name <- ClassUtil.getBinaryClassName(aClass).toOption
           id   <- tryEnumerate(enumerator, name)
         } yield new CompilerRef.JavaCompilerClassRef(id)
       case _ => None

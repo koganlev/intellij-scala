@@ -808,7 +808,7 @@ lazy val intelliLangIntegration = newProject(
 //  addCompilerPlugin(Dependencies.macroParadise),
   intellijPlugins ++= Seq(
     "org.intellij.intelliLang",
-    "com.intellij.json"
+    "com.intellij.modules.json"
   ).map(_.toPlugin)
 )
 
