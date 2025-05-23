@@ -13,16 +13,12 @@ import org.jetbrains.plugins.scala.worksheet.runconfiguration.WorksheetCache
 import org.jetbrains.plugins.scala.worksheet.settings.WorksheetExternalRunType.ReplRunType
 import org.jetbrains.plugins.scala.worksheet.settings.persistent.WorksheetFilePersistentSettings
 import org.junit.experimental.categories.Category
-import org.junit.runner.RunWith
-import org.junit.runners.JUnit4
-import org.junit.{Ignore, Test}
 
 import scala.concurrent.Await
 import scala.concurrent.duration.Duration
 import scala.jdk.CollectionConverters._
 
 @Category(Array(classOf[WorksheetEvaluationTests]))
-@RunWith(classOf[JUnit4])
 class TestSourcesInWorksheetTest extends SbtProjectCompilationTestBase(separateProdAndTestSources = true) {
 
   override def runInDispatchThread(): Boolean = false
@@ -76,8 +72,6 @@ class TestSourcesInWorksheetTest extends SbtProjectCompilationTestBase(separateP
     EdtTestUtil.runInEdtAndWait(() => super.tearDown())
   }
 
-  @Test
-  @Ignore
   def testSourcesInWorksheet(): Unit = {
     val messages = compiler.rebuild().asScala.toSeq
     CompilerMessagesUtil.assertNoErrorsOrWarnings(messages)

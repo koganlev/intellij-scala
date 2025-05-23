@@ -4,7 +4,6 @@ import com.intellij.openapi.compiler.CompilerMessage
 import com.intellij.openapi.editor.{Editor, FoldRegion}
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiDocumentManager
-import com.intellij.util.ThrowableRunnable
 import org.jetbrains.plugins.scala.compiler.ScalaCompilerTestBase
 import org.jetbrains.plugins.scala.extensions.TextRangeExt
 import org.jetbrains.plugins.scala.project.settings.{ScalaCompilerConfiguration, ScalaCompilerSettingsProfile}
@@ -12,11 +11,11 @@ import org.jetbrains.plugins.scala.settings.ScalaProjectSettings
 import org.jetbrains.plugins.scala.util.MarkersUtils
 import org.jetbrains.plugins.scala.util.assertions.AssertionMatchers._
 import org.jetbrains.plugins.scala.util.runners._
+import org.jetbrains.plugins.scala.worksheet.WorksheetFile
 import org.jetbrains.plugins.scala.worksheet.actions.topmenu.RunWorksheetAction.RunWorksheetActionResult
 import org.jetbrains.plugins.scala.worksheet.integration.WorksheetIntegrationBaseTest._
 import org.jetbrains.plugins.scala.worksheet.runconfiguration.WorksheetCache
 import org.jetbrains.plugins.scala.worksheet.settings.persistent.WorksheetFilePersistentSettings
-import org.jetbrains.plugins.scala.worksheet.{WorksheetFile, WorksheetTestExceptionUtil}
 import org.jetbrains.plugins.scala.{LatestScalaVersions, ScalaVersion, WorksheetEvaluationTests}
 import org.junit.Assert._
 import org.junit.experimental.categories.Category
@@ -81,18 +80,6 @@ abstract class WorksheetIntegrationBaseTest
     val settings = ScalaProjectSettings.getInstance(project)
     settings.setInProcessMode(self.runInCompileServerProcess)
     settings.setAutoRunDelay(300)
-  }
-
-  override def wrapTestRunnable(testRunnable: ThrowableRunnable[Throwable]) = {
-    val withProps: ThrowableRunnable[Throwable] = () => {
-      System.setProperty("intellij.testFramework.rethrow.logged.errors", "true")
-      try {
-        WorksheetTestExceptionUtil.catchAndIgnore(testRunnable.run())
-      } finally {
-        System.setProperty("intellij.testFramework.rethrow.logged.errors", "false")
-      }
-    }
-    super.wrapTestRunnable(withProps)
   }
 
   protected def doRenderTest(
