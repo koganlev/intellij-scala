@@ -246,19 +246,24 @@ class TreePrinter(privateMembers: Boolean = false, infixTypes: Boolean = false, 
           sb ++= simple(textOfType(upperBound))
         case _ =>
       }
-      if (bounds.isDefined) {
+      if (bounds.isDefined && !node.contains(OPAQUE)) {
         boundsIn(sb, bounds.get)
       } else {
-        val tpe = repr.children.findLast(it => it.isTypeTree || it.isSharedType).orElse(repr.children.find(_.is(TYPEBOUNDS)).flatMap(_.children.headOption)) match {
-          case Some(t) =>
-            simple(textOfType(t))
-          case None =>
-            simple("") // TODO implement
+        val tpe = {
+          val node = repr.children.collectFirst {
+            case Node3(TYPEBOUNDStpt, _, Seq(_, _, n)) => n
+            case Node3(TYPEBOUNDS, _, Seq(n)) => n
+            case n if n.isTypeTree || n.isSharedType => n
+          }
+          node.map(textOfType(_)).getOrElse(simple("")) // TODO implement
         }
         if (!node.contains(OPAQUE)) {
           sb ++= " = "
           sb ++= tpe
         } else {
+          bounds.foreach { n =>
+            boundsIn(sb, n)
+          }
           if (ReifiableTypes(tpe) || tpe.startsWith("_root_.scala.Array[")) {
             sb.insert(modifiersEnd, "opaque ")
             sb ++= " = "
