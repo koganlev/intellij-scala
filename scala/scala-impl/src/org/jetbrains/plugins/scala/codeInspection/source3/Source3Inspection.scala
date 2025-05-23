@@ -50,7 +50,7 @@ class Source3Inspection extends LocalInspectionTool {
             }
           )
         case gen@ScGenerator(pattern, _) if addGeneratorCase && features.`case in pattern bindings` && gen.caseKeyword.isEmpty &&
-          generatorType(gen).exists(ty => !pattern.isIrrefutableFor(Some(ty))) =>
+          generatorType(gen).exists(ty => !pattern.isIrrefutableFor(ty)) =>
           holder.registerProblem(
             pattern,
             getDisplayName,

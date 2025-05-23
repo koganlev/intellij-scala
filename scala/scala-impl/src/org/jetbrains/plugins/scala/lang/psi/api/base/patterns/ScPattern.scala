@@ -31,8 +31,17 @@ import scala.annotation.tailrec
 import scala.collection.MapView
 
 trait ScPattern extends ScalaPsiElement with Typeable {
-  final def isIrrefutableFor(t: Option[ScType]): Boolean = t.exists(_.isNothing) || isIrrefutableForImpl(t)
-  protected def isIrrefutableForImpl(t: Option[ScType]): Boolean
+  final def isIrrefutableFor(scrutineeType: ScType, deep: Boolean = true): Boolean =
+    scrutineeType.isNothing || isIrrefutableForImpl(scrutineeType, deep)
+
+  /**
+   * Checks whether this pattern will match **all** values of type scrutineeType
+   *
+   * @param scrutineeType Set of possible values that this pattern should match
+   * @param deep Whether to check subpatterns as well
+   * @return True if this pattern matches all values of type scrutineeType, false otherwise
+   */
+  protected def isIrrefutableForImpl(scrutineeType: ScType, deep: Boolean): Boolean
 
   def bindings: Seq[ScBindingPattern]
 

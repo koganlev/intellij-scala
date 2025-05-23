@@ -25,7 +25,7 @@ class ScSeqWildcardPatternImpl private(stub: ScBindingPatternStub[ScSeqWildcardP
   // in the exact position of an Constructor pattern.
   // See
   //   ScConstructorPattern.extractsRepeatedParameterIrrefutably
-  override def isIrrefutableForImpl(t: Option[ScType]): Boolean = false
+  override def isIrrefutableForImpl(scrutineeType: ScType, deep: Boolean): Boolean = false
 
   override def nameId: PsiElement = findChildByType[PsiElement](TokenSets.ID_SET)
 

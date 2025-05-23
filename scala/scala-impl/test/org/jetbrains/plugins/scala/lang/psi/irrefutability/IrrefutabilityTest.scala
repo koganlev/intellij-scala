@@ -19,7 +19,7 @@ abstract class IrrefutabilityTestBase extends ScalaLightCodeInsightFixtureTestCa
       } yield pattern -> expr
   }
 
-  private def isIrrefutable(@Language("Scala") code: String): Boolean = {
+  private def isIrrefutable(@Language("Scala") code: String, deep: Boolean): Boolean = {
     val testCode =
       s"""
          |{
@@ -52,15 +52,21 @@ abstract class IrrefutabilityTestBase extends ScalaLightCodeInsightFixtureTestCa
     val List((pattern, expr)) = foundPatterns
 
     val exprType = expr.`type`().get
-    pattern.isIrrefutableFor(Some(exprType))
+    pattern.isIrrefutableFor(exprType, deep)
   }
 
   def assertIsIrrefutable(code: String): Unit = {
-    assert(isIrrefutable(code), s"Code is not irrefutable: '$code'")
+    assert(isIrrefutable(code, deep = true), s"Code is not irrefutable: '$code'")
+    assert(isIrrefutable(code, deep = false), s"Expected code to be irrefutable for shallow as well: '$code'")
   }
 
-  def assertIsNotIrrefutable(code: String): Unit = {
-    assert(!isIrrefutable(code), s"Code is irrefutable: '$code'")
+  def assertIsNotIrrefutable(code: String, butIsForShallow: Boolean = false): Unit = {
+    assert(!isIrrefutable(code, deep = true), s"Code is irrefutable: '$code'")
+    if (butIsForShallow) {
+      assert(isIrrefutable(code, deep = false), s"Code is correctly not irrefutable for deep and incorrectly also for shallow: '$code'")
+    } else {
+      assert(!isIrrefutable(code, deep = false), s"Code is correctly not irrefutable for deep, but incorrectly for shallow: '$code'")
+    }
   }
 
   def testNothingIsAlwaysIrrefutable(): Unit = {
@@ -129,9 +135,9 @@ abstract class IrrefutabilityTestBase extends ScalaLightCodeInsightFixtureTestCa
     assertIsIrrefutable("(A, B) match { case x@(_, _) => }")
     assertIsIrrefutable("Some(A) match { case x@Some(a: A) => }")
 
-    assertIsNotIrrefutable("(A, B, B) match { case x@(_, _) => }")
-    assertIsNotIrrefutable("Some(B) match { case x@Some(a: A) => }")
-    assertIsNotIrrefutable("Option(A) match { case x@Some(a: A) => }")
+    assertIsNotIrrefutable("(A, B, B) match { case x@(_, _) => }", butIsForShallow = true)
+    assertIsNotIrrefutable("Some(B) match { case x@Some(a: A) => }", butIsForShallow = true)
+    assertIsNotIrrefutable("Option(A) match { case x@Some(a: A) => }", butIsForShallow = true)
   }
 
   def testTuplePattern(): Unit = {
@@ -142,8 +148,8 @@ abstract class IrrefutabilityTestBase extends ScalaLightCodeInsightFixtureTestCa
 
     assertIsNotIrrefutable("A match { case (a, b) => }")
     assertIsNotIrrefutable("(A, B, B) match { case (a, b) => }")
-    assertIsNotIrrefutable("(B, A) match { case (a: A, b: B) => }")
-    assertIsNotIrrefutable("(A, B -> A) match { case (_, (a: A, b: B)) => }")
+    assertIsNotIrrefutable("(B, A) match { case (a: A, b: B) => }", butIsForShallow = true)
+    assertIsNotIrrefutable("(A, B -> A) match { case (_, (a: A, b: B)) => }", butIsForShallow = true)
   }
 
   def testConstructorPattern(): Unit = {
@@ -161,8 +167,8 @@ abstract class IrrefutabilityTestBase extends ScalaLightCodeInsightFixtureTestCa
     assertIsIrrefutable("A match { case (((_))) => }")
     assertIsIrrefutable("Some(A) match { case (Some(a)) => }")
 
-    assertIsNotIrrefutable("A match { case (a: B) => }")
-    assertIsNotIrrefutable("Option(A) match { case (Some(a)) => }")
+    assertIsNotIrrefutable("A match { case (a: B) => }", butIsForShallow = true)
+    assertIsNotIrrefutable("Option(A) match { case (Some(a)) => }", butIsForShallow = true)
   }
 
   def testLiteralPattern(): Unit = {
@@ -171,7 +177,7 @@ abstract class IrrefutabilityTestBase extends ScalaLightCodeInsightFixtureTestCa
     //assertIsIrrefutable("\"test\" match { case \"test\" => }")
 
     assertIsNotIrrefutable("1 match { case 2 => }")
-    assertIsNotIrrefutable("(1: Int) match { case n@(2) => }")
+    assertIsNotIrrefutable("(1: Int) match { case n@(2) => }", butIsForShallow = true)
   }
 
   def testInfixPattern(): Unit = {
@@ -197,7 +203,7 @@ abstract class IrrefutabilityTestBase extends ScalaLightCodeInsightFixtureTestCa
 
     assertIsNotIrrefutable("A match { case (_*) => }")
     assertIsNotIrrefutable("Some(A) match { case Some(_*) => }")
-    assertIsNotIrrefutable("Some(A) match { case Some(a@_*) => }")
+    assertIsNotIrrefutable("Some(A) match { case Some(a@_*) => }", butIsForShallow = true)
     assertIsNotIrrefutable("Fun(A, B) match { case Fun(a, b) => }")
     assertIsNotIrrefutable("Fun(A, B) match { case Fun(a) => }")
     assertIsNotIrrefutable("Fun(A, B) match { case Fun(a, b, _*) => }")
@@ -228,7 +234,7 @@ class IrrefutabilityTest_Scala3 extends IrrefutabilityTestBase {
     assertIsIrrefutable("(x = 1, y = 2) match { case (y = _, x = _) => }")
 
     assertIsNotIrrefutable("(x = 1) match { case (y = _) => }")
-    assertIsNotIrrefutable("(x = 1) match { case (x = 2) => }")
+    assertIsNotIrrefutable("(x = 1) match { case (x = 2) => }", butIsForShallow = true)
     assertIsNotIrrefutable("(x = 1, y = 2) match { case (y = _, v = _) => }")
 
     // check nothing
@@ -243,9 +249,9 @@ class IrrefutabilityTest_Scala3 extends IrrefutabilityTestBase {
     assertIsIrrefutable("(a = A, b = B, c = B) match { case (a = a, b = b) => }")
 
     assertIsNotIrrefutable("A match { case (a, b) => }")
-    assertIsNotIrrefutable("(a = B, b = A) match { case (a = a: A, b = b: B) => }")
-    assertIsNotIrrefutable("(a = A, b = B) match { case (b = b, a = A) => }")
-    assertIsNotIrrefutable("(a = A, b = B -> A) match { case (a = _, b = (a: A, b: B)) => }")
+    assertIsNotIrrefutable("(a = B, b = A) match { case (a = a: A, b = b: B) => }", butIsForShallow = true)
+    assertIsNotIrrefutable("(a = A, b = B) match { case (b = b, a = A) => }", butIsForShallow = true)
+    assertIsNotIrrefutable("(a = A, b = B -> A) match { case (a = _, b = (a: A, b: B)) => }", butIsForShallow = true)
     assertIsNotIrrefutable("(A, B) match { case (b = _, a = _) => }")
   }
 
@@ -257,7 +263,7 @@ class IrrefutabilityTest_Scala3 extends IrrefutabilityTestBase {
 
     assertIsNotIrrefutable("A match { case (a, b) => }")
     assertIsNotIrrefutable("(a = A, b = B, c = B) match { case (a, b) => }")
-    assertIsNotIrrefutable("(a = B, b = A) match { case (a: A, b: B) => }")
-    assertIsNotIrrefutable("(a = A, b = B -> A) match { case (_, (a: A, b: B)) => }")
+    assertIsNotIrrefutable("(a = B, b = A) match { case (a: A, b: B) => }", butIsForShallow = true)
+    assertIsNotIrrefutable("(a = A, b = B -> A) match { case (_, (a: A, b: B)) => }", butIsForShallow = true)
   }
 }

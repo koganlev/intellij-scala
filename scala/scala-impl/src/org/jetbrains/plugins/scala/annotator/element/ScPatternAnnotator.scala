@@ -85,7 +85,7 @@ object ScPatternAnnotator extends ElementAnnotator[ScPattern] {
         hasNoFreeTypeVariables(pattern) &&
         !(patType.isNumericType && exTp.isNumericType)
 
-    lazy val isIrrefutable = pattern.isIrrefutableFor(Some(exprType))
+    lazy val isIrrefutable = pattern.isIrrefutableFor(exprType)
 
     def isEliminatedByErasure = (exprType.extractClass, patType.extractClass) match {
       case (Some(cl1), Some(cl2)) if pattern.is[ScTypedPattern] => !isNeverSubClass(cl1, cl2)

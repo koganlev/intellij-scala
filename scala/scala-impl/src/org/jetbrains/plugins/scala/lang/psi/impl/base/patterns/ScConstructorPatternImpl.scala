@@ -23,8 +23,8 @@ class ScConstructorPatternImpl(node: ASTNode) extends ScalaPsiElementImpl (node)
 
   override def subpatterns: Seq[ScPattern] = if (args != null) args.patterns else Seq.empty
 
-  override def isIrrefutableForImpl(t: Option[ScType]): Boolean =
-    ScConstructorPatternImpl.isIrrefutable(t, ref, subpatterns)
+  override def isIrrefutableForImpl(scrutineeType: ScType, deep: Boolean): Boolean =
+    ScConstructorPatternImpl.isIrrefutable(scrutineeType, ref, subpatterns, deep)
 
   override def `type`(): TypeResult = calcType(this, ref, this.expectedType)
 }
@@ -42,11 +42,9 @@ object ScConstructorPatternImpl {
       case _ => Failure(ScalaBundle.message("cannot.resolve.unknown.symbol"))
     }
 
-  def isIrrefutable(typeOpt: Option[ScType], ref: ScStableCodeReference, subpatterns: Seq[ScPattern]): Boolean = {
+  def isIrrefutable(matchedType: ScType, ref: ScStableCodeReference, subpatterns: Seq[ScPattern], deep: Boolean): Boolean = {
     implicit val context: Context = Context(ref)
-
     val typedParamsOpt = for {
-      matchedType <- typeOpt
       unapplyMethod <- resolveUnapplyMethodFromReference(ref)
       caseClass <- unapplyMethod.syntheticCaseClass
       (clazz: ScClass, substitutor) <- matchedType.extractClassType
@@ -60,7 +58,7 @@ object ScConstructorPatternImpl {
         subpatterns.corresponds(typedParams) {
           case (pattern, (param, paramType)) =>
             if (param.isRepeatedParameter) extractsRepeatedParameterIrrefutably(pattern)
-            else pattern.isIrrefutableFor(paramType)
+            else pattern.isIrrefutableFor(paramType, deep)
         }
     }
   }
@@ -71,11 +69,11 @@ object ScConstructorPatternImpl {
     unapplyMethod <- maybeUnapplyMethod.collect { case method: ScFunction if method.isUnapplyMethod => method }
   } yield unapplyMethod
 
-  private def getTypedParametersOfPrimaryConstructor(constr: ScPrimaryConstructor, substitutor: ScSubstitutor): Seq[(ScParameter, Option[ScType])] = {
+  private def getTypedParametersOfPrimaryConstructor(constr: ScPrimaryConstructor, substitutor: ScSubstitutor): Seq[(ScParameter, ScType)] = {
     val params = constr.parameterList.clauses.headOption.map(_.parameters).getOrElse(Seq.empty)
     for {
       param <- params
-      paramType = param.`type`().toOption.map(substitutor)
+      paramType = param.`type`().map(substitutor).getOrAny
     } yield param -> paramType
   }
 

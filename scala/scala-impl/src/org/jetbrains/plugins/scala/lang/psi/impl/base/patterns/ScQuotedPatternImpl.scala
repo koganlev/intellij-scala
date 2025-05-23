@@ -11,7 +11,7 @@ class ScQuotedPatternImpl(node: ASTNode)
     with ScPatternImpl
     with ScQuotedPattern {
 
-  override def isIrrefutableForImpl(t: Option[ScType]): Boolean = false
+  override def isIrrefutableForImpl(scrutineeType: ScType, deep: Boolean): Boolean = false
 
   override def toString: String = "QuotedPattern"
 
