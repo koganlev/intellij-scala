@@ -22,7 +22,8 @@ class ScalaProjectSettingsConfigurePostSyncHook extends ProjectPostSyncHook {
       val scalaProjectSettings = ScalaProjectSettings.in(project)
       scalaProjectSettings.setCompilerHighlightingScala2(false)
       scalaProjectSettings.setCompilerHighlightingScala3(false)
-      // Bazel projects only need compilation with JPS
+      // Bazel projects have issues when compiling with Zinc, hence this enforcement.
+      // SCL-23923 Customers' project failed to locally build with Zinc
       ScalaCompilerConfiguration.instanceIn(project).incrementalityType = IncrementalityType.IDEA
       cont.resume(kotlin.Unit.INSTANCE)
     }, continuation)
