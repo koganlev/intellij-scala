@@ -268,6 +268,119 @@ class Scala3OpaqueTypeAliasTest extends ScalaLightCodeInsightFixtureTestCase {
     )
   }
 
+  def testLowerBound0(): Unit = {
+    checkHasErrorAroundCaret(
+      s"""
+         |object Inside:
+         |  opaque type T >: AnyVal = ${CARET}Int
+         |""".stripMargin
+    )
+  }
+
+  def testLowerBound1(): Unit = {
+    checkTextHasNoErrors(
+      s"""
+         |object Inside:
+         |  opaque type T >: Int = Any
+         |object Outside:
+         |  val v: Inside.T = ??? : Int
+         |""".stripMargin
+    )
+  }
+
+  def testLowerBound2(): Unit = {
+    checkHasErrorAroundCaret(
+      s"""
+         |object Inside:
+         |  opaque type T >: Int = Any
+         |object Outside:
+         |  val v: Int = ??? : ${CARET}Inside.T
+         |""".stripMargin
+    )
+  }
+
+  def testLowerBound3(): Unit = {
+    checkTextHasNoErrors(
+      s"""
+         |object Inside:
+         |  opaque type T >: Int = Any
+         |object Outside:
+         |  val v: Inside.T = ??? : Inside.T
+         |""".stripMargin
+    )
+  }
+
+  def testLowerBound4(): Unit = {
+    checkTextHasNoErrors(
+      s"""
+         |object Inside:
+         |  opaque type T >: Int = AnyVal
+         |  val v: T = ??? : Long
+         |""".stripMargin
+    )
+  }
+
+  def testUpperBound0(): Unit = {
+    checkHasErrorAroundCaret(
+      s"""
+         |object Inside:
+         |  opaque type T <: Int = ${CARET}AnyVal
+         |""".stripMargin
+    )
+  }
+
+  def testUpperBound1(): Unit = {
+    checkTextHasNoErrors(
+      s"""
+         |object Inside:
+         |  opaque type T <: Int = Nothing
+         |object Outside:
+         |  val v: Int = ??? : Inside.T
+         |""".stripMargin
+    )
+  }
+
+  def testUpperBound2(): Unit = {
+    checkHasErrorAroundCaret(
+      s"""
+         |object Inside:
+         |  opaque type T <: Int = Nothing
+         |object Outside:
+         |  val v: Inside.T = ??? : ${CARET}Int
+         |""".stripMargin
+    )
+  }
+
+  def testUpperBound3(): Unit = {
+    checkTextHasNoErrors(
+      s"""
+         |object Inside:
+         |  opaque type T <: Int = Nothing
+         |object Outside:
+         |  val v: Inside.T = ??? : Inside.T
+         |""".stripMargin
+    )
+  }
+
+  def testUpperBound4(): Unit = {
+    checkTextHasNoErrors(
+      s"""
+         |object Inside:
+         |  opaque type T <: AnyVal = Int
+         |  val v: Int = ??? : T
+         |""".stripMargin
+    )
+  }
+
+  def testLowerAndUpperBounds(): Unit = {
+    checkHasErrorAroundCaret(
+      s"""
+         |object Inside:
+         |  opaque type T >: Any <: Nothing = ${CARET}Int
+         |""".stripMargin
+    )
+  }
+
   def testImplicitArgumentLhsLhsInside(): Unit = {
     checkTextHasNoErrors(
       s"""
@@ -343,6 +456,19 @@ class Scala3OpaqueTypeAliasTest extends ScalaLightCodeInsightFixtureTestCase {
     )
   }
 
+  def testImplicitArgumentUpperBound(): Unit = {
+    checkTextHasNoErrors(
+      s"""
+         |object Inside:
+         |  opaque type T <: Int = Nothing
+         |  def find(implicit x: Int): Unit = ()
+         |object Outside:
+         |  implicit val y: Inside.T = ???
+         |  Inside.find
+         |""".stripMargin
+    )
+  }
+
   def testImplicitConversionLhsLhsInside(): Unit = {
     checkTextHasNoErrors(
       s"""
@@ -411,6 +537,19 @@ class Scala3OpaqueTypeAliasTest extends ScalaLightCodeInsightFixtureTestCase {
          |object Outside:
          |  import Inside.*
          |  val b: Boolean = ??? : ${CARET}Inside.T
+         |""".stripMargin
+    )
+  }
+
+  def testImplicitConversionUpperBound(): Unit = {
+    checkTextHasNoErrors(
+      s"""
+         |object Inside:
+         |  opaque type T <: Int = Nothing
+         |  implicit def from(x: Int): Boolean = x > 0
+         |object Outside:
+         |  import Inside.*
+         |  val b: Boolean = ??? : Inside.T
          |""".stripMargin
     )
   }
@@ -493,6 +632,20 @@ class Scala3OpaqueTypeAliasTest extends ScalaLightCodeInsightFixtureTestCase {
     )
   }
 
+  def testExtensionUpperBound(): Unit = {
+    checkTextHasNoErrors(
+      s"""
+         |object Inside:
+         |  opaque type T <: Int = Nothing
+         |  extension (that: Int)
+         |    def method(): Unit = ()
+         |object Outside:
+         |  import Inside.*
+         |  (??? : T).method()
+      """.stripMargin
+    )
+  }
+
   def testImplicitInCompanionObjectRhsLhsInside(): Unit = {
     checkTextHasNoErrors(
       s"""
@@ -541,6 +694,20 @@ class Scala3OpaqueTypeAliasTest extends ScalaLightCodeInsightFixtureTestCase {
          |    implicit val x: T = ???
          |object Outside:
          |  implicitly[Inside.T]
+         |""".stripMargin
+    )
+  }
+
+  def testImplicitInCompanionObjectUpperBound(): Unit = {
+    checkHasErrorAroundCaret(
+      s"""
+         |class Foo
+         |object Foo:
+         |  implicit val x: Foo = ???
+         |object Inside:
+         |  opaque type T <: Foo = Nothing
+         |object Outside:
+         |  ${CARET}implicitly[Inside.T]
          |""".stripMargin
     )
   }

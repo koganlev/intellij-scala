@@ -6,7 +6,7 @@ import org.jetbrains.plugins.scala.ScalaBundle
 import org.jetbrains.plugins.scala.annotator.ScalaAnnotationHolder
 import org.jetbrains.plugins.scala.extensions._
 import org.jetbrains.plugins.scala.lang.psi.api.statements.params.{ScTypeParam, ScTypeParamClause}
-import org.jetbrains.plugins.scala.lang.psi.api.statements.{ScFunction, ScTypeAlias}
+import org.jetbrains.plugins.scala.lang.psi.api.statements.{ScFunction, ScTypeAlias, ScTypeAliasDefinition}
 import org.jetbrains.plugins.scala.lang.psi.api.toplevel.ScTypeBoundsOwner
 import org.jetbrains.plugins.scala.lang.psi.types.api.TypeParameterType
 import org.jetbrains.plugins.scala.lang.psi.types.api.designator.{ScDesignatorType, ScProjectionType}
@@ -18,6 +18,7 @@ object ScTypeBoundsOwnerAnnotator extends ElementAnnotator[ScTypeBoundsOwner] {
 
   override def annotate(element: ScTypeBoundsOwner, typeAware: Boolean)
                        (implicit holder: ScalaAnnotationHolder): Unit = {
+    implicit val tcp: TypePresentationContext = element
     implicit val context: Context = Context(element)
 
     if (!typeAware) return
@@ -31,7 +32,6 @@ object ScTypeBoundsOwnerAnnotator extends ElementAnnotator[ScTypeBoundsOwner] {
         upper <- element.upperBound.toOption
         if !lower.conforms(upper)
       } {
-        implicit val tcp: TypePresentationContext = element
         holder.createErrorAnnotation(
           element,
           ScalaBundle.message("lower.bound.conform.to.upper", upper.presentableText, lower.presentableText)
@@ -39,10 +39,22 @@ object ScTypeBoundsOwnerAnnotator extends ElementAnnotator[ScTypeBoundsOwner] {
       }
     }
 
+    element match {
+      case ta: ScTypeAliasDefinition if ta.isOpaque =>
+        for (at <- ta.aliasedType) {
+          for (lowerElement <- ta.lowerTypeElement; lower <- lowerElement.`type`().toOption if !lower.conforms(at)) {
+            holder.createErrorAnnotation(element, ScalaBundle.message("lower.bound.conform.to.upper", at.presentableText, lower.presentableText))
+          }
+          for (upperElement <- ta.upperTypeElement; upper <- upperElement.`type`().toOption if !at.conforms(upper)) {
+            holder.createErrorAnnotation(element, ScalaBundle.message("lower.bound.conform.to.upper", upper.presentableText, at.presentableText))
+          }
+        }
+      case _ =>
+    }
+
     element.contextBounds.foreach { cb =>
       val cbTypeElem = cb.typeElement
       val cbType     = cbTypeElem.getTypeNoConstructor.toOption
-      implicit val tpc: TypePresentationContext = element
 
       cbType.foreach { tpe =>
         ScParameterizedTypeElementAnnotator.annotateTypeArgs[PsiElement](

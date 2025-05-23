@@ -119,9 +119,9 @@ final class ScSyntheticTypeParameter(override val name: String, override val own
   override def isCovariant = false
   override def isContravariant = false
 
-  override def lowerBound: Right[Nothing, StdType] = Right(Nothing)
+  override def lowerBound(implicit context: Context): Right[Nothing, StdType] = Right(Nothing)
 
-  override def upperBound: TypeResult = Right(Any)
+  override def upperBound(implicit context: Context): TypeResult = Right(Any)
 
   override def getIndex: Int = -1
   override def getOwner: PsiTypeParameterListOwner = null

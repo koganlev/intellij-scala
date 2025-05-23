@@ -25,11 +25,14 @@ trait ScTypeAliasDefinition extends ScTypeAlias {
     }.getOrElse(Failure(ScalaBundle.message("no.alias.type")))
   }
 
-  override def lowerBound: TypeResult = aliasedType
+  override def lowerBound(implicit context: Context): TypeResult = lowerTypeElement match {
+    case Some(te) if !isOpaque || isEffectivelyOpaque(context) => te.`type`()
+    case _ => aliasedType
+  }
 
-  override def upperBound: TypeResult = upperTypeElement match {
-    case Some(te) => te.`type`()
-    case None => aliasedType
+  override def upperBound(implicit context: Context): TypeResult = upperTypeElement match {
+    case Some(te) if !isOpaque || isEffectivelyOpaque(context) => te.`type`()
+    case _ => aliasedType
   }
 
   def isExactAliasFor(cls: PsiClass): Boolean = {
@@ -73,4 +76,6 @@ trait ScTypeAliasDefinition extends ScTypeAlias {
       typeParameters.isEmpty && aliasedType.getOrElse(return false).equiv(clsType)
     }
   }
+
+  def toDeclaration: ScTypeAliasDeclaration
 }

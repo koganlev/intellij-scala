@@ -60,7 +60,7 @@ abstract class ScTypeAliasElementType[Func <: ScTypeAlias](debugName: String)
     val maybeDeclaration = maybeAlias.collect {
       case declaration: ScTypeAliasDeclaration => declaration
     }
-    val lowerBoundText = maybeDeclaration.flatMap {
+    val lowerBoundText = maybeAlias.flatMap {
       _.lowerTypeElement
     }.map {
       _.getText

@@ -10,7 +10,7 @@ import org.jetbrains.plugins.scala.caches.{BlockModificationTracker, cachedInUse
 import org.jetbrains.plugins.scala.extensions.{ObjectExt, ifReadAllowed}
 import org.jetbrains.plugins.scala.icons.Icons
 import org.jetbrains.plugins.scala.lang.lexer.ScalaTokenTypes
-import org.jetbrains.plugins.scala.lang.lexer.ScalaTokenTypes.tUPPER_BOUND
+import org.jetbrains.plugins.scala.lang.lexer.ScalaTokenTypes.{tLOWER_BOUND, tUPPER_BOUND}
 import org.jetbrains.plugins.scala.lang.parser.ScalaElementType
 import org.jetbrains.plugins.scala.lang.psi.api.ScalaElementVisitor
 import org.jetbrains.plugins.scala.lang.psi.api.base.types.ScTypeElement
@@ -43,6 +43,9 @@ final class ScTypeAliasDefinitionImpl private(stub: ScTypeAliasStub, node: ASTNo
       id.getPsi
     case n => n
   }
+
+  override def lowerTypeElement: Option[ScTypeElement] =
+    byPsiOrStub(boundElement(tLOWER_BOUND))(_.lowerBoundTypeElement)
 
   override def upperTypeElement: Option[ScTypeElement] =
     byPsiOrStub(boundElement(tUPPER_BOUND))(_.upperBoundTypeElement)
@@ -86,4 +89,9 @@ final class ScTypeAliasDefinitionImpl private(stub: ScTypeAliasStub, node: ASTNo
   }
 
   override def isEffectivelyFinal: Boolean = true
+
+  override def toDeclaration: ScTypeAliasDeclaration = cachedInUserData("toDeclaration", this, BlockModificationTracker(this)) {
+    val text = new ClassPrinter(this.isScala3, extendsSeparator = " ").declarationOf(this)
+    ScalaPsiElementFactory.createTypeAliasDeclarationFromText(text, getContext, null)
+  }
 }

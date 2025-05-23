@@ -26,6 +26,13 @@ class ClassPrinter(isScala3: Boolean, extendsSeparator: String = " ", withPrivat
     case t: ScTypeAlias => textOf(t, "")
   }
 
+  def declarationOf(t: ScTypeAliasDefinition): String = {
+    val name = t.name
+    val tps = if (t.typeParameters.isEmpty) "" else t.typeParameters.map(textOf).mkString("[", ", ", "]")
+    val bounds = if (t.isDefinition) "" else textOfBoundsIn(t)
+    "type " + name + tps + bounds
+  }
+
   def printTo(sb: StringBuilder, cls: ScTypeDefinition): Unit = printTo(sb, cls, "")
 
   private def printTo(sb: StringBuilder, cls: ScTypeDefinition, indent: String): Unit = {
@@ -188,7 +195,7 @@ class ClassPrinter(isScala3: Boolean, extendsSeparator: String = " ", withPrivat
     val modifiers = textOf(t.getModifierList)
     val name = t.name
     val tps = if (t.typeParameters.isEmpty) "" else t.typeParameters.map(textOf).mkString("[", ", ", "]")
-    val bounds = textOfBoundsIn(t, withLower = !t.isDefinition, withUpper = !t.isDefinition || t.upperTypeElement.isDefined)
+    val bounds = textOfBoundsIn(t)
     val rhs = t match {
       case definition: ScTypeAliasDefinition => " = " + textOf(definition.aliasedType)
       case _ => ""
@@ -206,15 +213,9 @@ class ClassPrinter(isScala3: Boolean, extendsSeparator: String = " ", withPrivat
     (if (annotations.isEmpty) "" else annotations + " ") + variance + name + clauses + typeBounds + contextBound
   }
 
-  private def textOfBoundsIn(o: ScTypeBoundsOwner, withLower: Boolean = true, withUpper: Boolean = true): String = {
-    val lower = if (!withLower) "" else {
-      val lb = textOf(o.lowerBound)
-      if (lb == "_root_.scala.Nothing") "" else " >: " + lb
-    }
-    val upper = if (!withUpper) "" else {
-      val ub = textOf(o.upperBound)
-      if (ub == "_root_.scala.Any") "" else " <: " + ub
-    }
+  private def textOfBoundsIn(o: ScTypeBoundsOwner): String = {
+    val lower = o.lowerTypeElement.flatMap(_.`type`().toOption).map(textOf(_)).filter(_ != "_root_.scala.Nothing").map(" >: " + _).getOrElse("")
+    val upper = o.upperTypeElement.flatMap(_.`type`().toOption).map(textOf(_)).filter(_ != "_root_.scala.Any").map(" <: " + _).getOrElse("")
     lower + upper
   }
 
