@@ -4,7 +4,7 @@ import com.intellij.psi.PsiElement
 import org.jetbrains.plugins.scala.extensions._
 import org.jetbrains.plugins.scala.lang.psi.api.base.ScLiteral
 import org.jetbrains.plugins.scala.lang.psi.api.expr.{ScBlockExpr, ScExpression}
-import org.jetbrains.plugins.scala.lang.psi.types.ScType
+import org.jetbrains.plugins.scala.lang.psi.types.{Context, ScType}
 import org.jetbrains.plugins.scala.lang.psi.types.ScalaType.expandAliases
 import org.jetbrains.plugins.scala.project.ProjectContext
 
@@ -49,7 +49,8 @@ object SpecialFormatEscape {
 case class Injection(expression: ScExpression, specifier: Option[Specifier]) extends StringPart {
   import Injection._
 
-  private implicit def ctx: ProjectContext = expression
+  private implicit def projectContext: ProjectContext = expression
+  private implicit def context: Context = Context(expression)
 
   def text: String = expression.getText
 
