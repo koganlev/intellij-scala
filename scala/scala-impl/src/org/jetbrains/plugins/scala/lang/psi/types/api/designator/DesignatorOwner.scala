@@ -45,7 +45,7 @@ trait DesignatorOwner extends ValueType {
         Some(AliasType(ta, ta.lowerBound.map(subst), ta.upperBound.map(subst)))
       case ta: ScTypeAlias => //higher kind case
         ta match {
-          case ta: ScTypeAliasDefinition => //hack for simple cases, it doesn't cover more complicated examples
+          case ta: ScTypeAliasDefinition if !ta.isEffectivelyOpaque => //hack for simple cases, it doesn't cover more complicated examples
             ta.aliasedType match {
               case Right(tp) if tp == this => // recursive type alias
                 return Some(AliasType(ta, Right(this), Right(this)))
