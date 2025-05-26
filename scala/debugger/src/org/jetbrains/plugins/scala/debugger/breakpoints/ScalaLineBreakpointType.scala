@@ -3,6 +3,7 @@ package org.jetbrains.plugins.scala.debugger.breakpoints
 import com.intellij.debugger.SourcePosition
 import com.intellij.debugger.ui.breakpoints._
 import com.intellij.icons.AllIcons
+import com.intellij.openapi.application.{ModalityState, ReadAction}
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.project.{DumbService, Project}
 import com.intellij.openapi.util.TextRange
@@ -10,12 +11,13 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi._
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.util.Processor
+import com.intellij.util.concurrency.AppExecutorUtil
+import com.intellij.util.concurrency.annotations.RequiresReadLock
 import com.intellij.xdebugger.breakpoints.{XLineBreakpoint, XLineBreakpointType}
 import com.intellij.xdebugger.impl.XSourcePositionImpl
 import com.intellij.xdebugger.impl.breakpoints.XLineBreakpointImpl
 import com.intellij.xdebugger.{XDebuggerUtil, XSourcePosition}
 import org.jetbrains.annotations.{NotNull, Nullable}
-import org.jetbrains.concurrency.{AsyncPromise, Promise}
 import org.jetbrains.java.debugger.breakpoints.properties.JavaLineBreakpointProperties
 import org.jetbrains.plugins.scala.ScalaLanguage
 import org.jetbrains.plugins.scala.debugger.{DebuggerBundle, ScalaLambdaSourcePosition, ScalaPositionManager, ScalaSourcePositionWithWholeLineHighlighted}
@@ -66,15 +68,7 @@ class ScalaLineBreakpointType extends JavaLineBreakpointType("scala-line", Debug
 
   private type JavaBPVariant = JavaLineBreakpointType#JavaBreakpointVariant
 
-  override def computeVariantsAsync(project: Project, position: XSourcePosition): Promise[java.util.List[_ <: BreakpointVariant]] = {
-    val promise = new AsyncPromise[java.util.List[_ <: BreakpointVariant]]()
-    executeOnPooledThread { inReadAction {
-      val variants = computeVariants(project, position)
-      promise.setResult(variants)
-    }}
-    promise
-  }
-
+  @RequiresReadLock
   @NotNull
   override def computeVariants(@NotNull project: Project, @NotNull position: XSourcePosition): java.util.List[JavaBPVariant] = {
     val dumbService = DumbService.getInstance(project)
@@ -159,17 +153,20 @@ class ScalaLineBreakpointType extends JavaLineBreakpointType("scala-line", Debug
         if (dumbService.isDumb) {
           breakpoint match {
             case breakpointImpl: XLineBreakpointImpl[_] =>
-              dumbService.smartInvokeLater { () =>
-                executeOnPooledThread {
+              val project = lineBp.getProject
+              ReadAction
+                .nonBlocking[Unit](() => {
                   if (lineBp.isValid) {
-                    inReadAction(getContainingMethod(lineBp)) //populating caches outside edt
+                    getContainingMethod(lineBp) //populating caches outside edt
                   }
-                  invokeLater {
-                    breakpointImpl.getHighlighter.dispose()
-                    breakpointImpl.updateUI()
-                  }
-                }
-              }
+                })
+                .finishOnUiThread(ModalityState.nonModal(), _ => {
+                  breakpointImpl.getHighlighter.dispose()
+                  breakpointImpl.updateUI()
+                })
+                .coalesceBy(lineBp)
+                .inSmartMode(project)
+                .submit(AppExecutorUtil.getAppExecutorService)
             case _ =>
           }
           null
