@@ -188,6 +188,7 @@ object MatchToPartialFunctionInspection {
       case _: ScReferencePattern |
            _: ScLiteralPattern |
            _: ScConstructorPattern |
+           _: ScInterpolationPattern |
            _: ScParenthesisedPattern |
            _: ScTuplePattern |
            _: ScStableReferencePattern => false

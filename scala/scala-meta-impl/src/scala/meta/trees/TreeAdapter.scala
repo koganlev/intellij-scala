@@ -179,7 +179,7 @@ trait TreeAdapter {
     }
     pt match {
       case t: ScReferencePattern  => Var(toTermName(t))
-      case t: ScConstructorPattern=> Extract(toTermName(t.ref), t.args.patterns.map(arg).toList)
+      case t: ScConstructorPattern=> Extract(toTermName(t.ref), t.argPatterns.map(arg).toList)
       case t: ScNamingPattern     => Bind(Var(toTermName(t)), arg(t.named))
       case t@ ScTypedPattern(_: types.ScWildcardTypeElement) => Typed(if (t.isWildcard) Wildcard() else Var(toTermName(t)), Type.Placeholder(Type.Bounds(None, None)))
       case t@ ScTypedPattern(te)  => Typed(if (t.isWildcard) Wildcard() else Var(toTermName(t)), toType(te))

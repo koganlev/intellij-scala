@@ -8,7 +8,7 @@ import com.intellij.usages.{Usage, UsageInfoToUsageConverter}
 import com.intellij.util.Processor
 import org.jetbrains.plugins.scala.extensions.{PsiElementExt, inReadAction}
 import org.jetbrains.plugins.scala.lang.psi.api.base.ScPrimaryConstructor
-import org.jetbrains.plugins.scala.lang.psi.api.base.patterns.{ScBindingPattern, ScConstructorPattern}
+import org.jetbrains.plugins.scala.lang.psi.api.base.patterns.{ScBindingPattern, ScExtractorPattern}
 import org.jetbrains.plugins.scala.lang.psi.api.statements.params.ScClassParameter
 import org.jetbrains.plugins.scala.lang.psi.api.toplevel.typedef.ScClass
 
@@ -20,7 +20,7 @@ import org.jetbrains.plugins.scala.lang.psi.api.toplevel.typedef.ScClass
  *   }
  * }}}
  */
-class ConstructorParamsInConstructorPatternSearcher extends CustomUsageSearcher {
+class ExtractorParamsInExtractorPatternSearcher extends CustomUsageSearcher {
   override def processElementUsages(element: PsiElement, processor0: Processor[_ >: Usage], options: FindUsagesOptions): Unit = {
     element match {
       case parameterOfClassWithIndex(cls, index) =>
@@ -66,7 +66,7 @@ class ConstructorParamsInConstructorPatternSearcher extends CustomUsageSearcher 
     def unapply(ref: PsiReference): Option[Seq[ScBindingPattern]] = {
       inReadAction {
         ref.getElement.getParent match {
-          case consPattern: ScConstructorPattern => consPattern.args.patterns.lift(i).map(_.bindings)
+          case consPattern: ScExtractorPattern => consPattern.argPatterns.lift(i).map(_.bindings)
           case _ => None
         }
       }

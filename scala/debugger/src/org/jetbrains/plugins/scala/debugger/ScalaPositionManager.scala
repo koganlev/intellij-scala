@@ -36,7 +36,7 @@ import org.jetbrains.plugins.scala.lang.lexer.ScalaTokenTypes
 import org.jetbrains.plugins.scala.lang.psi.ElementScope
 import org.jetbrains.plugins.scala.lang.psi.ScalaPsiUtil.isLocalClass
 import org.jetbrains.plugins.scala.lang.psi.api.ScalaFile
-import org.jetbrains.plugins.scala.lang.psi.api.base.patterns.{ScBindingPattern, ScConstructorPattern, ScInfixPattern}
+import org.jetbrains.plugins.scala.lang.psi.api.base.patterns.{ScBindingPattern, ScExtractorPattern}
 import org.jetbrains.plugins.scala.lang.psi.api.expr._
 import org.jetbrains.plugins.scala.lang.psi.api.statements._
 import org.jetbrains.plugins.scala.lang.psi.api.statements.params.{ScParameter, ScParameters}
@@ -825,7 +825,7 @@ object ScalaPositionManager {
         }
         val filteredParents = parentsOnTheLine.reverse.filter {
           case _: ScExpression => true
-          case _: ScConstructorPattern | _: ScInfixPattern | _: ScBindingPattern => true
+          case _: ScExtractorPattern | _: ScBindingPattern => true
           case callRefId childOf ((ref: ScReferenceExpression) childOf (_: ScMethodCall))
             if ref.nameId == callRefId && ref.getTextRange.getStartOffset < startLine => true
           case _: ScTypeDefinition => true

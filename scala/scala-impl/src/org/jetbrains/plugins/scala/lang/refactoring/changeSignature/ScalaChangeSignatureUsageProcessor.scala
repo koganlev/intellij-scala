@@ -12,7 +12,7 @@ import com.intellij.usageView.UsageInfo
 import com.intellij.util.containers.MultiMap
 import org.jetbrains.plugins.scala.extensions._
 import org.jetbrains.plugins.scala.lang.psi.TypeAdjuster
-import org.jetbrains.plugins.scala.lang.psi.api.base.patterns.{ScConstructorPattern, ScInfixPattern}
+import org.jetbrains.plugins.scala.lang.psi.api.base.patterns.{ScConstructorPattern, ScInfixPattern, ScInterpolationPattern}
 import org.jetbrains.plugins.scala.lang.psi.api.base.{AuxiliaryConstructor, ScConstructorInvocation, ScPrimaryConstructor, ScReference}
 import org.jetbrains.plugins.scala.lang.psi.api.expr._
 import org.jetbrains.plugins.scala.lang.psi.api.statements._
@@ -238,6 +238,7 @@ class ScalaChangeSignatureUsageProcessor extends ChangeSignatureUsageProcessor w
           case ref: ScSelfInvocation => results += SelfInvocationConstructorUsageInfo(ref)
           case refExpr: ScReferenceExpression => results += RefExpressionUsage(refExpr)
           case ChildOf(cp: ScConstructorPattern) if cp.ref == refElem => results += ConstructorPatternUsageInfo(cp)
+          case ChildOf(ip: ScInterpolationPattern) if ip.ref == refElem => results += InterpolationPatternUsageInfo(ip)
           case ChildOf(ip: ScInfixPattern) if ip.operation == refElem => results += InfixPatternUsageInfo(ip)
           case ref: PsiReferenceExpression if searchInJava => results += new JavaCallUsageInfo(ref, true, false)
           case _ =>

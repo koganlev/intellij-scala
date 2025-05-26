@@ -26,7 +26,7 @@ import org.jetbrains.plugins.scala.lang.formatting.scalafmt.{ScalafmtDynamicConf
 import org.jetbrains.plugins.scala.lang.formatting.settings.ScalaCodeStyleSettings
 import org.jetbrains.plugins.scala.lang.lexer.ScalaTokenTypes
 import org.jetbrains.plugins.scala.lang.psi.api.base.ScInterpolatedStringLiteral
-import org.jetbrains.plugins.scala.lang.psi.api.base.patterns.ScConstructorPattern
+import org.jetbrains.plugins.scala.lang.psi.api.base.patterns.{ScConstructorPattern, ScExtractorPattern}
 import org.jetbrains.plugins.scala.lang.psi.api.base.types.ScParameterizedTypeElement
 import org.jetbrains.plugins.scala.lang.psi.api.expr._
 import org.jetbrains.plugins.scala.lang.psi.api.statements.{ScFunctionDefinition, ScPatternDefinition}
@@ -604,7 +604,7 @@ object ScalaFmtPreFormatProcessor {
     val res = commonParent match {
       case Some(parent: LeafPsiElement) =>
         findProperParent(parent)
-      case Some(parent@Parent(_: ScConstructorPattern)) =>
+      case Some(parent@Parent(_: ScExtractorPattern)) =>
         findProperParent(parent)
       case Some(parent@Parent(Parent(_: ScParameterizedTypeElement))) =>
         findProperParent(parent)

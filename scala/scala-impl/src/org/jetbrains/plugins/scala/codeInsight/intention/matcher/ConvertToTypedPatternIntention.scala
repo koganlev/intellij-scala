@@ -8,7 +8,7 @@ import org.jetbrains.plugins.scala.ScalaBundle
 import org.jetbrains.plugins.scala.extensions._
 import org.jetbrains.plugins.scala.lang.psi.ScalaPsiUtil
 import org.jetbrains.plugins.scala.lang.psi.api.base.ScStableCodeReference
-import org.jetbrains.plugins.scala.lang.psi.api.base.patterns.ScConstructorPattern
+import org.jetbrains.plugins.scala.lang.psi.api.base.patterns.{ScConstructorPattern, ScExtractorPattern}
 import org.jetbrains.plugins.scala.lang.psi.api.statements.ScFunctionDefinition
 import org.jetbrains.plugins.scala.lang.psi.api.toplevel.typedef.{ScClass, ScObject}
 import org.jetbrains.plugins.scala.lang.psi.impl.ScalaPsiElementFactory.createPatternFromText
@@ -35,8 +35,8 @@ class ConvertToTypedPatternIntention extends PsiElementBaseIntentionAction {
     implicit val context: Context = Context(element)
 
     val codeRef = element.getParent.asInstanceOf[ScStableCodeReference]
-    val constrPattern = codeRef.getParent.asInstanceOf[ScConstructorPattern]
-    val name = codeRef.bind() match {
+    val constrPattern = codeRef.getParent.asInstanceOf[ScExtractorPattern]
+    val name = constrPattern.targetFor(constrPattern.expectedType) match {
       case Some( result @ ScalaResolveResult(fun: ScFunctionDefinition, _)) if fun.name == "unapply"=>
         // TODO follow aliases
         result.parentElement match {

@@ -623,6 +623,7 @@ object ScForImpl {
       case _: ScReferencePattern => false
       case _: ScTuplePattern => false
       case _: ScConstructorPattern => false
+      case _: ScInterpolationPattern => false
       case _: ScParenthesisedPattern => false
       case _: ScStableReferencePattern => false
       case _ => true

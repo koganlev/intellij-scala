@@ -15,4 +15,6 @@ trait ScReferencePattern extends ScBindingPattern {
       .foreach(_.setName(name))
     super.setName(name)
   }
+
+  override def subpatterns: Seq[ScPattern] = Seq.empty
 }

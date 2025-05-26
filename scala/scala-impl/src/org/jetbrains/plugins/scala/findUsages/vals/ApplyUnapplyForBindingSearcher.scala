@@ -9,7 +9,7 @@ import com.intellij.util.{Processor, QueryExecutor}
 import org.jetbrains.plugins.scala.extensions.inReadAction
 import org.jetbrains.plugins.scala.finder.ScalaFilterScope
 import org.jetbrains.plugins.scala.lang.psi.ScalaPsiUtil
-import org.jetbrains.plugins.scala.lang.psi.api.base.patterns.{ScBindingPattern, ScConstructorPattern}
+import org.jetbrains.plugins.scala.lang.psi.api.base.patterns.{ScBindingPattern, ScExtractorPattern}
 import org.jetbrains.plugins.scala.lang.psi.api.base.{ScReference, ScStableCodeReference}
 import org.jetbrains.plugins.scala.lang.psi.api.expr.{ScMethodCall, ScNewTemplateDefinition, ScReferenceExpression}
 import org.jetbrains.plugins.scala.lang.psi.api.statements.ScFunction.CommonNames
@@ -69,19 +69,16 @@ class ApplyUnapplyForBindingSearcher extends QueryExecutor[PsiReference, Referen
   private class Unapply(binding: ScBindingPattern) {
     def unapply(ref: PsiReference): Option[ScReference] = {
       (ref, ref.getElement.getContext) match {
-        case (sref: ScStableCodeReference, _: ScConstructorPattern) =>
-          sref.bind() match {
-            case Some(resolve@ScalaResolveResult(fun: ScFunctionDefinition, _))
-              if Set(CommonNames.Unapply, CommonNames.UnapplySeq).contains(fun.name) =>
-
+        case (sref: ScStableCodeReference, extractorPattern: ScExtractorPattern) =>
+          extractorPattern.targetFor(extractorPattern.expectedType) match {
+            case Some(resolve@ScalaResolveResult(fun: ScFunctionDefinition, _)) if fun.isUnapplyMethod =>
               resolve.innerResolveResult match {
                 case Some(ScalaResolveResult(`binding`, _)) => Some(sref)
                 case _                                      => None
               }
             case Some(resolve@ScalaResolveResult(`binding`, _)) =>
               resolve.innerResolveResult match {
-                case Some(ScalaResolveResult(fun: ScFunctionDefinition, _))
-                  if Set("unapply", "unapplySeq").contains(fun.name) => Some(sref)
+                case Some(ScalaResolveResult(fun: ScFunctionDefinition, _)) if fun.isUnapplyMethod => Some(sref)
                 case _ => None
               }
             case _ => None

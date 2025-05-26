@@ -7,7 +7,7 @@ import com.intellij.psi.scope.NameHint
 import org.jetbrains.plugins.scala.extensions._
 import org.jetbrains.plugins.scala.lang.psi.ScalaPsiUtil
 import org.jetbrains.plugins.scala.lang.psi.api.ScalaFile
-import org.jetbrains.plugins.scala.lang.psi.api.base.patterns.{ScConstructorPattern, ScReferencePattern}
+import org.jetbrains.plugins.scala.lang.psi.api.base.patterns.{ScExtractorPattern, ScReferencePattern}
 import org.jetbrains.plugins.scala.lang.psi.api.base.types.ScTypeProjection
 import org.jetbrains.plugins.scala.lang.psi.api.base.{Constructor, ScConstructorInvocation, ScReference}
 import org.jetbrains.plugins.scala.lang.psi.api.expr._
@@ -148,7 +148,7 @@ object Dependency {
       pathFor(entity, member).map(Dependency(target, _))
 
     reference match {
-      case Parent(_: ScConstructorPattern) =>
+      case Parent(_: ScExtractorPattern) =>
         val obj = target match {
           case o: ScObject => Some(o)
           case ContainingClass(o: ScObject) => Some(o)

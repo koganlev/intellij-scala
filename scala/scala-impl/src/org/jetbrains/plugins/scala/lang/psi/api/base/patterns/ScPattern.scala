@@ -71,7 +71,7 @@ object ScPattern {
           }
         case argList: ScPatternArgumentList =>
           argList.getContext match {
-            case constr: ScConstructorPattern =>
+            case constr: ScExtractorPattern =>
               expectedTypeForExtractorArgPattern(constr, pattern, constr.expectedType)
             case _ => None
           }

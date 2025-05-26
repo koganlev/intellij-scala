@@ -986,7 +986,7 @@ private[evaluation] trait ScalaEvaluatorBuilderUtil {
       ref.resolve() match {
         case fun: ScFunctionDefinition =>
           val elem = ref.bind().get.getActualElement //object or case class
-        val qual = ref.qualifier.map(q => createExpressionWithContextFromText(q.getText, q.getContext, q))
+          val qual = ref.qualifier.map(q => createExpressionWithContextFromText(q.getText, q.getContext, q))
           val refExpr = createExpressionWithContextFromText(ref.getText, ref.getContext, ref)
           val refEvaluator = evaluatorForReferenceWithoutParameters(qual, elem, refExpr.asInstanceOf[ScReferenceExpression])
 
@@ -1047,13 +1047,9 @@ private[evaluation] trait ScalaEvaluatorBuilderUtil {
           val args = Seq(new IntEvaluator(nextPatternIndex))
           val newEval = ScalaMethodEvaluator(exprEval, "productElement", signature, args)
           evaluateSubpatternFromPattern(newEval, nextPattern, subPattern)
-        case constr: ScConstructorPattern =>
-          val ref: ScStableCodeReference = constr.ref
-          evaluateConstructorOrInfix(exprEval, ref, constr, nextPatternIndex)
-        case infix: ScInfixPattern =>
-          val ref: ScStableCodeReference = infix.operation
-          evaluateConstructorOrInfix(exprEval, ref, infix, nextPatternIndex)
-        //todo: handle infix with tuple right pattern
+        case extractor: ScExtractorPattern =>
+          val ref: ScStableCodeReference = extractor.ref
+          evaluateConstructorOrInfix(exprEval, ref, extractor, nextPatternIndex)
         case _: ScCompositePattern => throw EvaluationException(DebuggerBundle.message("pattern.alternatives.cannot.bind.vars"))
         case _: ScXmlPattern => throw EvaluationException(DebuggerBundle.message("xml.patterns.not.supported")) //todo: xml patterns
         case _ => throw EvaluationException(DebuggerBundle.message("kind.of.pattern.not.supported", pattern.getText)) //todo: xml patterns

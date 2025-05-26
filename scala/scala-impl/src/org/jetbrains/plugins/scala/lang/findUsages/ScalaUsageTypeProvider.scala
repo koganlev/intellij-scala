@@ -51,7 +51,7 @@ final class ScalaUsageTypeProvider extends UsageTypeProviderEx {
 
     val result = (element, targets) match {
       case (referenceElement: ScReference, Array(only: PsiElementUsageTarget))
-        if isConstructorPatternReference(referenceElement) && !referenceElement.isReferenceTo(only.getElement) =>
+        if isExtractorPatternReference(referenceElement) && !referenceElement.isReferenceTo(only.getElement) =>
         Some(ParameterInPattern)
       case (SAMTypeImplementation(_), _) if isSAMTypeUsageTarget(targets) =>
         Option(SAMImplementation)
@@ -60,9 +60,6 @@ final class ScalaUsageTypeProvider extends UsageTypeProviderEx {
       case (e, Array(target: PsiElementUsageTarget))
         if isImplicitUsageTarget(target) && isReferencedImplicitlyIn(target.getElement, e) =>
         Some(ImplicitConversionOrParam)
-      case (referenceElement: ScReference, Array(only: PsiElementUsageTarget))
-        if isConstructorPatternReference(referenceElement) && !referenceElement.isReferenceTo(only.getElement) =>
-        Some(ParameterInPattern)
       case _ =>
         //TODO: Only run this logic for references or leaf elements?
         element.withParentsInFile
@@ -185,7 +182,7 @@ object ScalaUsageTypeProvider {
     if (catchClausePatterns.exists(isPatternAncestor))
       CLASS_CATCH_CLAUSE_PARAMETER_DECLARATION
     else pattern match {
-      case _: ScConstructorPattern | _: ScInfixPattern =>
+      case _: ScExtractorPattern =>
         Extractor //Q: maybe we should remove separate "Extractor" pattern and just always use "Pattern"?
       case _ =>
         Pattern
@@ -215,8 +212,8 @@ object ScalaUsageTypeProvider {
   private def usageType(element: PsiElement, original: PsiElement): Option[UsageType] =
     Option(nullableUsageType(element, original))
 
-  private def isConstructorPatternReference(element: ScReference): Boolean = element.resolve() match {
-    case pattern: ScBindingPattern => getParentOfType(pattern, classOf[ScConstructorPattern], classOf[ScInfixPattern]) != null
+  private def isExtractorPatternReference(element: ScReference): Boolean = element.resolve() match {
+    case pattern: ScBindingPattern => getParentOfType(pattern, classOf[ScExtractorPattern]) != null
     case _ => false
   }
 
