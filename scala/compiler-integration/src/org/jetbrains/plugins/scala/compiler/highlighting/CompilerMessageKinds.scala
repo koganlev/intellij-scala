@@ -1,46 +1,45 @@
 package org.jetbrains.plugins.scala.compiler.highlighting
 
-import com.intellij.codeInsight.daemon.impl.HighlightInfoType
 import org.apache.commons.lang3.StringUtils
 import org.jetbrains.jps.incremental.scala.MessageKind
 
 private object CompilerMessageKinds {
   def highlightInfoType(kind: MessageKind, text: String, fatalWarningsFlag: Boolean, unusedImportsFlag: Boolean): HighlightInfoType = kind match {
     case MessageKind.Error if isErrorMessageAboutWrongRef(text) =>
-      HighlightInfoType.WRONG_REF
+      HighlightInfoType.WrongRef
     case MessageKind.Error if isUnusedImportMessage(text) =>
       if (fatalWarningsFlag && unusedImportsFlag) {
         // The project has enabled fatal warnings and unused imports. We need to report an error here.
-        HighlightInfoType.ERROR
+        HighlightInfoType.Error
       } else {
         // In all other cases, report an unused symbol instead of an error.
         // The else case contains the following cases:
         //   1. fatalWarnings && !unusedImports (silent unused imports added by us) => UNUSED_SYMBOL
         //   2. !fatalWarnings && unusedImports (cannot happen, because the unused import will be a warning, not an error)
         //   3. !fatalWarnings && !unusedImports (silent unused imports added by us) => UNUSED_SYMBOL
-        HighlightInfoType.UNUSED_SYMBOL
+        HighlightInfoType.UnusedSymbol
       }
     case MessageKind.Error =>
-      HighlightInfoType.ERROR
+      HighlightInfoType.Error
     case MessageKind.Warning if isUnusedImportMessage(text) =>
       if (fatalWarningsFlag && unusedImportsFlag) {
         // The project has enabled fatal warnings and unused imports. We need to report an error here.
-        HighlightInfoType.ERROR
+        HighlightInfoType.Error
       } else if (unusedImportsFlag) {
         // The project has enabled unused imports, and fatal warnings are not enabled. Keep the warning.
-        HighlightInfoType.WARNING
+        HighlightInfoType.Warning
       } else {
         // Silent unused imports added by us.
-        HighlightInfoType.UNUSED_SYMBOL
+        HighlightInfoType.UnusedSymbol
       }
     case MessageKind.Warning if fatalWarningsFlag =>
-      HighlightInfoType.ERROR
+      HighlightInfoType.Error
     case MessageKind.Warning =>
-      HighlightInfoType.WARNING
+      HighlightInfoType.Warning
     case MessageKind.Info =>
-      HighlightInfoType.WEAK_WARNING
+      HighlightInfoType.WeakWarning
     case _ =>
-      HighlightInfoType.INFORMATION
+      HighlightInfoType.Information
   }
 
   private def isErrorMessageAboutWrongRef(text: String): Boolean =

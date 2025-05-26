@@ -1,6 +1,5 @@
 package org.jetbrains.plugins.scala.compiler.highlighting
 
-import com.intellij.codeInsight.daemon.impl.HighlightInfoType
 import junitparams.naming.TestCaseName
 import junitparams.{JUnitParamsRunner, Parameters}
 import org.jetbrains.jps.incremental.scala.MessageKind
@@ -13,15 +12,13 @@ import scala.annotation.unused
 @RunWith(classOf[JUnitParamsRunner])
 class CompilerMessageKindsTest {
 
-  import CompilerMessageKindsTest.{ExpectedHighlightInfoType, toHighlightInfoType}
-
   private case class TestCase(
     displayName: String,
     text: String,
     kind: MessageKind,
     fatalWarningsFlag: Boolean,
     unusedImportsFlag: Boolean,
-    expected: ExpectedHighlightInfoType
+    expected: HighlightInfoType
   )
 
   @unused("used reflectively by the @Parameters annotation")
@@ -32,126 +29,126 @@ class CompilerMessageKindsTest {
       kind = MessageKind.Error,
       fatalWarningsFlag = false,
       unusedImportsFlag = false,
-      expected = ExpectedHighlightInfoType.WrongRef),
+      expected = HighlightInfoType.WrongRef),
     TestCase(
       displayName = "wrongRef2",
       text = "Not found: myValue",
       kind = MessageKind.Error,
       fatalWarningsFlag = false,
       unusedImportsFlag = false,
-      expected = ExpectedHighlightInfoType.WrongRef),
+      expected = HighlightInfoType.WrongRef),
     TestCase(
       displayName = "wrongRef3",
       text = "Cannot find symbol myValue",
       kind = MessageKind.Error,
       fatalWarningsFlag = false,
       unusedImportsFlag = false,
-      expected = ExpectedHighlightInfoType.WrongRef),
+      expected = HighlightInfoType.WrongRef),
     TestCase(
       displayName = "errorUnusedImportFatalWarningsWithFlag",
       text = "Unused import",
       kind = MessageKind.Error,
       fatalWarningsFlag = true,
       unusedImportsFlag = true,
-      expected = ExpectedHighlightInfoType.Error),
+      expected = HighlightInfoType.Error),
     TestCase(
       displayName = "errorUnusedImportNoFlag",
       text = "Unused import",
       kind = MessageKind.Error,
       fatalWarningsFlag = true,
       unusedImportsFlag = false,
-      expected = ExpectedHighlightInfoType.UnusedSymbol),
+      expected = HighlightInfoType.UnusedSymbol),
     TestCase(
       displayName = "errorUnusedImportNoFatalWarningsNoFlag",
       text = "Unused import",
       kind = MessageKind.Error,
       fatalWarningsFlag = false,
       unusedImportsFlag = false,
-      expected = ExpectedHighlightInfoType.UnusedSymbol),
+      expected = HighlightInfoType.UnusedSymbol),
     TestCase(
       displayName = "regularError",
       text = "Some random compiler error",
       kind = MessageKind.Error,
       fatalWarningsFlag = false,
       unusedImportsFlag = false,
-      expected = ExpectedHighlightInfoType.Error),
+      expected = HighlightInfoType.Error),
     TestCase(
       displayName = "upgradeWarningUnusedImportFatalWarningsWithFlag",
       text = "Unused import",
       kind = MessageKind.Warning,
       fatalWarningsFlag = true,
       unusedImportsFlag = true,
-      expected = ExpectedHighlightInfoType.Error),
+      expected = HighlightInfoType.Error),
     TestCase(
       displayName = "warningUnusedImportNoFatalWarningsWithFlag",
       text = "Unused import",
       kind = MessageKind.Warning,
       fatalWarningsFlag = false,
       unusedImportsFlag = true,
-      expected = ExpectedHighlightInfoType.Warning),
+      expected = HighlightInfoType.Warning),
     TestCase(
       displayName = "warningUnusedImportFatalWarningsNoFlag",
       text = "Unused import",
       kind = MessageKind.Warning,
       fatalWarningsFlag = true,
       unusedImportsFlag = false,
-      expected = ExpectedHighlightInfoType.UnusedSymbol),
+      expected = HighlightInfoType.UnusedSymbol),
     TestCase(
       displayName = "warningUnusedImportNoFatalWarningsNoFlag",
       text = "Unused import",
       kind = MessageKind.Warning,
       fatalWarningsFlag = false,
       unusedImportsFlag = false,
-      expected = ExpectedHighlightInfoType.UnusedSymbol),
+      expected = HighlightInfoType.UnusedSymbol),
     TestCase(
       displayName = "regularWarning",
       text = "Some random compiler warning",
       kind = MessageKind.Warning,
       fatalWarningsFlag = false,
       unusedImportsFlag = false,
-      expected = ExpectedHighlightInfoType.Warning),
+      expected = HighlightInfoType.Warning),
     TestCase(
       displayName = "upgradeRegularWarningToErrorFatalWarnings",
       text = "Some random compiler warning",
       kind = MessageKind.Warning,
       fatalWarningsFlag = true,
       unusedImportsFlag = false,
-      expected = ExpectedHighlightInfoType.Error),
+      expected = HighlightInfoType.Error),
     TestCase(
       displayName = "regularInfo",
       text = "Some random compiler info",
       kind = MessageKind.Info,
       fatalWarningsFlag = false,
       unusedImportsFlag = false,
-      expected = ExpectedHighlightInfoType.WeakWarning),
+      expected = HighlightInfoType.WeakWarning),
     TestCase(
       displayName = "internalBuilderError",
       text = "Some random compiler internal builder error",
       kind = MessageKind.InternalBuilderError,
       fatalWarningsFlag = false,
       unusedImportsFlag = false,
-      expected = ExpectedHighlightInfoType.Information),
+      expected = HighlightInfoType.Information),
     TestCase(
       displayName = "jpsInfo",
       text = "Some random jps info",
       kind = MessageKind.JpsInfo,
       fatalWarningsFlag = false,
       unusedImportsFlag = false,
-      expected = ExpectedHighlightInfoType.Information),
+      expected = HighlightInfoType.Information),
     TestCase(
       displayName = "progress",
       text = "Some random progress message",
       kind = MessageKind.Progress,
       fatalWarningsFlag = false,
       unusedImportsFlag = false,
-      expected = ExpectedHighlightInfoType.Information),
+      expected = HighlightInfoType.Information),
     TestCase(
       displayName = "other",
       text = "Some random other message",
       kind = MessageKind.Other,
       fatalWarningsFlag = false,
       unusedImportsFlag = false,
-      expected = ExpectedHighlightInfoType.Information)
+      expected = HighlightInfoType.Information)
   ).map(tc => Array(tc.displayName, tc))
 
   @Test
@@ -163,28 +160,6 @@ class CompilerMessageKindsTest {
   ): Unit = {
     val TestCase(_, text, kind, fatalWarningsFlag, unusedImportsFlag, expected) = testCase
     val actual = CompilerMessageKinds.highlightInfoType(kind, text, fatalWarningsFlag, unusedImportsFlag)
-    assertEquals(toHighlightInfoType(expected), actual)
-  }
-}
-
-private object CompilerMessageKindsTest {
-  private sealed trait ExpectedHighlightInfoType
-
-  private object ExpectedHighlightInfoType {
-    case object WrongRef extends ExpectedHighlightInfoType
-    case object Error extends ExpectedHighlightInfoType
-    case object UnusedSymbol extends ExpectedHighlightInfoType
-    case object Warning extends ExpectedHighlightInfoType
-    case object WeakWarning extends ExpectedHighlightInfoType
-    case object Information extends ExpectedHighlightInfoType
-  }
-
-  private def toHighlightInfoType(expected: ExpectedHighlightInfoType): HighlightInfoType = expected match {
-    case ExpectedHighlightInfoType.WrongRef => HighlightInfoType.WRONG_REF
-    case ExpectedHighlightInfoType.Error => HighlightInfoType.ERROR
-    case ExpectedHighlightInfoType.UnusedSymbol => HighlightInfoType.UNUSED_SYMBOL
-    case ExpectedHighlightInfoType.Warning => HighlightInfoType.WARNING
-    case ExpectedHighlightInfoType.WeakWarning => HighlightInfoType.WEAK_WARNING
-    case ExpectedHighlightInfoType.Information => HighlightInfoType.INFORMATION
+    assertEquals(expected, actual)
   }
 }

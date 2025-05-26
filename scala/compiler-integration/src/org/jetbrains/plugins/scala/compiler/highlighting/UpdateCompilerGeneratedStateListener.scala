@@ -113,13 +113,21 @@ private class UpdateCompilerGeneratedStateListener(project: Project) extends Com
   }
 
   private def kindToHighlightInfoType(kind: MessageKind, text: String, virtualFile: VirtualFile): HighlightInfoType = {
+    import org.jetbrains.plugins.scala.compiler.highlighting.{HighlightInfoType => HIT}
     val scalacOptions = scalacOptionsForFile(virtualFile)
     CompilerMessageKinds.highlightInfoType(
       kind = kind,
       text = text,
       fatalWarningsFlag = CompilerOptions.containsFatalWarnings(scalacOptions),
       unusedImportsFlag = CompilerOptions.containsUnusedImports(scalacOptions)
-    )
+    ) match {
+      case HIT.WrongRef => HighlightInfoType.WRONG_REF
+      case HIT.Error => HighlightInfoType.ERROR
+      case HIT.UnusedSymbol => HighlightInfoType.UNUSED_SYMBOL
+      case HIT.Warning => HighlightInfoType.WARNING
+      case HIT.WeakWarning => HighlightInfoType.WEAK_WARNING
+      case HIT.Information => HighlightInfoType.INFORMATION
+    }
   }
 
   private def scalacOptionsForFile(virtualFile: VirtualFile): Seq[String] = {
