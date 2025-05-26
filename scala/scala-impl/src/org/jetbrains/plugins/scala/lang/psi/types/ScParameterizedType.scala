@@ -23,12 +23,12 @@ final class ScParameterizedType private (override val designator: ScType, overri
     designator match {
       case ScDesignatorType(ta: ScTypeAliasDefinition) if ta.isEffectivelyOpaque =>
         if (ta.lowerTypeElement.isEmpty && ta.upperTypeElement.isEmpty) None
-        else Some(AliasType(ta.toDeclaration, ta.lowerBound, ta.upperBound))
+        else computeAliasType(ta, ta.lowerBound, ta.upperBound)
       case ScDesignatorType(ta: ScTypeAlias) =>
         computeAliasType(ta, ta.lowerBound, ta.upperBound)
-      case ScProjectionType.withActual(ta: ScTypeAliasDefinition, _) if ta.isEffectivelyOpaque =>
+      case ScProjectionType.withActual(ta: ScTypeAliasDefinition, subst) if ta.isEffectivelyOpaque =>
         if (ta.lowerTypeElement.isEmpty && ta.upperTypeElement.isEmpty) None
-        else Some(AliasType(ta.toDeclaration, ta.lowerBound, ta.upperBound))
+        else computeAliasType(ta, ta.lowerBound, ta.upperBound, subst)
       case ScProjectionType.withActual(ta: ScTypeAlias, subst) =>
         computeAliasType(ta, ta.lowerBound, ta.upperBound, subst)
       case p: ScParameterizedType =>

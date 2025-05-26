@@ -3,11 +3,12 @@ package org.jetbrains.plugins.scala.lang.psi.api.statements
 import com.intellij.psi.PsiClass
 import org.jetbrains.plugins.scala.ScalaBundle
 import org.jetbrains.plugins.scala.caches.{BlockModificationTracker, cachedInUserData}
-import org.jetbrains.plugins.scala.lang.psi.api.base.types.ScTypeElement
+import org.jetbrains.plugins.scala.extensions.ObjectExt
+import org.jetbrains.plugins.scala.lang.psi.api.base.types.{ScMatchTypeElement, ScTypeElement}
 import org.jetbrains.plugins.scala.lang.psi.api.toplevel.ScTypeParametersOwner
 import org.jetbrains.plugins.scala.lang.psi.api.toplevel.typedef.{ScClass, ScObject, ScTrait}
 import org.jetbrains.plugins.scala.lang.psi.types._
-import org.jetbrains.plugins.scala.lang.psi.types.api.{Invariant, TypeParameterType}
+import org.jetbrains.plugins.scala.lang.psi.types.api.{Any, Invariant, Nothing, TypeParameterType}
 import org.jetbrains.plugins.scala.lang.psi.types.result._
 
 trait ScTypeAliasDefinition extends ScTypeAlias {
@@ -25,15 +26,17 @@ trait ScTypeAliasDefinition extends ScTypeAlias {
     }.getOrElse(Failure(ScalaBundle.message("no.alias.type")))
   }
 
-  override def lowerBound(implicit context: Context): TypeResult = lowerTypeElement match {
-    case Some(te) if !isOpaque || isEffectivelyOpaque(context) => te.`type`()
-    case _ => aliasedType
-  }
+  override def lowerBound(implicit context: Context): TypeResult =
+    if (!isEffectivelyOpaque(context)) aliasedType else lowerTypeElement match {
+      case Some(te) => te.`type`()
+      case _ => Right(Nothing)
+    }
 
-  override def upperBound(implicit context: Context): TypeResult = upperTypeElement match {
-    case Some(te) if !isOpaque || isEffectivelyOpaque(context) => te.`type`()
-    case _ => aliasedType
-  }
+  override def upperBound(implicit context: Context): TypeResult =
+    if (!isEffectivelyOpaque(context) && !aliasedTypeElement.exists(_.is[ScMatchTypeElement])) aliasedType else upperTypeElement match {
+      case Some(te) => te.`type`()
+      case _ => Right(Any)
+    }
 
   def isExactAliasFor(cls: PsiClass): Boolean = {
     val isDefinedInObject = containingClass match {

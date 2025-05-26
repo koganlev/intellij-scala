@@ -873,7 +873,7 @@ class ReferenceComparisonTest_Scala3_Newest extends ReferenceComparisonTestBase(
   def test_i7078(): Unit = doTest("i7078", true) // #transparentInline
   def test_i7082(): Unit = doTest("i7082", true)
   def test_i7084(): Unit = doTest("i7084", true) // #extension
-  def test_i7087(): Unit = doTest("i7087", false) // #matchType, #extension
+  def test_i7087(): Unit = doTest("i7087", true) // #matchType, #extension
   def test_i7103(): Unit = doTest("i7103", true)
   def test_i7119(): Unit = doTest("i7119", true) // #extension
   def test_i7132(): Unit = doTest("i7132", true)
@@ -1421,9 +1421,9 @@ class ReferenceComparisonTest_Scala3_Newest extends ReferenceComparisonTestBase(
   def test_i14626(): Unit = doTest("i14626", true)
   def test_i14637(): Unit = doTest("i14637", true)
   def test_i14642(): Unit = doTest("i14642", true) // #intersectionType
-  def test_i14653(): Unit = doTest("i14653", false) // #opaque, #extension
+  def test_i14653(): Unit = doTest("i14653", true) // #opaque, #extension
   def test_i14653b(): Unit = doTest("i14653b", true) // #opaque
-  def test_i14656(): Unit = doTest("i14656", false) // #opaque, #extension
+  def test_i14656(): Unit = doTest("i14656", true) // #opaque, #extension
   def test_i14660(): Unit = doTest("i14660", true) // #opaque
   def test_i14699(): Unit = doTest("i14699", true)
   def test_i14707(): Unit = doTest("i14707", true)
@@ -2101,7 +2101,7 @@ class ReferenceComparisonTest_Scala3_Newest extends ReferenceComparisonTestBase(
   def test_opaque_propability(): Unit = doTest("opaque-propability", true) // #opaque
   def test_opaque_propability_xm(): Unit = doTest("opaque-propability-xm", false) // #opaque, #extension
   def test_opaque_simple(): Unit = doTest("opaque-simple", true) // #opaque
-  def test_opaque_xm(): Unit = doTest("opaque-xm", false) // #opaque, #extension
+  def test_opaque_xm(): Unit = doTest("opaque-xm", true) // #opaque, #extension
   def test_opaques_patmat(): Unit = doTest("opaques-patmat", true) // #opaque
   def test_opaques_queue(): Unit = doTest("opaques-queue", true) // #opaque
   def test_opassign(): Unit = doTest("opassign", true)

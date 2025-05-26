@@ -241,6 +241,176 @@ class Scala3OpaqueTypeAliasTest extends ScalaLightCodeInsightFixtureTestCase {
     )
   }
 
+  def testMethod(): Unit = {
+    checkHasErrorAroundCaret(
+      s"""
+         |class Foo:
+         |  def foo(x: Int): Unit = ???
+         |object Inside:
+         |  opaque type T = Foo
+         |object Outside:
+         |  val v: Inside.T = ???
+         |  v.${CARET}foo(1)
+      """.stripMargin
+    )
+  }
+
+  def testParameterlessMethod(): Unit = {
+    checkHasErrorAroundCaret(
+      s"""
+         |class Foo:
+         |  def foo: Int = ???
+         |object Inside:
+         |  opaque type T = Foo
+         |object Outside:
+         |  val v: Inside.T = ???
+         |  v.${CARET}foo
+      """.stripMargin
+    )
+  }
+
+  def testVal(): Unit = {
+    checkHasErrorAroundCaret(
+      s"""
+         |class Foo:
+         |  val foo: Int = ???
+         |object Inside:
+         |  opaque type T = Foo
+         |object Outside:
+         |  val v: Inside.T = ???
+         |  v.${CARET}foo
+      """.stripMargin
+    )
+  }
+
+  def testVar(): Unit = {
+    checkHasErrorAroundCaret(
+      s"""
+         |class Foo:
+         |  var foo: Int = ???
+         |object Inside:
+         |  opaque type T = Foo
+         |object Outside:
+         |  val v: Inside.T = ???
+         |  v.${CARET}foo = 1
+      """.stripMargin
+    )
+  }
+
+  def testClass(): Unit = {
+    checkHasErrorAroundCaret(
+      s"""
+         |class Foo:
+         |  class Bar
+         |object Inside:
+         |  opaque type T = Foo
+         |object Outside:
+         |  val v: Inside.T#${CARET}Bar = ???
+      """.stripMargin
+    )
+  }
+
+  def testTypeAlias(): Unit = {
+    checkHasErrorAroundCaret(
+      s"""
+         |class Foo:
+         |  type Bar = Int
+         |object Inside:
+         |  opaque type T = Foo
+         |object Outside:
+         |  val v: Inside.T#${CARET}Bar = ???
+      """.stripMargin
+    )
+  }
+
+  def testAbstractTypeMember(): Unit = {
+    checkHasErrorAroundCaret(
+      s"""
+         |trait Foo:
+         |  type Bar
+         |object Inside:
+         |  opaque type T = Foo
+         |object Outside:
+         |  val v: Inside.T#${CARET}Bar = ???
+      """.stripMargin
+    )
+  }
+
+  def testValParameter(): Unit = {
+    checkHasErrorAroundCaret(
+      s"""
+         |class Foo(val foo: Int)
+         |object Inside:
+         |  opaque type T = Foo
+         |object Outside:
+         |  val v: Inside.T = ???
+         |  v.${CARET}foo
+      """.stripMargin
+    )
+  }
+
+  def testVarParameter(): Unit = {
+    checkHasErrorAroundCaret(
+      s"""
+         |class Foo(var foo: Int)
+         |object Inside:
+         |  opaque type T = Foo
+         |object Outside:
+         |  val v: Inside.T = ???
+         |  v.${CARET}foo = 1
+      """.stripMargin
+    )
+  }
+
+  def testTypeParameter(): Unit = {
+    checkHasErrorAroundCaret(
+      s"""
+         |class Foo[Bar]
+         |object Inside:
+         |  opaque type T = Foo[Int]
+         |object Outside:
+         |  val v: Inside.T[${CARET}Int] = ???
+      """.stripMargin
+    )
+  }
+
+//  def testPrimaryConstructor(): Unit = {
+//    checkHasErrorAroundCaret(
+//      s"""
+//         |class Foo(x: Int)
+//         |object Inside:
+//         |  opaque type T = Foo
+//         |object Outside:
+//         |  new ${CARET}Inside.T(1)
+//      """.stripMargin
+//    )
+//  }
+//
+//  def testAuxiliaryConstructor(): Unit = {
+//    checkHasErrorAroundCaret(
+//      s"""
+//         |class Foo:
+//         |  def this(x: Int) = this()
+//         |object Inside:
+//         |  opaque type T = Foo
+//         |object Outside:
+//         |  new ${CARET}Inside.T(1)
+//      """.stripMargin
+//    )
+//  }
+//
+//  def testUniversalApplyMethod(): Unit = {
+//    checkHasErrorAroundCaret(
+//      s"""
+//         |class Foo(x: Int)
+//         |object Inside:
+//         |  opaque type T = Foo
+//         |object Outside:
+//         |  ${CARET}Inside.T(1)
+//      """.stripMargin
+//    )
+//  }
+
   // TODO Union type, SCL-23806
   def testLeastUpperBoundIf(): Unit = {
     checkHasErrorAroundCaret(
@@ -320,6 +490,26 @@ class Scala3OpaqueTypeAliasTest extends ScalaLightCodeInsightFixtureTestCase {
     )
   }
 
+  def testLowerBound5(): Unit = {
+    checkTextHasNoErrors(
+      s"""
+         |opaque type T[A] >: A = A
+         |val v: T[Int] = ??? : Int
+         |""".stripMargin
+    )
+  }
+
+  def testLowerBound6(): Unit = {
+    checkTextHasNoErrors(
+      s"""
+         |object Inside:
+         |  opaque type T[A] >: A = A
+         |object Outside:
+         |  val v: Inside.T[Int] = ??? : Int
+         |""".stripMargin
+    )
+  }
+
   def testUpperBound0(): Unit = {
     checkHasErrorAroundCaret(
       s"""
@@ -368,6 +558,26 @@ class Scala3OpaqueTypeAliasTest extends ScalaLightCodeInsightFixtureTestCase {
          |object Inside:
          |  opaque type T <: AnyVal = Int
          |  val v: Int = ??? : T
+         |""".stripMargin
+    )
+  }
+
+  def testUpperBound5(): Unit = {
+    checkTextHasNoErrors(
+      s"""
+         |opaque type T[A] <: A = A
+         |val v: Int = ??? : T[Int]
+         |""".stripMargin
+    )
+  }
+
+  def testUpperBound6(): Unit = {
+    checkTextHasNoErrors(
+      s"""
+         |object Inside:
+         |  opaque type T[A] <: A = A
+         |object Outside:
+         |  val v: Int = ??? : Inside.T[Int]
          |""".stripMargin
     )
   }
