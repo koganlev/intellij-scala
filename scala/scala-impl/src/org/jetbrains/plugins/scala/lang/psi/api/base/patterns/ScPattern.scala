@@ -4,8 +4,6 @@ package patterns
 import com.intellij.psi._
 import org.jetbrains.plugins.scala.caches.{BlockModificationTracker, cachedInUserData}
 import org.jetbrains.plugins.scala.extensions._
-import org.jetbrains.plugins.scala.lang.lexer.ScalaTokenTypes
-import org.jetbrains.plugins.scala.lang.psi.ScalaPsiUtil.FakeCompanionClassOrCompanionClass
 import org.jetbrains.plugins.scala.lang.psi.api.base.types.ScTypeVariableTypeElement
 import org.jetbrains.plugins.scala.lang.psi.api.expr._
 import org.jetbrains.plugins.scala.lang.psi.api.expr.xml.ScXmlPattern
@@ -14,16 +12,13 @@ import org.jetbrains.plugins.scala.lang.psi.api.statements.params._
 import org.jetbrains.plugins.scala.lang.psi.api.statements.{ScFunction, ScValue, ScVariable}
 import org.jetbrains.plugins.scala.lang.psi.api.toplevel.typedef.ScClass
 import org.jetbrains.plugins.scala.lang.psi.api.{ScalaElementVisitor, ScalaPsiElement}
-import org.jetbrains.plugins.scala.lang.psi.impl.base.patterns.ScInterpolationPatternImpl
-import org.jetbrains.plugins.scala.lang.psi.impl.expr.PatternTypeInference
-import org.jetbrains.plugins.scala.lang.psi.impl.{ScalaPsiElementFactory, ScalaPsiManager}
+import org.jetbrains.plugins.scala.lang.psi.impl.ScalaPsiManager
 import org.jetbrains.plugins.scala.lang.psi.types.api._
-import org.jetbrains.plugins.scala.lang.psi.types.api.designator.{ScDesignatorType, ScThisType}
-import org.jetbrains.plugins.scala.lang.psi.types.recursiveUpdate.ScSubstitutor
+import org.jetbrains.plugins.scala.lang.psi.types.api.designator.ScDesignatorType
 import org.jetbrains.plugins.scala.lang.psi.types.result._
 import org.jetbrains.plugins.scala.lang.psi.types.{api, _}
 import org.jetbrains.plugins.scala.lang.resolve._
-import org.jetbrains.plugins.scala.lang.resolve.processor.{CompletionProcessor, ExpandedExtractorResolveProcessor}
+import org.jetbrains.plugins.scala.lang.resolve.processor.CompletionProcessor
 import org.jetbrains.plugins.scala.project.ProjectContext
 import org.jetbrains.plugins.scala.scalaMeta.QuasiquoteInferUtil
 
@@ -77,44 +72,18 @@ object ScPattern {
         case argList: ScPatternArgumentList =>
           argList.getContext match {
             case constr: ScConstructorPattern =>
-              val thisIndex: Int = constr.args.patterns.indexWhere(_ == pattern)
-              expectedTypeForExtractorArg(
-                constr,
-                constr.ref,
-                thisIndex,
-                constr.expectedType,
-                argList.patterns.length,
-                pattern.asOptionOf[ScNamedConstructorArgPattern].flatMap(_.name.toOption)
-              )
+              expectedTypeForExtractorArgPattern(constr, pattern, constr.expectedType)
             case _ => None
           }
         case arg: ScNamedConstructorArgPattern => arg.expectedType
         case composite: ScCompositePattern => composite.expectedType
-        case infix: ScInfixPattern =>
-          val i =
-            if (infix.left == pattern) 0
-            else if (pattern.is[ScTuplePattern]) return None //pattern is handled elsewhere in pattern function
-            else 1
-          expectedTypeForExtractorArg(infix, infix.operation, i, infix.expectedType, 2, None)
+        case infix: ScInfixPattern => expectedTypeForExtractorArgPattern(infix, pattern, infix.expectedType)
         case par: ScParenthesisedPattern => par.expectedType
         case patternList: ScPatterns => patternList.getContext match {
           case tuple: ScTuplePattern =>
-            tuple.getContext match {
-              case infix: ScInfixPattern =>
-                if (infix.left != tuple) {
-                  //so it's right pattern
-                  val i = tuple.patternList match {
-                    case Some(patterns: ScPatterns) => patterns.patterns.indexWhere(_ == pattern)
-                    case _                          => return None
-                  }
-
-                  val patternLength: Int = tuple.patternList match {
-                    case Some(pat) => pat.patterns.length
-                    case _         => -1 //is it possible to get here?
-                  }
-
-                  return expectedTypeForExtractorArg(infix, infix.operation, i + 1, infix.expectedType, patternLength, None)
-                }
+            // In Scala 2
+            tuple.infixPatternOfWhichThisIsTheArgPatternList match {
+              case Some(infix) => expectedTypeForExtractorArgPattern(infix, pattern, infix.expectedType)
               case _ =>
             }
 
@@ -197,113 +166,10 @@ object ScPattern {
         case _ => None
       }
     }
-
-    private def expectedTypeForExtractorArg(
-      contextPattern:        ScPattern,
-      ref:                   ScStableCodeReference,
-      argIndex:              Int,
-      expected:              Option[ScType],
-      totalNumberOfPatterns: Int,
-      byName:                Option[String],
-    ): Option[ScType] = {
-      val bind =
-        ExpandedExtractorResolveProcessor.resolveActualUnapply(ref, expected)
-
-      bind match {
-        case Some(ScalaResolveResult(fun: ScFunction, _))
-          if fun.name == CommonNames.Unapply && ScPattern.isQuasiquote(fun) =>
-          val tpe = pattern.getContext.getContext match {
-            case _: ScInterpolationPattern =>
-              val parts = pattern.getParent.asInstanceOf[ScalaPsiElement]
-                .findChildrenByType(ScalaTokenTypes.tINTERPOLATED_STRING)
-                .map(_.getText)
-              if (argIndex < parts.length && parts(argIndex).endsWith("..."))
-                ScalaPsiElementFactory.createTypeElementFromText("Seq[Seq[scala.reflect.api.Trees#Tree]]", fun)
-              if (argIndex < parts.length && parts(argIndex).endsWith(".."))
-                ScalaPsiElementFactory.createTypeElementFromText("Seq[scala.reflect.api.Trees#Tree]", fun)
-              else
-                ScalaPsiElementFactory.createTypeElementFromText("scala.reflect.api.Trees#Tree", fun)
-          }
-          tpe.`type`().toOption
-        case Some(ScalaResolveResult(fun: ScFunction, _))
-          if fun.name == CommonNames.Unapply && QuasiquoteInferUtil.isMetaQQ(fun) =>
-          try {
-            val interpolationPattern = pattern.getParent.getParent.asInstanceOf[ScInterpolationPatternImpl]
-            val patterns = QuasiquoteInferUtil.getMetaQQPatternTypes(interpolationPattern)
-            if (argIndex < patterns.size) {
-              val clazz = patterns(argIndex)
-              val tpe = ScalaPsiElementFactory.createTypeElementFromText(clazz, fun)
-              tpe.`type`().toOption
-            } else None
-          } catch {
-            case _: ArrayIndexOutOfBoundsException => None // workaround for meta parser failure on malformed quasiquotes
-          }
-        case Some(ScalaResolveResult(fun: ScFunction, substitutor: ScSubstitutor))
-          if fun.name == CommonNames.Unapply && fun.parameters.count(!_.isImplicit) == 1 =>
-
-          val subst = expected match {
-            case Some(tp) => substitutor.followed(PatternTypeInference.doTypeInference(contextPattern, tp))
-            case _        => substitutor
-          }
-
-          fun.returnType match {
-            case Right(rt) =>
-              val matches = ScPattern.unapplyExtractorMatches(subst(rt), pattern, fun)
-              byName match {
-                case None =>
-                  matches
-                    .bestMatch(totalNumberOfPatterns)
-                    .flatMap(_.productTypes.lift(argIndex))
-                    .map(subst)
-                case Some(name) =>
-                  matches
-                    .find(_.supportsNamedPatterns)
-                    .flatMap(_.namedPatternTypes(pattern).get(name).flatten)
-              }
-            case _ => None
-          }
-        case Some(ScalaResolveResult(fun: ScFunction, substitutor: ScSubstitutor))
-          if fun.name == CommonNames.UnapplySeq && fun.parameters.count(!_.isImplicit) == 1 =>
-
-          val subst = expected match {
-            case Some(tp) => substitutor.followed(PatternTypeInference.doTypeInference(contextPattern, tp))
-            case _        => substitutor
-          }
-
-          fun.returnType match {
-            case Right(rt) =>
-              ScPattern.unapplySeqExtractorMatches(subst(rt), pattern, fun)
-                .bestMatch(totalNumberOfPatterns)
-                .flatMap { m =>
-                  Some(subst(m.productTypes.lift(argIndex).getOrElse {
-                    pattern match {
-                      case SeqExpectingPattern() => m.sequenceType.tryWrapIntoSeqType
-                      case _                     => m.sequenceType
-                    }
-                  }))
-                }
-
-            case _ => None
-          }
-        case Some(ScalaResolveResult(FakeCompanionClassOrCompanionClass(cl: ScClass), subst: ScSubstitutor))
-          if cl.isCase && cl.tooBigForUnapply =>
-          val undefSubst = subst.followed(ScSubstitutor(ScThisType(cl)))
-          val params: Seq[ScParameter] = cl.parameters
-          val types = params.map(_.`type`().getOrAny).map(undefSubst)
-          val args =
-            if (types.nonEmpty && params.last.isVarArgs) types.dropRight(1) ++ types.last.wrapIntoSeqType
-            else                                         types
-          args.lift(argIndex)
-        case _ => None
-      }
-    }
-  }
-
-  private object SeqExpectingPattern {
-    def unapply(e: ScPattern): Boolean = e match {
-      case named: ScNamingPattern => named.getLastChild.is[ScSeqWildcardPattern]
-      case _: ScSeqWildcardPattern => true
-      case _ => false
+    private def expectedTypeForExtractorArgPattern(extractorPattern: ScExtractorPattern,
+                                                   pattern: ScPattern,
+                                                   expected: Option[ScType]): Option[ScType] = {
+      extractorPattern.argPatternsMapping(expected).flatMap(_.typeOfArg(pattern))
     }
   }
 
@@ -312,7 +178,7 @@ object ScPattern {
 
     variants.flatMap {
       case ScalaResolveResult(fun: ScFunction, subst)
-          if (!parameterless || fun.parameters.isEmpty) && fun.name == name =>
+        if (!parameterless || fun.parameters.isEmpty) && fun.name == name =>
         Seq(subst(fun.`type`().getOrAny))
       case ScalaResolveResult(b: ScBindingPattern, subst) if b.name == name =>
         Seq(subst(b.`type`().getOrAny))
@@ -350,10 +216,10 @@ object ScPattern {
       for {
         apply <- findMember(CommonNames.Apply, tpe, place, parameterless = false)
         resTpe <- apply match {
-                   case FunctionType(res, Seq(idxTpe)) if idxTpe.equiv(api.Int(place)) =>
-                     res.toOption
-                   case _ => None
-                 }
+          case FunctionType(res, Seq(idxTpe)) if idxTpe.equiv(api.Int(place)) =>
+            res.toOption
+          case _ => None
+        }
       } yield resTpe
   }
 
@@ -376,7 +242,7 @@ object ScPattern {
 
     returnTpe match {
       case ParameterizedType(ExtractClass(cls), Seq(arg))
-          if cls.qualifiedName == "scala.Option" || cls.qualifiedName == "scala.Some" =>
+        if cls.qualifiedName == "scala.Option" || cls.qualifiedName == "scala.Some" =>
         arg.toOption
       case other =>
         for {
@@ -767,9 +633,9 @@ object ScPattern {
 
       (
         sequenceMatch #::
-        productSequenceMatch #::
+          productSequenceMatch #::
           LazyList.empty
-      ).flatten ++
+        ).flatten ++
         (if (extract) extracted else LazyList.empty)
     }
 
@@ -831,5 +697,13 @@ object ScPattern {
   def isQuasiquote(fun: ScFunction): Boolean = {
     val fqnO = Option(fun.containingClass).flatMap(_.qualifiedName.toOption)
     fqnO.exists(fqn => fqn.contains('.') && fqn.substring(0, fqn.lastIndexOf('.')) == "scala.reflect.api.Quasiquotes.Quasiquote")
+  }
+
+  object SeqExpectingPattern {
+    def unapply(e: ScPattern): Boolean = e match {
+      case named: ScNamingPattern => named.getLastChild.is[ScSeqWildcardPattern]
+      case _: ScSeqWildcardPattern => true
+      case _ => false
+    }
   }
 }

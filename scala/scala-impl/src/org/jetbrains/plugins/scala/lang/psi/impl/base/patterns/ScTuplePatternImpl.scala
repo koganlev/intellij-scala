@@ -2,6 +2,7 @@ package org.jetbrains.plugins.scala.lang.psi.impl.base
 package patterns
 
 import com.intellij.lang.ASTNode
+import org.jetbrains.plugins.scala.extensions.PsiElementExt
 import org.jetbrains.plugins.scala.lang.psi.api.base.patterns._
 import org.jetbrains.plugins.scala.lang.psi.impl.ScalaPsiElementImpl
 import org.jetbrains.plugins.scala.lang.psi.types.ScType
@@ -27,5 +28,12 @@ class ScTuplePatternImpl(node: ASTNode) extends ScalaPsiElementImpl(node) with S
   override def subpatterns: Seq[ScPattern] =  patternList match {
     case Some(l) => l.patterns
     case None => Seq.empty
+  }
+
+  def infixPatternOfWhichThisIsTheArgPatternList: Option[ScInfixPattern] = {
+    getContext match {
+      case infix: ScInfixPattern if !this.isInScala3File && infix.rightOption.contains(this) => Some(infix)
+      case _ => None
+    }
   }
 }
