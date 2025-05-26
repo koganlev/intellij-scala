@@ -267,7 +267,7 @@ object ScParameterizedTypeElementAnnotator extends ElementAnnotator[ScParameteri
 
   private object TypeParameters {
     import org.jetbrains.plugins.scala.lang.psi.types.extractTypeParameters
-    def unapply(ty: ScType): Option[Seq[TypeParameter]] =
+    def unapply(ty: ScType)(implicit context: Context): Option[Seq[TypeParameter]] =
       Option(extractTypeParameters(ty))
   }
 }

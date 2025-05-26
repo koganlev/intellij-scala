@@ -493,8 +493,8 @@ class Scala3OpaqueTypeAliasTest extends ScalaLightCodeInsightFixtureTestCase {
   def testLowerBound5(): Unit = {
     checkTextHasNoErrors(
       s"""
-         |opaque type T[A] >: A = A
-         |val v: T[Int] = ??? : Int
+         |opaque type TC[A] >: A = A
+         |val v: TC[Int] = ??? : Int
          |""".stripMargin
     )
   }
@@ -503,9 +503,9 @@ class Scala3OpaqueTypeAliasTest extends ScalaLightCodeInsightFixtureTestCase {
     checkTextHasNoErrors(
       s"""
          |object Inside:
-         |  opaque type T[A] >: A = A
+         |  opaque type TC[A] >: A = A
          |object Outside:
-         |  val v: Inside.T[Int] = ??? : Int
+         |  val v: Inside.TC[Int] = ??? : Int
          |""".stripMargin
     )
   }
@@ -565,8 +565,8 @@ class Scala3OpaqueTypeAliasTest extends ScalaLightCodeInsightFixtureTestCase {
   def testUpperBound5(): Unit = {
     checkTextHasNoErrors(
       s"""
-         |opaque type T[A] <: A = A
-         |val v: Int = ??? : T[Int]
+         |opaque type TC[A] <: A = A
+         |val v: Int = ??? : TC[Int]
          |""".stripMargin
     )
   }
@@ -575,9 +575,9 @@ class Scala3OpaqueTypeAliasTest extends ScalaLightCodeInsightFixtureTestCase {
     checkTextHasNoErrors(
       s"""
          |object Inside:
-         |  opaque type T[A] <: A = A
+         |  opaque type TC[A] <: A = A
          |object Outside:
-         |  val v: Int = ??? : Inside.T[Int]
+         |  val v: Int = ??? : Inside.TC[Int]
          |""".stripMargin
     )
   }
@@ -926,9 +926,9 @@ class Scala3OpaqueTypeAliasTest extends ScalaLightCodeInsightFixtureTestCase {
     checkTextHasNoErrors(
       s"""
          |object Inside:
-         |  opaque type T[A] = Boolean
-         |  def method(x: T[Int] ?=> Unit): Unit = ???
-         |  method { implicitly[Inside.T[Int]] }
+         |  opaque type TC[A] = Boolean
+         |  def method(x: TC[Int] ?=> Unit): Unit = ???
+         |  method { implicitly[Inside.TC[Int]] }
          |""".stripMargin
     )
   }
@@ -937,10 +937,10 @@ class Scala3OpaqueTypeAliasTest extends ScalaLightCodeInsightFixtureTestCase {
     checkTextHasNoErrors(
       s"""
          |object Inside:
-         |  opaque type T[A] = Boolean
-         |  def method(x: T[Int] ?=> Unit): Unit = ???
+         |  opaque type TC[A] = Boolean
+         |  def method(x: TC[Int] ?=> Unit): Unit = ???
          |object Outside:
-         |  Inside.method { implicitly[Inside.T[Int]] }
+         |  Inside.method { implicitly[Inside.TC[Int]] }
          |""".stripMargin
     )
   }

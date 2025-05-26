@@ -453,7 +453,7 @@ package object types {
     }
   }
 
-  def extractTypeParameters(ty: ScType, visited: Set[ScTypeAlias] = Set.empty): Seq[TypeParameter] = ty match {
+  def extractTypeParameters(ty: ScType, visited: Set[ScTypeAlias] = Set.empty)(implicit context: Context): Seq[TypeParameter] = ty match {
     case _: ScThisType                    => Seq.empty
     case designatorOwner: DesignatorOwner =>
       designatorOwner.extractDesignated(false) match {

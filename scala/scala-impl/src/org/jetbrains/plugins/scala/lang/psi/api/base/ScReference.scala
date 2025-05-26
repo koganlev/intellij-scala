@@ -176,13 +176,13 @@ trait ScReference extends ScalaPsiElement with PsiPolyVariantReference {
     if (resolved == null)
       return false
     (resolved, element) match {
-      case (typeAlias: ScTypeAliasDefinition, cls: PsiClass) =>
+      case (typeAlias: ScTypeAliasDefinition, cls: PsiClass) if !typeAlias.isEffectivelyOpaque =>
         typeAlias.isExactAliasFor(cls)
       case (_: ScPrimaryConstructor, cls: PsiClass) =>
         this.bind() match {
           case Some(r) =>
             r.parentElement match {
-              case Some(ta: ScTypeAliasDefinition) => ta.isExactAliasFor(cls)
+              case Some(ta: ScTypeAliasDefinition) if !ta.isEffectivelyOpaque => ta.isExactAliasFor(cls)
               case _ => false
             }
           case None => false
