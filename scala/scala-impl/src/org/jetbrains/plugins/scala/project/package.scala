@@ -673,7 +673,7 @@ package object project {
     def kindProjectorEnabled: Boolean =
       kindProjectorPluginEnabled || YKindProjectorOptionEnabled || YKindProjectorUnderscoresOptionEnabled
 
-    def underscoreWidlcardsDisabled: Boolean =
+    def underscoreWildcardsDisabled: Boolean =
       kindProjectorUnderscorePlaceholdersEnabled || YKindProjectorUnderscoresOptionEnabled
 
     def kindProjectorPluginEnabled: Boolean = isDefinedInModuleOrProject(_.kindProjectorPluginEnabled)

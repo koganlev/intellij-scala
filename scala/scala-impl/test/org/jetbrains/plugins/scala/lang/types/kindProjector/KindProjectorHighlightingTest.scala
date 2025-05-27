@@ -21,6 +21,74 @@ abstract class KindProjectorHighlightingTestBase extends ScalaLightCodeInsightFi
   }
 }
 
+class YKindProjectorHighlightingTest extends ScalaLightCodeInsightFixtureTestCase {
+  override protected def supportedIn(version: ScalaVersion): Boolean =
+    version >= LatestScalaVersions.Scala_3_LTS
+
+  override protected def setUp(): Unit = {
+    super.setUp()
+
+    val defaultProfile = ScalaCompilerConfiguration.instanceIn(getProject).defaultProfile
+    val settings       = defaultProfile.getSettings
+
+    val newSettings = settings.copy(
+      additionalCompilerOptions = Seq("-Ykind-projector")
+    )
+
+    defaultProfile.setSettings(newSettings)
+  }
+
+  def testSCL23837(): Unit = {
+    val defaultProfile = ScalaCompilerConfiguration.instanceIn(getProject).defaultProfile
+    val settings       = defaultProfile.getSettings
+
+    val newSettings = settings.copy(
+      additionalCompilerOptions = Seq("-Ykind-projector")
+    )
+
+    defaultProfile.setSettings(newSettings)
+
+    checkTextHasNoErrors(
+      s"""
+         |@main
+         |def main(): Unit = {
+         |  case class Kleisli[F[_], -A, B](run: A => F[B])
+         |
+         |  class CatsResource[F[_], +A]
+         |  type Resource[F[_], +A] = CatsResource[F, A]
+         |
+         |  def func[F[_]]: Kleisli[Resource[F, *], String, String] = ???
+         |}
+         |""".stripMargin
+    )
+  }
+
+  def testSCL23837Underscores(): Unit = {
+    val defaultProfile = ScalaCompilerConfiguration.instanceIn(getProject).defaultProfile
+    val settings       = defaultProfile.getSettings
+
+    val newSettings = settings.copy(
+      additionalCompilerOptions = Seq("-Ykind-projector:underscores")
+    )
+
+    defaultProfile.setSettings(newSettings)
+
+    checkTextHasNoErrors(
+      s"""
+         |@main
+         |def main(): Unit = {
+         |  case class Kleisli[F[_], -A, B](run: A => F[B])
+         |
+         |  class CatsResource[F[_], +A]
+         |  type Resource[F[_], +A] = CatsResource[F, A]
+         |
+         |  def func[F[_]]: Kleisli[Resource[F, _], String, String] = ???
+         |}
+         |""".stripMargin
+    )
+  }
+}
+
 class KindProjectorHighlightingTestXSource3 extends KindProjectorHighlightingTestBase {
   override protected def supportedIn(version: ScalaVersion): Boolean =
     version == LatestScalaVersions.Scala_2_13

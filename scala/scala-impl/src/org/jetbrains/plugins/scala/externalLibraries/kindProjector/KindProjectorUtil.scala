@@ -53,7 +53,7 @@ object KindProjectorUtil {
   def syntaxIdsFor(e: PsiElement): Seq[String] =
     if (e.kindProjectorEnabled) {
       val underscoreSyntax =
-        if (e.underscoreWidlcardsDisabled) underscoreInlineSyntax
+        if (e.underscoreWildcardsDisabled) underscoreInlineSyntax
         else                               Seq.empty
 
       underscoreSyntax ++ (
