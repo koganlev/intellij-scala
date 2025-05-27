@@ -77,8 +77,13 @@ abstract class DependencyManagerBase {
   protected def customizeIvySettings(settings: IvySettings): Unit = ()
 
   protected def progressIndicator: Option[ProgressIndicator] = {
-    val indicator = ProgressManager.getInstance().getProgressIndicator
-    Option(indicator)
+    // Can be null when running the AfterUpdateDottyVersionScript
+    if (ApplicationManager.getApplication != null) {
+      val indicator = ProgressManager.getInstance().getProgressIndicator
+      Option(indicator)
+    } else {
+      None
+    }
   }
 
   protected def createLogger: MessageLogger = new DefaultMessageLogger(logLevel)
