@@ -8,6 +8,7 @@ import com.intellij.psi.PsiFile
 import com.intellij.testFramework.InspectionsKt
 import org.jetbrains.plugins.scala.codeInspection.declarationRedundancy.{ScalaAccessCanBeTightenedInspection, ScalaUnusedDeclarationInspection}
 import org.jetbrains.plugins.scala.projectHighlighting.reporter.HighlightingProgressReporter
+import org.jetbrains.plugins.scala.settings.BackReferencesFromSharedSources
 import org.jetbrains.plugins.scala.util.RevertableChange
 
 class SbtOverBspCrossBuildProjectHighlightingTest_BackReferencesEnabled extends SbtOverBspProjectHighlightingLocalProjectsTestBase {
@@ -45,8 +46,8 @@ class SbtOverBspCrossBuildProjectHighlightingTest_BackReferencesEnabled extends 
   private def withEnabledBackReferencesFromSharedSources(body: => Any): Unit = {
     val revertible = RevertableChange.withModifiedScalaProjectSettings[Boolean](
       getProject,
-      _.isEnableBackReferencesFromSharedSources,
-      _.setEnableBackReferencesFromSharedSources(_),
+      _ => BackReferencesFromSharedSources.isEnabled,
+      (_, _) => (),
       true
     )
     revertible.run {
