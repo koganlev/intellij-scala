@@ -21,6 +21,12 @@ object CompilerUtils {
       IncrementalityType.SBT,
       incrementalityType
     )
+    buildProjectAndAssertNoWarningsOrErrors(project)
+  }
+
+  def buildProjectAndAssertNoWarningsOrErrors(project: Project): Unit = {
+    val compilerConfiguration = ScalaCompilerConfiguration.instanceIn(project)
+    val incrementalityType = compilerConfiguration.incrementalityType
 
     val modules = ModuleManager.getInstance(project).getModules
     val compiler = new CompilerTester(project, java.util.Arrays.asList(modules: _*), null, false)
