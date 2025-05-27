@@ -19,6 +19,13 @@ import scala.annotation.nowarn
 import scala.util.control.NoStackTrace
 
 private final class UIFreezingGuard extends ProjectActivity {
+  /**
+   * An entry point for initialising the application-level service. This method is executed once per project, but
+   * the application service initialisation is guaranteed to be executed exactly once, which is what matters to us.
+   * Project activities are a useful tool for running a piece of code even when the plugin has been dynamically loaded
+   * after the IDE has already been running for some time. This helps us to register our application-level service and
+   * to initialise our recurring background task, regardless of how/when the Scala plugin was loaded.
+   */
   override def execute(project: Project): Unit = {
     // Application-level services are initialised exactly once.
     ApplicationManager.getApplication.getService(classOf[UIFreezingGuard.AppService])
@@ -27,6 +34,12 @@ private final class UIFreezingGuard extends ProjectActivity {
 
 object UIFreezingGuard {
 
+  /**
+   * Schedules a recurring task (only once) which runs on a background thread every 300 milliseconds and checks the IDE
+   * global event queue for unprocessed user input events.
+   * If such events are detected, it issues a cancellation, to hopefully stop the long-running resolve computation which
+   * is blocking the UI thread.
+   */
   @Service(Array(Service.Level.APP))
   private final class AppService extends Disposable {
     private final val periodMs = 300
@@ -57,6 +70,10 @@ object UIFreezingGuard {
 
   private def isEdt: Boolean = ApplicationManager.getApplication.isDispatchThread
 
+  /**
+   * Cooperatively called by the caching methods to ensure that any long-running resolve which is executed
+   * on the UI thread can be preempted by throwing a [[ProcessCanceledException]].
+   */
   def withResponsibleUI[T](body: => T): T = {
     if (!isAlreadyGuarded && pceEnabled) {
       val start = System.currentTimeMillis()
@@ -110,6 +127,13 @@ object UIFreezingGuard {
 
   private def canInterrupt: Boolean = !isWriteAction && !isTransaction && !isUnderProgress && !hasModalityState
 
+  /**
+   * Creates and saves a thread-dump to disk for any freeze longer than 1 second.
+   *
+   * @note This method is very slow and actually makes the freeze worse, as perceived by the user.
+   *       But we keep it around because it is a good way of reporting long-running resolve computations on the UI thread,
+   *       which we need to address.
+   */
   private def dumpThreads(ms: Long): Unit = {
     val threshold = 1000
     if (ms > threshold) {
@@ -117,6 +141,12 @@ object UIFreezingGuard {
     }
   }
 
+  /**
+   * Checks that the global IDE event queue contains any of the events we are interested in (currently keyboard and
+   * mouse events).
+   * If these events are in the IDE event queue and have not already been processed by the UI thread,
+   * we assume that the UI thread is blocked by a long-running resolve computation.
+   */
   private def hasPendingUserInput: Boolean = {
     val queue = IdeEventQueue.getInstance()
     val userEventIds = Seq(Event.KEY_ACTION, Event.KEY_PRESS, MouseEvent.MOUSE_PRESSED, MouseEvent.MOUSE_WHEEL)
