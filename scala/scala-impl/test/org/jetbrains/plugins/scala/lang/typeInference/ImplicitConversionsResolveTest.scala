@@ -98,4 +98,36 @@ class ImplicitConversionsScala3ResolveTest extends ScalaLightCodeInsightFixtureT
       |case class Bar() derives Foo
       |""".stripMargin
   )
+
+
+  def testSCL23230(): Unit = checkTextHasNoErrors(
+    """
+      |class Vec(val x: Double, val y: Double)
+      |
+      |trait Context[V]
+      |
+      |implicit class VecOps1[V](lhs: V)(using v: Context[V]):
+      |  def foo1: Int = 0
+      |
+      |implicit class VecOps2[V](lhs: V)(implicit v: Context[V]):
+      |  def foo2: Int = 0
+      |
+      |extension [V](lhs: V)(using v: Context[V])
+      |  def foo3: Int = 0
+      |
+      |extension [V](lhs: V)
+      |  def foo4(using v: Context[V]): Int = 0
+      |
+      |object Main:
+      |  def main(args: Array[String]): Unit =
+      |    val vec = new Vec(0, 1)
+      |
+      |    given Context[Vec] = ???
+      |
+      |    vec.foo1
+      |    vec.foo2
+      |    vec.foo3
+      |    vec.foo4
+      |""".stripMargin
+  )
 }

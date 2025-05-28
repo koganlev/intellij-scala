@@ -116,11 +116,17 @@ class ScClassImpl(stub: ScTemplateDefinitionStub[ScClass],
 
   private def implicitMethodText: String = {
     val constr = constructor.getOrElse(return "")
-    val returnType = name + typeParametersClause.map(_ => typeParameters.map(_.name).
-      mkString("[", ",", "]")).getOrElse("")
-    val typeParametersText = typeParametersClause.map(tp => {
-      tp.typeParameters.map(tp => {
+
+    val returnType =
+      name +
+        typeParametersClause
+          .map(_ => typeParameters.map(_.name).mkString("[", ",", "]"))
+          .getOrElse("")
+
+    val typeParametersText = typeParametersClause.map { typeParamClause =>
+      typeParamClause.typeParameters.map { tp =>
         val baseText = tp.typeParameterText
+
         if (tp.isContravariant) {
           val i = baseText.indexOf('-')
           baseText.substring(i + 1)
@@ -128,8 +134,9 @@ class ScClassImpl(stub: ScTemplateDefinitionStub[ScClass],
           val i = baseText.indexOf('+')
           baseText.substring(i + 1)
         } else baseText
-      }).mkString("[", ", ", "]")
-    }).getOrElse("")
+      }.mkString("[", ", ", "]")
+    }.getOrElse("")
+
     val parametersText = constr.parameterList.clauses.map { clause =>
       clause.parameters.map { parameter =>
         val paramText = s"${parameter.name} : ${parameter.typeElement.map(_.getText).getOrElse("Nothing")}"
@@ -137,8 +144,13 @@ class ScClassImpl(stub: ScTemplateDefinitionStub[ScClass],
           case Some(expr) => s"$paramText = ${expr.getText}"
           case _          => paramText
         }
-      }.mkString(if (clause.hasImplicitKeyword) "(implicit " else "(", ", ", ")")
+      }.mkString(
+        if (clause.hasImplicitKeyword)   "(implicit "
+        else if (clause.hasUsingKeyword) "(using "
+        else                             "(", ", ", ")"
+      )
     }.mkString
+
     val accessModifier = getModifierList.accessModifier.map(am => AccessModifierRenderer.simpleTextHtmlEscaped(am) + " ").getOrElse("")
     s"${accessModifier}implicit def $name$typeParametersText$parametersText : $returnType = throw new Error()"
   }

@@ -1182,7 +1182,7 @@ class ReferenceComparisonTest_Scala3_Newest extends ReferenceComparisonTestBase(
   def test_i11128_wildcard(): Unit = doTest("i11128-wildcard", false) // #export
   def test_i11141(): Unit = doTest("i11141", true) // #export
   def test_i11163(): Unit = doTest("i11163", true)
-  def test_i11168(): Unit = doTest("i11168", false) // #extension
+  def test_i11168(): Unit = doTest("i11168", true) // #extension
   def test_i11170a(): Unit = doTest("i11170a", true)
   def test_i11174minimisation(): Unit = doTest("i11174minimisation", false) // #enum
   def test_i11175(): Unit = doTest("i11175", true) // #extension
