@@ -17,7 +17,7 @@ import org.jetbrains.plugins.scala.lang.psi.api.{ScalaElementVisitor, ScalaFile}
 import org.jetbrains.plugins.scala.lang.psi.impl.ScalaPsiElementFactory.createTypeElementFromText
 import org.jetbrains.plugins.scala.lang.psi.types.api.{FunctionType, TupleType, TypeParameterType}
 import org.jetbrains.plugins.scala.lang.psi.types.result._
-import org.jetbrains.plugins.scala.lang.psi.types.{ScMatchType, ScParameterizedType, TypePresentationContext}
+import org.jetbrains.plugins.scala.lang.psi.types.{Context, ScMatchType, ScParameterizedType, TypePresentationContext}
 import org.jetbrains.plugins.scala.settings.ScalaApplicationSettings.{getInstance => ScalaApplicationSettings}
 
 import scala.collection.mutable
@@ -94,6 +94,9 @@ object KindProjectorSimplifyTypeProjectionInspection {
   }
 
   private[this] def tryConvertToInlineSyntax(alias: ScTypeAliasDefinition): Option[String] = {
+    implicit val tpc: TypePresentationContext = TypePresentationContext(alias)
+    implicit val context: Context = Context(alias)
+
     def simpleTypeArgumentOccurrences(tpe: ScParameterizedType): Map[String, Int] =
       tpe.typeArguments.collect { case tpt: TypeParameterType => tpt.name }
         .groupBy(identity)
@@ -114,14 +117,14 @@ object KindProjectorSimplifyTypeProjectionInspection {
 
           val newTypeArgs = paramType.typeArguments.map { ta =>
             currentTypeParam match {
-              case Some(tpt) if ta.presentableText(TypePresentationContext.emptyContext) == tpt.name =>
+              case Some(tpt) if ta.presentableText == tpt.name =>
                 currentTypeParam =
                   if (typeParamIt.hasNext) Option(typeParamIt.next())
                   else                     None
                 tpt.getText.replace(tpt.name, KindProjectorUtil.placeholderSymbolFor(alias))
               case _ =>
                 if (ScalaApplicationSettings.PRECISE_TEXT) ta.canonicalText
-                else ta.presentableText(TypePresentationContext.emptyContext)
+                else ta.presentableText
             }
           }
 
@@ -141,7 +144,7 @@ object KindProjectorSimplifyTypeProjectionInspection {
               (!typeParamIt.hasNext && currentTypeParam.isEmpty).option {
                 val designatorText =
                   if (ScalaApplicationSettings.PRECISE_TEXT) paramType.designator.canonicalText
-                  else paramType.designator.presentableText(alias)
+                  else paramType.designator.presentableText
                 s"$designatorText${newTypeArgs.mkString(start = "[", sep = ", ", end = "]")}"
               }
           }
@@ -151,6 +154,9 @@ object KindProjectorSimplifyTypeProjectionInspection {
   }
 
   private[this] def convertToFunctionSyntax(alias: ScTypeAliasDefinition): String = {
+    implicit val tpc: TypePresentationContext = TypePresentationContext(alias)
+    implicit val context: Context = Context(alias)
+
     val builder = new mutable.StringBuilder()
 
     // TODO Use standard type lambda presentation (as without -Ykind-projector), SCL-23275
@@ -160,7 +166,7 @@ object KindProjectorSimplifyTypeProjectionInspection {
       builder ++= {
         val tpe = alias.aliasedType.getOrAny
         if (ScalaApplicationSettings.PRECISE_TEXT) tpe.canonicalText
-        else tpe.presentableText(alias)
+        else tpe.presentableText
       }
     } else {
       val styleSettings = ScalaCodeStyleSettings.getInstance(alias.getProject)
@@ -179,7 +185,7 @@ object KindProjectorSimplifyTypeProjectionInspection {
       else builder ++= parameters.mkString(start = "", sep = "", end = "")
 
       builder ++= " => "
-      builder ++= alias.aliasedType.getOrAny.presentableText(alias)
+      builder ++= alias.aliasedType.getOrAny.presentableText
       builder ++= "]"
     }
 

@@ -1,8 +1,8 @@
 package org.jetbrains.plugins.scala.lang.psi.types.api.presentation
 
-import org.jetbrains.plugins.scala.lang.psi.types.{ScType, TypePresentationContext}
+import org.jetbrains.plugins.scala.lang.psi.types.{Context, ScType, TypePresentationContext}
 
-case class ScTypeText(tp: ScType)(implicit tpc: TypePresentationContext) {
+case class ScTypeText(tp: ScType)(implicit tpc: TypePresentationContext, context: Context) {
   val canonicalText: String = tp.canonicalText(tpc)
-  val presentableText: String = tp.presentableText(tpc)
+  val presentableText: String = tp.presentableText
 }

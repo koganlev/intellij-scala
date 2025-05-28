@@ -24,6 +24,7 @@ import org.jetbrains.plugins.scala.lang.psi.api.expr.ScReferenceExpression
 import org.jetbrains.plugins.scala.lang.psi.api.statements.ScFunction
 import org.jetbrains.plugins.scala.lang.psi.api.toplevel.imports.ScImportSelector
 import org.jetbrains.plugins.scala.lang.psi.impl.ScalaPsiElementFactory.{createReferenceExpressionFromText, createScalaDocLinkValue}
+import org.jetbrains.plugins.scala.lang.psi.types.{Context, TypePresentationContext}
 import org.jetbrains.plugins.scala.lang.scaladoc.psi.api.ScDocResolvableCodeReference
 
 import java.awt.Point
@@ -264,6 +265,8 @@ object ScalaAddImportAction {
                                       place: ImplicitArgumentsOwner,
                                       popupPosition: PopupPosition)
     extends ScalaAddImportAction[ImplicitArgumentsOwner, ImplicitToImport](editor, variants, place, popupPosition) {
+    private implicit def tpc: TypePresentationContext = TypePresentationContext(place)
+    private implicit def context: Context = Context(place)
 
     override protected def chooserTitle(variants: Seq[ImplicitToImport]): String =
       ScalaBundle.message("import.implicit.chooser.title")
@@ -278,7 +281,7 @@ object ScalaAddImportAction {
       val firstWithType = variants.find(_.found.scType == variant.found.scType).get
 
       if (firstWithType.found.instance != variant.found.instance) null
-      else new ListSeparator(variant.found.scType.presentableText(place))
+      else new ListSeparator(variant.found.scType.presentableText)
     }
 
     override protected def customizePopup(popup: ListPopup, editor: Editor): Unit = {

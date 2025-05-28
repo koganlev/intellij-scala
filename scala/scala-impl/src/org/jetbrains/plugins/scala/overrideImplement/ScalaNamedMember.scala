@@ -6,7 +6,7 @@ import com.intellij.psi._
 import org.jetbrains.annotations.Nls
 import org.jetbrains.plugins.scala.NlsString
 import org.jetbrains.plugins.scala.extensions.{PsiNamedElementExt, PsiTypeExt}
-import org.jetbrains.plugins.scala.lang.psi.ScalaPsiPresentationUtils
+import org.jetbrains.plugins.scala.lang.psi.{ScalaPsiPresentationUtils, types}
 import org.jetbrains.plugins.scala.lang.psi.api.statements._
 import org.jetbrains.plugins.scala.lang.psi.api.toplevel.ScTypedDefinition
 import org.jetbrains.plugins.scala.lang.psi.types._
@@ -148,7 +148,7 @@ object ScExtensionMethodMember {
     s"$extensionSignatureText $extensionMethodText"
   }
 
-  private val typeRenderer: TypeRenderer = _.presentableText(TypePresentationContext.emptyContext)
+  private val typeRenderer: TypeRenderer = _.presentableText(TypePresentationContext.emptyContext, Context.Empty)
   private val typeParamsRenderer = new TypeParamsRenderer(typeRenderer)
   private val parametersRenderer = new ParametersRenderer(new ParameterRenderer(
     typeRenderer,
@@ -166,7 +166,7 @@ sealed abstract class ScValueOrVariableMember[T <: ScValueOrVariable](
 )(
   override val name: String = element.name,
   override val scType: ScType = substitutor(element.`type`().getOrAny)
-) extends PsiElementClassMember[T](member, NlsString.force(s"$name: ${scType.presentableText(element)}"))
+) extends PsiElementClassMember[T](member, NlsString.force(s"$name: ${scType.presentableText(element, Context(element))}"))
   with ScalaFieldMember
 
 class ScValueMember(
@@ -198,10 +198,13 @@ object JavaFieldMember {
 
   def apply(field: PsiField, substitutor: ScSubstitutor): JavaFieldMember = {
     implicit val project: Project = field.getProject
+    implicit val tpc: TypePresentationContext = TypePresentationContext(field)
+    implicit val context: types.Context = types.Context(field)
+
     val fieldType = field.getType.toScType()
     val scType = substitutor(fieldType)
 
-    val text = NlsString.force(s"${field.name}: ${scType.presentableText(field)}")
+    val text = NlsString.force(s"${field.name}: ${scType.presentableText}")
     new JavaFieldMember(field, text, scType, substitutor)
   }
 }

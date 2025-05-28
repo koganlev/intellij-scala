@@ -10,14 +10,14 @@ import com.intellij.psi.codeStyle.CodeStyleManager
 import org.jetbrains.plugins.scala.actions.ScalaFileTemplateUtil
 import org.jetbrains.plugins.scala.codeInspection.targetNameAnnotation.addTargetNameAnnotationIfNeeded
 import org.jetbrains.plugins.scala.extensions._
-import org.jetbrains.plugins.scala.lang.psi.TypeAdjuster
+import org.jetbrains.plugins.scala.lang.psi.{TypeAdjuster, types}
 import org.jetbrains.plugins.scala.lang.psi.api.ScalaPsiElement
 import org.jetbrains.plugins.scala.lang.psi.api.expr.ScBlockExpr
 import org.jetbrains.plugins.scala.lang.psi.api.statements._
 import org.jetbrains.plugins.scala.lang.psi.api.statements.params.{ScClassParameter, ScParameterClause}
 import org.jetbrains.plugins.scala.lang.psi.api.toplevel.typedef.{ScMember, ScTemplateDefinition}
 import org.jetbrains.plugins.scala.lang.psi.impl.ScalaPsiElementFactory._
-import org.jetbrains.plugins.scala.lang.psi.types.{ScType, ScTypeExt}
+import org.jetbrains.plugins.scala.lang.psi.types.{ScType, ScTypeExt, TypePresentationContext}
 import org.jetbrains.plugins.scala.lang.refactoring.util.ScalaNamesUtil
 import org.jetbrains.plugins.scala.overrideImplement.ScalaGenerationInfo._
 import org.jetbrains.plugins.scala.project.ScalaFeatures
@@ -199,6 +199,9 @@ object ScalaGenerationInfo {
     td: ScTemplateDefinition,
     isImplement: Boolean
   ): String = {
+    implicit val tpc: TypePresentationContext = TypePresentationContext(td)
+    implicit val context: types.Context = types.Context(td)
+
     val templateName =
       if (isImplement) ScalaFileTemplateUtil.SCALA_IMPLEMENTED_METHOD_TEMPLATE
       else ScalaFileTemplateUtil.SCALA_OVERRIDDEN_METHOD_TEMPLATE
@@ -209,7 +212,7 @@ object ScalaGenerationInfo {
 
     val standardValue = getStandardValue(returnType)
 
-    properties.setProperty(FileTemplate.ATTRIBUTE_RETURN_TYPE, returnType.presentableText(method))
+    properties.setProperty(FileTemplate.ATTRIBUTE_RETURN_TYPE, returnType.presentableText)
     properties.setProperty(FileTemplate.ATTRIBUTE_DEFAULT_RETURN_VALUE, standardValue)
     properties.setProperty(FileTemplate.ATTRIBUTE_CALL_SUPER, callSuperText(td, method))
     properties.setProperty("Q_MARK", ScalaGenerationInfo.defaultValue)

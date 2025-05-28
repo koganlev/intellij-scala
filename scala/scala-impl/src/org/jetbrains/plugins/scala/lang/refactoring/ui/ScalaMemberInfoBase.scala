@@ -9,6 +9,7 @@ import org.jetbrains.plugins.scala.lang.psi.api.statements._
 import org.jetbrains.plugins.scala.lang.psi.api.statements.params.ScClassParameter
 import org.jetbrains.plugins.scala.lang.psi.api.toplevel.ScNamedElement
 import org.jetbrains.plugins.scala.lang.psi.api.toplevel.typedef.{ScObject, ScTemplateDefinition, ScTypeDefinition}
+import org.jetbrains.plugins.scala.lang.psi.types.{Context, TypePresentationContext}
 import org.jetbrains.plugins.scala.lang.psi.types.result.Typeable
 import org.jetbrains.plugins.scala.lang.psi.{ScalaPsiPresentationUtils, ScalaPsiUtil}
 
@@ -70,8 +71,11 @@ object ScalaMemberInfoBase {
     if (typeAlias.nameId != null) typeAlias.nameId.getText else ScalaBundle.message("presentable.type.unnamed")
 
   private def getValOrVarPresentableText(elem: ScNamedElement): String = {
+    implicit val tpc: TypePresentationContext = TypePresentationContext(elem)
+    implicit val context: Context = Context(elem)
+
     val typeText = elem match {
-      case typed: Typeable => ": " + typed.`type`().getOrAny.presentableText(typed)
+      case typed: Typeable => ": " + typed.`type`().getOrAny.presentableText
       case _ => ""
     }
     val keyword = elem.nameContext match {

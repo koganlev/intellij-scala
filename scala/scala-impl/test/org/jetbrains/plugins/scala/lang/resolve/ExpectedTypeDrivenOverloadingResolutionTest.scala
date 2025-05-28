@@ -1,7 +1,7 @@
 package org.jetbrains.plugins.scala.lang.resolve
 
 import org.jetbrains.plugins.scala.lang.psi.api.statements.ScFunctionDefinition
-import org.jetbrains.plugins.scala.lang.psi.types.TypePresentationContext
+import org.jetbrains.plugins.scala.lang.psi.types.{Context, TypePresentationContext}
 import org.junit.Assert
 
 class ExpectedTypeDrivenOverloadingResolutionTest extends SimpleResolveTestBase {
@@ -20,7 +20,7 @@ class ExpectedTypeDrivenOverloadingResolutionTest extends SimpleResolveTestBase 
     result match {
       case fn: ScFunctionDefinition =>
         fn.`type`()
-          .foreach(tpe => Assert.assertEquals("T => ClassTag[T] => Array[T]", tpe.presentableText(TypePresentationContext.emptyContext)))
+          .foreach(tpe => Assert.assertEquals("T => ClassTag[T] => Array[T]", tpe.presentableText(TypePresentationContext.emptyContext, Context.Empty)))
       case _ => Assert.fail("Invalid resolve result.")
     }
   }

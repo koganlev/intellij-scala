@@ -15,7 +15,7 @@ import org.jetbrains.plugins.scala.lang.psi.api.statements.ScValueOrVariableDefi
 import org.jetbrains.plugins.scala.lang.psi.api.toplevel.ScNamedElement
 import org.jetbrains.plugins.scala.lang.psi.impl.ScalaPsiElementFactory
 import org.jetbrains.plugins.scala.lang.psi.impl.ScalaPsiElementFactory.{createBlockWithGivenExpressions, createScalaElementFromTextWithContext}
-import org.jetbrains.plugins.scala.lang.psi.types.TypePresentationContext
+import org.jetbrains.plugins.scala.lang.psi.types.{Context, TypePresentationContext}
 import org.jetbrains.plugins.scala.lang.psi.uast.controlStructures.ScUIfExpression
 import org.jetbrains.plugins.scala.lang.psi.uast.converter.Scala2UastConverter.UConvertible
 import org.jetbrains.plugins.scala.lang.psi.uast.expressions._
@@ -192,7 +192,10 @@ final class ScalaUastElementFactory(project: Project) extends UastElementFactory
       }
 
       scType match {
-        case Some(tp) => s"$name: ${tp.presentableText(TypePresentationContext.emptyContext)}"
+        case Some(tp) =>
+          implicit val tpc: TypePresentationContext = Option(context).map(TypePresentationContext(_)).getOrElse(TypePresentationContext.emptyContext)
+          implicit val elementContext: Context = Option(context).map(Context(_)).getOrElse(Context.Empty)
+          s"$name: ${tp.presentableText}"
         case _ => name
       }
     }.mkString(if (needsParensAroundParams) "(" else "", ", ", if (needsParensAroundParams) ")" else "")

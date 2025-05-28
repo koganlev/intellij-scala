@@ -47,7 +47,7 @@ object PatternGenerationStrategy {
   }
 
   def unapply(`type`: ScType)
-             (implicit parameters: ClauseCompletionParameters, context: Context): Option[PatternGenerationStrategy] = {
+             (implicit parameters: ClauseCompletionParameters, tpc: TypePresentationContext, context: Context): Option[PatternGenerationStrategy] = {
     val valueType = toValueType(`type`)
     val strategy = valueType match {
       case ScProjectionType(DesignatorOwner(enumClass@ScalaEnumeration(values)), _) =>
@@ -69,7 +69,7 @@ object PatternGenerationStrategy {
           case _ =>
             new EnumGenerationStrategy(
               enumClass,
-              valueType.presentableText(TypePresentationContext.emptyContext),
+              valueType.presentableText(TypePresentationContext.emptyContext, context),
               enumConstants.map(_.getName)
             )
         }

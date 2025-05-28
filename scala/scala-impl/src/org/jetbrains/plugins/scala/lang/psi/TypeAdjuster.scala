@@ -200,6 +200,7 @@ object TypeAdjuster {
     object withExpandableTypeAlias {
 
       def unapply(info: SimpleInfo): Option[ReplacementInfo] = {
+        implicit val tpc: TypePresentationContext = TypePresentationContext(info.place)
         implicit val context: Context = Context(info.place)
 
         val SimpleInfo(place, replacement, _, _) = info
@@ -207,7 +208,7 @@ object TypeAdjuster {
         val replacementType = newTypeElem(replacement, place).calcType
         val withoutAliases = replacementType.removeAliasDefinitions(expandableOnly = true)
 
-        if (replacementType.presentableText(TypePresentationContext.emptyContext) != withoutAliases.presentableText(TypePresentationContext.emptyContext)) {
+        if (replacementType.presentableText != withoutAliases.presentableText) {
           ToReplace(place)
 
           val newTypeElement = newTypeElem(withoutAliases.canonicalText, place)
@@ -368,7 +369,7 @@ object TypeAdjuster {
                 simple.place.containingFile.exists(_.isScala3OrSource3Enabled)
             }
 
-            val newTypeText = e.calcType.presentableText(presentationContext)
+            val newTypeText = e.calcType.presentableText(presentationContext, Context(info.place))
             simple.copy(replacement = newTypeText)
           case _ => simple
         }

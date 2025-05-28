@@ -7,7 +7,7 @@ import org.jetbrains.plugins.scala.lang.psi.api.base.ScReference
 import org.jetbrains.plugins.scala.lang.psi.api.statements.ScTypeAliasDefinition
 import org.jetbrains.plugins.scala.lang.psi.api.toplevel.typedef.{ScClass, ScDerivesClauseOwner, ScTrait, ScTypeDefinition}
 import org.jetbrains.plugins.scala.lang.psi.implicits.ImplicitConversionResolveResult
-import org.jetbrains.plugins.scala.lang.psi.types.TypeVariableUnification
+import org.jetbrains.plugins.scala.lang.psi.types.{Context, TypePresentationContext, TypeVariableUnification}
 import org.jetbrains.plugins.scala.lang.psi.types.api.TypeParameter
 import org.jetbrains.plugins.scala.lang.resolve.{ScalaResolveResult, ScalaResolveState}
 import org.jetbrains.plugins.scala.lang.resolve.processor.MethodResolveProcessor
@@ -210,23 +210,27 @@ object DerivesUtil {
     } else candidatesWithoutImplicits
   }
 
-  def resolveTypeClassReference(ref: ScReference): Either[String, ScTypeDefinition] =
+  def resolveTypeClassReference(ref: ScReference): Either[String, ScTypeDefinition] = {
+    implicit val tpc: TypePresentationContext = TypePresentationContext(ref)
+    implicit val context: Context = Context(ref)
+
     ref.bind().toRight(ScalaBundle.message("derives.scala.no.resolve")).flatMap {
       srr => srr.element match {
         case tc: ScClass => Right(tc)
         case tc: ScTrait => Right(tc)
         case _: PsiClass => Left(ScalaBundle.message("derives.scala.class.expected"))
-        case alias: ScTypeAliasDefinition =>
+        case alias: ScTypeAliasDefinition if !alias.isEffectivelyOpaque =>
           val aliasedType = alias.aliasedType.getOrAny
           aliasedType.extractClass match {
             case Some(tc: ScClass) => Right(tc)
             case Some(tc: ScTrait) => Right(tc)
             case Some(_)           => Left(ScalaBundle.message("derives.scala.class.expected"))
             case None =>
-              Left(ScalaBundle.message("derives.not.a.class.type", aliasedType.presentableText(ref)))
+              Left(ScalaBundle.message("derives.not.a.class.type", aliasedType.presentableText))
           }
       }
     }
+  }
 
   private def typeParamsString(tps: Seq[String]): String =
     if (tps.isEmpty) ""

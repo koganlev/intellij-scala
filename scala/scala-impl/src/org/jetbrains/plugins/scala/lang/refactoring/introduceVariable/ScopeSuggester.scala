@@ -14,6 +14,7 @@ import org.jetbrains.plugins.scala.lang.psi.api.toplevel.templates.{ScExtendsBlo
 import org.jetbrains.plugins.scala.lang.psi.api.toplevel.typedef._
 import org.jetbrains.plugins.scala.lang.psi.api.toplevel.{ScPackaging, ScTypeParametersOwner}
 import org.jetbrains.plugins.scala.lang.psi.impl.ScPackageImpl
+import org.jetbrains.plugins.scala.lang.psi.types.{Context, TypePresentationContext}
 import org.jetbrains.plugins.scala.lang.psi.types.api.designator.ScProjectionType
 import org.jetbrains.plugins.scala.lang.refactoring._
 import org.jetbrains.plugins.scala.lang.refactoring.namesSuggester.NameSuggester
@@ -173,6 +174,9 @@ object ScopeSuggester {
 
   def handleOnePackage(typeElement: ScTypeElement, inPackageName: String, containingDirectory: PsiDirectory,
                        conflictsReporter: ConflictsReporter, project: Project, isReplaceAll: Boolean, inputName: String): PackageScopeItem = {
+    implicit val tpc: TypePresentationContext = TypePresentationContext(typeElement)
+    implicit val context: Context = Context(typeElement)
+
     def getFilesToSearchIn(currentDirectory: PsiDirectory): Array[ScalaFile] = {
       if (!isReplaceAll) {
         Array(typeElement.getContainingFile.asInstanceOf[ScalaFile])
@@ -196,7 +200,7 @@ object ScopeSuggester {
           bufResult += buffer
         }
 
-        val typeName = typeElement.calcType.codeText(typeElement)
+        val typeName = typeElement.calcType.codeText
         val words = StringUtil.getWordsIn(typeName).asScala
 
         val resultBuffer = mutable.ArrayBuffer.empty[mutable.ArrayBuffer[ScalaFile]]

@@ -4,7 +4,7 @@ import com.intellij.codeInspection.ProblemHighlightType
 import org.jetbrains.plugins.scala.ScalaBundle
 import org.jetbrains.plugins.scala.annotator.{ScalaAnnotationHolder, TypeMismatchError}
 import org.jetbrains.plugins.scala.lang.psi.api.expr.{ScExpression, ScReturn}
-import org.jetbrains.plugins.scala.lang.psi.types.api
+import org.jetbrains.plugins.scala.lang.psi.types.{Context, TypePresentationContext, api}
 import org.jetbrains.plugins.scala.project.ProjectContext
 
 object ScReturnAnnotator extends ElementAnnotator[ScReturn] {
@@ -31,9 +31,12 @@ object ScReturnAnnotator extends ElementAnnotator[ScReturn] {
   }
 
   private def redundantReturnExpression(e: ScExpression)(implicit holder: ScalaAnnotationHolder): Unit = {
+    implicit val tpc: TypePresentationContext = TypePresentationContext(e)
+    implicit val context: Context = Context(e)
+
     val tpe = e.getTypeAfterImplicitConversion().tr
     tpe.foreach { t =>
-      val message = ScalaBundle.message("return.expression.is.redundant", t.presentableText(e))
+      val message = ScalaBundle.message("return.expression.is.redundant", t.presentableText)
       holder.createWarningAnnotation(e, message)
     }
   }

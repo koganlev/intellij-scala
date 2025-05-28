@@ -66,8 +66,12 @@ object ImplicitCollector {
     fullInfo:                   Boolean,
     previousDivergenceStack:    Option[DivergenceChecker.DivergenceStack]
   ) {
-    def presentableTypeText: String =
-      Using.resource(SlowOperations.knownIssue("SCL-23054"))(_ => tp.presentableText(place))
+    def presentableTypeText: String = {
+      implicit val tpc: TypePresentationContext = TypePresentationContext(place)
+      implicit val context: Context = Context(place)
+
+      Using.resource(SlowOperations.knownIssue("SCL-23054"))(_ => tp.presentableText)
+    }
   }
 
   def probableArgumentsFor(parameter: ScalaResolveResult): Seq[(ScalaResolveResult, FullInfoResult)] = {

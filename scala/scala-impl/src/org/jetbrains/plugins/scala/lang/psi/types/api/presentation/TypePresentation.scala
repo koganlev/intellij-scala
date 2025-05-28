@@ -37,7 +37,7 @@ trait TypePresentation {
     typeText(`type`, renderer, PresentationOptions.Default)(tpc, context)
   }
 
-  final def canonicalText(`type`: ScType, tpc: TypePresentationContext): String = {
+  final def canonicalText(`type`: ScType, tpc: TypePresentationContext)(implicit context: Context): String = {
     val renderer: NameRenderer = new NameRenderer {
       override def renderName(e: PsiNamedElement): String = renderNameImpl(e, withPoint = false)
       override def renderNameWithPoint(e: PsiNamedElement): String = renderNameImpl(e, withPoint = true)
@@ -69,7 +69,7 @@ trait TypePresentation {
         if (res.nonEmpty && withPoint) res + "." else res
       }
     }
-    typeText(`type`, renderer, PresentationOptions(renderStdTypes = ScalaApplicationSettings.PRECISE_TEXT, canonicalForm = true))(tpc, Context.Empty)
+    typeText(`type`, renderer, PresentationOptions(renderStdTypes = ScalaApplicationSettings.PRECISE_TEXT, canonicalForm = true))(tpc, context)
   }
 }
 
@@ -98,7 +98,7 @@ object TypePresentation {
   // TODO Why the presentable text for java.lang.Long is "Long" in Scala? (see SCL-15899)
   // TODO (and why the canonical text for scala.Long is "Long", for that matter)
   def different(t1: ScType, t2: ScType)
-               (implicit context: TypePresentationContext): (String, String) = {
+               (implicit tpc: TypePresentationContext, context: Context): (String, String) = {
     val (p1, p2) = (t1.presentableText, t2.presentableText)
     if (p1 != p2) (p1, p2)
     else (t1.canonicalText.replace("_root_.", ""), t2.canonicalText.replace("_root_.", ""))
@@ -110,6 +110,6 @@ object TypePresentation {
   }
 
   def withoutAliases(`type`: ScType)
-                    (implicit context: TypePresentationContext): String =
+                    (implicit tpc: TypePresentationContext, context: Context): String =
     `type`.removeAliasDefinitions(expandableOnly = true).presentableText
 }

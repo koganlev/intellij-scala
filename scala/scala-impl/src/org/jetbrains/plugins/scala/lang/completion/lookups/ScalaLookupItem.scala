@@ -19,7 +19,7 @@ import org.jetbrains.plugins.scala.lang.psi.api.statements.{ScFun, ScFunction, S
 import org.jetbrains.plugins.scala.lang.psi.api.toplevel.ScTypeParametersOwner
 import org.jetbrains.plugins.scala.lang.psi.api.toplevel.imports.{ScImportSelectors, ScImportStmt}
 import org.jetbrains.plugins.scala.lang.psi.api.toplevel.typedef.{ScObject, ScTemplateDefinition}
-import org.jetbrains.plugins.scala.lang.psi.types.TypePresentationContext
+import org.jetbrains.plugins.scala.lang.psi.types.{Context, TypePresentationContext}
 import org.jetbrains.plugins.scala.lang.psi.types.recursiveUpdate.ScSubstitutor
 import org.jetbrains.plugins.scala.lang.psi.types.result._
 import org.jetbrains.plugins.scala.lang.refactoring.util.ScalaNamesUtil.escapeKeyword
@@ -34,6 +34,8 @@ final class ScalaLookupItem private(override val getPsiElement: PsiNamedElement,
                                     override val getLookupString: String,
                                     private[completion] val containingClass: PsiClass)
   extends LookupItem[PsiNamedElement](getPsiElement, getLookupString) {
+  private implicit def tpc: TypePresentationContext = TypePresentationContext(getPsiElement)
+  private implicit def context: Context = Context(getPsiElement)
 
   import ScalaInsertHandler._
   import ScalaLookupItem._
@@ -146,7 +148,7 @@ final class ScalaLookupItem private(override val getPsiElement: PsiNamedElement,
       case t: ScTemplateDefinition if getLookupString == "this" || getLookupString.endsWith(".this") =>
         t.getTypeWithProjections(thisProjections = true) match {
           case Right(tp) =>
-            tp.presentableText(t)
+            tp.presentableText
           case _ => ""
         }
       case f: PsiField =>
@@ -198,8 +200,7 @@ final class ScalaLookupItem private(override val getPsiElement: PsiNamedElement,
   }
 
   private def typeParametersText(typeParameters: Seq[_ <: PsiTypeParameter])
-                                (implicit project: Project,
-                                 context: TypePresentationContext): String =
+                                (implicit project: Project, tpc: TypePresentationContext, context: Context): String =
     if (typeParameters.isEmpty)
       ""
     else
@@ -212,8 +213,7 @@ final class ScalaLookupItem private(override val getPsiElement: PsiNamedElement,
       }.commaSeparated(Model.SquareBrackets)
 
   private def typeParametersText(owner: PsiTypeParameterListOwner)
-                                (implicit project: Project,
-                                 context: TypePresentationContext): String = owner match {
+                                (implicit project: Project, tpc: TypePresentationContext, context: Context): String = owner match {
     case owner: ScTypeParametersOwner =>
       owner.typeParametersClause.fold("") {
         LookupItemPresentationUtil.presentationStringForPsiElement(_, substitutor)
@@ -223,8 +223,7 @@ final class ScalaLookupItem private(override val getPsiElement: PsiNamedElement,
   }
 
   private def parametersText(parametersList: PsiParameterList)
-                            (implicit project: Project,
-                             context: TypePresentationContext) =
+                            (implicit project: Project, tpc: TypePresentationContext, context: Context) =
     if (Option(JavaCompletionUtil.getAllMethods(this)).exists(_.size > 1))
       "(...)"
     else

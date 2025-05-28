@@ -17,7 +17,7 @@ import org.jetbrains.plugins.scala.lang.psi.impl.ScalaPsiElementFactory._
 import org.jetbrains.plugins.scala.lang.psi.types.api.FunctionType
 import org.jetbrains.plugins.scala.lang.psi.types.recursiveUpdate.ScSubstitutor
 import org.jetbrains.plugins.scala.lang.psi.types.result._
-import org.jetbrains.plugins.scala.lang.psi.types.{ScType, TypePresentationContext}
+import org.jetbrains.plugins.scala.lang.psi.types.{Context, ScType, TypePresentationContext}
 import org.jetbrains.plugins.scala.lang.psi.{ElementScope, ScalaPsiUtil, TypeAdjuster}
 import org.jetbrains.plugins.scala.lang.refactoring._
 import org.jetbrains.plugins.scala.lang.refactoring.extractMethod.duplicates.DuplicateMatch
@@ -338,7 +338,10 @@ object ScalaExtractMethodUtils {
   def previewSignatureText(settings: ScalaExtractMethodSettings): String = {
     def nameAndType(param: ExtractMethodParameter): String = {
       val ExtractMethodParameter(_, newName, fromElement, tp, _) = param
-      this.typedName(newName, tp.codeText(fromElement), param.isCallByNameParameter)(fromElement.getProject)
+      implicit val tpc: TypePresentationContext = TypePresentationContext(fromElement)
+      implicit val context: Context = Context(fromElement)
+
+      this.typedName(newName, tp.codeText, param.isCallByNameParameter)(fromElement.getProject)
     }
 
     val ics = settings.innerClassSettings

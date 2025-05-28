@@ -13,7 +13,7 @@ import org.jetbrains.plugins.scala.lang.psi.api.expr.ScExpression
 import org.jetbrains.plugins.scala.lang.psi.api.statements.ScFunction
 import org.jetbrains.plugins.scala.lang.psi.api.toplevel.typedef.ScTypeDefinition
 import org.jetbrains.plugins.scala.lang.psi.api.{ScalaFile, ScalaPsiElement}
-import org.jetbrains.plugins.scala.lang.psi.types.{Context, ScType}
+import org.jetbrains.plugins.scala.lang.psi.types.{Context, ScType, TypePresentationContext}
 import org.jetbrains.plugins.scala.lang.psi.types.result.Typeable
 
 import java.awt.Toolkit
@@ -32,7 +32,10 @@ final class CopyTypeAction extends AnAction(ScalaBundle.message("copy.scala.type
   override def actionPerformed(event: AnActionEvent): Unit = {
     val typeableElement = getTypeableElement(event)
     typeableElement.foreach { case (e, t) =>
-      val text = t.presentableText(e)
+      implicit val tpc: TypePresentationContext = TypePresentationContext(e)
+      implicit val context: Context = Context(e)
+
+      val text = t.presentableText
       if (ApplicationManager.getApplication.isUnitTestMode) {
         CopyTypeAction.copyToClipboardListeners.values().forEach(_(text))
       } else {

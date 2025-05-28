@@ -31,7 +31,7 @@ object TypePresentationContext {
           val element = ScalaPsiElementFactory.createTypeElementFromText(name, context, place)
           element match {
             case ScSimpleTypeElement(ResolvesTo(reference)) =>
-              ScEquivalenceUtil.smartEquivalence(reference, target)
+              ScEquivalenceUtil.smartEquivalence(reference, target)(Context(context))
             case _ => false
           }
         } else true

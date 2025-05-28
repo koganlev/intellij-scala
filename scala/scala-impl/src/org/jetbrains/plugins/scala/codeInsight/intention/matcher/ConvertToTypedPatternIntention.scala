@@ -12,7 +12,7 @@ import org.jetbrains.plugins.scala.lang.psi.api.base.patterns.ScConstructorPatte
 import org.jetbrains.plugins.scala.lang.psi.api.statements.ScFunctionDefinition
 import org.jetbrains.plugins.scala.lang.psi.api.toplevel.typedef.{ScClass, ScObject}
 import org.jetbrains.plugins.scala.lang.psi.impl.ScalaPsiElementFactory.createPatternFromText
-import org.jetbrains.plugins.scala.lang.psi.types.ScalaType
+import org.jetbrains.plugins.scala.lang.psi.types.{Context, ScalaType, TypePresentationContext}
 import org.jetbrains.plugins.scala.lang.refactoring.namesSuggester.NameSuggester
 import org.jetbrains.plugins.scala.lang.resolve.ScalaResolveResult
 
@@ -31,6 +31,9 @@ class ConvertToTypedPatternIntention extends PsiElementBaseIntentionAction {
   }
 
   override def invoke(project: Project, editor: Editor, element: PsiElement): Unit = {
+    implicit val tpc: TypePresentationContext = TypePresentationContext(element)
+    implicit val context: Context = Context(element)
+
     val codeRef = element.getParent.asInstanceOf[ScStableCodeReference]
     val constrPattern = codeRef.getParent.asInstanceOf[ScConstructorPattern]
     val name = codeRef.bind() match {
@@ -49,7 +52,7 @@ class ConvertToTypedPatternIntention extends PsiElementBaseIntentionAction {
         }
       case _ => "value"
     }
-    val typeText = constrPattern.`type`().toOption.fold(codeRef.getText)(_.presentableText(element))
+    val typeText = constrPattern.`type`().toOption.fold(codeRef.getText)(_.presentableText)
     constrPattern.replace(createPatternFromText(s"$name: $typeText", element)(codeRef.getManager))
   }
 }

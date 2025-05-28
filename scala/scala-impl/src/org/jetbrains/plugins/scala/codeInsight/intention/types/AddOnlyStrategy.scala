@@ -154,9 +154,12 @@ object AddOnlyStrategy {
   case class TypeAnnotationWithVariants(annotation: ScTypeElement, validVariants: Seq[ScTypeText])
 
   def typeAnnotationWithVariants(types: Seq[TypeForAnnotation], context: PsiElement): Option[TypeAnnotationWithVariants] = {
+    implicit val tpc: TypePresentationContext = TypePresentationContext(context)
+    implicit val elementContext: Context = Context(context)
+
     val tps = types.flatMap(_.typeWithSuperTypes)
     tps.headOption.map { typeElement =>
-      val validVariants = tps.reverse.flatMap(_.`type`().toOption).map(ScTypeText(_)(context))
+      val validVariants = tps.reverse.flatMap(_.`type`().toOption).map(ScTypeText(_))
       TypeAnnotationWithVariants(typeElement, validVariants)
     }
   }
@@ -278,16 +281,21 @@ object AddOnlyStrategy {
     }
   }
 
-  def annotationsFor(`type`: ScType, ctx: PsiElement): Seq[ScTypeElement] =
-    canonicalTypes(`type`)(ctx)
-      .map(createTypeElementFromText(_, ctx)(ctx))
+  def annotationsFor(`type`: ScType, ctx: PsiElement): Seq[ScTypeElement] = {
+    implicit val projectContext: ProjectContext = ctx
+    implicit val tpc: TypePresentationContext = TypePresentationContext(ctx)
+    implicit val context: Context = Context(ctx)
 
-  private[this] def canonicalTypes(tpe: ScType)(ctx: TypePresentationContext): Seq[String] = {
+    canonicalTypes(`type`)
+      .map(createTypeElementFromText(_, ctx))
+  }
+
+  private[this] def canonicalTypes(tpe: ScType)(implicit tpc: TypePresentationContext, context: Context): Seq[String] = {
     import BaseTypes.get
 
-    tpe.canonicalCodeText(ctx) +: (tpe.extractClass match {
+    tpe.canonicalCodeText +: (tpe.extractClass match {
       case Some(sc: ScTypeDefinition) if sc.qualifiedName == "scala.Some" =>
-        get(tpe).map(_.canonicalCodeText(ctx))
+        get(tpe).map(_.canonicalCodeText)
           .filter(_.startsWith("_root_.scala.Option"))
       case Some(sc: ScTypeDefinition) if sc.qualifiedName.startsWith("scala.collection") =>
         val goodTypes = Set(
@@ -299,12 +307,12 @@ object AddOnlyStrategy {
           "_root_.scala.collection.immutable.Map["
         )
 
-        get(tpe).map(_.canonicalCodeText(ctx))
+        get(tpe).map(_.canonicalCodeText)
           .filter(t => goodTypes.exists(t.startsWith))
       case Some(sc: ScTypeDefinition) if sc.isObject && sc.supers.exists(_.isSealed) =>
         // if the type is the type of an object we prefer the super class
         get(tpe).find(_.extractClass.exists(_.isSealed)).toSeq
-          .map(_.canonicalCodeText(ctx))
+          .map(_.canonicalCodeText)
       case _ => Seq.empty
     })
   }

@@ -85,10 +85,11 @@ object ScalaColorSchemeAnnotator {
     refElement: ScReference,
     resolvedElement: => PsiElement
   )(implicit holder: ScalaAnnotationHolder): Unit = {
+    implicit val tpc: TypePresentationContext = TypePresentationContext(refElement)
     implicit val context: Context = Context(refElement)
 
     def annotateCollectionByType(resolvedType: ScType): Unit = {
-      val resolvedTypeName = resolvedType.presentableText(TypePresentationContext.emptyContext)
+      val resolvedTypeName = resolvedType.presentableText
 
       val isOperator = ScalaNamesUtil.isOperatorName(resolvedTypeName.substring(0, resolvedTypeName.segmentLength(_ != '.')))
       if (isOperator)
@@ -149,7 +150,7 @@ object ScalaColorSchemeAnnotator {
         }
       case alias: ScTypeAlias =>
         alias.getOriginalElement match {
-          case originalElement: ScTypeAliasDefinition =>
+          case originalElement: ScTypeAliasDefinition if !originalElement.isEffectivelyOpaque =>
             originalElement.aliasedType.foreach(annotateCollectionByType)
           case _ =>
         }

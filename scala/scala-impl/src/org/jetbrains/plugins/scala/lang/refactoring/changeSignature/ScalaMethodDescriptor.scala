@@ -5,6 +5,7 @@ import com.intellij.refactoring.changeSignature.MethodDescriptor
 import com.intellij.refactoring.changeSignature.MethodDescriptor.ReadWriteOption
 import org.jetbrains.plugins.scala.lang.psi.api.base.{ScMethodLike, ScalaConstructor}
 import org.jetbrains.plugins.scala.lang.psi.api.statements.ScFunction
+import org.jetbrains.plugins.scala.lang.psi.types.{Context, TypePresentationContext}
 import org.jetbrains.plugins.scala.lang.psi.types.result._
 import org.jetbrains.plugins.scala.lang.refactoring._
 
@@ -12,6 +13,9 @@ import java.util
 import scala.jdk.CollectionConverters._
 
 class ScalaMethodDescriptor(val fun: ScMethodLike) extends MethodDescriptor[ScalaParameterInfo, String] {
+  protected implicit def tpc: TypePresentationContext = TypePresentationContext(fun)
+  protected implicit def context: Context = Context(fun)
+
   override def getName: String = fun match {
     case ScalaConstructor.in(c) => c.name
     case fun: ScFunction        => fun.name
@@ -38,7 +42,7 @@ class ScalaMethodDescriptor(val fun: ScMethodLike) extends MethodDescriptor[Scal
   override def getVisibility: String = fun.getModifierList.accessModifier.fold("")(_.getText)
 
   def returnTypeText: String = fun match {
-    case f: ScFunction => f.returnType.getOrAny.codeText(f)
+    case f: ScFunction => f.returnType.getOrAny.codeText
     case _ => ""
   }
 

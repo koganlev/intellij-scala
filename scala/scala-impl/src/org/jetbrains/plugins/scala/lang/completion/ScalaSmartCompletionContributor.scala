@@ -690,7 +690,7 @@ object ScalaSmartCompletionContributor {
     private val presentableParams = for {
       parameterType <- params
       simplifiedType = parameterType.removeAbstracts
-    } yield (simplifiedType, simplifiedType.presentableText(TypePresentationContext.emptyContext))
+    } yield (simplifiedType, simplifiedType.presentableText(TypePresentationContext.emptyContext, Context.Empty))
 
     override def renderElement(element: LookupElement,
                                presentation: LookupElementPresentation): Unit = {

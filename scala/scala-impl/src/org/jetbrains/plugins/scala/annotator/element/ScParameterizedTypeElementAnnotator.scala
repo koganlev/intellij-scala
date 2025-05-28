@@ -26,6 +26,7 @@ object ScParameterizedTypeElementAnnotator extends ElementAnnotator[ScParameteri
   )(implicit
     holder: ScalaAnnotationHolder
   ): Unit = {
+    implicit val tpc: TypePresentationContext = TypePresentationContext(element)
     implicit val context: Context = Context(element)
 
     if (!typeAware) return
@@ -46,7 +47,6 @@ object ScParameterizedTypeElementAnnotator extends ElementAnnotator[ScParameteri
 
     prefixType.foreach { tpe =>
       val typeParams = extractTypeParameters(tpe)
-      implicit val tpc: TypePresentationContext = element
 
       if (!isKindProjectorLambda) {
         annotateTypeArgs[ScTypeElement](
@@ -54,7 +54,7 @@ object ScParameterizedTypeElementAnnotator extends ElementAnnotator[ScParameteri
           element.typeArgList.typeArgs,
           element.typeArgList.getTextRange,
           projSubstitutor,
-          tpe.presentableText(element),
+          tpe.presentableText,
           _.`type`()
         )
       }

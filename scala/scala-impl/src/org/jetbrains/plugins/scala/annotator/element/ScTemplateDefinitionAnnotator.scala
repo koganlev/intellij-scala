@@ -64,6 +64,9 @@ object ScTemplateDefinitionAnnotator extends ElementAnnotator[ScTemplateDefiniti
       sig:        TermSignature,
       superTrait: PsiClass
     ): Unit = {
+      implicit val tpc: TypePresentationContext = TypePresentationContext(tdef)
+      implicit val context: Context = Context(tdef)
+
       val collector = new ImplicitCollector(
         tdef.getContext,
         tp,
@@ -81,7 +84,7 @@ object ScTemplateDefinitionAnnotator extends ElementAnnotator[ScTemplateDefiniti
 
           holder.createErrorAnnotation(
             highlightRange(tdef),
-            ScalaBundle.message("no.given.instance.for.deferred", tp.presentableText(tdef), givenName, superName)
+            ScalaBundle.message("no.given.instance.for.deferred", tp.presentableText, givenName, superName)
           )
       }
     }

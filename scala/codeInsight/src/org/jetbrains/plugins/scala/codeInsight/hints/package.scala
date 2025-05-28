@@ -16,7 +16,7 @@ import org.jetbrains.plugins.scala.editor.documentationProvider.ScalaDocQuickInf
 import org.jetbrains.plugins.scala.extensions.{NullSafe, ObjectExt}
 import org.jetbrains.plugins.scala.lang.psi.api.expr.{ScExpression, ScReferenceExpression}
 import org.jetbrains.plugins.scala.lang.psi.types.api.designator.ScDesignatorType
-import org.jetbrains.plugins.scala.lang.psi.types.{ScType, TypePresentationContext}
+import org.jetbrains.plugins.scala.lang.psi.types.{Context, ScType, TypePresentationContext}
 import org.jetbrains.plugins.scala.lang.refactoring.util.ScalaNamesUtil
 
 import scala.reflect.ClassTag
@@ -48,7 +48,7 @@ package object hints {
     } yield segment.toLowerCase
   }
 
-  private[hints] def textPartsOf(tpe: ScType, maxChars: Int, originalElement: PsiElement)(implicit scheme: EditorColorsScheme, context: TypePresentationContext): Seq[Text] = {
+  private[hints] def textPartsOf(tpe: ScType, maxChars: Int, originalElement: PsiElement)(implicit scheme: EditorColorsScheme, tpc: TypePresentationContext, context: Context): Seq[Text] = {
     def toText(diff: Tree[TypeDiff]): Text = diff match {
       case Node(diffs @_*) =>
         Text(foldedString,
@@ -73,12 +73,16 @@ package object hints {
 
   private val NonIdentifierChars = Set('\n', '(', '[', '{', ';', ',')
 
-  def isTypeObvious(name: Option[String], tpe: ScType, body: ScExpression): Boolean =
+  def isTypeObvious(name: Option[String], tpe: ScType, body: ScExpression): Boolean = {
+    implicit val tpc: TypePresentationContext = TypePresentationContext(body)
+    implicit val context: Context = Context(body)
+
     isTypeObvious(
       name.getOrElse(""),
-      tpe.presentableText(TypePresentationContext.emptyContext),
+      tpe.presentableText,
       body.getText.takeWhile(!NonIdentifierChars(_))
     )
+  }
 
   // SCL-14339
   // Text-based algorithm is easy to implement, easy to test, and is highly portable (e.g. can be reused in Kotlin)

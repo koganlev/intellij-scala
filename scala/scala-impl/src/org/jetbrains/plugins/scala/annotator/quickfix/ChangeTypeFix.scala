@@ -12,7 +12,8 @@ import org.jetbrains.plugins.scala.lang.psi.ScalaPsiUtil
 import org.jetbrains.plugins.scala.lang.psi.api.base.types.ScTypeElement
 import org.jetbrains.plugins.scala.lang.psi.impl.ScalaPsiElementFactory.createTypeElementFromText
 import org.jetbrains.plugins.scala.lang.psi.types.api.presentation.TypePresentation
-import org.jetbrains.plugins.scala.lang.psi.types.{ScType, TypePresentationContext}
+import org.jetbrains.plugins.scala.lang.psi.types.{Context, ScType, TypePresentationContext}
+import org.jetbrains.plugins.scala.project.ProjectContext
 
 /**
  * @param widenNewType true to replace singleton types with wider version, e.g. use String instead of "42" (see SCL-16489)
@@ -47,7 +48,11 @@ final class ChangeTypeFix(
     if (!typeElement.isValid) return
     if (!IntentionPreviewUtils.prepareElementForWrite(typeElement.getContainingFile)) return
     if (typeElement.getParent == null || typeElement.getParent.getNode == null) return
-    val replaced = typeElement.replace(createTypeElementFromText(newType.canonicalText(typeElement), typeElement)(file))
+
+    implicit val projectContext: ProjectContext = ProjectContext.fromPsi(typeElement)
+    implicit val context: Context = Context(typeElement)
+
+    val replaced = typeElement.replace(createTypeElementFromText(newType.canonicalText(TypePresentationContext(typeElement)), typeElement))
     ScalaPsiUtil.adjustTypes(replaced)
     UndoUtil.markPsiFileForUndo(file)
   }

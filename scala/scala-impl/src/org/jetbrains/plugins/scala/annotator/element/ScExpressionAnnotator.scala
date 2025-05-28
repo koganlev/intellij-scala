@@ -116,6 +116,7 @@ object ScExpressionAnnotator extends ElementAnnotator[ScExpression] {
     holder: ScalaAnnotationHolder
   ): Unit = {
     implicit val projectContext: ProjectContext = element
+    implicit val tpc: TypePresentationContext = TypePresentationContext(element)
     implicit val context: Context = Context(element)
 
     @tailrec
@@ -233,7 +234,7 @@ object ScExpressionAnnotator extends ElementAnnotator[ScExpression] {
                   case Right(t: DesignatorOwner) if t.isSingleton =>
                     t.element.asOptionOf[ScTypeDefinition].flatMap(_.methodsByName("apply").nextOption()).map(_.method) match {
                       case Some(method: ScFunctionDefinition) =>
-                        val missingParameters = method.parameters.map(p => p.getName + ": " + p.`type`().getOrNothing.presentableText(target)).mkString(", ")
+                        val missingParameters = method.parameters.map(p => p.getName + ": " + p.`type`().getOrNothing.presentableText).mkString(", ")
                         holder.createErrorAnnotation(target, ScalaBundle.message("annotator.error.unspecified.value.parameters", missingParameters))
                         return
                       case None => () // The type has no apply method

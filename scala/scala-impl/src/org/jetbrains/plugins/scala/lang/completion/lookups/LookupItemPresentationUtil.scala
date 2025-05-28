@@ -9,12 +9,12 @@ import org.jetbrains.plugins.scala.lang.psi.types.api.presentation.TypeAnnotatio
 import org.jetbrains.plugins.scala.lang.psi.types.api.presentation._
 import org.jetbrains.plugins.scala.lang.psi.types.nonvalue.Parameter
 import org.jetbrains.plugins.scala.lang.psi.types.recursiveUpdate.ScSubstitutor
-import org.jetbrains.plugins.scala.lang.psi.types.{ScType, TypePresentationContext}
+import org.jetbrains.plugins.scala.lang.psi.types.{Context, ScType, TypePresentationContext}
 import org.jetbrains.plugins.scala.project.ProjectContext
 
 private object LookupItemPresentationUtil {
 
-  def presentationStringForParameter(param: Parameter, substitutor: ScSubstitutor): String = {
+  def presentationStringForParameter(param: Parameter, substitutor: ScSubstitutor)(implicit tpc: TypePresentationContext, context: Context): String = {
     val builder = new StringBuilder
     builder.append(param.name)
     builder.append(": " + presentationStringForScalaType(param.paramType, substitutor))
@@ -23,14 +23,14 @@ private object LookupItemPresentationUtil {
     builder.toString()
   }
 
-  def presentationStringForScalaType(scType: ScType): String =
+  def presentationStringForScalaType(scType: ScType)(implicit tpc: TypePresentationContext, context: Context): String =
     presentationStringForScalaType(scType, ScSubstitutor.empty)
 
-  def presentationStringForScalaType(scType: ScType, substitutor: ScSubstitutor): String =
-    substitutor(scType).presentableText(TypePresentationContext.emptyContext)
+  def presentationStringForScalaType(scType: ScType, substitutor: ScSubstitutor)(implicit tpc: TypePresentationContext, context: Context): String =
+    substitutor(scType).presentableText
 
   def presentationStringForJavaType(psiType: PsiType, substitutor: ScSubstitutor)
-                                   (implicit project: ProjectContext): String =
+                                   (implicit project: ProjectContext, tpc: TypePresentationContext, context: Context): String =
     psiType match {
       case tp: PsiEllipsisType =>
         presentationStringForJavaType(tp.getComponentType, substitutor) + "*"
@@ -40,7 +40,7 @@ private object LookupItemPresentationUtil {
 
 
   def presentationStringForPsiElement(element: PsiElement, substitutor: ScSubstitutor)
-                                     (implicit project: ProjectContext): String = {
+                                     (implicit project: ProjectContext, tpc: TypePresentationContext, context: Context): String = {
     def typeRenderer: TypeRenderer =
       presentationStringForScalaType(_, substitutor)
 
@@ -96,7 +96,7 @@ private object LookupItemPresentationUtil {
   }
 
   private def renderPsiParameter(substitutor: ScSubstitutor, param: PsiParameter)
-                                (implicit project: ProjectContext): String = {
+                                (implicit project: ProjectContext, tpc: TypePresentationContext, context: Context): String = {
     val buffer: StringBuilder = new StringBuilder("")
     val list = param.getModifierList
     if (list == null)
