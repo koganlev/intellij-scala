@@ -50,9 +50,11 @@ object ScalaAfterNewCompletionContributor {
                                 context: ProcessingContext,
                                 result: CompletionResultSet): Unit = {
       val place = positionFromParameters(parameters)
-      val types = expectedTypes(place, parentExprClass)
       implicit val project: Project = place.getProject
+      implicit val tpc: TypePresentationContext = TypePresentationContext(place)
       implicit val placeContext: Context = Context(place)
+
+      val types = expectedTypes(place, parentExprClass)
 
       val props = for {
         expectedType <- types
@@ -92,6 +94,7 @@ object ScalaAfterNewCompletionContributor {
       .orElse(expectedTypeInUniversalApply(place, context))
 
   private def expectedTypeConstructor[E <: ScExpression](place: PsiElement, parentExprClass: Class[E]): Option[PropsConstructor] = {
+    implicit val tpc: TypePresentationContext = TypePresentationContext(place)
     implicit val context: Context = Context(place)
 
     val types = expectedTypes(place, parentExprClass)
@@ -143,7 +146,7 @@ object ScalaAfterNewCompletionContributor {
   private[completion] final case class LookupElementProps(`type`: ScType,
                                                           hasSubstitutionProblem: Boolean,
                                                           `class`: PsiClass,
-                                                          substitutor: ScSubstitutor = ScSubstitutor.empty) {
+                                                          substitutor: ScSubstitutor = ScSubstitutor.empty)(implicit tpc: TypePresentationContext, context: Context) {
 
     def createLookupElement(renamesMap: RenamesMap): LookupElement = {
       val isRenamed = for {
@@ -175,7 +178,7 @@ object ScalaAfterNewCompletionContributor {
           presentation.setIcon(`class`)
           presentation.setStrikeout(`class`)
 
-          val parametersText = typeParametersEvaluator(substitutor.andThen(_.presentableText(`class`)))
+          val parametersText = typeParametersEvaluator(substitutor.andThen(_.presentableText))
           presentation.setItemText(renamedPrefix + name + parametersText)
         }
       }
@@ -205,7 +208,7 @@ object ScalaAfterNewCompletionContributor {
 
   private def collectProps(`type`: ScType)
                           (isAccessible: PsiClass => Boolean)
-                          (implicit project: Project, context: Context): Seq[LookupElementProps] = {
+                          (implicit project: Project, tpc: TypePresentationContext, context: Context): Seq[LookupElementProps] = {
     val inheritors = `type`.extractClass.toSeq
       .flatMap(findInheritors)
       .filter { clazz =>

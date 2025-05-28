@@ -12,7 +12,7 @@ import org.jetbrains.plugins.scala.lang.psi.impl.ScalaPsiManager
 import org.jetbrains.plugins.scala.lang.psi.types.api.designator.ScDesignatorType
 import org.jetbrains.plugins.scala.lang.psi.types.api.Boolean
 import org.jetbrains.plugins.scala.lang.psi.types.api.presentation.TypePresentation
-import org.jetbrains.plugins.scala.lang.psi.types.{Compatibility, Context, ScType, api}
+import org.jetbrains.plugins.scala.lang.psi.types.{Compatibility, Context, ScType, TypePresentationContext, api}
 import org.jetbrains.plugins.scala.lang.resolve.ScalaResolveResult
 import org.jetbrains.plugins.scala.lang.resolve.processor.MethodResolveProcessor
 import org.jetbrains.plugins.scala.project.ProjectContext
@@ -27,6 +27,9 @@ object ScCatchBlockAnnotator extends ElementAnnotator[ScCatchBlock] {
 
     element.expression match {
       case Some(expr) =>
+        implicit val tpc: TypePresentationContext = TypePresentationContext(expr)
+        implicit val context: Context = Context(expr)
+
         val tp = expr.`type`().getOrAny
         val throwable = ScalaPsiManager.instance(expr.getProject).getCachedClass(expr.resolveScope, "java.lang.Throwable").orNull
         if (throwable == null) return
@@ -44,7 +47,7 @@ object ScCatchBlockAnnotator extends ElementAnnotator[ScCatchBlock] {
           processor.processType(tp, expr)
           val candidates = processor.candidates
           if (candidates.length != 1) {
-            val error = ScalaBundle.message("method.is.not.member", memberName, tp.presentableText(expr))
+            val error = ScalaBundle.message("method.is.not.member", memberName, tp.presentableText)
             holder.createErrorAnnotation(expr, error)
           } else if (checkReturnTypeIsBoolean) {
             val maybeType = candidates(0) match {
@@ -69,7 +72,7 @@ object ScCatchBlockAnnotator extends ElementAnnotator[ScCatchBlock] {
                     val conformance = smartCheckConformance(t, Right(tp), returnType)
                     if (!conformance) {
                       if (typeAware) {
-                        val (retTypeText, expectedTypeText) = TypePresentation.different(returnType.getOrNothing, tp)(t)
+                        val (retTypeText, expectedTypeText) = TypePresentation.different(returnType.getOrNothing, tp)
                         val error = ScalaBundle.message("expr.type.does.not.conform.expected.type", retTypeText, expectedTypeText)
                         typeElement match {
                           //Don't highlight te if it's outside of original file.

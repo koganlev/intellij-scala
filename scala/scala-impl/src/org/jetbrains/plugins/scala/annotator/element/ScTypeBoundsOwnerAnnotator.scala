@@ -62,7 +62,7 @@ object ScTypeBoundsOwnerAnnotator extends ElementAnnotator[ScTypeBoundsOwner] {
           Seq(element.nameId),
           cbTypeElem.getTextRange,
           ScSubstitutor.empty,
-          tpe.presentableText(cbTypeElem),
+          tpe.presentableText,
           _ => element match {
             case tparam: ScTypeParam => Right(TypeParameterType(tparam))
             case alias: ScTypeAlias =>

@@ -20,6 +20,7 @@ import org.jetbrains.plugins.scala.lang.psi.api.statements.{ScTypeAlias, ScTypeA
 import org.jetbrains.plugins.scala.lang.psi.api.toplevel.templates.{ScExtendsBlock, ScTemplateBody}
 import org.jetbrains.plugins.scala.lang.psi.api.toplevel.typedef.{ScObject, ScTypeDefinition}
 import org.jetbrains.plugins.scala.lang.psi.impl.ScalaPsiElementFactory
+import org.jetbrains.plugins.scala.lang.psi.types.{Context, TypePresentationContext}
 import org.jetbrains.plugins.scala.lang.refactoring.ScTypePresentationExt
 import org.jetbrains.plugins.scala.lang.refactoring.introduceVariable.OccurrenceData.ReplaceOptions
 import org.jetbrains.plugins.scala.lang.refactoring.util.ScalaRefactoringUtil._
@@ -250,6 +251,9 @@ trait IntroduceTypeAlias {
 
   private def replaceTypeElements(occurrences: Array[ScTypeElement], name: String, typeAlias: ScTypeAlias): Array[ScTypeElement] = {
     def replaceHelper(typeElement: ScTypeElement, inName: String): ScTypeElement = {
+      implicit val tpc: TypePresentationContext = TypePresentationContext(typeElement)
+      implicit val context: Context = Context(typeElement)
+
       val replacement = ScalaPsiElementFactory.createTypeElementFromText(inName, typeElement.getContext, typeElement)
       //remove parethesis around typeElement
       if (typeElement.getParent.is[ScParenthesisedTypeElement]) {
@@ -258,7 +262,7 @@ trait IntroduceTypeAlias {
       }
 
       //avoid replacing typeelement that was replaced
-      if (typeElement.calcType.codeText(typeElement) == inName) {
+      if (typeElement.calcType.codeText == inName) {
         typeElement
       } else {
         typeElement.replace(replacement).asInstanceOf[ScTypeElement]

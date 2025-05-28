@@ -41,7 +41,7 @@ import org.jetbrains.plugins.scala.lang.psi.impl.ScalaPsiElementFactory._
 import org.jetbrains.plugins.scala.lang.psi.stubs.util.ScalaInheritors
 import org.jetbrains.plugins.scala.lang.psi.types.api.TypeParameterType
 import org.jetbrains.plugins.scala.lang.psi.types.result._
-import org.jetbrains.plugins.scala.lang.psi.types.{ScType, TypePresentationContext}
+import org.jetbrains.plugins.scala.lang.psi.types.{Context, ScType, TypePresentationContext}
 import org.jetbrains.plugins.scala.lang.refactoring.ScTypePresentationExt
 import org.jetbrains.plugins.scala.lang.refactoring.ScalaNamesValidator.isIdentifier
 import org.jetbrains.plugins.scala.lang.resolve.ScalaResolveResult
@@ -701,7 +701,7 @@ object ScalaRefactoringUtil {
         builder.append("new ")
         val types = n.extendsBlock.superTypes
         for (tp <- types) {
-          builder.append(tp.codeText(expr))
+          builder.append(tp.codeText(expr, Context(expr)))
           if (tp != types.last) builder.append(" with ")
         }
         n.extendsBlock.templateBody match {

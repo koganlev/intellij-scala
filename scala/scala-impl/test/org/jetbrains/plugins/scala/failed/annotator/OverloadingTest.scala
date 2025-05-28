@@ -9,7 +9,7 @@ import org.jetbrains.plugins.scala.base.ScalaLightCodeInsightFixtureTestCase
 import org.jetbrains.plugins.scala.lang.psi.api.base.types.{ScTypeElement, ScTypeElementExt}
 import org.jetbrains.plugins.scala.lang.psi.api.expr.{ScBlockExpr, ScExpression}
 import org.jetbrains.plugins.scala.lang.psi.api.statements.ScPatternDefinition
-import org.jetbrains.plugins.scala.lang.psi.types.{Context, ScTypeExt}
+import org.jetbrains.plugins.scala.lang.psi.types.{Context, ScTypeExt, TypePresentationContext}
 import org.jetbrains.plugins.scala.lang.psi.types.api.presentation.TypePresentation
 import org.jetbrains.plugins.scala.util.assertions.MatcherAssertions
 import org.junit.Assert._
@@ -52,6 +52,7 @@ abstract class OverloadingTestBase extends ScalaLightCodeInsightFixtureTestCase 
   // TODO Why do we have this custom _implementation_ in a _test_?
   // TODO Use TypeMismatchError.register
   private def checkConformance(expression: ScExpression, typeElement: ScTypeElement, holder: ScalaAnnotationHolder): Unit = {
+    implicit val tpc: TypePresentationContext = TypePresentationContext(expression)
     implicit val context: Context = Context(expression)
 
     expression.getTypeAfterImplicitConversion().tr.foreach { actual =>
@@ -61,7 +62,7 @@ abstract class OverloadingTestBase extends ScalaLightCodeInsightFixtureTestCase 
           case b: ScBlockExpr => b.getRBrace.getOrElse(b)
           case _ => expression
         }
-        val (actualText, expText) = TypePresentation.different(actual, expected)(expr)
+        val (actualText, expText) = TypePresentation.different(actual, expected)
         holder.createErrorAnnotation(
           expr,
           ScalaBundle.message("type.mismatch.found.required", actualText, expText),

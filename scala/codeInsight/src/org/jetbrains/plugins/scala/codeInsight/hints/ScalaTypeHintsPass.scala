@@ -23,7 +23,7 @@ import org.jetbrains.plugins.scala.lang.psi.api.statements.params.{ScParameter, 
 import org.jetbrains.plugins.scala.lang.psi.api.statements.{ScFunction, ScFunctionDefinition, ScPatternDefinition, ScValueOrVariable, ScVariableDefinition}
 import org.jetbrains.plugins.scala.lang.psi.types.nonvalue.ScMethodType
 import org.jetbrains.plugins.scala.lang.psi.types.result.Typeable
-import org.jetbrains.plugins.scala.lang.psi.types.{ScType, TypePresentationContext}
+import org.jetbrains.plugins.scala.lang.psi.types.{Context, ScType, TypePresentationContext}
 import org.jetbrains.plugins.scala.settings.ScalaApplicationSettings.{getInstance => ScalaApplicationSettings}
 import org.jetbrains.plugins.scala.settings.ScalaHighlightingMode
 import org.jetbrains.plugins.scala.settings.annotations.Definition
@@ -48,7 +48,7 @@ private[codeInsight] trait ScalaTypeHintsPass {
         if !(settings.preserveIndents && (!element.textContains('\n') && definition.hasCustomIndents || adjacentDefinitionsHaveCustomIndent(element)))
         if !ScMethodType.hasMethodType(body)
         if settings.showObviousType || !(definition.hasStableType || isTypeObvious(definition.name, tpe, body))
-        info <- hintFor(definition, tpe, menu)(editor.getColorsScheme, TypePresentationContext(element), settings)
+        info <- hintFor(definition, tpe, menu)(editor.getColorsScheme, TypePresentationContext(element), Context(element), settings)
       } yield info) ++ (if (ScalaHintsSettings.xRayMode) collectXRayHints(editor, root) else Seq.empty)
     }.toSeq
   }
@@ -141,7 +141,7 @@ private object ScalaTypeHintsPass {
   }
 
   private def hintFor(definition: Definition, returnType: ScType, menu: MenuProvider)
-                     (implicit scheme: EditorColorsScheme, context: TypePresentationContext, settings: ScalaHintsSettings): Option[Hint] =
+                     (implicit scheme: EditorColorsScheme, tpc: TypePresentationContext, context: Context, settings: ScalaHintsSettings): Option[Hint] =
     for {
       anchor <- definition.parameterList
       suffix = definition match {

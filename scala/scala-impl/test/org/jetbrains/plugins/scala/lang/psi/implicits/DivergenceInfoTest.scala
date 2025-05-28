@@ -5,7 +5,7 @@ import org.jetbrains.plugins.scala.base.ScalaLightCodeInsightFixtureTestCase
 import org.jetbrains.plugins.scala.extensions.{IterableOnceExt, PsiElementExt, PsiNamedElementExt}
 import org.jetbrains.plugins.scala.lang.psi.api.ScalaFile
 import org.jetbrains.plugins.scala.lang.psi.api.statements.ScValueOrVariable
-import org.jetbrains.plugins.scala.lang.psi.types.ScType
+import org.jetbrains.plugins.scala.lang.psi.types.{Context, ScType, TypePresentationContext}
 import org.jetbrains.plugins.scala.util.assertions.AssertionMatchers.AssertMatchersExt
 
 class DivergenceInfoTest extends ScalaLightCodeInsightFixtureTestCase {
@@ -29,12 +29,15 @@ class DivergenceInfoTest extends ScalaLightCodeInsightFixtureTestCase {
         Format(decl.declaredNames.head, error, error, error, error)
 
       def fromType(decl: ScValueOrVariable, tp: ScType): Format = {
+        implicit val tpc: TypePresentationContext = TypePresentationContext(decl)
+        implicit val context: Context = Context(decl)
+
         val info = DivergenceInfo(tp)
         Format(
           decl.declaredNames.head,
-          info.coreType.presentableText(decl),
+          info.coreType.presentableText,
           info.complexity.toString,
-          info.topLevelTypeConstructors.map(_.presentableText(decl)).toSeq.sorted.mkString(", "),
+          info.topLevelTypeConstructors.map(_.presentableText).toSeq.sorted.mkString(", "),
           info.coveringSet.map(_.name).toSeq.sorted.mkString(", "),
         )
       }

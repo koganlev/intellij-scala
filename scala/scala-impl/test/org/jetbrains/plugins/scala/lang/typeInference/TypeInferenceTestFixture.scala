@@ -5,7 +5,7 @@ import org.jetbrains.plugins.scala.ScalaVersion
 import org.jetbrains.plugins.scala.base.ScalaSdkOwner
 import org.jetbrains.plugins.scala.lang.psi.api.ScalaFile
 import org.jetbrains.plugins.scala.lang.psi.api.expr.ScExpression
-import org.jetbrains.plugins.scala.lang.psi.types.TypePresentationContext
+import org.jetbrains.plugins.scala.lang.psi.types.{Context, TypePresentationContext}
 import org.jetbrains.plugins.scala.lang.psi.types.api.presentation.TypePresentation
 import org.jetbrains.plugins.scala.lang.psi.types.result._
 import org.jetbrains.plugins.scala.lang.typeInference.TypeInferenceTestFixture.extractTextForCurrentVersion
@@ -54,6 +54,8 @@ final class TypeInferenceTestFixture(
         val expectedTextForCurrentVersion = extractTextForCurrentVersion(lastLineCommentText, scalaVersion)
 
         implicit val tpc: TypePresentationContext = TypePresentationContext.emptyContext
+        implicit val context: Context = Context.Empty
+
         val expressionTypeText = expressionType.presentableText
 
         if (expectedTextForCurrentVersion.startsWith(FewVariantsMarker)) {

@@ -59,6 +59,16 @@ class ScalaTypePresentationTest extends ScalaLightCodeInsightFixtureTestCase {
     expected = "HCT[Int => *]"
   )
 
+  def testOpaqueTypeInt(): Unit = {
+    assertPresentationIs(
+      "Inside.T", "Inside.T", "object Inside { opaque type T = Int }")
+  }
+
+  def testOpaqueTypeTuple(): Unit = {
+    assertPresentationIs(
+      "Inside.T", "Inside.T", "object Inside { opaque type T = (Int, Int) }")
+  }
+
   private def assertPresentationIs(tpe: String): Unit = assertPresentationIs(tpe, tpe)
 
   private def assertPresentationIs(tpe: String, expected: String, header: String = ""): Unit = {
@@ -67,8 +77,8 @@ class ScalaTypePresentationTest extends ScalaLightCodeInsightFixtureTestCase {
         getProject
       )
 
-    val typeElement = file.elements.findByType[ScTypeElement].get
-    val actual = typeElement.`type`().get.presentableText(TypePresentationContext(typeElement))
+    val typeElement = file.elements.collectFirst { case e: ScTypeElement if e.getTextOffset > header.length => e }.get
+    val actual = typeElement.`type`().get.presentableText(TypePresentationContext(typeElement), Context(typeElement))
     assertEquals(expected, actual)
   }
 }

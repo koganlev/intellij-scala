@@ -9,7 +9,7 @@ import org.jetbrains.plugins.scala.lang.completion.{CaptureExt, ScalaCompletionC
 import org.jetbrains.plugins.scala.lang.parser
 import org.jetbrains.plugins.scala.lang.psi.api.base.patterns._
 import org.jetbrains.plugins.scala.lang.psi.api.expr._
-import org.jetbrains.plugins.scala.lang.psi.types.{Context, ScType}
+import org.jetbrains.plugins.scala.lang.psi.types.{Context, ScType, TypePresentationContext}
 import org.jetbrains.plugins.scala.lang.surroundWith.surrounders.expression.ScalaPsiElementExt
 
 final class ExhaustiveMatchCompletionContributor extends ScalaCompletionContributor {
@@ -83,6 +83,7 @@ object ExhaustiveMatchCompletionContributor {
 
     override final protected def addCompletions(expression: E, result: CompletionResultSet)
                                                (implicit parameters: ClauseCompletionParameters): Unit = {
+      implicit val tpc: TypePresentationContext = TypePresentationContext(expression)
       implicit val context: Context = Context(expression)
 
       for {

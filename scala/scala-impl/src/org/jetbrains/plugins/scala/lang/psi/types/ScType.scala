@@ -42,7 +42,7 @@ trait ScType extends ProjectContextOwner {
   // TODO: we must not override toString which does such a complex stuff (resolve, tree traversal etc...)
   //  for such things we should always use explicit methods oText/mkString/presentableText/etc...
   override final def toString: String = ifReadAllowed {
-    presentableText(TypePresentationContext.emptyContext)
+    presentableText(TypePresentationContext.emptyContext, Context.Empty)
   }(getClass.getSimpleName)
 
   def isValue: Boolean
@@ -66,14 +66,14 @@ trait ScType extends ProjectContextOwner {
   def typeDepth: Int = 1
 
   @Nls
-  def presentableText(implicit tpc: TypePresentationContext): String =
+  def presentableText(implicit tpc: TypePresentationContext, context: Context): String =
     typeSystem.presentableText(this)
 
-  def canonicalText: String = canonicalText(TypePresentationContext.emptyContext)
+  def canonicalText: String = canonicalText(TypePresentationContext.emptyContext)(Context.Empty)
 
-  def canonicalText(tpc: TypePresentationContext): String = typeSystem.canonicalText(this, tpc)
+  def canonicalText(tpc: TypePresentationContext)(implicit context: Context): String = typeSystem.canonicalText(this, tpc)
 
-  def typeText(nameRenderer: NameRenderer, options: PresentationOptions)(implicit tpc: TypePresentationContext): String =
+  def typeText(nameRenderer: NameRenderer, options: PresentationOptions)(implicit tpc: TypePresentationContext, context: Context): String =
     typeSystem.typeText(this, nameRenderer, options)
 }
 
@@ -84,7 +84,7 @@ object ScType {
 trait NamedType extends ScType {
   val name: String
 
-  override def presentableText(implicit context: TypePresentationContext): String = name
+  override def presentableText(implicit tpc: TypePresentationContext, context: Context): String = name
 
   override def canonicalText: String =
     if (ScalaApplicationSettings.PRECISE_TEXT) super.canonicalText // #SCL-21178

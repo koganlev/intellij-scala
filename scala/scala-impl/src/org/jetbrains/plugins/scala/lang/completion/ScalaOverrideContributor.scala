@@ -22,6 +22,7 @@ import org.jetbrains.plugins.scala.lang.psi.api.toplevel.ScModifierListOwner
 import org.jetbrains.plugins.scala.lang.psi.api.toplevel.templates.ScTemplateBody
 import org.jetbrains.plugins.scala.lang.psi.api.toplevel.typedef.ScTemplateDefinition
 import org.jetbrains.plugins.scala.lang.psi.impl.ScalaPsiElementFactory
+import org.jetbrains.plugins.scala.lang.psi.types.{Context, TypePresentationContext}
 import org.jetbrains.plugins.scala.overrideImplement._
 import org.jetbrains.plugins.scala.project.ScalaFeatures
 import org.jetbrains.plugins.scala.util.TypeAnnotationUtil
@@ -49,6 +50,9 @@ class ScalaOverrideContributor extends ScalaCompletionContributor {
         // one word (simple completion throw generation all possible variants)
 
         val position = positionFromParameters(parameters)
+        implicit val tpc: TypePresentationContext = TypePresentationContext(position)
+        implicit val context: Context = Context(position)
+
         val maybeBody = Option(position.getContext.getContext).collect {
           case body: ScTemplateBody => body
         }
@@ -75,6 +79,9 @@ class ScalaOverrideContributor extends ScalaCompletionContributor {
                                   processingContext: ProcessingContext,
                                   completionResultSet: CompletionResultSet): Unit = {
         val position = positionFromParameters(completionParameters)
+        implicit val tpc: TypePresentationContext = TypePresentationContext(position)
+        implicit val context: Context = Context(position)
+
         val hasOverride = position.getParent match {
           case parameter: ScClassParameter => parameter.hasModifierPropertyScala("override")
           case _ => false
@@ -100,6 +107,8 @@ class ScalaOverrideContributor extends ScalaCompletionContributor {
 
     override def addCompletions(parameters: CompletionParameters, context: ProcessingContext, resultSet: CompletionResultSet): Unit = {
       val position = positionFromParameters(parameters)
+      implicit val tpc: TypePresentationContext = TypePresentationContext(position)
+      implicit val context: Context = Context(position)
 
       Option(PsiTreeUtil.getContextOfType(position, classOf[ScDeclaration])).collect {
         case ml: ScModifierListOwner => ml
@@ -228,7 +237,7 @@ object ScalaOverrideContributor {
       (clazz, getMembersToOverride(clazz) ++ getMembersToImplement(clazz, withSelfType = true))
   }
 
-  private def createLookupElement(member: ClassMember, lookupString: String, hasOverride: Boolean) = {
+  private def createLookupElement(member: ClassMember, lookupString: String, hasOverride: Boolean)(implicit tpc: TypePresentationContext, context: Context) = {
     import Iconable._
 
     val lookupObject = member match {
@@ -299,7 +308,8 @@ object ScalaOverrideContributor {
     presentation.setItemText(itemText)
   }
 
-  private def expensiveRenderer(member: ClassMember, icon: Icon): LookupElementRenderer[LookupElement] = { (element, presentation) =>
+  private def expensiveRenderer(member: ClassMember, icon: Icon)
+                               (implicit tpc: TypePresentationContext, context: Context): LookupElementRenderer[LookupElement] = { (element, presentation) =>
     def typeText: String = {
       val maybeType = member match {
         case member: ScalaTypedMember if !member.is[JavaFieldMember] => Some(member.scType)
@@ -307,7 +317,7 @@ object ScalaOverrideContributor {
         case _ => None
       }
 
-      maybeType.map(_.presentableText(member.getPsiElement)).getOrElse("")
+      maybeType.map(_.presentableText).getOrElse("")
     }
 
     element.renderElement(presentation)

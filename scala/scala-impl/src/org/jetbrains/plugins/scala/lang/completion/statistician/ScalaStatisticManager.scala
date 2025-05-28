@@ -6,14 +6,18 @@ import org.jetbrains.plugins.scala.lang.psi.api.base.patterns.ScBindingPattern
 import org.jetbrains.plugins.scala.lang.psi.api.statements.params.{ScClassParameter, ScParameter}
 import org.jetbrains.plugins.scala.lang.psi.api.statements.{ScFunction, ScTypeAlias, ScValue, ScVariable}
 import org.jetbrains.plugins.scala.lang.psi.api.toplevel.typedef.{ScClass, ScObject, ScTrait}
+import org.jetbrains.plugins.scala.lang.psi.types.{Context, TypePresentationContext}
 import org.jetbrains.plugins.scala.lang.psi.types.result._
 
 
 object ScalaStatisticManager {
   def memberKey(element: PsiElement): Option[String] = {
+    implicit val tpc: TypePresentationContext = TypePresentationContext(element)
+    implicit val context: Context = Context(element)
+
     val value = element match {
       case f: ScFunction => s"function#${f.name}" +
-        f.parameters.map(p => "#" + p.`type`().getOrAny.presentableText(element)).mkString
+        f.parameters.map(p => "#" + p.`type`().getOrAny.presentableText).mkString
       case o: ScObject => s"object#${o.qualifiedName}"
       case c: ScClass => s"class#${c.qualifiedName}"
       case t: ScTrait => s"trait#${t.qualifiedName}"

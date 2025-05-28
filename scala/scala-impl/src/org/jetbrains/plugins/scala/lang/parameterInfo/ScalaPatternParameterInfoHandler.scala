@@ -46,6 +46,8 @@ class ScalaPatternParameterInfoHandler extends ScalaParameterInfoHandler[ScPatte
     context.getParameterOwner match {
       case args: ScPatternArgumentList =>
         implicit val ctx: ProjectContext = args
+        implicit val tpc: TypePresentationContext = TypePresentationContext(args)
+        implicit val elementContext: Context = Context(args)
 
         val color: Color = context.getDefaultParameterColor
         val hoverIndex = context.getCurrentParameterIndex
@@ -77,7 +79,7 @@ class ScalaPatternParameterInfoHandler extends ScalaParameterInfoHandler[ScPatte
                 buffer.append(params.zipWithIndex.map {
                   case ((param, isSeq), i) =>
                     val sb = new StringBuilder()
-                    sb.append(param.presentableText(method))
+                    sb.append(param.presentableText)
 
                     if (isSeq) sb.append("*")
 

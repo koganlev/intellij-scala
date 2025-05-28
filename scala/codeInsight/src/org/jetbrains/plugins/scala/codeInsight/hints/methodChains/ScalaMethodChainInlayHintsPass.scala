@@ -18,7 +18,7 @@ import org.jetbrains.plugins.scala.extensions.{&, ObjectExt, Parent, PsiElementE
 import org.jetbrains.plugins.scala.lang.lexer.{ScalaTokenType, ScalaTokenTypes}
 import org.jetbrains.plugins.scala.lang.psi.api.expr.{MethodInvocation, ScArgumentExprList, ScBlockExpr, ScExpression, ScFunctionExpr, ScInfixExpr, ScMethodCall, ScParenthesisedExpr, ScReferenceExpression}
 import org.jetbrains.plugins.scala.lang.psi.types.api.designator.DesignatorOwner
-import org.jetbrains.plugins.scala.lang.psi.types.{ScType, TypePresentationContext}
+import org.jetbrains.plugins.scala.lang.psi.types.{Context, ScType, TypePresentationContext}
 import org.jetbrains.plugins.scala.settings.ScalaHighlightingMode
 import org.jetbrains.plugins.scala.settings.annotations.Expression
 
@@ -47,6 +47,9 @@ private[codeInsight] trait ScalaMethodChainInlayHintsPass {
     val builder = Seq.newBuilder[(Seq[AlignedHintTemplate], ScExpression)]
 
     def gatherFor(elem: PsiElement): Set[Int] = {
+      implicit val tpc: TypePresentationContext = TypePresentationContext(elem)
+      implicit val context: Context = Context(elem)
+
       if (!elem.isVisible) return Set.empty
 
       var occupiedLines = Set.empty[Int]
@@ -75,7 +78,7 @@ private[codeInsight] trait ScalaMethodChainInlayHintsPass {
 
         if filteredMethodAndTypes.length >= minChainCount
 
-        uniqueTypeCount = filteredMethodAndTypes.map { case (m, ty) => ty.presentableText(m) }.toSet.size
+        uniqueTypeCount = filteredMethodAndTypes.map { case (m, ty) => ty.presentableText }.toSet.size
         if uniqueTypeCount >= settings.uniqueTypesToShowMethodChains
       } {
         val finalSelection = if (settings.alignMethodChainInlayHints) withoutPackagesAndSingletons else filteredMethodAndTypes
@@ -304,8 +307,12 @@ private object ScalaMethodChainInlayHintsPass {
     }
 
     val (expr, ty) = methodAndTypes
+
+    implicit val tpc: TypePresentationContext = TypePresentationContext(expr)
+    implicit val context: Context = Context(expr)
+
     Expression(expr).hasStableType ||
-      isTypeObvious("", ty.presentableText(expr), methodName(expr))
+      isTypeObvious("", ty.presentableText, methodName(expr))
   }
 
   private def removeLastIfHasTypeMismatch(methodsWithTypes: Seq[AlignedHintTemplate],
