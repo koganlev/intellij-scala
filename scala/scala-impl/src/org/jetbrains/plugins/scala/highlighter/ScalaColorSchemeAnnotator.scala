@@ -150,7 +150,7 @@ object ScalaColorSchemeAnnotator {
         }
       case alias: ScTypeAlias =>
         alias.getOriginalElement match {
-          case originalElement: ScTypeAliasDefinition =>
+          case originalElement: ScTypeAliasDefinition if !originalElement.isEffectivelyOpaque =>
             originalElement.aliasedType.foreach(annotateCollectionByType)
           case _ =>
         }

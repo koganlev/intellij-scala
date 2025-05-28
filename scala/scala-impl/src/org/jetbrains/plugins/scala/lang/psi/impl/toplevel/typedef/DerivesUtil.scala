@@ -219,7 +219,7 @@ object DerivesUtil {
         case tc: ScClass => Right(tc)
         case tc: ScTrait => Right(tc)
         case _: PsiClass => Left(ScalaBundle.message("derives.scala.class.expected"))
-        case alias: ScTypeAliasDefinition =>
+        case alias: ScTypeAliasDefinition if !alias.isEffectivelyOpaque =>
           val aliasedType = alias.aliasedType.getOrAny
           aliasedType.extractClass match {
             case Some(tc: ScClass) => Right(tc)
