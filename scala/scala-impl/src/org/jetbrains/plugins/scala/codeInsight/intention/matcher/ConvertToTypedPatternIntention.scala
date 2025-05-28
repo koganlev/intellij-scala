@@ -8,13 +8,12 @@ import org.jetbrains.plugins.scala.ScalaBundle
 import org.jetbrains.plugins.scala.extensions._
 import org.jetbrains.plugins.scala.lang.psi.ScalaPsiUtil
 import org.jetbrains.plugins.scala.lang.psi.api.base.ScStableCodeReference
+import org.jetbrains.plugins.scala.lang.psi.api.base.patterns.ScExtractorPattern.ExtractorTarget
 import org.jetbrains.plugins.scala.lang.psi.api.base.patterns.{ScConstructorPattern, ScExtractorPattern}
-import org.jetbrains.plugins.scala.lang.psi.api.statements.ScFunctionDefinition
 import org.jetbrains.plugins.scala.lang.psi.api.toplevel.typedef.{ScClass, ScObject}
 import org.jetbrains.plugins.scala.lang.psi.impl.ScalaPsiElementFactory.createPatternFromText
 import org.jetbrains.plugins.scala.lang.psi.types.{Context, ScalaType, TypePresentationContext}
 import org.jetbrains.plugins.scala.lang.refactoring.namesSuggester.NameSuggester
-import org.jetbrains.plugins.scala.lang.resolve.ScalaResolveResult
 
 
 class ConvertToTypedPatternIntention extends PsiElementBaseIntentionAction {
@@ -37,9 +36,9 @@ class ConvertToTypedPatternIntention extends PsiElementBaseIntentionAction {
     val codeRef = element.getParent.asInstanceOf[ScStableCodeReference]
     val constrPattern = codeRef.getParent.asInstanceOf[ScExtractorPattern]
     val name = constrPattern.targetFor(constrPattern.expectedType) match {
-      case Some( result @ ScalaResolveResult(fun: ScFunctionDefinition, _)) if fun.name == "unapply"=>
+      case Some(target: ExtractorTarget.Unapply) =>
         // TODO follow aliases
-        result.parentElement match {
+        target.resolveResult.parentElement match {
           case Some(obj: ScObject) =>
             ScalaPsiUtil.getCompanionModule(obj) match {
               case Some(cls: ScClass) =>

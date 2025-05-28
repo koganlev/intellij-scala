@@ -355,7 +355,7 @@ object ScPattern {
       override final def isEmpty: Boolean = productTypes.isEmpty
     }
 
-    private[ScPattern] object Unapply {
+    private[patterns] object Unapply {
       def boolean(tpe: ScType): Unapply = product(Seq.empty, tpe)
 
       def tuple(tuple: ScType, comps: Seq[ScType]): Unapply = new Unapply {

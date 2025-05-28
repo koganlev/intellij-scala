@@ -70,7 +70,7 @@ class ApplyUnapplyForBindingSearcher extends QueryExecutor[PsiReference, Referen
     def unapply(ref: PsiReference): Option[ScReference] = {
       (ref, ref.getElement.getContext) match {
         case (sref: ScStableCodeReference, extractorPattern: ScExtractorPattern) =>
-          extractorPattern.targetFor(extractorPattern.expectedType) match {
+          extractorPattern.bindWithScrutinee(extractorPattern.expectedType) match {
             case Some(resolve@ScalaResolveResult(fun: ScFunctionDefinition, _)) if fun.isUnapplyMethod =>
               resolve.innerResolveResult match {
                 case Some(ScalaResolveResult(`binding`, _)) => Some(sref)

@@ -1,14 +1,14 @@
 package org.jetbrains.plugins.scala.lang.psi.api.base.patterns
 
 import com.intellij.psi.PsiElement
-import org.jetbrains.plugins.scala.extensions.PsiElementExt
+import org.jetbrains.plugins.scala.extensions.{ObjectExt, PsiElementExt}
 import org.jetbrains.plugins.scala.lang.lexer.ScalaTokenTypes
 import org.jetbrains.plugins.scala.lang.psi.ElementScope
 import org.jetbrains.plugins.scala.lang.psi.ScalaPsiUtil.FakeCompanionClassOrCompanionClass
 import org.jetbrains.plugins.scala.lang.psi.api.base.ScStableCodeReference
-import org.jetbrains.plugins.scala.lang.psi.api.base.patterns.ScExtractorPattern.ArgPatternsMapping
-import org.jetbrains.plugins.scala.lang.psi.api.base.patterns.ScPattern.SeqExpectingPattern
-import org.jetbrains.plugins.scala.lang.psi.api.statements.ScFunction
+import org.jetbrains.plugins.scala.lang.psi.api.base.patterns.ScExtractorPattern.{ArgPatternsMapping, ExtractorTarget}
+import org.jetbrains.plugins.scala.lang.psi.api.base.patterns.ScPattern.{ExtractorMatch, SeqExpectingPattern}
+import org.jetbrains.plugins.scala.lang.psi.api.statements.{ScFunction, ScMacroDefinition}
 import org.jetbrains.plugins.scala.lang.psi.api.statements.ScFunction.CommonNames
 import org.jetbrains.plugins.scala.lang.psi.api.statements.params.ScParameter
 import org.jetbrains.plugins.scala.lang.psi.api.toplevel.typedef.ScClass
@@ -16,6 +16,7 @@ import org.jetbrains.plugins.scala.lang.psi.impl.ScalaPsiElementFactory
 import org.jetbrains.plugins.scala.lang.psi.impl.base.patterns.ScInterpolationPatternImpl
 import org.jetbrains.plugins.scala.lang.psi.impl.expr.PatternTypeInference
 import org.jetbrains.plugins.scala.lang.psi.types.ScType
+import org.jetbrains.plugins.scala.lang.psi.types.api.StdTypes
 import org.jetbrains.plugins.scala.lang.psi.types.api.designator.ScThisType
 import org.jetbrains.plugins.scala.lang.psi.types.recursiveUpdate.ScSubstitutor
 import org.jetbrains.plugins.scala.lang.resolve.ScalaResolveResult
@@ -30,20 +31,132 @@ trait ScExtractorPattern extends ScPattern {
   def ref: ScStableCodeReference
   final def argPatterns: Seq[ScPattern] = subpatterns
 
-  final def targetFor(scrutineeType: Option[ScType]): Option[ScalaResolveResult] =
+  final def bindWithScrutinee(scrutineeType: Option[ScType]): Option[ScalaResolveResult] =
     ExpandedExtractorResolveProcessor.resolveActualUnapply(ref, scrutineeType)
 
+  final def targetFor(scrutineeType: Option[ScType]): Option[ExtractorTarget] = {
+    bindWithScrutinee(scrutineeType).collect {
+      case srr@ScalaResolveResult(fun: ScFunction, _) if fun.name == CommonNames.Unapply && ScPattern.isQuasiquote(fun) =>
+        new ExtractorTarget.Quasiquote(fun, srr, scrutineeType, this)
+      case srr@ScalaResolveResult(fun: ScFunction, _) if fun.name == CommonNames.Unapply && QuasiquoteInferUtil.isMetaQQ(fun) =>
+        new ExtractorTarget.MetaQQ(fun, srr, scrutineeType, this)
+      case srr@ScalaResolveResult(fun: ScFunction, _) if fun.name == CommonNames.Unapply && fun.parameters.count(!_.isImplicit) == 1 =>
+        new ExtractorTarget.Unapply(fun, srr, scrutineeType, this)
+      case srr@ScalaResolveResult(fun: ScFunction, _) if fun.name == CommonNames.UnapplySeq && fun.parameters.count(!_.isImplicit) == 1 =>
+        new ExtractorTarget.UnapplySeq(fun, srr, scrutineeType, this)
+      case srr@ScalaResolveResult(FakeCompanionClassOrCompanionClass(cl: ScClass), _) if cl.isCase && cl.tooBigForUnapply =>
+        new ExtractorTarget.TooBigCaseClass(cl,srr, scrutineeType, this)
+    }
+  }
+
   final def argPatternsMapping(scrutineeType: Option[ScType]): Option[ArgPatternsMapping] =
-    ArgPatternsMapping(this, scrutineeType)
+    targetFor(scrutineeType).flatMap(_.argPatternsMapping)
 }
 
 object ScExtractorPattern {
+  sealed abstract class ExtractorTarget(val resolveResult: ScalaResolveResult, scrutineeType: Option[ScType], protected val pattern: ScExtractorPattern) {
+    def unapplyType: Option[ScType]
+    final lazy val substitutor: ScSubstitutor = {
+      val subst = resolveResult.substitutor
+      scrutineeType.fold(subst)(tp => subst.followed(PatternTypeInference.doTypeInference(pattern, tp)))
+    }
+
+    def isMacroExtractor: Boolean
+    def argPatternsMapping: Option[ArgPatternsMapping]
+  }
+
+  object ExtractorTarget {
+    sealed abstract class Function(ssr: ScalaResolveResult, sty: Option[ScType], pattern: ScExtractorPattern) extends ExtractorTarget(ssr, sty, pattern) {
+      def targetFunction: ScFunction
+      final def returnType: Option[ScType] = targetFunction.returnType.map(substitutor).toOption
+      final def unapplyType: Option[ScType] = returnType
+
+      final override def isMacroExtractor: Boolean = targetFunction.is[ScMacroDefinition]
+    }
+
+    trait WithExtractorMatches {
+      def extractorMatches: Option[LazyList[ExtractorMatch]]
+    }
+
+    final class Quasiquote private[ScExtractorPattern](override val targetFunction: ScFunction, ssr: ScalaResolveResult, sty: Option[ScType], p: ScExtractorPattern) extends Function(ssr, sty, p) {
+      override def argPatternsMapping: Some[ArgPatternsMapping] = Some(new ArgPatternsMapping.Quasiquote(pattern, targetFunction))
+    }
+    final class MetaQQ private[ScExtractorPattern](override val targetFunction: ScFunction, ssr: ScalaResolveResult, sty: Option[ScType], p: ScExtractorPattern) extends Function(ssr, sty, p) {
+      override def argPatternsMapping: Option[ArgPatternsMapping] = try {
+        val interpolationPattern = pattern.asInstanceOf[ScInterpolationPatternImpl]
+        val qqPatterns = QuasiquoteInferUtil.getMetaQQPatternTypes(interpolationPattern)
+        Some(new ArgPatternsMapping.MetaQQ(pattern.subpatterns.zip(qqPatterns).toMap, targetFunction))
+      } catch {
+        case _: ArrayIndexOutOfBoundsException => None // workaround for meta parser failure on malformed quasiquotes
+      }
+    }
+    final class Unapply private[ScExtractorPattern](override val targetFunction: ScFunction, ssr: ScalaResolveResult, sty: Option[ScType], p: ScExtractorPattern) extends Function(ssr, sty, p) with WithExtractorMatches {
+      override def extractorMatches: Option[LazyList[ExtractorMatch.Unapply]] = returnType.map(ScPattern.unapplyExtractorMatches(_, pattern, targetFunction))
+      override def argPatternsMapping: Option[ArgPatternsMapping] = extractorMatches.map(new ArgPatternsMapping.Unapply(_, pattern))
+    }
+    final class UnapplySeq private[ScExtractorPattern](override val targetFunction: ScFunction,ssr: ScalaResolveResult, sty: Option[ScType], p: ScExtractorPattern) extends Function(ssr, sty, p) with WithExtractorMatches {
+      override def extractorMatches: Option[LazyList[ExtractorMatch.UnapplySeq]] = returnType.map(ScPattern.unapplySeqExtractorMatches(_, pattern, targetFunction))
+      override def argPatternsMapping: Option[ArgPatternsMapping] = extractorMatches.map(new ArgPatternsMapping.UnapplySeq(_, pattern))
+    }
+    final class TooBigCaseClass private[ScExtractorPattern](val clazz: ScClass, ssr: ScalaResolveResult, sty: Option[ScType], p: ScExtractorPattern) extends ExtractorTarget(ssr, sty, p) with WithExtractorMatches {
+      def unapplyType: Option[ScType] = clazz.`type`().toOption.map(substitutor)
+
+      def extractorMatch: ExtractorMatch = {
+        implicit val elementScope: ElementScope = pattern.elementScope
+        val undefSubst = substitutor.followed(ScSubstitutor(ScThisType(clazz)))
+        val params: Seq[ScParameter] = clazz.parameters
+        val types = params.map(_.`type`().getOrAny).map(undefSubst)
+        val selectorType = unapplyType.getOrElse(StdTypes.instance.Any)
+
+        if (types.nonEmpty && params.last.isVarArgs) {
+          ExtractorMatch.UnapplySeq(types.dropRight(1), types.last.tryWrapIntoSeqType, selectorType)
+        } else {
+          ExtractorMatch.Unapply.productWithSelector(types, selectorType)
+        }
+      }
+
+      override def extractorMatches: Some[LazyList[ExtractorMatch]] = Some(LazyList(extractorMatch))
+      override def argPatternsMapping: Some[ArgPatternsMapping] = extractorMatch match {
+        case unapply: ExtractorMatch.Unapply => Some(new ArgPatternsMapping.Unapply(LazyList(unapply), pattern))
+        case unapply: ExtractorMatch.UnapplySeq => Some(new ArgPatternsMapping.UnapplySeq(LazyList(unapply), pattern))
+        case _ =>
+          throw new AssertionError("extractorMatch should always be Unapply or UnapplySeq")
+      }
+
+      override def isMacroExtractor: false = false
+    }
+
+    object UnapplyMatches {
+      def unapply(target: ExtractorTarget): Option[LazyList[ExtractorMatch.Unapply]] = target match {
+        case target: ExtractorTarget.Unapply => target.extractorMatches
+        case target: ExtractorTarget.TooBigCaseClass => target.extractorMatch.asOptionOf[ExtractorMatch.Unapply].map(LazyList(_))
+        case _ => None
+      }
+    }
+
+    object UnapplySeqMatches {
+      def unapply(target: ExtractorTarget): Option[LazyList[ExtractorMatch.UnapplySeq]] = target match {
+        case target: ExtractorTarget.UnapplySeq => target.extractorMatches
+        case target: ExtractorTarget.TooBigCaseClass => target.extractorMatch.asOptionOf[ExtractorMatch.UnapplySeq].map(LazyList(_))
+        case _ => None
+      }
+    }
+
+    object Function {
+      def unapply(target: ExtractorTarget.Function): Some[ScFunction] = Some(target.targetFunction)
+
+      object Returning {
+        def unapply(target: ExtractorTarget.Function): Option[ScType] = target.returnType
+      }
+    }
+  }
+
   sealed abstract class ArgPatternsMapping {
     def typeOfArg(pattern: ScPattern): Option[ScType]
   }
 
   object ArgPatternsMapping {
-    private final class Quasiquote(extractorPattern: ScExtractorPattern, fun: ScFunction) extends ArgPatternsMapping {
+    private[ScExtractorPattern] final class Quasiquote(extractorPattern: ScExtractorPattern, fun: ScFunction) extends ArgPatternsMapping {
       private implicit def projectContext: ProjectContext = fun.projectContext
 
       private lazy val seqSeqTreeType =
@@ -75,7 +188,7 @@ object ScExtractorPattern {
       }
     }
 
-    private final class MetaQQ(qqPatterns: Map[ScPattern, String], fun: ScFunction) extends ArgPatternsMapping {
+    private[ScExtractorPattern] final class MetaQQ(qqPatterns: Map[ScPattern, String], fun: ScFunction) extends ArgPatternsMapping {
       private implicit def projectContext: ProjectContext = fun.projectContext
 
       private def makeType(clazz: String): Option[ScType] =
@@ -84,8 +197,7 @@ object ScExtractorPattern {
       override def typeOfArg(pattern: ScPattern): Option[ScType] = qqPatterns.get(pattern).flatMap(makeType)
     }
 
-    private final class Unapply(returnType: ScType, extractorPattern: ScExtractorPattern, subst: ScSubstitutor, fun: ScFunction) extends ArgPatternsMapping {
-      private lazy val matches = ScPattern.unapplyExtractorMatches(subst(returnType), extractorPattern, fun)
+    private[ScExtractorPattern] final class Unapply(matches: LazyList[ExtractorMatch.Unapply], extractorPattern: ScExtractorPattern) extends ArgPatternsMapping {
       private lazy val argPatterns = extractorPattern.argPatterns
 
       private lazy val forIndexed =
@@ -104,61 +216,23 @@ object ScExtractorPattern {
         }
     }
 
-    private final class UnapplySeq(returnType: ScType, pattern: ScExtractorPattern, subst: ScSubstitutor, fun: ScFunction) extends ArgPatternsMapping {
-      private implicit def elementScope: ElementScope = fun.elementScope
+    private[ScExtractorPattern] final class UnapplySeq(matches: LazyList[ExtractorMatch.UnapplySeq], pattern: ScExtractorPattern) extends ArgPatternsMapping {
+      private implicit def elementScope: ElementScope = pattern.elementScope
 
       private lazy val argPatterns = pattern.argPatterns
-      private lazy val forIndex = ScPattern.unapplySeqExtractorMatches(subst(returnType), pattern, fun)
+      private lazy val forIndex = matches
         .bestMatch(argPatterns.length)
 
       override def typeOfArg(pattern: ScPattern): Option[ScType] =
         forIndex.map { forIndex =>
           val i = argPatterns.indexOf(pattern)
-          subst(forIndex.productTypes.lift(i).getOrElse {
+          forIndex.productTypes.lift(i).getOrElse {
             pattern match {
               case SeqExpectingPattern() => forIndex.sequenceType.tryWrapIntoSeqType
               case _ => forIndex.sequenceType
             }
-          })
-        }
-    }
-
-    private final class TooBigCaseClass(subpatterns: Seq[ScPattern], types: Seq[ScType]) extends ArgPatternsMapping {
-      override def typeOfArg(pattern: ScPattern): Option[ScType] = types.lift(subpatterns.indexOf(pattern))
-    }
-
-    def apply(pattern: ScExtractorPattern, scrutineeType: Option[ScType]): Option[ArgPatternsMapping] = {
-      def updateSubstitutor(subst: ScSubstitutor): ScSubstitutor =
-        scrutineeType.fold(subst)(tp => subst.followed(PatternTypeInference.doTypeInference(pattern, tp)))
-
-      pattern.targetFor(scrutineeType) match {
-        case Some(ScalaResolveResult(fun: ScFunction, _)) if fun.name == CommonNames.Unapply && ScPattern.isQuasiquote(fun) =>
-          Some(new Quasiquote(pattern, fun))
-        case Some(ScalaResolveResult(fun: ScFunction, _)) if fun.name == CommonNames.Unapply && QuasiquoteInferUtil.isMetaQQ(fun) =>
-          try {
-            val interpolationPattern = pattern.asInstanceOf[ScInterpolationPatternImpl]
-            val qqPatterns = QuasiquoteInferUtil.getMetaQQPatternTypes(interpolationPattern)
-            Some(new MetaQQ(pattern.subpatterns.zip(qqPatterns).toMap, fun))
-          } catch {
-            case _: ArrayIndexOutOfBoundsException => None // workaround for meta parser failure on malformed quasiquotes
           }
-        case Some(ScalaResolveResult(fun: ScFunction, substitutor: ScSubstitutor)) if fun.name == CommonNames.Unapply && fun.parameters.count(!_.isImplicit) == 1 =>
-          fun.returnType.toOption
-            .map(new Unapply(_, pattern, updateSubstitutor(substitutor), fun))
-        case Some(ScalaResolveResult(fun: ScFunction, substitutor: ScSubstitutor)) if fun.name == CommonNames.UnapplySeq && fun.parameters.count(!_.isImplicit) == 1 =>
-          fun.returnType.toOption
-            .map(new UnapplySeq(_, pattern, updateSubstitutor(substitutor), fun))
-        case Some(ScalaResolveResult(FakeCompanionClassOrCompanionClass(cl: ScClass), subst: ScSubstitutor)) if cl.isCase && cl.tooBigForUnapply =>
-          implicit val elementScope: ElementScope = pattern.elementScope
-          val undefSubst = subst.followed(ScSubstitutor(ScThisType(cl)))
-          val params: Seq[ScParameter] = cl.parameters
-          val types = params.map(_.`type`().getOrAny).map(undefSubst)
-          val args =
-            if (types.nonEmpty && params.last.isVarArgs) types.dropRight(1) ++ types.last.wrapIntoSeqType
-            else                                         types
-          Some(new TooBigCaseClass(pattern.subpatterns, args))
-        case _ => None
-      }
+        }
     }
   }
 }
