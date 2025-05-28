@@ -164,11 +164,13 @@ object ScalaPluginUpdater {
   }
 
   // this hack uses reflection to downgrade plugin version
-  def patchPluginVersion(newVersion: String, descriptor: IdeaPluginDescriptorImpl): Unit = {
-    val versionField = classOf[IdeaPluginDescriptorImpl].getDeclaredField("version")
-    versionField.setAccessible(true)
-    versionField.set(descriptor, newVersion)
-    versionField.setAccessible(false)
+  def patchPluginVersion(newVersion: String, descriptor: IdeaPluginDescriptorImpl): Unit = descriptor match {
+    case d: PluginMainDescriptor =>
+      val versionField = classOf[PluginMainDescriptor].getDeclaredField("version")
+      versionField.setAccessible(true)
+      versionField.set(d, newVersion)
+      versionField.setAccessible(false)
+    case _ =>
   }
 
   def askUpdatePluginBranchIfNeeded(): Unit = {
