@@ -5,7 +5,7 @@ import com.intellij.psi.PsiClass
 import org.jetbrains.plugins.scala.extensions._
 import org.jetbrains.plugins.scala.lang.completion.ScalaKeyword
 import org.jetbrains.plugins.scala.lang.psi.ScalaPsiUtil
-import org.jetbrains.plugins.scala.lang.psi.api.base.patterns.ScPattern
+import org.jetbrains.plugins.scala.lang.psi.api.ExtractorMatch
 import org.jetbrains.plugins.scala.lang.psi.api.base.types.ScSimpleTypeElement
 import org.jetbrains.plugins.scala.lang.psi.api.base.{ScPrimaryConstructor, ScStableCodeReference}
 import org.jetbrains.plugins.scala.lang.psi.api.toplevel.typedef.{ScClass, ScConstructorOwner, ScObject, ScTypeDefinition}
@@ -119,7 +119,7 @@ object PhysicalExtractorPatternComponents {
       Extractor(method) <- `class`.baseCompanion
       returnType        <- method.returnType.toOption
       types =
-        ScPattern.extractorMatches(returnType, parameters.place, method)
+        ExtractorMatch.extractorMatches(returnType, parameters.place, method)
           .headOption
           .map(_.productTypes)
           .getOrElse(Seq.empty)

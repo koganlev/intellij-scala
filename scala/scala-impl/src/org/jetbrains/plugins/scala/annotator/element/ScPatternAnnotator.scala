@@ -6,13 +6,14 @@ import org.jetbrains.plugins.scala.extensions._
 import org.jetbrains.plugins.scala.externalLibraries.bm4.Implicit0Pattern
 import org.jetbrains.plugins.scala.lang.psi.ScalaPsiUtil
 import org.jetbrains.plugins.scala.lang.psi.ScalaPsiUtil.inNameContext
+import org.jetbrains.plugins.scala.lang.psi.api.ExtractorMatch
 import org.jetbrains.plugins.scala.lang.psi.api.base.ScStableCodeReference
 import org.jetbrains.plugins.scala.lang.psi.api.base.patterns.ScExtractorPattern.ExtractorTarget
 import org.jetbrains.plugins.scala.lang.psi.api.base.patterns._
 import org.jetbrains.plugins.scala.lang.psi.api.base.types.{ScCompoundTypeElement, ScInfixTypeElement}
 import org.jetbrains.plugins.scala.lang.psi.api.expr.ScGenerator
 import org.jetbrains.plugins.scala.lang.psi.api.statements.params.ScClassParameter
-import org.jetbrains.plugins.scala.lang.psi.api.statements.{ScFunction, ScMacroDefinition, ScValueOrVariableDefinition, ScVariable}
+import org.jetbrains.plugins.scala.lang.psi.api.statements.{ScFunction, ScValueOrVariableDefinition, ScVariable}
 import org.jetbrains.plugins.scala.lang.psi.types.ComparingUtil.{isNeverSubClass, isNeverSubType}
 import org.jetbrains.plugins.scala.lang.psi.types.api.designator.DesignatorOwner
 import org.jetbrains.plugins.scala.lang.psi.types.api.presentation.TypePresentation
@@ -72,7 +73,7 @@ object ScPatternAnnotator extends ElementAnnotator[ScPattern] {
       pattern.typeVariables.isEmpty && freeTypeParams.isEmpty
 
     lazy val patternTypeAsTuple =
-      ScPattern.ByNameExtractor(pattern).unapply(patType).map {
+      ExtractorMatch.ByNameExtractor(pattern).unapply(patType).map {
         productElements =>
           TupleType(productElements, context = pattern)
       }

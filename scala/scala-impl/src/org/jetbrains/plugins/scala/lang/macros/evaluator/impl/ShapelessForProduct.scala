@@ -20,7 +20,7 @@ package impl
 
 import com.intellij.psi.PsiElement
 import org.jetbrains.plugins.scala.extensions._
-import org.jetbrains.plugins.scala.lang.psi.api.base.patterns.ScPattern
+import org.jetbrains.plugins.scala.lang.psi.api.ExtractorMatch
 import org.jetbrains.plugins.scala.lang.psi.api.statements.{ScFunction, ScTypeAlias}
 import org.jetbrains.plugins.scala.lang.psi.api.toplevel.typedef.{ScObject, ScTypeDefinition}
 import org.jetbrains.plugins.scala.lang.psi.types._
@@ -71,7 +71,7 @@ object ShapelessForProduct extends ScalaMacroTypeable {
 
   private[this] def reprType(`type`: ScType, place: PsiElement)
                             (nilType: ScType, consType: ScType) =
-    ScPattern.extractPossibleProductParts(`type`, place).foldRight(nilType) {
+    ExtractorMatch.extractPossibleProductParts(`type`, place).foldRight(nilType) {
       case (part, resultType) => ScParameterizedType(consType, Seq(part, resultType))
     }
 

@@ -5,12 +5,13 @@ import org.jetbrains.plugins.scala.extensions.{ObjectExt, PsiElementExt}
 import org.jetbrains.plugins.scala.lang.lexer.ScalaTokenTypes
 import org.jetbrains.plugins.scala.lang.psi.ElementScope
 import org.jetbrains.plugins.scala.lang.psi.ScalaPsiUtil.FakeCompanionClassOrCompanionClass
+import org.jetbrains.plugins.scala.lang.psi.api.ExtractorMatch
 import org.jetbrains.plugins.scala.lang.psi.api.base.ScStableCodeReference
 import org.jetbrains.plugins.scala.lang.psi.api.base.patterns.ScExtractorPattern.{ArgPatternsMapping, ExtractorTarget}
-import org.jetbrains.plugins.scala.lang.psi.api.base.patterns.ScPattern.{ExtractorMatch, SeqExpectingPattern}
-import org.jetbrains.plugins.scala.lang.psi.api.statements.{ScFunction, ScMacroDefinition}
+import org.jetbrains.plugins.scala.lang.psi.api.base.patterns.ScPattern.SeqExpectingPattern
 import org.jetbrains.plugins.scala.lang.psi.api.statements.ScFunction.CommonNames
 import org.jetbrains.plugins.scala.lang.psi.api.statements.params.ScParameter
+import org.jetbrains.plugins.scala.lang.psi.api.statements.{ScFunction, ScMacroDefinition}
 import org.jetbrains.plugins.scala.lang.psi.api.toplevel.typedef.ScClass
 import org.jetbrains.plugins.scala.lang.psi.impl.ScalaPsiElementFactory
 import org.jetbrains.plugins.scala.lang.psi.impl.base.patterns.ScInterpolationPatternImpl
@@ -91,11 +92,11 @@ object ScExtractorPattern {
       }
     }
     final class Unapply private[ScExtractorPattern](override val targetFunction: ScFunction, ssr: ScalaResolveResult, sty: Option[ScType], p: ScExtractorPattern) extends Function(ssr, sty, p) with WithExtractorMatches {
-      override def extractorMatches: Option[LazyList[ExtractorMatch.Unapply]] = returnType.map(ScPattern.unapplyExtractorMatches(_, pattern, targetFunction))
+      override def extractorMatches: Option[LazyList[ExtractorMatch.Unapply]] = returnType.map(ExtractorMatch.unapplyExtractorMatches(_, pattern, targetFunction))
       override def argPatternsMapping: Option[ArgPatternsMapping] = extractorMatches.map(new ArgPatternsMapping.Unapply(_, pattern))
     }
     final class UnapplySeq private[ScExtractorPattern](override val targetFunction: ScFunction,ssr: ScalaResolveResult, sty: Option[ScType], p: ScExtractorPattern) extends Function(ssr, sty, p) with WithExtractorMatches {
-      override def extractorMatches: Option[LazyList[ExtractorMatch.UnapplySeq]] = returnType.map(ScPattern.unapplySeqExtractorMatches(_, pattern, targetFunction))
+      override def extractorMatches: Option[LazyList[ExtractorMatch.UnapplySeq]] = returnType.map(ExtractorMatch.unapplySeqExtractorMatches(_, pattern, targetFunction))
       override def argPatternsMapping: Option[ArgPatternsMapping] = extractorMatches.map(new ArgPatternsMapping.UnapplySeq(_, pattern))
     }
     final class TooBigCaseClass private[ScExtractorPattern](val clazz: ScClass, ssr: ScalaResolveResult, sty: Option[ScType], p: ScExtractorPattern) extends ExtractorTarget(ssr, sty, p) with WithExtractorMatches {
