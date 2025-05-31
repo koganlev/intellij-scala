@@ -257,4 +257,7 @@ abstract class SbtProjectStructureImportingLike extends SbtExternalSystemImporti
   protected def buildCrossProjectAndAssertNoWarningsOrErrors(): Unit = {
     CompilerUtils.buildCrossProjectAndAssertNoWarningsOrErrors(getProject)
   }
+
+  protected def buildProjectAndAssertNoWarningsOrErrors(): Unit =
+    CompilerUtils.buildProjectAndAssertNoWarningsOrErrors(getProject)
 }
