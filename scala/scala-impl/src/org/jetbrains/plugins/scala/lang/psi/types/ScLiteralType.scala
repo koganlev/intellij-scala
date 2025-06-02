@@ -49,13 +49,11 @@ object ScLiteralType {
   def unapply(literalType: ScLiteralType): Some[(Value[_], Boolean)] =
     Some(literalType.value, literalType.allowWiden)
 
-  def widenRecursive(`type`: ScType): ScType = {
+  def widenRecursive(`type`: ScType)(implicit context: Context): ScType = {
     import api._
     import recursiveUpdate.AfterUpdate.{ProcessSubtypes, ReplaceWith, Stop}
 
     def isSingleton(param: ScTypeParam) = param.upperBound.exists {
-      implicit val context: Context = Context(param)
-
       _.conforms(Singleton(param.projectContext))
     }
 

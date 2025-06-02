@@ -21,7 +21,7 @@ import org.jetbrains.plugins.scala.lang.psi.stubs.ScFunctionStub
 import org.jetbrains.plugins.scala.lang.psi.stubs.elements.ScFunctionElementType
 import org.jetbrains.plugins.scala.lang.psi.types.ValueClassType.{ImplicitValueClass, ImplicitValueClassDumbMode}
 import org.jetbrains.plugins.scala.lang.psi.types.result._
-import org.jetbrains.plugins.scala.lang.psi.types.{ScLiteralType, api}
+import org.jetbrains.plugins.scala.lang.psi.types.{Context, ScLiteralType, api}
 import org.jetbrains.plugins.scala.util.UnloadableThreadLocal
 
 class ScFunctionDefinitionImpl[S <: ScFunctionDefinition](stub: ScFunctionStub[S],
@@ -130,6 +130,7 @@ private object ScFunctionDefinitionImpl {
 
   private def returnTypeInner(fun: ScFunctionDefinition): TypeResult = {
     import fun.projectContext
+    implicit val context: Context = Context(fun)
 
     fun.returnTypeElement match {
       case None if !fun.hasAssign => Right(api.Unit)

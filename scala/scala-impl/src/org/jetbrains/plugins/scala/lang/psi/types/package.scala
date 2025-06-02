@@ -378,7 +378,7 @@ package object types {
   private object RecursionException extends NoStackTrace
 
   object ImplicitMethodOrFunctionType {
-    def unapply(tpe: ScType): Option[(ScType, Seq[Parameter])] = tpe match {
+    def unapply(tpe: ScType)(implicit context: Context): Option[(ScType, Seq[Parameter])] = tpe match {
       case ContextFunctionType(retTpe, paramTpes) =>
         Option((retTpe, paramTpes.mapWithIndex((tp, i) => Parameter(tp, isRepeated = false, i, s"evidence$$$i"))))
       case ScMethodType(retType, params, isImplicit) if isImplicit => Option((retType, params))

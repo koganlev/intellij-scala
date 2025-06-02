@@ -1072,4 +1072,16 @@ class Scala3OpaqueTypeAliasTest extends ScalaLightCodeInsightFixtureTestCase {
          |""".stripMargin
     )
   }
+
+  def testLiteralTypeWidening(): Unit = {
+    checkHasErrorAroundCaret(
+      s"""
+         |object Inside:
+         |  opaque type T = 123
+         |object Outside:
+         |  var x = ??? : Inside.T
+         |  x = ${CARET}123
+         |""".stripMargin
+    )
+  }
 }

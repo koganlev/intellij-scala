@@ -40,7 +40,7 @@ sealed trait FunctionTypeFactory[D <: ScTypeDefinition, T] {
       case definition: D => ScParameterizedType(ScalaType.designator(definition), parameters).asInstanceOf[ValueType]
     }.getOrElse(api.Nothing)
 
-  protected def unapplyCollector: PartialFunction[Seq[ScType], T]
+  protected def unapplyCollector(implicit context: Context): PartialFunction[Seq[ScType], T]
 }
 
 object FunctionTypeFactory {
@@ -76,7 +76,7 @@ trait FunctionTypeBase extends FunctionTypeFactory[ScTrait, (ScType, Seq[ScType]
     apply(parameters :+ returnType, parameters.length.toString)
   }
 
-  override protected def unapplyCollector: PartialFunction[Seq[ScType], (ScType, Seq[ScType])] = {
+  override protected def unapplyCollector(implicit context: Context): PartialFunction[Seq[ScType], (ScType, Seq[ScType])] = {
     case types => (types.last, types.dropRight(1))
   }
 }
@@ -103,7 +103,7 @@ object PartialFunctionType extends FunctionTypeFactory[ScTrait, (ScType, ScType)
     apply(Seq(parameter, returnType), "")
   }
 
-  override protected def unapplyCollector: PartialFunction[Seq[ScType], (ScType, ScType)] = {
+  override protected def unapplyCollector(implicit context: Context): PartialFunction[Seq[ScType], (ScType, ScType)] = {
     case Seq(returnType, parameter) => (parameter, returnType)
   }
 }
@@ -224,7 +224,7 @@ object TupleType {
                       (implicit scope: ElementScope, context: Context): ValueType =
       apply(types, types.length.toString)
 
-    override protected def unapplyCollector: PartialFunction[Seq[ScType], Seq[ScType]] = {
+    override protected def unapplyCollector(implicit context: Context): PartialFunction[Seq[ScType], Seq[ScType]] = {
       case types => types
     }
   }
@@ -315,7 +315,7 @@ object NamedTupleType extends FunctionTypeFactory[ScClass, Seq[(ScType, ScType)]
 
   }
 
-  override protected def unapplyCollector: PartialFunction[Seq[ScType], Seq[(ScType, ScType)]] = {
+  override protected def unapplyCollector(implicit context: Context): PartialFunction[Seq[ScType], Seq[(ScType, ScType)]] = {
     case Seq(TupleType(names), TupleType(types)) =>
       names.zip(types)
   }

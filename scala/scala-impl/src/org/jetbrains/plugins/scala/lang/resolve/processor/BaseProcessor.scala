@@ -318,6 +318,8 @@ abstract class BaseProcessor(val kinds: Set[ResolveTargets.Value])
 
   private def processElement(e: PsiNamedElement, s: ScSubstitutor, place: PsiElement, state: ResolveState)
                             (implicit recState: RecursionState): Boolean = {
+    implicit val context: Context = Context(place)
+
     val subst = state.substitutor
     val compoundOrThis = state.compoundOrThisType //todo: looks like ugly workaround
     val newSubst = if (compoundOrThis.nonEmpty) subst else subst.followed(s)

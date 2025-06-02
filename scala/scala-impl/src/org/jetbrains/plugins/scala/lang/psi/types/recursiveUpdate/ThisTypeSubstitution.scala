@@ -62,7 +62,7 @@ private case class ThisTypeSubstitution(target: ScType, @Nullable seenFromClass:
   private def isSameOrInheritor(clazz: PsiClass, thisTp: ScThisType): Boolean =
     clazz == thisTp.element || isInheritorDeep(clazz, thisTp.element)
 
-  private def hasSameOrInheritor(compound: ScCompoundType, thisTp: ScThisType): Boolean = {
+  private def hasSameOrInheritor(compound: ScCompoundType, thisTp: ScThisType)(implicit context: Context): Boolean = {
     compound.components
       .exists {
         extractAll(_)
@@ -80,7 +80,7 @@ private case class ThisTypeSubstitution(target: ScType, @Nullable seenFromClass:
   }
 
   @tailrec
-  private def isMoreNarrow(target: ScType, thisTp: ScThisType, visited: Set[PsiElement]): Boolean = {
+  private def isMoreNarrow(target: ScType, thisTp: ScThisType, visited: Set[PsiElement])(implicit context: Context): Boolean = {
     extractAll(target) match {
       case Some(pat: ScBindingPattern) =>
         if (visited.contains(pat)) false
@@ -116,7 +116,7 @@ private case class ThisTypeSubstitution(target: ScType, @Nullable seenFromClass:
     }
   }
 
-  private def extractAll(tp: ScType) = {
+  private def extractAll(tp: ScType)(implicit context: Context) = {
     // Like tp.extractDesignated(expandAliases = true)
     // But also return non-designator returns
     // Such as ScCompoundType, after dealiasing and dereferencing.
