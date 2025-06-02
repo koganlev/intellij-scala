@@ -8,7 +8,7 @@ import com.intellij.notification.{Notification, NotificationType, Notifications}
 import com.intellij.openapi.application.{ApplicationManager, PathManagerEx}
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.options.advanced.AdvancedSettings
-import com.intellij.openapi.project.Project
+import com.intellij.openapi.project.{Project, ProjectManager}
 import com.intellij.openapi.projectRoots.{JavaSdkVersion, ProjectJdkTable, Sdk}
 import com.intellij.util.PathUtil
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
@@ -245,13 +245,14 @@ object CompileServerLauncher {
             watcher.startNotify()
             watcher.addProcessListener(new ProcessListener {
               override def processTerminated(event: ProcessEvent): Unit = {
-                // CS can terminate if we close IDEA and the project will be disposed already
-                if (!project.isDisposed) {
-                  val isExpectedProcessTermination = watcher.isTerminatedByIdleTimeout || instance.stopped
-                  if (!isExpectedProcessTermination) {
-                    invokeLater {
-                      CompileServerManager(project).showNotification(CompilerIntegrationBundle.message("compile.server.terminated.unexpectedly.0.port.1.pid", instance.port, instance.pid), NotificationType.WARNING)
-                      LOG.warn(s"Compile server terminated unexpectedly: ${instance.summary}")
+                val isExpectedProcessTermination = watcher.isTerminatedByIdleTimeout || instance.stopped
+                if (!isExpectedProcessTermination) {
+                  LOG.warn(s"Compile server terminated unexpectedly: ${instance.summary}")
+                  invokeLater {
+                    ProjectManager.getInstance().getOpenProjects.foreach { project =>
+                      if (!project.isDisposed) {
+                        CompileServerManager(project).showNotification(CompilerIntegrationBundle.message("compile.server.terminated.unexpectedly.0.port.1.pid", instance.port, instance.pid), NotificationType.WARNING)
+                      }
                     }
                   }
                 }
