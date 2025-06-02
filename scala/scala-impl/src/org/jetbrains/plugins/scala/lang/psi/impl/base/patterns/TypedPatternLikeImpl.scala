@@ -7,7 +7,7 @@ import org.jetbrains.plugins.scala.lang.psi.types.result.Typeable
 trait TypedPatternLikeImpl extends ScPattern { this: Typeable =>
 
   final override def isIrrefutableForImpl(scrutineeType: ScType, deep: Boolean): Boolean =
-    (scrutineeType.isAny ||
+    (scrutineeType.isAny /* we need this check to not loop in ScFor desugaring */ ||
       `type`().forall(scrutineeType.conforms(_))
       ) &&
       (!deep || subpatterns.forall(_.isIrrefutableFor(scrutineeType, deep)))
