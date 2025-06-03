@@ -564,6 +564,22 @@ class PatternAnnotatorTest extends PatternAnnotatorTestBase {
     assertNoErrors(text)
   }
 
+  def testSCL23740(): Unit = {
+    val text =
+      """
+        |type Bool = Boolean
+        |object Extractor {
+        |  def unapply(a: Any): Bool = true
+        |}
+        |1 match {
+        |  case Extractor() =>
+        |}"""
+        .stripMargin
+
+    assertNoWarnings(text)
+    assertNoErrors(text)
+  }
+
   /*def testNonFinalCaseClassConstructorPattern(): Unit = {
     val code =
       """

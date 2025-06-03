@@ -24,6 +24,7 @@ import org.jetbrains.plugins.scala.lang.psi.types.result._
 import org.jetbrains.plugins.scala.lang.psi.types.{api, _}
 import org.jetbrains.plugins.scala.lang.resolve._
 import org.jetbrains.plugins.scala.lang.resolve.processor.{CompletionProcessor, ExpandedExtractorResolveProcessor}
+import org.jetbrains.plugins.scala.project.ProjectContext
 import org.jetbrains.plugins.scala.scalaMeta.QuasiquoteInferUtil
 
 import scala.annotation.tailrec
@@ -579,6 +580,7 @@ object ScPattern {
    * See https://docs.scala-lang.org/scala3/reference/changed-features/pattern-matching.html#
    */
   private[this] def scala3UnapplyExtractorMatches(tpe: ScType, place: PsiElement): LazyList[ExtractorMatch.Unapply] = {
+    implicit val projectContext: ProjectContext = place
     implicit val context: Context = Context(place)
 
     import ExtractorMatch.Unapply
@@ -597,7 +599,7 @@ object ScPattern {
     /*
      * Scala 3 boolean match
      */
-    if (tpe.widenIfLiteral.isBoolean) {
+    if (tpe.conforms(api.Boolean)) {
       // if tpe is a boolean then it cannot be any of the other matches
       // so we don't even need to try them and can just return
       return LazyList(Unapply.boolean(tpe))
@@ -644,13 +646,14 @@ object ScPattern {
   }
 
   private def scala2UnapplyExtractorMatches(tpe: ScType, place: PsiElement, fun: ScFunction): LazyList[ExtractorMatch.Unapply] = {
+    implicit val projectContext: ProjectContext = place
     implicit val context: Context = Context(place)
 
     import ExtractorMatch.Unapply
     /*
      * Scala 2 boolean match
      */
-    if (tpe.widenIfLiteral.isBoolean) {
+    if (tpe.conforms(api.Boolean)) {
       // if tpe is a boolean then it cannot be any of the other matches
       // so we don't even need to try them and can just return
       return LazyList(Unapply.boolean(tpe))
