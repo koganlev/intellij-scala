@@ -633,7 +633,7 @@ object MixinNodes {
   }
 
   private def dealias(tp: ScType) = tp match {
-    case AliasType(_: ScTypeAliasDefinition, lower, _) => lower.getOrElse(tp)
+    case AliasType(ta: ScTypeAliasDefinition, lower, _) if !ta.isEffectivelyOpaque => lower.getOrElse(tp)
     case _                                             => tp
   }
 

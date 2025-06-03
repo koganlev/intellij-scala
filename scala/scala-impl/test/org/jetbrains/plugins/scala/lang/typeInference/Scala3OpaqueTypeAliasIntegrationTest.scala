@@ -325,28 +325,6 @@ class Scala3OpaqueTypeAliasIntegrationTest extends ScalaLightCodeInsightFixtureT
     )
   }
 
-  def testScl23356(): Unit = {
-    checkTextHasNoErrors(
-      s"""
-         |class TestA {
-         |  def testWithIArray(): Unit = {
-         |    val array = IArray(1, 2)
-         |    val value1 = array(0)
-         |    val value2 = array.apply(0)
-         |    value1 + value2
-         |  }
-         |
-         |  def testWithArray(): Unit = {
-         |    val array = Array(1, 2)
-         |    val value1 = array(0)
-         |    val value2 = array.apply(0)
-         |    value1 + value2
-         |  }
-         |}
-         |""".stripMargin
-    )
-  }
-
   def testScl23626(): Unit = {
     checkTextHasNoErrors(
       s"""

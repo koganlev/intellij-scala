@@ -270,7 +270,7 @@ class ScReferenceExpressionImpl(node: ASTNode) extends ScReferenceImpl(node) wit
       case Some(other) if !t.conforms(other) =>
         other match {
           case AliasType(_, Right(lower: DesignatorOwner), _)                   => lower.isStable
-          case AliasType(_: ScTypeAliasDefinition, Right(c: ScCompoundType), _) => isRefinement(c)
+          case AliasType(ta: ScTypeAliasDefinition, Right(c: ScCompoundType), _) if !ta.isEffectivelyOpaque => isRefinement(c)
           case c: ScCompoundType                                                => isRefinement(c)
           case _                                                                => false
         }

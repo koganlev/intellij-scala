@@ -502,7 +502,7 @@ trait ScalaConformance extends api.Conformance with TypeVariableUnification {
         if (results.nonEmpty) result = ConstraintSystem(results)
         else
           result = l match {
-            case AliasType(_: ScTypeAliasDefinition, Right(lower), _) =>
+            case AliasType(ta: ScTypeAliasDefinition, Right(lower), _) if !ta.isEffectivelyOpaque =>
               conformsInner(lower, r, HashSet.empty, constraints)
             case _ => ConstraintsResult.Left
           }
@@ -1292,7 +1292,7 @@ trait ScalaConformance extends api.Conformance with TypeVariableUnification {
       if (result != null) return
 
       r match {
-        case AliasType(_: ScTypeAliasDefinition, Right(lower), _) =>
+        case AliasType(ta: ScTypeAliasDefinition, Right(lower), _) if !ta.isEffectivelyOpaque =>
           val conformsLower = conformsInner(tpt1, lower, visited, constraints)
           if (conformsLower.isRight) {
             result = conformsLower

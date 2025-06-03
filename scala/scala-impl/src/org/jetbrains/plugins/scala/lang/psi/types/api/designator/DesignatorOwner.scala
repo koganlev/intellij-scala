@@ -38,9 +38,6 @@ trait DesignatorOwner extends ValueType {
 
   protected def calculateAliasTypeAux(actualElement: PsiElement, subst: ScSubstitutor)(implicit context: Context): Option[AliasType] = {
     actualElement match {
-      case ta: ScTypeAliasDefinition if ta.isEffectivelyOpaque =>
-        if (ta.lowerTypeElement.isEmpty && ta.upperTypeElement.isEmpty) None
-        else Some(AliasType(ta.toDeclaration, ta.lowerBound.map(subst), ta.upperBound.map(subst)))
       case ta: ScTypeAlias if ta.typeParameters.isEmpty =>
         Some(AliasType(ta, ta.lowerBound.map(subst), ta.upperBound.map(subst)))
       case ta: ScTypeAlias => //higher kind case

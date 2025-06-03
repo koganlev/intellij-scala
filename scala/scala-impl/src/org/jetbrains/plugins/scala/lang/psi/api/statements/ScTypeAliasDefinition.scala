@@ -79,6 +79,4 @@ trait ScTypeAliasDefinition extends ScTypeAlias {
       typeParameters.isEmpty && aliasedType.getOrElse(return false).equiv(clsType)
     }
   }
-
-  def toDeclaration: ScTypeAliasDeclaration
 }

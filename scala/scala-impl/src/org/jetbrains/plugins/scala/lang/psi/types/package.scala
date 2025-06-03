@@ -209,10 +209,10 @@ package object types {
 
       def innerUpdate(tp: ScType, visited: Set[ScType]): ScType = {
         tp.recursiveUpdate {
-          case AliasType(_: ScTypeAliasDefinition, Right(_: ScTypePolymorphicType), _) => ProcessSubtypes
-          case AliasType(ta: ScTypeAliasDefinition, _, Failure(_)) if needExpand(ta) =>
+          case AliasType(ta: ScTypeAliasDefinition, Right(_: ScTypePolymorphicType), _) if !ta.isEffectivelyOpaque => ProcessSubtypes
+          case AliasType(ta: ScTypeAliasDefinition, _, Failure(_)) if !ta.isEffectivelyOpaque && needExpand(ta) =>
             ReplaceWith(projectContext.stdTypes.Any)
-          case `type`@AliasType(ta: ScTypeAliasDefinition, _, Right(upper)) if needExpand(ta) =>
+          case `type`@AliasType(ta: ScTypeAliasDefinition, _, Right(upper)) if !ta.isEffectivelyOpaque && needExpand(ta) =>
             if (visited.contains(`type`)) throw RecursionException
             val updated =
               try innerUpdate(upper, visited + `type`)
@@ -334,7 +334,7 @@ package object types {
           }
         case parameterizedType: ParameterizedType =>
           parameterizedType.aliasType match {
-           case Some(AliasType(ta: ScTypeAliasDefinition, _, Right(upper))) if needExpand(ta) =>
+           case Some(AliasType(ta: ScTypeAliasDefinition, _, Right(upper))) if !ta.isEffectivelyOpaque && needExpand(ta) =>
             extractFrom(upper, visitedAliases + ta)
           case _ =>
             extractFrom(parameterizedType.designator, visitedAliases).map {

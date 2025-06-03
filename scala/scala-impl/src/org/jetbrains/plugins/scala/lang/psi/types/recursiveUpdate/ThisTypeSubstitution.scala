@@ -131,7 +131,7 @@ private case class ThisTypeSubstitution(target: ScType, @Nullable seenFromClass:
         case tp                                     => Right(tp)
       }
       case tp: ParameterizedType => tp match {
-        case AliasType(ta: ScTypeAliasDefinition, _, Right(ub)) if !seen(ta) => rec(ub, seen + ta)
+        case AliasType(ta: ScTypeAliasDefinition, _, Right(ub)) if !ta.isEffectivelyOpaque && !seen(ta) => rec(ub, seen + ta)
         case _                                                               => rec(tp.designator, seen)
       }
       case tp: StdType           => tp.syntheticClass.toRight(tp)

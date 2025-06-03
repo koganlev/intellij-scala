@@ -89,9 +89,4 @@ final class ScTypeAliasDefinitionImpl private(stub: ScTypeAliasStub, node: ASTNo
   }
 
   override def isEffectivelyFinal: Boolean = true
-
-  override def toDeclaration: ScTypeAliasDeclaration = cachedInUserData("toDeclaration", this, BlockModificationTracker(this)) {
-    val text = new ClassPrinter(this.isScala3, extendsSeparator = " ").declarationOf(this)
-    ScalaPsiElementFactory.createTypeAliasDeclarationFromText(text, getContext, null)
-  }
 }

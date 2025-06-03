@@ -41,7 +41,7 @@ trait ScAnnotationsHolder extends ScalaPsiElement with PsiAnnotatedAdapter {
         clazz.qualifiedName == qualifiedName
       case tp =>
         tp match {
-          case AliasType(definition: ScTypeAliasDefinition, _, _) =>
+          case AliasType(definition: ScTypeAliasDefinition, _, _) if !definition.isEffectivelyOpaque =>
             acceptType(definition.aliasedType.getOrAny)
           case _ => false
         }

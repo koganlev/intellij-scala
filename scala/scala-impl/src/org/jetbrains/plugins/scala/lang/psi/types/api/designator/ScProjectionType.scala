@@ -184,7 +184,7 @@ final class ScProjectionType private(val projected: ScType,
         }
       case ParameterizedType(ScProjectionType(_, _), _) =>
         r match {
-          case AliasType(_: ScTypeAliasDefinition, Right(lower), _) =>
+          case AliasType(ta: ScTypeAliasDefinition, Right(lower), _) if !ta.isEffectivelyOpaque =>
             this.equiv(lower, constraints, falseUndef)
           case _ => ConstraintsResult.Left
         }
@@ -203,7 +203,7 @@ final class ScProjectionType private(val projected: ScType,
         if (sameElements) projected.equiv(p1, constraints, falseUndef)
         else
           r match {
-            case AliasType(_: ScTypeAliasDefinition, Right(lower), _) =>
+            case AliasType(ta: ScTypeAliasDefinition, Right(lower), _) if !ta.isEffectivelyOpaque =>
               this.equiv(lower, constraints, falseUndef)
             case _ => ConstraintsResult.Left
           }
@@ -226,7 +226,7 @@ final class ScProjectionType private(val projected: ScType,
       case cs: ConstraintSystem   => cs
       case ConstraintsResult.Left =>
         this match {
-          case AliasType(_: ScTypeAliasDefinition, Right(lower), _) =>
+          case AliasType(ta: ScTypeAliasDefinition, Right(lower), _) if !ta.isEffectivelyOpaque =>
             lower.equiv(r, constraints, falseUndef)
           case _ => ConstraintsResult.Left
         }

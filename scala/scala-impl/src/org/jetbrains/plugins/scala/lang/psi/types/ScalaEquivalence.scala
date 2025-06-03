@@ -76,13 +76,13 @@ trait ScalaEquivalence extends api.Equivalence {
         return ConstraintSystem.empty
 
       right match {
-        case AliasType(_: ScTypeAliasDefinition, Right(right), _) =>
+        case AliasType(ta: ScTypeAliasDefinition, Right(right), _) if !ta.isEffectivelyOpaque =>
           return equivInner(left, right, falseUndef = falseUndef)
         case _ =>
       }
 
       left match {
-        case AliasType(_: ScTypeAliasDefinition, Right(left), _) =>
+        case AliasType(ta: ScTypeAliasDefinition, Right(left), _) if !ta.isEffectivelyOpaque =>
           return equivInner(left, right, falseUndef = falseUndef)
         case _ =>
       }
