@@ -11,7 +11,7 @@ import org.jetbrains.plugins.scala.lang.psi.api.base.ScStableCodeReference
 import org.jetbrains.plugins.scala.lang.psi.api.base.patterns.ScExtractorPattern.ExtractorTarget
 import org.jetbrains.plugins.scala.lang.psi.api.base.patterns._
 import org.jetbrains.plugins.scala.lang.psi.api.base.types.{ScCompoundTypeElement, ScInfixTypeElement}
-import org.jetbrains.plugins.scala.lang.psi.api.expr.ScGenerator
+import org.jetbrains.plugins.scala.lang.psi.api.expr.{ScBlockStatement, ScExpression, ScGenerator}
 import org.jetbrains.plugins.scala.lang.psi.api.statements.params.ScClassParameter
 import org.jetbrains.plugins.scala.lang.psi.api.statements.{ScFunction, ScValueOrVariableDefinition, ScVariable}
 import org.jetbrains.plugins.scala.lang.psi.types.ComparingUtil.{isNeverSubClass, isNeverSubType}
@@ -83,8 +83,6 @@ object ScPatternAnnotator extends ElementAnnotator[ScPattern] {
         isNeverSubType(abstraction(patType), exTp) &&
         hasNoFreeTypeVariables(pattern) &&
         !(patType.isNumericType && exTp.isNumericType)
-
-    lazy val isIrrefutable = pattern.isIrrefutableFor(exprType)
 
     def isEliminatedByErasure = (exprType.extractClass, patType.extractClass) match {
       case (Some(cl1), Some(cl2)) if pattern.is[ScTypedPattern] => !isNeverSubClass(cl1, cl2)
@@ -167,11 +165,10 @@ object ScPatternAnnotator extends ElementAnnotator[ScPattern] {
       case extractorPattern: ScExtractorPattern => //check number of arguments
         val argPatterns = extractorPattern.argPatterns
         val numPatterns = argPatterns.length
+        val argPatternsShape = extractorPattern.argPatternShape
 
         extractorPattern.targetFor(Some(exprType)) match {
           case Some(target@ExtractorTarget.UnapplyMatches(matches)) if !target.isMacroExtractor =>
-              val hasNamedArgs = argPatterns.exists(_.is[ScNamedConstructorArgPattern])
-
               if (matches.isEmpty) {
                 target match {
                   case ExtractorTarget.Function.Returning(rt) =>
@@ -181,7 +178,7 @@ object ScPatternAnnotator extends ElementAnnotator[ScPattern] {
                     // Or the return type of the function can not be resolved... in that case also don't give an error
                 }
 
-              } else if (hasNamedArgs) {
+              } else if (argPatternsShape.hasNamedArgs) {
                 val extractorMatch = matches.find(_.supportsNamedPatterns)
                 extractorMatch match {
                   case Some(extractorMatch) =>
@@ -202,12 +199,12 @@ object ScPatternAnnotator extends ElementAnnotator[ScPattern] {
                         holder.createErrorAnnotation(pat, ScalaBundle.message("cannot.use.positional.pattern.when.named.patterns.are.used"))
                     }
                   case None =>
-                    target.unapplyType.foreach { unapplyType =>
+                    target.selectorType.foreach { unapplyType =>
                       val message = ScalaBundle.message("type.does.not.support.named.patterns", unapplyType.presentableText)
                       holder.createErrorAnnotation(pattern, message)
                     }
                 }
-              } else if (!matches.exists(_.isApplicable(numPatterns))) {
+              } else if (!matches.exists(_.isApplicable(argPatternsShape))) {
                 val expected = matches.map(_.productTypes.length).max
                 val message = ScalaBundle.message("wrong.number.arguments.extractor", numPatterns.toString, expected)
                 holder.createErrorAnnotation(pattern, message)
@@ -221,34 +218,32 @@ object ScPatternAnnotator extends ElementAnnotator[ScPattern] {
                   // this is either ExtractorTarget.TooBigCaseClass and shouldn't happen at all because there should always be a match for TooBigCaseClass
                   // Or the return type of the function can not be resolved... in that case also don't give an error
               }
-            } else if (!matches.exists(_.isApplicable(numPatterns))) {
+            } else if (!matches.exists(_.isApplicable(argPatternsShape))) {
               val expected = matches.map(_.productTypes.length).max
               val message = ScalaBundle.message("wrong.number.arguments.extractor.unapplySeq", numPatterns.toString, expected)
               holder.createErrorAnnotation(pattern, message)
             }
           case _ =>
         }
-      case Parent(gen: ScGenerator) if
-        gen.caseKeyword.isEmpty &&
-          pattern.isInScala3Module &&
-          !isIrrefutable =>
-        val (exprTypeText, patTypeText) = TypePresentation.different(exprType, patType)
-        val message = ScalaBundle.message("pattern.type.is.more.specialized.than.the.expr", patTypeText, exprTypeText)
-        val quickfix = new AddCaseToGeneratorQuickfix(gen)
-        if (pattern.features.`Scala 3 Irrefutable Patterns`)
-          holder.createErrorAnnotation(pattern, message, quickfix)
-        else
-          holder.createWarningAnnotation(pattern, message, quickfix)
-
-      case Parent(Parent(v: ScValueOrVariableDefinition)) if !v.expr.exists(ScalaPsiUtil.isUncheckedExpr) && pattern.isInScala3Module && !isIrrefutable =>
-        val (exprTypeText, patTypeText) = TypePresentation.different(exprType, patType)
-        val message = ScalaBundle.message("pattern.type.is.more.specialized.than.the.expr", patTypeText, exprTypeText)
-        if (pattern.features.`Scala 3 Irrefutable Patterns`)
-          holder.createErrorAnnotation(pattern, message)
-        else
-          holder.createWarningAnnotation(pattern, message)
-
       case _ =>
+    }
+
+    if (pattern.isInScala3File) {
+      val nonPattern = pattern.contexts
+        .takeWhile(e => !e.is[ScExpression, ScBlockStatement] || e.is[ScValueOrVariableDefinition, ScPattern])
+        .find(_.is[ScGenerator, ScValueOrVariableDefinition])
+
+      def isIrrefutable = pattern.isIrrefutableFor(exprType, deep = false)
+      def message = ScalaBundle.message("pattern.is.not.irrefutable.for.exprType", pattern.getText, exprType.presentableText)
+
+      nonPattern match {
+        case Some(gen: ScGenerator) if gen.caseKeyword.isEmpty && !isIrrefutable =>
+          val quickfix = new AddCaseToGeneratorQuickfix(gen)
+          holder.createWarningAnnotation(pattern, message, quickfix)
+        case Some(v: ScValueOrVariableDefinition) if !v.expr.exists(ScalaPsiUtil.isUncheckedExpr) && !isIrrefutable =>
+          holder.createWarningAnnotation(pattern, message)
+        case _ =>
+      }
     }
   }
 

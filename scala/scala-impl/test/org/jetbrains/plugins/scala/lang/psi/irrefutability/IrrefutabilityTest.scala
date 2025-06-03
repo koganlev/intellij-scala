@@ -157,7 +157,7 @@ abstract class IrrefutabilityTestBase extends ScalaLightCodeInsightFixtureTestCa
     assertIsIrrefutable("Some(A -> B) match { case Some((a, b)) => }")
 
     assertIsNotIrrefutable("Option(A) match { case Some(a) => }")
-    assertIsNotIrrefutable("Some(A) match { case Some(a: B) => }")
+    assertIsNotIrrefutable("Some(A) match { case Some(a: B) => }", butIsForShallow = true)
     assertIsNotIrrefutable("A match { case Some(_) => }")
   }
 
@@ -203,11 +203,70 @@ abstract class IrrefutabilityTestBase extends ScalaLightCodeInsightFixtureTestCa
 
     assertIsNotIrrefutable("A match { case (_*) => }")
     assertIsNotIrrefutable("Some(A) match { case Some(_*) => }")
-    assertIsNotIrrefutable("Some(A) match { case Some(a@_*) => }", butIsForShallow = true)
+    assertIsNotIrrefutable("Some(A) match { case Some(a@_*) => }")
     assertIsNotIrrefutable("Fun(A, B) match { case Fun(a, b) => }")
     assertIsNotIrrefutable("Fun(A, B) match { case Fun(a) => }")
     assertIsNotIrrefutable("Fun(A, B) match { case Fun(a, b, _*) => }")
     assertIsNotIrrefutable("Fun(A, B) match { case Fun(a, b, c@_*) => }")
+  }
+
+  def testBooleanUnapply(): Unit = {
+    val common =
+      """
+        |object Bool {
+        |  def unapply(x: Int): Boolean = true
+        |}
+        |object True {
+        |  def unapply(x: Int): true = true
+        |}
+        |object False {
+        |  def unapply(x: Int): false = false
+        |}
+        |""".stripMargin
+
+    assertIsNotIrrefutable(s"$common 1 match { case Bool() => }")
+    assertIsIrrefutable(s"$common 1 match { case True() => }")
+    assertIsNotIrrefutable(s"$common 1 match { case False() => }")
+  }
+
+  def testUnapplyOption(): Unit = {
+    val common =
+      """
+        |object Opt {
+        |  def unapply(i: Int): Option[Int] = None
+        |}
+        |
+        |object Som {
+        |  def unapply(i: Int): Some[Int] = Some(3)
+        |}
+        |
+        |""".stripMargin
+
+    assertIsIrrefutable(s"$common 1 match { case Som(a) => }")
+    assertIsNotIrrefutable(s"$common 1 match { case Som(1) => }", butIsForShallow = true)
+
+    assertIsNotIrrefutable(s"$common 1 match { case Opt(a) => }")
+  }
+
+  def testUnapplyCustom(): Unit = {
+    def common(ret: String) =
+      s"""
+         |class Empty {
+         |  def get: Int = 0
+         |  def isEmpty: $ret = ???
+         |}
+         |
+         |object Extractor {
+         |  def unapply(a: Int): Empty = new Empty
+         |}
+         |
+         |""".stripMargin
+
+    assertIsIrrefutable(s"${common("false")} 1 match { case Extractor(a) => }")
+    assertIsNotIrrefutable(s"${common("false")} 1 match { case Extractor(2) => }", butIsForShallow = true)
+
+    assertIsNotIrrefutable(s"${common("true")} 1 match { case Extractor(a) => }")
+    assertIsNotIrrefutable(s"${common("Boolean")} 1 match { case Extractor(a) => }")
   }
 }
 
@@ -265,5 +324,23 @@ class IrrefutabilityTest_Scala3 extends IrrefutabilityTestBase {
     assertIsNotIrrefutable("(a = A, b = B, c = B) match { case (a, b) => }")
     assertIsNotIrrefutable("(a = B, b = A) match { case (a: A, b: B) => }", butIsForShallow = true)
     assertIsNotIrrefutable("(a = A, b = B -> A) match { case (_, (a: A, b: B)) => }", butIsForShallow = true)
+  }
+
+  def testDirectUnapply(): Unit = {
+    val common =
+      """
+        |class Test extends scala.Product {
+        |  def _1: Int = 0
+        |  def _2: Int = 2
+        |}
+        |object Test {
+        |  def unapply(x: Int): Test = new Test
+        |}
+        |
+        |""".stripMargin
+
+    assertIsIrrefutable(s"$common 1 match { case Test(x, y) => }")
+    assertIsNotIrrefutable(s"$common 1 match { case Test(1, 2) => }", butIsForShallow = true)
+    assertIsNotIrrefutable(s"$common 1 match { case Test(x) => }")
   }
 }

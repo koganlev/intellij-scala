@@ -170,11 +170,13 @@ object ScPattern {
     fqnO.exists(fqn => fqn.contains('.') && fqn.substring(0, fqn.lastIndexOf('.')) == "scala.reflect.api.Quasiquotes.Quasiquote")
   }
 
+  def isSeqExpectingPattern(p: ScPattern): Boolean = p match {
+    case named: ScNamingPattern => named.getLastChild.is[ScSeqWildcardPattern]
+    case _: ScSeqWildcardPattern => true
+    case _ => false
+  }
+
   object SeqExpectingPattern {
-    def unapply(e: ScPattern): Boolean = e match {
-      case named: ScNamingPattern => named.getLastChild.is[ScSeqWildcardPattern]
-      case _: ScSeqWildcardPattern => true
-      case _ => false
-    }
+    def unapply(p: ScPattern): Boolean = isSeqExpectingPattern(p)
   }
 }

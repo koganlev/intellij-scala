@@ -11,6 +11,7 @@ import org.jetbrains.plugins.scala.lang.lexer.ScalaTokenTypes
 import org.jetbrains.plugins.scala.lang.psi.ScalaPsiUtil
 import org.jetbrains.plugins.scala.lang.psi.api.ExtractorMatch
 import org.jetbrains.plugins.scala.lang.psi.api.base.ScStableCodeReference
+import org.jetbrains.plugins.scala.lang.psi.api.base.patterns.ScExtractorPattern.ArgPatternShape
 import org.jetbrains.plugins.scala.lang.psi.api.base.patterns.{ScConstructorPattern, ScPattern, ScPatternArgumentList}
 import org.jetbrains.plugins.scala.lang.psi.api.statements.ScFunction
 import org.jetbrains.plugins.scala.lang.psi.api.toplevel.typedef.{ScClass, ScObject}
@@ -69,7 +70,7 @@ class ScalaPatternParameterInfoHandler extends ScalaParameterInfoHandler[ScPatte
             if (matches.isEmpty) {
               buffer.append(ScalaBundle.message("parameter.info.not.matchable"))
             } else {
-              val extractorMatch = matches.bestMatch(argCount).get
+              val extractorMatch = matches.bestMatch(ArgPatternShape.from(args.patterns)).get
 
               if (extractorMatch.isEmpty) buffer.append(CodeInsightBundle.message("parameter.info.no.parameters"))
               else {

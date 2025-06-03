@@ -21,11 +21,7 @@ class ScSeqWildcardPatternImpl private(stub: ScBindingPatternStub[ScSeqWildcardP
 
   def this(stub: ScBindingPatternStub[ScSeqWildcardPattern]) = this(stub, null)
 
-  // The SeqWildCard pattern is never irrefutable, with the exception that it occurs
-  // in the exact position of an Constructor pattern.
-  // See
-  //   ScConstructorPattern.extractsRepeatedParameterIrrefutably
-  override def isIrrefutableForImpl(scrutineeType: ScType, deep: Boolean): Boolean = false
+  override def isIrrefutableForImpl(scrutineeType: ScType, deep: Boolean): Boolean = true
 
   override def nameId: PsiElement = findChildByType[PsiElement](TokenSets.ID_SET)
 
