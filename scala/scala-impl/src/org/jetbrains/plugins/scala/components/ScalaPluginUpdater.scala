@@ -170,7 +170,8 @@ object ScalaPluginUpdater {
       versionField.setAccessible(true)
       versionField.set(d, newVersion)
       versionField.setAccessible(false)
-    case _ =>
+    case desc =>
+      LOG.warn(s"Cannot patch plugin version for plugin descriptor: $desc (instance of ${desc.getClass.getName})")
   }
 
   def askUpdatePluginBranchIfNeeded(): Unit = {
