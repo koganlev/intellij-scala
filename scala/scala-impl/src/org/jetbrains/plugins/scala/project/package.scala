@@ -7,6 +7,7 @@ import com.intellij.openapi.externalSystem.ExternalSystemModulePropertyManager
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil
 import com.intellij.openapi.fileEditor.{FileDocumentManager, FileEditorManager}
 import com.intellij.openapi.module._
+import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.{DumbService, Project, ProjectUtil}
 import com.intellij.openapi.roots._
 import com.intellij.openapi.roots.impl.libraries.LibraryEx
@@ -482,13 +483,29 @@ package object project {
 
     def hasScala: Boolean = modulesWithScala.nonEmpty
 
+    /**
+     * @note This utility method can end up being called on the UI thread. In the worst-case scenario with changes to
+     *       the project structure and dropped caches, this can end up being a very expensive method, especially in
+     *       large projects with many modules. Therefore, checking for cancellation often can be very helpful.
+     */
     // TODO Generalize: hasScala(Version => Boolean), hasScala(_ >= Scala3)
     def hasScala2: Boolean = cachedInUserData("hasScala2", project, ProjectRootManager.getInstance(project)) {
-      modulesWithScala.exists(_.scalaLanguageLevel.exists(_.isScala2))
+      modulesWithScala.exists { m =>
+        ProgressManager.checkCanceled()
+        m.scalaLanguageLevel.exists(_.isScala2)
+      }
     }
 
+    /**
+     * @note This utility method can end up being called on the UI thread. In the worst-case scenario with changes to
+     *       the project structure and dropped caches, this can end up being a very expensive method, especially in
+     *       large projects with many modules. Therefore, checking for cancellation often can be very helpful.
+     */
     def hasScala3: Boolean = cachedInUserData("hasScala3", project, ProjectRootManager.getInstance(project)) {
-      modulesWithScala.exists(_.hasScala3)
+      modulesWithScala.exists { m =>
+        ProgressManager.checkCanceled()
+        m.hasScala3
+      }
     }
 
     //TODO: currently this is an extension method on a project
@@ -511,8 +528,16 @@ package object project {
       if (project.isDisposed) Seq.empty
       else modulesWithScalaCached
 
+    /**
+     * @note This utility method can end up being called on the UI thread. In the worst-case scenario with changes to
+     *       the project structure and dropped caches, this can end up being a very expensive method, especially in
+     *       large projects with many modules. Therefore, checking for cancellation often can be very helpful.
+     */
     private def modulesWithScalaCached: Seq[Module] = cachedInUserData("modulesWithScalaCached", project, ProjectRootManager.getInstance(project)) {
-      modules.filter(m => m.hasScala && !m.isBuildModule)
+      modules.filter { m =>
+        ProgressManager.checkCanceled()
+        m.hasScala && !m.isBuildModule
+      }
     }
 
     def anyScalaModule: Option[Module] =
