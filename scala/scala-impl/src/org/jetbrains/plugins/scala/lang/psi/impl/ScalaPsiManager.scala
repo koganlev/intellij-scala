@@ -667,6 +667,17 @@ class ScalaPsiManager(implicit val project: Project) extends Disposable {
     doClearAllCaches()
   }
 
+  /**
+   * Should be invoked only in the [[dispose]] method, to run synchronously
+   * and without checking if the project is disposed (it still isn't, it is being disposed).
+   *
+   * @note Same as [[doClearAllCaches]] except without a `Project#isDisposed` check.
+   */
+  private def clearAllCachesOnDispose(): Unit = {
+    clearOnRootsChange()
+    TopLevelModificationTracker.incModificationCount()
+  }
+
   @RequiresEdt()
   private def doClearAllCaches(): Unit =
     if (!project.isDisposed) {
@@ -685,7 +696,7 @@ class ScalaPsiManager(implicit val project: Project) extends Disposable {
   }
 
   override def dispose(): Unit = {
-    clearAllCaches()
+    clearAllCachesOnDispose()
   }
 
   @TestOnly
