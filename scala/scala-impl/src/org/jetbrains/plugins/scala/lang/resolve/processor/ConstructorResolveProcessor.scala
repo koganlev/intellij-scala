@@ -63,7 +63,9 @@ class ConstructorResolveProcessor(
           orDefault(constructors(clazz, defaultSubstitutor))
         case _: ScTypeAliasDeclaration =>
           orDefault()
-        case definition: ScTypeAliasDefinition if !definition.isEffectivelyOpaque =>
+        case definition: ScTypeAliasDefinition if definition.isEffectivelyOpaque =>
+          orDefault()
+        case definition: ScTypeAliasDefinition =>
           val result = definition.aliasedType.toOption.toSeq flatMap {
             _.extractClassType
           } flatMap {

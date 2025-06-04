@@ -374,31 +374,31 @@ class Scala3OpaqueTypeAliasTest extends ScalaLightCodeInsightFixtureTestCase {
     )
   }
 
-//  def testPrimaryConstructor(): Unit = {
-//    checkHasErrorAroundCaret(
-//      s"""
-//         |class Foo(x: Int)
-//         |object Inside:
-//         |  opaque type T = Foo
-//         |object Outside:
-//         |  new ${CARET}Inside.T(1)
-//      """.stripMargin
-//    )
-//  }
-//
-//  def testAuxiliaryConstructor(): Unit = {
-//    checkHasErrorAroundCaret(
-//      s"""
-//         |class Foo:
-//         |  def this(x: Int) = this()
-//         |object Inside:
-//         |  opaque type T = Foo
-//         |object Outside:
-//         |  new ${CARET}Inside.T(1)
-//      """.stripMargin
-//    )
-//  }
-//
+  def testPrimaryConstructor(): Unit = {
+    checkHasErrorAroundCaret(
+      s"""
+         |class Foo(x: Int)
+         |object Inside:
+         |  opaque type T = Foo
+         |object Outside:
+         |  new ${CARET}Inside.T(1)
+      """.stripMargin
+    )
+  }
+
+  def testAuxiliaryConstructor(): Unit = {
+    checkHasErrorAroundCaret(
+      s"""
+         |class Foo:
+         |  def this(x: Int) = this()
+         |object Inside:
+         |  opaque type T = Foo
+         |object Outside:
+         |  new ${CARET}Inside.T(1)
+      """.stripMargin
+    )
+  }
+
 //  def testUniversalApplyMethod(): Unit = {
 //    checkHasErrorAroundCaret(
 //      s"""
