@@ -957,15 +957,25 @@ class Scala3OpaqueTypeAliasTest extends ScalaLightCodeInsightFixtureTestCase {
     )
   }
 
-  def testErasureIArray1(): Unit = {
+  def testErasureIArray0(): Unit = {
     checkHasErrorAroundCaret(
       s"""
          |object Outside:
-         |  def foo(x: Array[_ <: Int]): Unit = ???
+         |  def foo(x: IArray[Int]): Unit = ???
          |  def ${CARET}foo(x: IArray[Int]): Unit = ???
          |""".stripMargin
     )
   }
+
+  //  def testErasureIArray1(): Unit = {
+//    checkHasErrorAroundCaret(
+//      s"""
+//         |object Outside:
+//         |  def foo(x: Array[_ <: Int]): Unit = ???
+//         |  def ${CARET}foo(x: IArray[Int]): Unit = ???
+//         |""".stripMargin
+//    )
+//  }
 
   def testErasureIArray2(): Unit = {
     checkTextHasNoErrors(
@@ -973,6 +983,36 @@ class Scala3OpaqueTypeAliasTest extends ScalaLightCodeInsightFixtureTestCase {
          |object Outside:
          |  def foo(x: Array[_ <: Int]): Unit = ???
          |  def foo(x: IArray[String]): Unit = ???
+         |""".stripMargin
+    )
+  }
+
+  def testErasureIArray3(): Unit = {
+    checkTextHasNoErrors(
+      s"""
+         |object Outside:
+         |  def foo(x: AnyRef): Unit = ???
+         |  def foo(x: IArray[Int]): Unit = ???
+         |""".stripMargin
+    )
+  }
+
+  def testErasureIArray4(): Unit = {
+    checkTextHasNoErrors(
+      s"""
+         |object Outside:
+         |  def foo(x: IArray[Int]): Unit = ???
+         |  def foo(x: IArray[Long]): Unit = ???
+         |""".stripMargin
+    )
+  }
+
+  def testErasureIArray5(): Unit = {
+    checkHasErrorAroundCaret(
+      s"""
+         |object Outside:
+         |  def foo(x: IArray[Option[Int]]): Unit = ???
+         |  def ${CARET}foo(x: IArray[Option[Long]]): Unit = ???
          |""".stripMargin
     )
   }

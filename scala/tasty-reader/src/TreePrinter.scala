@@ -1,7 +1,7 @@
 package org.jetbrains.plugins.scala.tasty.reader
 
 import Node.{Node1, Node2, Node3}
-import TreePrinter.{Keywords, ReifiableTypes}
+import TreePrinter.Keywords
 
 import dotty.tools.tasty.TastyBuffer.Addr
 import dotty.tools.tasty.TastyFormat.*
@@ -264,11 +264,7 @@ class TreePrinter(privateMembers: Boolean = false, infixTypes: Boolean = false, 
           bounds.foreach { n =>
             boundsIn(sb, n)
           }
-          if (ReifiableTypes(tpe) || tpe.startsWith("_root_.scala.Array[")) {
-            sb.insert(modifiersEnd, "opaque ")
-            sb ++= " = "
-            sb ++= tpe
-          }
+          sb.insert(modifiersEnd, "opaque ")
         }
       }
     }
@@ -1187,15 +1183,5 @@ private object TreePrinter {
     "while",
     "with",
     "yield",
-  )
-
-  private val ReifiableTypes = Set(
-    "_root_.scala.Byte",
-    "_root_.scala.Short",
-    "_root_.scala.Int",
-    "_root_.scala.Long",
-    "_root_.scala.Float",
-    "_root_.scala.Double",
-    "_root_.scala.Char",
   )
 }
