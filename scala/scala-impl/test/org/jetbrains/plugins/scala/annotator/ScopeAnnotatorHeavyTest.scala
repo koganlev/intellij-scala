@@ -261,10 +261,10 @@ class ScopeAnnotatorHeavyTest_Scala_3 extends ScopeAnnotatorHeavyTest {
         |  def clash2(a: IArray[IArray[Box[Bar]]]): IArray[IArray[Box[Bar]]] = ???
         |}
         |""".stripMargin,
-      """Error(clash1,clash1((Array[_$1]) forSome {type _$1 <: Box})(Array[_$1]) forSome {type _$1 <: Box} is already defined in the scope)
-        |Error(clash1,clash1((Array[_$1]) forSome {type _$1 <: Box})(Array[_$1]) forSome {type _$1 <: Box} is already defined in the scope)
-        |Error(clash2,clash2((Array[_$1]) forSome {type _$1 <: (Array[_$1]) forSome {type _$1 <: Box}})(Array[_$1]) forSome {type _$1 <: (Array[_$1]) forSome {type _$1 <: Box}} is already defined in the scope)
-        |Error(clash2,clash2((Array[_$1]) forSome {type _$1 <: (Array[_$1]) forSome {type _$1 <: Box}})(Array[_$1]) forSome {type _$1 <: (Array[_$1]) forSome {type _$1 <: Box}} is already defined in the scope)
+      """Error(clash1,clash1(IArray[Box])IArray[Box] is already defined in the scope)
+        |Error(clash1,clash1(IArray[Box])IArray[Box] is already defined in the scope)
+        |Error(clash2,clash2(IArray[IArray[Box]])IArray[IArray[Box]] is already defined in the scope)
+        |Error(clash2,clash2(IArray[IArray[Box]])IArray[IArray[Box]] is already defined in the scope)
         |""".stripMargin,
     )
 

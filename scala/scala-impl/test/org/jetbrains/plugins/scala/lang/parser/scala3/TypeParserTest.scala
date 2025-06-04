@@ -227,4 +227,24 @@ class TypeParserTest extends SimpleScala3ParserTestBase {
       |  PsiWhiteSpace('\n')
       |""".stripMargin
   )
+
+  def test_opaque_abstract_type_member(): Unit = checkTree(
+    """
+      |opaque type A
+      |""".stripMargin,
+    """
+      |ScalaFile
+      |  PsiWhiteSpace('\n')
+      |  ScTypeAliasDeclaration: A
+      |    AnnotationsList
+      |      <empty list>
+      |    Modifiers
+      |      PsiElement(opaque)('opaque')
+      |    PsiWhiteSpace(' ')
+      |    PsiElement(type)('type')
+      |    PsiWhiteSpace(' ')
+      |    PsiElement(identifier)('A')
+      |  PsiWhiteSpace('\n')
+      |""".stripMargin
+  )
 }

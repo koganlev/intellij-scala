@@ -18,7 +18,7 @@ import org.jetbrains.plugins.scala.lang.psi.api.toplevel.{ScEarlyDefinitions, Sc
 import org.jetbrains.plugins.scala.lang.psi.types.api.designator.ScProjectionType
 import org.jetbrains.plugins.scala.lang.psi.types.api.{JavaArrayType, ParameterizedType, StdTypes, TypeParameterType, arrayType}
 import org.jetbrains.plugins.scala.lang.psi.types.result.Typeable
-import org.jetbrains.plugins.scala.lang.psi.types.{Context, ScLiteralType, ScType}
+import org.jetbrains.plugins.scala.lang.psi.types.{AliasType, Context, ScLiteralType, ScParameterizedType, ScType}
 import org.jetbrains.plugins.scala.lang.refactoring.util.ScalaNamesUtil
 
 import scala.collection.immutable.ArraySeq
@@ -201,6 +201,10 @@ trait ScopeAnnotator extends ElementAnnotator[ScalaPsiElement] {
     val stdTypes = StdTypes.instance(t.projectContext)
 
     t.updateRecursively {
+      case t @ AliasType(ta: ScTypeAliasDeclaration, _, _, _) if ta.hasModifierProperty("opaque") => t match {
+        case ParameterizedType(d, args) => ScParameterizedType(d, args.map(erased(_, forPresentableText)))
+        case t => t
+      }
       //during erasure literal types collapse into widened types
       case lit: ScLiteralType => lit.wideType
       case ScProjectionType(_, element: Typeable) => element.`type`().map {
