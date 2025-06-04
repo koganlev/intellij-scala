@@ -156,7 +156,7 @@ trait TypeVariableUnification { self: ScalaConformance with ProjectContextOwner 
   ): ConstraintsResult =
     unifyTypeVariable(hkTv, tpe, constraints, boundKind, visited, checkWeak) match {
       case ConstraintsResult.Left => tpe match {
-        case AliasType(_, Right(lower: ParameterizedType), _) =>
+        case AliasType(_, Right(lower: ParameterizedType), _, _) =>
           unifyHK(hkTv, lower, constraints, boundKind, visited, checkWeak)
         case _ => tryUnifyParent(hkTv, tpe, constraints, boundKind, visited, checkWeak)
       }
@@ -168,7 +168,7 @@ object TypeVariableUnification {
   @scala.annotation.tailrec
   private final def extractTypeParameters(tpe: ScType): Seq[TypeParameter] = tpe match {
     case ParameterizedType(des, _)         => extractTypeParameters(des)
-    case AliasType(alias, _, _)            => alias.typeParameters.map(TypeParameter(_))
+    case AliasType(alias, _, _, _)         => alias.typeParameters.map(TypeParameter(_))
     case ScAbstractType(tp, _, _)          => tp.typeParameters
     case ScTypePolymorphicType(_, tparams) => tparams
     case UndefinedOrWildcard(tparam, _)    => tparam.typeParameters

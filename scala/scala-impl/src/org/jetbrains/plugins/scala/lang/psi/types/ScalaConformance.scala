@@ -435,7 +435,7 @@ trait ScalaConformance extends api.Conformance with TypeVariableUnification {
     trait ParameterizedAliasVisitor extends ScalaTypeVisitor {
       override def visitParameterizedType(p: ParameterizedType): Unit = {
         p match {
-          case AliasType(_, _, upper) =>
+          case AliasType(_, _, upper, _) =>
             result = upper match {
               case Right(value) => conformsInner(l, value, visited, constraints)
               case _            => ConstraintsResult.Left
@@ -450,7 +450,7 @@ trait ScalaConformance extends api.Conformance with TypeVariableUnification {
 
       override def visitDesignatorType(des: ScDesignatorType): Unit = {
         des match {
-          case AliasType(_, _, Right(value)) =>
+          case AliasType(_, _, Right(value), _) =>
             val res = conformsInner(l, value, visited, constraints)
             if (stopDesignatorAliasOnFailure || res.isRight) result = res
           case _ =>
@@ -502,7 +502,7 @@ trait ScalaConformance extends api.Conformance with TypeVariableUnification {
         if (results.nonEmpty) result = ConstraintSystem(results)
         else
           result = l match {
-            case AliasType(ta: ScTypeAliasDefinition, Right(lower), _) if !ta.isEffectivelyOpaque =>
+            case AliasType(_: ScTypeAliasDefinition, Right(lower), _, effectivelyOpaque) if !effectivelyOpaque =>
               conformsInner(lower, r, HashSet.empty, constraints)
             case _ => ConstraintsResult.Left
           }
@@ -527,8 +527,8 @@ trait ScalaConformance extends api.Conformance with TypeVariableUnification {
         }
 
         proj2 match {
-          case AliasType(_, _, Left(_)) =>
-          case AliasType(_, _, Right(value)) =>
+          case AliasType(_, _, Left(_), _) =>
+          case AliasType(_, _, Right(value), _) =>
             val res = conformsInner(l, value, visited, constraints)
             if (stopProjectionAliasOnFailure || res.isRight) result = res
           case _ =>
@@ -837,7 +837,7 @@ trait ScalaConformance extends api.Conformance with TypeVariableUnification {
       if (result != null) return
 
       proj match {
-        case AliasType(_, Right(lower), _) =>
+        case AliasType(_, Right(lower), _, _) =>
           val conforms = conformsInner(lower, r, visited, constraints)
           if (conforms.isRight) result = conforms
         case _ =>
@@ -1059,7 +1059,7 @@ trait ScalaConformance extends api.Conformance with TypeVariableUnification {
 
         if (result.isRight) return
         else l match {
-          case AliasType(_, Right(lower), _) =>
+          case AliasType(_, Right(lower), _, _) =>
             result = conformsInner(lower, r, visited, constraints)
           case _ => return
         }
@@ -1089,7 +1089,7 @@ trait ScalaConformance extends api.Conformance with TypeVariableUnification {
       if (result != null) return
 
       p match {
-        case AliasType(_, lower, _) =>
+        case AliasType(_, lower, _, _) =>
           result = lower match {
             case Right(value) => conformsInner(value, r, visited, constraints)
             case _            => ConstraintsResult.Left
@@ -1237,7 +1237,7 @@ trait ScalaConformance extends api.Conformance with TypeVariableUnification {
       if (result != null) return
 
       des match {
-        case AliasType(_, lower, _) =>
+        case AliasType(_, lower, _, _) =>
           result = lower match {
             case Right(value) => conformsInner(value, r, visited, constraints)
             case _            => ConstraintsResult.Left
@@ -1292,7 +1292,7 @@ trait ScalaConformance extends api.Conformance with TypeVariableUnification {
       if (result != null) return
 
       r match {
-        case AliasType(ta: ScTypeAliasDefinition, Right(lower), _) if !ta.isEffectivelyOpaque =>
+        case AliasType(_: ScTypeAliasDefinition, Right(lower), _, effectivelyOpaque) if !effectivelyOpaque =>
           val conformsLower = conformsInner(tpt1, lower, visited, constraints)
           if (conformsLower.isRight) {
             result = conformsLower

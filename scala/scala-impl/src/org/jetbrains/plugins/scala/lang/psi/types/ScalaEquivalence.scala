@@ -66,7 +66,7 @@ trait ScalaEquivalence extends api.Equivalence {
        */
       def isNothingBounded(tp: ScType): Boolean =
         tp.isNothing || (tp match {
-          case AliasType(_, _, Right(upper)) => upper.isNothing
+          case AliasType(_, _, Right(upper), _) => upper.isNothing
           case tpt: TypeParameterType        => tpt.upperType.isNothing
           case exArg: ScExistentialArgument  => exArg.upper.isNothing
           case _                             => false
@@ -76,13 +76,13 @@ trait ScalaEquivalence extends api.Equivalence {
         return ConstraintSystem.empty
 
       right match {
-        case AliasType(ta: ScTypeAliasDefinition, Right(right), _) if !ta.isEffectivelyOpaque =>
+        case AliasType(_: ScTypeAliasDefinition, Right(right), _, effectivelyOpaque) if !effectivelyOpaque =>
           return equivInner(left, right, falseUndef = falseUndef)
         case _ =>
       }
 
       left match {
-        case AliasType(ta: ScTypeAliasDefinition, Right(left), _) if !ta.isEffectivelyOpaque =>
+        case AliasType(_: ScTypeAliasDefinition, Right(left), _, effectivelyOpaque) if !effectivelyOpaque =>
           return equivInner(left, right, falseUndef = falseUndef)
         case _ =>
       }

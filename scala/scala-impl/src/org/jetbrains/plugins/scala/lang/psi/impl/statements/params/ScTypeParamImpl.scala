@@ -45,8 +45,8 @@ class ScTypeParamImpl private (stub: ScTypeParamStub, node: ASTNode)
         case ParameterizedType(des, params)
           if params.length == tParams.length &&
             params.collect { case tpt: TypeParameterType => tpt.psiTypeParameter } == tParams => des
-        case AliasType(ta: ScTypeAliasDefinition, Right(lower), _) if !ta.isEffectivelyOpaque && isLower  => extractBound(lower, isLower)
-        case AliasType(ta: ScTypeAliasDefinition, _, Right(upper)) if !ta.isEffectivelyOpaque && !isLower => extractBound(upper, isLower)
+        case AliasType(_: ScTypeAliasDefinition, Right(lower), _, effectivelyOpaque) if !effectivelyOpaque && isLower  => extractBound(lower, isLower)
+        case AliasType(_: ScTypeAliasDefinition, _, Right(upper), effectivelyOpaque) if !effectivelyOpaque && !isLower => extractBound(upper, isLower)
         case t                                                                => ScTypePolymorphicType(t, tParams.map(TypeParameter(_)))
       }
     case _ => in

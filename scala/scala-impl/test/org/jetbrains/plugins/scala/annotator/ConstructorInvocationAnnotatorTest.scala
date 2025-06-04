@@ -81,6 +81,12 @@ abstract class ConstructorInvocationAnnotatorTestBase extends AnnotatorSimpleTes
     }
   }
 
+  def testNonClassType(): Unit = {
+    assertMatches(messages("type T; new T()")) {
+      case Error("T", "Class type required but (T) found") :: Nil =>
+    }
+  }
+
   def testExcessArguments(): Unit = {
     assertMatches(messages("new A(0, 1)")) {
       case Error(", 1", "Too many arguments for constructor A(Int)") :: Nil =>

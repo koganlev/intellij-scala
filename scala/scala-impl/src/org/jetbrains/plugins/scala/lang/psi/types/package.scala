@@ -209,10 +209,10 @@ package object types {
 
       def innerUpdate(tp: ScType, visited: Set[ScType]): ScType = {
         tp.recursiveUpdate {
-          case AliasType(ta: ScTypeAliasDefinition, Right(_: ScTypePolymorphicType), _) if !ta.isEffectivelyOpaque => ProcessSubtypes
-          case AliasType(ta: ScTypeAliasDefinition, _, Failure(_)) if !ta.isEffectivelyOpaque && needExpand(ta) =>
+          case AliasType(_: ScTypeAliasDefinition, Right(_: ScTypePolymorphicType), _, effectivelyOpaque) if !effectivelyOpaque => ProcessSubtypes
+          case AliasType(ta: ScTypeAliasDefinition, _, Failure(_), effectivelyOpaque) if !effectivelyOpaque && needExpand(ta) =>
             ReplaceWith(projectContext.stdTypes.Any)
-          case `type`@AliasType(ta: ScTypeAliasDefinition, _, Right(upper)) if !ta.isEffectivelyOpaque && needExpand(ta) =>
+          case `type`@AliasType(ta: ScTypeAliasDefinition, _, Right(upper), effectivelyOpaque) if !effectivelyOpaque && needExpand(ta) =>
             if (visited.contains(`type`)) throw RecursionException
             val updated =
               try innerUpdate(upper, visited + `type`)
@@ -334,7 +334,7 @@ package object types {
           }
         case parameterizedType: ParameterizedType =>
           parameterizedType.aliasType match {
-           case Some(AliasType(ta: ScTypeAliasDefinition, _, Right(upper))) if !ta.isEffectivelyOpaque && needExpand(ta) =>
+           case Some(AliasType(ta: ScTypeAliasDefinition, _, Right(upper), effectivelyOpaque)) if !effectivelyOpaque && needExpand(ta) =>
             extractFrom(upper, visitedAliases + ta)
           case _ =>
             extractFrom(parameterizedType.designator, visitedAliases).map {
@@ -466,7 +466,7 @@ package object types {
     case typeParameter: TypeParameterType                             => typeParameter.typeParameters
     case u: UndefinedType                                             => u.typeParameter.typeParameters
     case tpt: ScTypePolymorphicType                                   => tpt.typeParameters
-    case (_: ScParameterizedType) & AliasType(alias, Right(lower), _) =>
+    case (_: ScParameterizedType) & AliasType(alias, Right(lower), _, _) =>
       if (visited.contains(alias)) Seq.empty
       else                         extractTypeParameters(lower, visited + alias)
     case _                                                            => Seq.empty

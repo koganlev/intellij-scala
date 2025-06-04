@@ -26,7 +26,7 @@ final class ScParameterizedType private (override val designator: ScType, overri
       case p: ScParameterizedType =>
         //@TODO: scala 3 only
         p.aliasType.flatMap {
-          case AliasType(ta, lower, upper) =>
+          case AliasType(ta, lower, upper, _) =>
             computeAliasType(ta, lower, upper, isGuaranteedToBeTypeLambda = true)
         }
       case _ => None
@@ -46,7 +46,7 @@ final class ScParameterizedType private (override val designator: ScType, overri
       else
         t match {
           case ScTypePolymorphicType(internal, tps) => (internal, tps)
-          case AliasType(ta, Right(lower), _)       => stripParamsFromTypeLambdas(ta, lower)
+          case AliasType(ta, Right(lower), _, _)    => stripParamsFromTypeLambdas(ta, lower)
           case t                                    => (t, Seq.empty)
         }
 
@@ -63,7 +63,7 @@ final class ScParameterizedType private (override val designator: ScType, overri
     }
 
     val newUpper =
-      if (ta.isDefinition && !ta.asInstanceOf[ScTypeAliasDefinition].isEffectivelyOpaque) newLower
+      if (ta.isDefinition && !ta.isEffectivelyOpaque) newLower
       else
         upper.map { u =>
           val (t, tps) = stripParamsFromTypeLambdas(ta, u)
@@ -77,7 +77,7 @@ final class ScParameterizedType private (override val designator: ScType, overri
           s(t)
         }
 
-    Some(AliasType(ta, newLower, newUpper))
+    Some(AliasType(ta, newLower, newUpper, ta.isEffectivelyOpaque))
   }
 
   private var hash: Int = -1
@@ -124,7 +124,7 @@ final class ScParameterizedType private (override val designator: ScType, overri
         conformance
       case (ParameterizedType(proj@ScProjectionType(_, _), _), _) if proj.actualElement.isInstanceOf[ScTypeAliasDefinition] =>
         this match {
-          case AliasType(ta: ScTypeAliasDefinition, lower, _) if !ta.isEffectivelyOpaque =>
+          case AliasType(_: ScTypeAliasDefinition, lower, _, effectivelyOpaque) if !effectivelyOpaque =>
             (lower match {
               case Right(tp) => tp
               case _         => return ConstraintsResult.Left
@@ -133,7 +133,7 @@ final class ScParameterizedType private (override val designator: ScType, overri
         }
       case (ParameterizedType(ScDesignatorType(_: ScTypeAliasDefinition), _), _) =>
         this match {
-          case AliasType(ta: ScTypeAliasDefinition, lower, _) if !ta.isEffectivelyOpaque =>
+          case AliasType(_: ScTypeAliasDefinition, lower, _, effectivelyOpaque) if !effectivelyOpaque =>
             (lower match {
               case Right(tp) => tp
               case _         => return ConstraintsResult.Left

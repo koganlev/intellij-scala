@@ -5,6 +5,7 @@ import org.jetbrains.plugins.scala.lang.lexer.ScalaTokenTypes
 import org.jetbrains.plugins.scala.lang.psi.api.base.types.ScExistentialClause
 import org.jetbrains.plugins.scala.lang.psi.api.toplevel.typedef.{ScDocCommentOwner, ScMember, ScTypeDefinition}
 import org.jetbrains.plugins.scala.lang.psi.api.toplevel.{ScNamedElement, ScPolymorphicElement}
+import org.jetbrains.plugins.scala.lang.psi.types.Context
 
 trait ScTypeAlias extends ScNamedElement
   // TODO: ScDefinitionWithAssignment should go to ScTypeAliasDefinition but first, we should fix parser
@@ -17,6 +18,8 @@ trait ScTypeAlias extends ScNamedElement
   with ScMember.WithBaseIconProvider
   with ScDocCommentOwner
   with ScCommentOwner {
+
+  def isEffectivelyOpaque(implicit context: Context): Boolean
 
   override protected def isSimilarMemberForNavigation(m: ScMember, isStrictCheck: Boolean): Boolean = m match {
     case t: ScTypeAlias => t.name == name

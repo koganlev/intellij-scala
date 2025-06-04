@@ -160,7 +160,7 @@ trait TypeAdapter {
     ProgressManager.checkCanceled()
     typeCache.getOrElseUpdate(tp, {
       tp match {
-        case AliasType(ta, _, _) => return toTypeName(ta)
+        case AliasType(ta, _, _, _) => return toTypeName(ta)
         case _                   =>
       }
 

@@ -11,6 +11,7 @@ import org.jetbrains.plugins.scala.extensions._
 import org.jetbrains.plugins.scala.lang.psi.api.base.types.ScLiteralTypeElement
 import org.jetbrains.plugins.scala.lang.psi.api.base.{ConstructorInvocationLike, ScConstructorInvocation, ScMethodLike, ScalaConstructor}
 import org.jetbrains.plugins.scala.lang.psi.api.expr.ScArgumentExprList
+import org.jetbrains.plugins.scala.lang.psi.api.statements.{ScTypeAliasDeclaration, ScTypeAliasDefinition}
 import org.jetbrains.plugins.scala.lang.psi.api.toplevel.typedef.{ScConstructorOwner, ScEnum, ScTrait}
 import org.jetbrains.plugins.scala.lang.psi.types._
 import org.jetbrains.plugins.scala.lang.psi.types.api.UndefinedType
@@ -36,6 +37,9 @@ object ScConstructorInvocationAnnotator extends ElementAnnotator[ScConstructorIn
   // TODO duplication with application annotator.
   private def annotateConstructorInvocation(constrInvocation: ScConstructorInvocation)
                                            (implicit holder: ScalaAnnotationHolder): Unit = {
+    implicit val context: Context = Context(constrInvocation)
+    implicit val tps: TypePresentationContext = TypePresentationContext(constrInvocation)
+
     constrInvocation.typeElement match {
       case lit: ScLiteralTypeElement =>
         val message = ScalaBundle.message("annotator.error.class.type.required.but.found", lit)
@@ -64,7 +68,10 @@ object ScConstructorInvocationAnnotator extends ElementAnnotator[ScConstructorIn
       accessible = resolveResult.isAccessible && !elementShouldHaveBeenConcreteConstructor
     } yield resolveResult.copy(isAccessible = accessible) // TODO Resolve should return matching inaccessible constructors, SCL-22156
 
-    if (resolved.exists(isConstructorMalformed)) {
+    if (resolved.map(_.element).exists { case _: ScTypeAliasDeclaration => true; case ta: ScTypeAliasDefinition if ta.isEffectivelyOpaque => true; case _ => false }) {
+      val message = ScalaBundle.message("annotator.error.class.type.required.but.found", constrInvocation.typeElement.`type`().toOption.map(_.presentableText).mkString)
+      holder.createErrorAnnotation(constrInvocation.typeElement, message)
+    } else if (resolved.exists(isConstructorMalformed)) {
       val message = ScalaBundle.message("annotator.error.constructor.has.malformed.definition")
       holder.createErrorAnnotation(constrInvocation.typeElement, message)
     }
