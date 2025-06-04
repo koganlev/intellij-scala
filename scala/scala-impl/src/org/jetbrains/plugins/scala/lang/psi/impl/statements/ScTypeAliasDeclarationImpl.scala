@@ -30,6 +30,8 @@ final class ScTypeAliasDeclarationImpl private(stub: ScTypeAliasStub, node: ASTN
 
   def this(stub: ScTypeAliasStub) = this(stub, null)
 
+  override def isEffectivelyOpaque(implicit context: Context): Boolean = false
+
   override def navigate(requestFocus: Boolean): Unit = {
     val descriptor = EditSourceUtil.getDescriptor(this)
     if (descriptor != null) {

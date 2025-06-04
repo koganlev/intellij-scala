@@ -64,7 +64,7 @@ object FunctionTypeFactory {
   private[this] object AliasLowerBound {
 
     def unapply(`type`: ScType)(implicit context: Context): Option[ScType] = `type` match {
-      case AliasType(ta: ScTypeAliasDefinition, Right(lower), _) if !ta.isEffectivelyOpaque => Option(lower)
+      case AliasType(_: ScTypeAliasDefinition, Right(lower), _, effectivelyOpaque) if !effectivelyOpaque => Option(lower)
       case _                                                    => None
     }
   }

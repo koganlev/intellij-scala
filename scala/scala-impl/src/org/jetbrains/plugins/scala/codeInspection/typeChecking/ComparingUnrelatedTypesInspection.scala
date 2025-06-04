@@ -110,13 +110,13 @@ object ComparingUnrelatedTypesInspection {
   }
 
   private def undefinedTypeAlias(`type`: ScType)(implicit context: Context) = `type` match {
-    case AliasType(_, Right(lower), Right(upper)) => !lower.equiv(upper)
+    case AliasType(_, Right(lower), Right(upper), _) => !lower.equiv(upper)
     case _                                        => false
   }
 
   @tailrec
   private def extractActualType(`type`: ScType)(implicit context: Context): ScType = `type` match {
-    case AliasType(_, _, Right(rhs)) => extractActualType(rhs)
+    case AliasType(_, _, Right(rhs), _) => extractActualType(rhs)
     case _                           => `type`.widen
   }
 

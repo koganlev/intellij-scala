@@ -279,7 +279,7 @@ object ImplicitProcessor {
       if (!visited.add(convertRawArgs(tp))) return
 
       tp match {
-        case AliasType(_, _, Right(t)) => collectParts(t)
+        case AliasType(_, _, Right(t), _) => collectParts(t)
         case _ => ()
       }
 

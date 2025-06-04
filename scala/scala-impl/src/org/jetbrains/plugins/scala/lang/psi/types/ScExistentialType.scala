@@ -22,7 +22,7 @@ final class ScExistentialType private (
   override implicit def projectContext: ProjectContext = quantified.projectContext
 
   override protected def calculateAliasType(implicit context: Context): Option[AliasType] = {
-    quantified.aliasType.map(a => a.copy(lower = a.lower.map(_.unpackedType), upper = a.upper.map(_.unpackedType)))
+    quantified.aliasType.map(a => a.copy(lower = a.lower.map(_.unpackedType), upper = a.upper.map(_.unpackedType), effectivelyOpaque = a.effectivelyOpaque))
   }
 
   override def equivInner(r: ScType, constraints: ConstraintSystem, falseUndef: Boolean)(implicit context: Context): ConstraintsResult = {

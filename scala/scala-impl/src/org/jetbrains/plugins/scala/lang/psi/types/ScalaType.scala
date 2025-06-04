@@ -42,7 +42,7 @@ object ScalaType {
       case t: ScTypeAliasDeclaration if t.typeParameters.isEmpty =>
         t.upperBound.flatMap(expandAliases(_, visited + tp))
       case t: ScTypeAliasDefinition if t.typeParameters.isEmpty && !t.isEffectivelyOpaque => t.aliasedType
-      case (_: ScParameterizedType) & AliasType(_, upper, _) =>
+      case (_: ScParameterizedType) & AliasType(_, upper, _, _) =>
         upper.flatMap(expandAliases(_, visited + tp))
       case _ => Right(tp)
     }

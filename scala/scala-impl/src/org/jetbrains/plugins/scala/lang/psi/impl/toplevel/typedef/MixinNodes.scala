@@ -591,7 +591,7 @@ object MixinNodes {
       @tailrec
       def updateTp(tp: ScType, depth: Int = 0): ScType = {
         tp match {
-          case AliasType(_, _, Right(upper)) =>
+          case AliasType(_, _, Right(upper), _) =>
             if (tp != upper && depth < 100) updateTp(upper, depth + 1)
             else                            tp
           case _ =>
@@ -633,7 +633,7 @@ object MixinNodes {
   }
 
   private def dealias(tp: ScType) = tp match {
-    case AliasType(ta: ScTypeAliasDefinition, lower, _) if !ta.isEffectivelyOpaque => lower.getOrElse(tp)
+    case AliasType(_: ScTypeAliasDefinition, lower, _, effectivelyOpaque) if !effectivelyOpaque => lower.getOrElse(tp)
     case _                                             => tp
   }
 
