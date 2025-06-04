@@ -89,4 +89,20 @@ class Scala3NewTuplesTest extends TypeInferenceTestBase {
        |// (Int, Boolean, String)
        |""".stripMargin
   )
+
+  def test_underscore_accessor_1(): Unit = doTest(
+    s"""
+       |val t = 1 *: true *: 2 *: EmptyTuple
+       |${START}t._1$END
+       |// Int
+       |""".stripMargin
+  )
+
+  def test_underscore_accessor_2(): Unit = doTest(
+    s"""
+       |val t = 1 *: true *: 2 *: EmptyTuple
+       |${START}t._2$END
+       |// Boolean
+       |""".stripMargin
+  )
 }

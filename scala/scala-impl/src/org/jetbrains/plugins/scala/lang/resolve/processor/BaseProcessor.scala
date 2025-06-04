@@ -261,7 +261,7 @@ abstract class BaseProcessor(val kinds: Set[ResolveTargets.Value])
             }
         }
 
-        cont && processNamedTuple(p, execute(_, state))
+        cont && processNamedTuple(p, execute(_, state)) && processScala3Tuple(p, execute(_, state))
       case proj: ScProjectionType =>
         val withActual = new ScProjectionType.withActual(updateWithProjectionSubst)
         proj match {

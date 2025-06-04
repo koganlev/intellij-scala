@@ -17,7 +17,7 @@ import org.jetbrains.plugins.scala.lang.psi.api.toplevel.typedef._
 import org.jetbrains.plugins.scala.lang.psi.api.toplevel.{ScNamedElement, ScTypedDefinition}
 import org.jetbrains.plugins.scala.lang.psi.impl.{ScalaPsiElementFactory, ScalaPsiManager}
 import org.jetbrains.plugins.scala.lang.psi.types._
-import org.jetbrains.plugins.scala.lang.psi.types.api.{NamedTupleType, ParameterizedType, StdType}
+import org.jetbrains.plugins.scala.lang.psi.types.api.{NamedTupleType, ParameterizedType, StdType, TupleType}
 import org.jetbrains.plugins.scala.lang.psi.types.result._
 import org.jetbrains.plugins.scala.lang.refactoring.util.ScalaNamesUtil
 import org.jetbrains.plugins.scala.lang.resolve.ScalaResolveState.ResolveStateExt
@@ -513,6 +513,25 @@ object TypeDefinitionMembers {
       case _ =>
         true
     }
+  }
+
+  def processScala3Tuple(p: ParameterizedType, execute: PsiElement => Boolean): Boolean = {
+    if (TupleType.TupleHList.isCons(p)) {
+      p match {
+        case TupleType(comps) =>
+          comps.zipWithIndex.foreach { case (comp, i) =>
+            val index = i + 1
+            val property = ScalaPsiElementFactory.createMethodFromText(
+              text = s"def _$index: ${comp.canonicalText}",
+              features = ScalaFeatures.defaultScala3,
+            )(p.projectContext)
+
+            execute(property)
+          }
+        case _ =>
+      }
+    }
+    true
   }
 
   private def signaturesFromCompanion(clazz: PsiClass, withSupers: Boolean): TermNodes.Map = {
