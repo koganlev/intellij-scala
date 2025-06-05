@@ -1081,6 +1081,16 @@ class Scala3OpaqueTypeAliasTest extends ScalaLightCodeInsightFixtureTestCase {
     )
   }
 
+  def testTreeContext(): Unit = {
+    checkTextHasNoErrors(
+      s"""
+         |object Inside:
+         |  opaque type T[+A] = Seq[A]
+         |  for (x <- ??? : T[Int]; if x > 0) yield x + 1
+         |""".stripMargin
+    )
+  }
+
   def testScl21568(): Unit = {
     checkTextHasNoErrors(
       s"""
