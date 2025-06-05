@@ -1134,4 +1134,17 @@ class Scala3OpaqueTypeAliasTest extends ScalaLightCodeInsightFixtureTestCase {
          |""".stripMargin
     )
   }
+
+  def testConstraintSolving(): Unit = {
+    checkTextHasNoErrors(
+      s"""
+         |class Foo
+         |object Inside:
+         |  opaque type T[_] = Int
+         |  def foo[A](x: T[A]): A = ???
+         |  var v = foo(??? : T[Foo])
+         |  v = new Foo()
+         |""".stripMargin
+    )
+  }
 }

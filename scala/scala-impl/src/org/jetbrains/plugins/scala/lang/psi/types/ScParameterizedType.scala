@@ -109,6 +109,32 @@ final class ScParameterizedType private (override val designator: ScType, overri
     val Nothing = projectContext.stdTypes.Nothing
 
     (this, r) match {
+      case (ParameterizedType(ScProjectionType.withActual(ta1: ScTypeAliasDefinition, _), _), ParameterizedType(ScProjectionType.withActual(ta2: ScTypeAliasDefinition, _), _))
+        if ta1 == ta2 && !ta1.isEffectivelyOpaque =>
+      case (ParameterizedType(ScProjectionType.withActual(ta: ScTypeAliasDefinition, _), _), _) if !ta.isEffectivelyOpaque =>
+        return this match {
+          case AliasType(_: ScTypeAliasDefinition, lower, _, effectivelyOpaque) if !effectivelyOpaque =>
+            (lower match {
+              case Right(tp) => tp
+              case _         => return ConstraintsResult.Left
+            }).equiv(r, constraints, falseUndef)
+          case _ => ConstraintsResult.Left
+        }
+      case (ParameterizedType(ScDesignatorType(ta1: ScTypeAliasDefinition), _), ParameterizedType(ScDesignatorType(ta2: ScTypeAliasDefinition), _))
+        if ta1 == ta2 && !ta1.isEffectivelyOpaque =>
+      case (ParameterizedType(ScDesignatorType(ta: ScTypeAliasDefinition), _), _) if !ta.isEffectivelyOpaque =>
+        return this match {
+          case AliasType(_: ScTypeAliasDefinition, lower, _, effectivelyOpaque) if !effectivelyOpaque =>
+            (lower match {
+              case Right(tp) => tp
+              case _         => return ConstraintsResult.Left
+            }).equiv(r, constraints, falseUndef)
+          case _ => ConstraintsResult.Left
+        }
+      case _ =>
+    }
+
+    (this, r) match {
       case (ParameterizedType(Nothing, _), Nothing) => constraints
       case (ParameterizedType(Nothing, _), ParameterizedType(Nothing, _)) => constraints
       case (ParameterizedType(ScAbstractType(tp, lower, upper), args), _) =>
@@ -122,24 +148,6 @@ final class ScParameterizedType private (override val designator: ScType, overri
         if (conformance.isLeft) return ConstraintsResult.Left
 
         conformance
-      case (ParameterizedType(proj@ScProjectionType(_, _), _), _) if proj.actualElement.isInstanceOf[ScTypeAliasDefinition] =>
-        this match {
-          case AliasType(_: ScTypeAliasDefinition, lower, _, effectivelyOpaque) if !effectivelyOpaque =>
-            (lower match {
-              case Right(tp) => tp
-              case _         => return ConstraintsResult.Left
-            }).equiv(r, constraints, falseUndef)
-          case _ => ConstraintsResult.Left
-        }
-      case (ParameterizedType(ScDesignatorType(_: ScTypeAliasDefinition), _), _) =>
-        this match {
-          case AliasType(_: ScTypeAliasDefinition, lower, _, effectivelyOpaque) if !effectivelyOpaque =>
-            (lower match {
-              case Right(tp) => tp
-              case _         => return ConstraintsResult.Left
-            }).equiv(r, constraints, falseUndef)
-          case _ => ConstraintsResult.Left
-        }
       case (ParameterizedType(UndefinedType(_, _), _), rhs @ ParameterizedType(_, _)) if !falseUndef =>
         Conformance.unifyHK(this, rhs, constraints, Bound.Equivalence, Set.empty, checkWeak = false)
       case (ParameterizedType(_, _), rhs @ ParameterizedType(UndefinedType(_, _), _)) if !falseUndef =>

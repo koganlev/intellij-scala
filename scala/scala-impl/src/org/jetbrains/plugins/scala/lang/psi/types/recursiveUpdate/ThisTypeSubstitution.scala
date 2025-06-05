@@ -127,7 +127,7 @@ private case class ThisTypeSubstitution(target: ScType, @Nullable seenFromClass:
     def rec(tp: ScType, seen: Set[ScTypeAlias]): Either[ScType, PsiNamedElement] = tp match {
       case tp: NonValueType      => rec(tp.inferValueType, seen)
       case tp: DesignatorOwner   => elem1(tp) match {
-        case ta: ScTypeAliasDefinition if !seen(ta) => ta.aliasedType.map(subst(tp)).fold(_ => Left(tp), rec(_, seen + ta))
+        case ta: ScTypeAliasDefinition if !ta.isEffectivelyOpaque && !seen(ta) => ta.aliasedType.map(subst(tp)).fold(_ => Left(tp), rec(_, seen + ta))
         case tp                                     => Right(tp)
       }
       case tp: ParameterizedType => tp match {

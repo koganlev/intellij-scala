@@ -75,14 +75,12 @@ trait ScalaEquivalence extends api.Equivalence {
       if (isNothingBounded(left) && isNothingBounded(right))
         return ConstraintSystem.empty
 
-      right match {
-        case AliasType(_: ScTypeAliasDefinition, Right(right), _, effectivelyOpaque) if !effectivelyOpaque =>
+      (left, right) match {
+        case (AliasType(ta1: ScTypeAliasDefinition, _, _, effectivelyOpaque), AliasType(ta2: ScTypeAliasDefinition, _, _, _))
+          if ta1 == ta2 && !effectivelyOpaque =>
+        case (_, AliasType(_: ScTypeAliasDefinition, Right(right), _, effectivelyOpaque)) if !effectivelyOpaque =>
           return equivInner(left, right, falseUndef = falseUndef)
-        case _ =>
-      }
-
-      left match {
-        case AliasType(_: ScTypeAliasDefinition, Right(left), _, effectivelyOpaque) if !effectivelyOpaque =>
+        case (AliasType(_: ScTypeAliasDefinition, Right(left), _, effectivelyOpaque), _) if !effectivelyOpaque =>
           return equivInner(left, right, falseUndef = falseUndef)
         case _ =>
       }
