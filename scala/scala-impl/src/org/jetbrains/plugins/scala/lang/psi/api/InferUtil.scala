@@ -313,7 +313,7 @@ object InferUtil {
           .get("MirroredMonoType")
           .map(sig => sig.typeAlias -> sig.substitutor)
           .collect {
-            case (tdef: ScTypeAliasDefinition, subst) if eligibleForMirror(subst(tdef.aliasedType.getOrAny)) =>
+            case (tdef: ScTypeAliasDefinition, subst) if !tdef.isEffectivelyOpaque && eligibleForMirror(subst(tdef.aliasedType.getOrAny)) =>
               new ScalaResolveResult(cls)
           }
       case _ => None

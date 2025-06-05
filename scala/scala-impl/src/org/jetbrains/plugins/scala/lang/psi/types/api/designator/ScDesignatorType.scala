@@ -43,7 +43,7 @@ final case class ScDesignatorType(override val element: PsiNamedElement) extends
     (`type` match {
       case rhs: ScTypePolymorphicType =>
         ScEquivalenceUtil.isTypeConstructorEquivalentToPolyType(this, rhs, constraints, falseUndef)
-      case _ if element.is[ScTypeAliasDefinition] =>
+      case _ if element.is[ScTypeAliasDefinition] && !element.asInstanceOf[ScTypeAliasDefinition].isEffectivelyOpaque =>
         element.asInstanceOf[ScTypeAliasDefinition].aliasedType.toOption.map(
           _.equiv(`type`, constraints, falseUndef)
         )

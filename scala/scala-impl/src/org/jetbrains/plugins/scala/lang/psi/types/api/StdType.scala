@@ -79,7 +79,7 @@ object StdType {
 sealed class ValType(override val name: String)(implicit projectContext: ProjectContext)
   extends StdType(name, Some(StdTypes.instance.AnyVal)) with LeafType {
 
-  override def isFinalType = true
+  override def isFinalType(implicit context: Context) = true
 }
 
 class StdTypes(implicit private val projectContext: ProjectContext) extends Disposable {
@@ -88,13 +88,13 @@ class StdTypes(implicit private val projectContext: ProjectContext) extends Disp
   lazy val Any = new StdType(Name.Any, None)
   lazy val AnyRef = new StdType(Name.AnyRef, Some(Any))
   lazy val Null: StdType = new StdType(Name.Null, Some(AnyRef)) {
-    override def isFinalType = true
+    override def isFinalType(implicit context: Context) = true
   }
   lazy val Nothing: StdType = new StdType(Name.Nothing, Some(Any)) {
-    override def isFinalType = true
+    override def isFinalType(implicit context: Context) = true
   }
   lazy val Singleton: StdType = new StdType(Name.Singleton, Some(AnyRef)) {
-    override def isFinalType = true
+    override def isFinalType(implicit context: Context) = true
   }
 
   // Scala 2 library AnyVal classes

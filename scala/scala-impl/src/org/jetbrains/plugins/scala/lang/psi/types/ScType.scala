@@ -47,7 +47,7 @@ trait ScType extends ProjectContextOwner {
 
   def isValue: Boolean
 
-  def isFinalType: Boolean = false
+  def isFinalType(implicit context: Context): Boolean = false
 
   def inferValueType: api.ValueType
 

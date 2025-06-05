@@ -112,7 +112,7 @@ class ScConstructorInvocationImpl(node: ASTNode)
       val clazz = constr.containingClass
 
       val tp = r.getActualElement match {
-        case ta: ScTypeAliasDefinition => subst(ta.aliasedType.getOrElse(return FAILURE))
+        case ta: ScTypeAliasDefinition if !ta.isEffectivelyOpaque => subst(ta.aliasedType.getOrElse(return FAILURE))
         case _ =>
           parameterize(
             ScSimpleTypeElementImpl.calculateReferenceType(ref, shapesOnly = true).getOrElse(return FAILURE),

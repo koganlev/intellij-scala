@@ -157,7 +157,7 @@ trait ScImportsHolder extends ScImportsOrExportsHolder {
       else {
         val resolveResult = ref.bind()
         resolveResult.exists {
-          case ScalaResolveResult(t: ScTypeAliasDefinition, _) if t.typeParameters.isEmpty =>
+          case ScalaResolveResult(t: ScTypeAliasDefinition, _) if t.typeParameters.isEmpty && !t.isEffectivelyOpaque =>
             val aliasedType = t.aliasedType
             aliasedType.exists {
               case ScDesignatorType(c: PsiClass) =>

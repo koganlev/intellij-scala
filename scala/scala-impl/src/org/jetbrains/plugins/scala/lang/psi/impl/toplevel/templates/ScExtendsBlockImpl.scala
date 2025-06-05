@@ -302,13 +302,13 @@ class ScExtendsBlockImpl private(stub: ScExtendsBlockStub, node: ASTNode)
 object ScExtendsBlockImpl {
 
   private def extractSupers(typeElements: Seq[ScTypeElement])
-                           (implicit project: ProjectContext): Seq[PsiClass] =
+                           (implicit project: ProjectContext, context: Context): Seq[PsiClass] =
     typeElements.flatMap {
       case typeElement@ScSimpleTypeElement.unwrapped(reference) =>
         reference.resolveNoConstructor match {
           case Array(ScalaResolveResult(clazz: PsiClass, _)) =>
             Some(clazz)
-          case Array(ScalaResolveResult(typeAlias: ScTypeAliasDefinition, subst)) =>
+          case Array(ScalaResolveResult(typeAlias: ScTypeAliasDefinition, subst)) if !typeAlias.isEffectivelyOpaque =>
             tail(typeAlias.aliasedType.map(subst))
           case _ =>
             tail(typeElement.`type`())

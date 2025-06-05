@@ -141,7 +141,7 @@ final class ScalaLookupItem private(override val getPsiElement: PsiNamedElement,
         presentationStringForScalaType(scType, substitutor)
       case fun: ScFun =>
         presentationStringForScalaType(fun.retType, substitutor)
-      case alias: ScTypeAliasDefinition =>
+      case alias: ScTypeAliasDefinition if !alias.isEffectivelyOpaque =>
         presentationStringForScalaType(alias.aliasedType.getOrAny, substitutor)
       case param: ScParameter =>
         presentationStringForScalaType(param.getRealParameterType.getOrAny, substitutor)

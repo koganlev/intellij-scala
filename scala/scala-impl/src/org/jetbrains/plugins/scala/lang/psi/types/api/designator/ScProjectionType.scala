@@ -233,9 +233,9 @@ final class ScProjectionType private(val projected: ScType,
     }
   }
 
-  override def isFinalType: Boolean = actualElement match {
+  override def isFinalType(implicit context: Context): Boolean = actualElement match {
     case cl: PsiClass if cl.isEffectivelyFinal => true
-    case alias: ScTypeAliasDefinition          => alias.aliasedType.exists(_.isFinalType)
+    case alias: ScTypeAliasDefinition if !alias.isEffectivelyOpaque => alias.aliasedType.exists(_.isFinalType)
     case _                                     => false
   }
 
