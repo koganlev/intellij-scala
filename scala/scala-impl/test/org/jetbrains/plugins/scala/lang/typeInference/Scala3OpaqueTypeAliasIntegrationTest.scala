@@ -89,6 +89,26 @@ class Scala3OpaqueTypeAliasIntegrationTest extends ScalaLightCodeInsightFixtureT
     )
   }
 
+  def testScl22480(): Unit = {
+    checkTextHasNoErrors(
+      s"""
+         |object MainX {
+         |  trait Base
+         |  case class Child(x: String) extends Base
+         |
+         |  opaque type Id[+T <: Base] = Int
+         |
+         |  def update[T <: Base](id: Id[T])(update: (Double, T) => T) = ()
+         |
+         |  def main(args: Array[String]): Unit = {
+         |    val id: Id[Child] = ???
+         |    update(id)((x, child) => child.copy(x = ""))
+         |  }
+         |}
+         |""".stripMargin
+    )
+  }
+
   def testScl22871(): Unit = {
     checkTextHasNoErrors(
       s"""
@@ -375,6 +395,26 @@ class Scala3OpaqueTypeAliasIntegrationTest extends ScalaLightCodeInsightFixtureT
          |  import A.Foo
          |  implicitly[Bar[Foo]]
          |}
+         |""".stripMargin
+    )
+  }
+
+  def testScl23656(): Unit = {
+    checkTextHasNoErrors(
+      s"""
+         |trait MyService {
+         |  def find(x: Int): String = ""
+         |}
+         |
+         |opaque type Stub[+A] <: A = A
+         |
+         |object Stub {
+         |  def apply[A](a: A): Stub[A] = a
+         |}
+         |
+         |@main def hello =
+         |  val myList = Stub(new MyService {})
+         |  myList.find(42)
          |""".stripMargin
     )
   }

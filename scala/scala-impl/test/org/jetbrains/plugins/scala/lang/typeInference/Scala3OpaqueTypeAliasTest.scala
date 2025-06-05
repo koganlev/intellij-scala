@@ -1081,6 +1081,16 @@ class Scala3OpaqueTypeAliasTest extends ScalaLightCodeInsightFixtureTestCase {
     )
   }
 
+  def testTreeContext(): Unit = {
+    checkTextHasNoErrors(
+      s"""
+         |object Inside:
+         |  opaque type T[+A] = Seq[A]
+         |  for (x <- ??? : T[Int]; if x > 0) yield x + 1
+         |""".stripMargin
+    )
+  }
+
   def testScl21568(): Unit = {
     checkTextHasNoErrors(
       s"""
@@ -1121,6 +1131,19 @@ class Scala3OpaqueTypeAliasTest extends ScalaLightCodeInsightFixtureTestCase {
          |object Outside:
          |  var x = ??? : Inside.T
          |  x = ${CARET}123
+         |""".stripMargin
+    )
+  }
+
+  def testConstraintSolving(): Unit = {
+    checkTextHasNoErrors(
+      s"""
+         |class Foo
+         |object Inside:
+         |  opaque type T[_] = Int
+         |  def foo[A](x: T[A]): A = ???
+         |  var v = foo(??? : T[Foo])
+         |  v = new Foo()
          |""".stripMargin
     )
   }
