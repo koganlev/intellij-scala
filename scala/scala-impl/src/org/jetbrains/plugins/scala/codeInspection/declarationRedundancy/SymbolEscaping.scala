@@ -169,7 +169,7 @@ private[declarationRedundancy] object SymbolEscaping {
 
         EscapeInfo(typeDef, destructureAndFilter(types)) +: childTypes
 
-      case typeAlias: ScTypeAliasDefinition if !isPrivate(typeAlias) =>
+      case typeAlias: ScTypeAliasDefinition if !typeAlias.isOpaque && !isPrivate(typeAlias) =>
         val types = getTypeParameterTypes(typeAlias) ++ typeAlias.aliasedType.toSeq
         Seq(EscapeInfo(typeAlias, destructureAndFilter(types)))
 

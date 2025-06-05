@@ -143,7 +143,7 @@ class ScSimpleTypeElementImpl(node: ASTNode) extends ScalaPsiElementImpl(node) w
       val subst = _subst followed constrSubst
 
       val tp = parentElement match {
-        case ta: ScTypeAliasDefinition =>
+        case ta: ScTypeAliasDefinition if !ta.isEffectivelyOpaque =>
           if (ScalaApplicationSettings.PRECISE_TEXT) parametrise1(calculateReferenceType(ref).getOrElse(return Nothing), ta)
           else ta.aliasedType.getOrElse(return Nothing)
         case _ => parametrise(calculateReferenceType(ref).getOrElse(return Nothing), clazz)

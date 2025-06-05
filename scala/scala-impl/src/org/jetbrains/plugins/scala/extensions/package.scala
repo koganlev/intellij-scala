@@ -647,7 +647,7 @@ package object extensions {
         case e: ScParameter      => e.getRealParameterType.toOption
         case e: PsiMethod        => e.functionType(scope, context)
         case e: PsiVariable      => lift(e.getType)
-        case e: ScTypeAliasDefinition => e.aliasedType.toOption
+        case e: ScTypeAliasDefinition if !e.isEffectivelyOpaque => e.aliasedType.toOption
         case e: ScObject         => e.`type`().toOption
         case _                   => None
       }).map(substitutor)

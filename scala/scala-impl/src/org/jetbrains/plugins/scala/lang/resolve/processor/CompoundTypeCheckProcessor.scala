@@ -237,17 +237,7 @@ class CompoundTypeCheckTypeAliasProcessor(
 
     def checkDeclarationForTypeAlias(tp: ScTypeAlias): Boolean = {
       sign.typeAlias match {
-        case _: ScTypeAliasDeclaration =>
-          var conformance = subst(sign.lowerBound).conforms(subst(tp.lowerBound.getOrNothing), undef)
-          if (conformance.isRight) {
-            conformance = subst(tp.upperBound.getOrAny).conforms(subst(sign.upperBound), conformance.constraints)
-            if (conformance.isRight) {
-              trueResult = true
-              innerConstraints = conformance.constraints
-              return true
-            }
-          }
-        case tdef: ScTypeAliasDefinition =>
+        case tdef: ScTypeAliasDefinition if !tdef.isEffectivelyOpaque =>
           val enclosingClass = tp.parentOfType(classOf[ScTemplateDefinition])
           val thisType       = enclosingClass.map(ScThisType).getOrElse(tdef.projectContext.stdTypes.Any)
           val asSeenFrom     = subst(ScProjectionType(thisType, tp))
@@ -259,6 +249,16 @@ class CompoundTypeCheckTypeAliasProcessor(
             innerConstraints = conforms.constraints
             return true
           }
+        case _: ScTypeAlias =>
+          var conformance = subst(sign.lowerBound).conforms(subst(tp.lowerBound.getOrNothing), undef)
+          if (conformance.isRight) {
+            conformance = subst(tp.upperBound.getOrAny).conforms(subst(sign.upperBound), conformance.constraints)
+            if (conformance.isRight) {
+              trueResult = true
+              innerConstraints = conformance.constraints
+              return true
+            }
+          }
         case _ =>
       }
       false
@@ -267,7 +267,7 @@ class CompoundTypeCheckTypeAliasProcessor(
     namedElement match {
       case tp: ScTypeAliasDefinition =>
         sign.typeAlias match {
-          case adef: ScTypeAliasDefinition =>
+          case adef: ScTypeAliasDefinition if !adef.isEffectivelyOpaque =>
             val tpts             = tp.typeParameters.map(TypeParameterType(_))
             val renameTypeParams = ScSubstitutor.bind(adef.typeParameters, tpts)
             val lhs              = subst(tp.aliasedType.getOrNothing)
@@ -279,7 +279,7 @@ class CompoundTypeCheckTypeAliasProcessor(
               innerConstraints = conforms.constraints
               return false
             }
-          case _: ScTypeAliasDeclaration => if (checkDeclarationForTypeAlias(tp)) return false
+          case _: ScTypeAlias => if (checkDeclarationForTypeAlias(tp)) return false
           case _ => throw new IllegalArgumentException("Type alias must be either a declaration of definition.")
         }
       case tp: ScTypeAliasDeclaration => if (checkDeclarationForTypeAlias(tp)) return false

@@ -141,7 +141,7 @@ class ScalaOverrideContributor extends ScalaCompletionContributor {
     }
   })
 
-  private def createText(classMember: ClassMember, clazz: ScTemplateDefinition, full: Boolean, withBody: Boolean): String = {
+  private def createText(classMember: ClassMember, clazz: ScTemplateDefinition, full: Boolean, withBody: Boolean)(implicit context: Context): String = {
     import ScalaPsiElementFactory._
     import TypeAnnotationUtil._
     import clazz.projectContext

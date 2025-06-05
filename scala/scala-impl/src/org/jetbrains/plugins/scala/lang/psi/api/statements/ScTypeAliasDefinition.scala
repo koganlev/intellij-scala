@@ -46,7 +46,16 @@ trait ScTypeAliasDefinition extends ScTypeAlias {
     isDefinedInObject && isAliasFor(cls)
   }
 
-  def isAliasFor(cls: PsiClass): Boolean = {
+  def isAliasFor(cls: PsiClass)(implicit context: Context): Boolean =
+    ScTypeAliasDefinition.isAliasFor(this, cls)(context)
+}
+
+private object ScTypeAliasDefinition {
+  def isAliasFor(that: ScTypeAliasDefinition, cls: PsiClass)(implicit context: Context): Boolean = {
+    import that.{typeParameters, aliasedType, isEffectivelyOpaque}
+
+    if (isEffectivelyOpaque) return false
+
     if (cls.getTypeParameters.length != typeParameters.length) false
     else if (cls.hasTypeParameters) {
       val typeParamsAreAppliedInOrderToCorrectClass = aliasedType.getOrAny match {
