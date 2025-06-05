@@ -1,7 +1,7 @@
 package org.jetbrains.plugins.scala.lang.psi.types
 
-import com.intellij.psi.PsiElement
-import org.jetbrains.plugins.scala.extensions.PsiElementExt
+import com.intellij.psi.{PsiDirectory, PsiElement}
+import org.jetbrains.plugins.scala.extensions.{ObjectExt, PsiElementExt}
 import org.jetbrains.plugins.scala.lang.psi.api.statements.ScTypeAliasDefinition
 
 trait Context {
@@ -15,7 +15,7 @@ object Context {
         throw new IllegalArgumentException("Opaque type alias expected")
 
       opaqueTypeAlias.getContainingFile == place.getContainingFile &&
-        place.parentsInFile.contains(opaqueTypeAlias.getParent)
+        place.parents.takeWhile(!_.is[PsiDirectory]).contains(opaqueTypeAlias.getParent)
     }
 
     override def toString: String = place.toString

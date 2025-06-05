@@ -379,6 +379,26 @@ class Scala3OpaqueTypeAliasIntegrationTest extends ScalaLightCodeInsightFixtureT
     )
   }
 
+  def testScl23656(): Unit = {
+    checkTextHasNoErrors(
+      s"""
+         |trait MyService {
+         |  def find(x: Int): String = ""
+         |}
+         |
+         |opaque type Stub[+A] <: A = A
+         |
+         |object Stub {
+         |  def apply[A](a: A): Stub[A] = a
+         |}
+         |
+         |@main def hello =
+         |  val myList = Stub(new MyService {})
+         |  myList.find(42)
+         |""".stripMargin
+    )
+  }
+
   def testScl23705(): Unit = {
     checkTextHasNoErrors(
       s"""
