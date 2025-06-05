@@ -7,7 +7,10 @@ import org.jetbrains.plugins.scala.extensions.executeOnPooledThread
 
 object TypeAwareWidgetUpdater {
 
-  def updateWidget(project: Project): Unit = executeOnPooledThread {
+  /**
+   * @note Can be called on any thread. The updating logic will be run on a background, non-ui thread.
+   */
+  def scheduleWidgetUpdate(project: Project): Unit = executeOnPooledThread {
     updateWidgetImpl(project)
   }
 

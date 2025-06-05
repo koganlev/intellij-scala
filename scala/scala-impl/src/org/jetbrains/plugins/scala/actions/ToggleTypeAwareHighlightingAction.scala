@@ -35,7 +35,7 @@ object ToggleTypeAwareHighlightingAction {
     val settings = ScalaProjectSettings.getInstance(project)
     settings.toggleTypeAwareHighlighting()
 
-    TypeAwareWidgetUpdater.updateWidget(project)
+    TypeAwareWidgetUpdater.scheduleWidgetUpdate(project)
 
     invokeLater(ModalityState.nonModal()) {
       reparseActiveFiles(project)

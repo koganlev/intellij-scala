@@ -45,7 +45,7 @@ private object TypeAwareWidgetFactory {
      * project, based on whether it is a Scala project.
      */
     override def exitDumbMode(): Unit = {
-      TypeAwareWidgetUpdater.updateWidget(project)
+      TypeAwareWidgetUpdater.scheduleWidgetUpdate(project)
     }
   }
 }

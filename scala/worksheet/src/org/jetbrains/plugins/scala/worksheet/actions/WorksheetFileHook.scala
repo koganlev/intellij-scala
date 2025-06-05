@@ -217,7 +217,7 @@ object WorksheetFileHook {
       //      where we do the UI modification work (which must be done on the UI thread anyways).
 
       val editor = FileEditorManager.getInstance(project).getSelectedTextEditor
-      if (editor eq null) {
+      if (editor == null) {
         // There are no active editors. Do nothing.
         return
       }
