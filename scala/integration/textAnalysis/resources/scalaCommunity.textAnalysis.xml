@@ -1,6 +1,7 @@
 <idea-plugin package="org.jetbrains.plugins.scala.textAnalysis">
     <dependencies>
         <plugin id="tanvd.grazi"/>
+        <module name="scalaCommunity.intelliLang" />
     </dependencies>
 
     <extensions defaultExtensionNs="com.intellij.spellchecker">
