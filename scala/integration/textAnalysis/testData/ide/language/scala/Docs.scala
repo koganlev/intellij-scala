@@ -5,13 +5,13 @@
  * <p>
  * This class has no useful logic; it's just a documentation example.
  *
- * This is thought to be a great news, e.g. a new invention.
+ * This is thought to be a great news, <STYLE_SUGGESTION descr="Put commas after 'e.g.' in American English">e.g.</STYLE_SUGGESTION> a new invention.
  *
- * A code example 1: {{{
+ * <GRAMMAR_ERROR descr="Don’t use articles before nouns with numbers">A </GRAMMAR_ERROR>code example 1: {{{
  *   Item item = env.generateData(Generator.sampledFrom(sys.currentItems), "working on %s item");
  * }}}
  *
- * A code example 2:
+ * <GRAMMAR_ERROR descr="Don’t use articles before nouns with numbers">A </GRAMMAR_ERROR>code example 2:
  * <code>
  *   Item item = env.generateData(Generator.sampledFrom(sys.currentItems), "working on %s item");
  * </code>
@@ -20,31 +20,31 @@
  */
 class ExampleClassWithNoTypos[T] {
 
-    private var name: String = null;
+  private var name: String = null;
 
-    /**
-     * Adds a `member` to this group.
-     *
-     * @param cancellable Whether the progress can be cancelled.
-     * @param member member to add
-     * @return the new size of the group. And another sentence.
-     */
-    def goodFunction(cancellable: Boolean, member: T): Int = {
-        1; // no error comment
-    }
+  /**
+   * Adds a `member` to this group.
+   *
+   * @param cancellable Whether the progress can be <STYLE_SUGGESTION descr="American English does not double '-l-' in suffixes">cancelled</STYLE_SUGGESTION>.
+   * @param member member to add
+   * @return the new size of the group. And another sentence.
+   */
+  def goodFunction(cancellable: Boolean, member: T): Int = {
+    1; // no error comment
+  }
 
-    /**
-     * Accepts files for which vcs operations are temporarily blocked.
-     * @return the project instance.
-     */
-    val some1: Any = 42
+  /**
+   * Accepts files for which vcs operations are temporarily blocked.
+   * @return the project instance.
+   */
+  val some1: Any = 42
 
-    /** Currently active change list. */
-    class ActiveChangeList {}
+  /** Currently active change list. */
+  class ActiveChangeList {}
 }
 
 /**
- * It is <GRAMMAR_ERROR descr="EN_A_VS_AN">an</GRAMMAR_ERROR> friend there
+ * It is <GRAMMAR_ERROR descr="Use 'a' before a consonant sound">an </GRAMMAR_ERROR>friend there
  *
  * </unopenedTag>
  *
@@ -52,18 +52,18 @@ class ExampleClassWithNoTypos[T] {
  */
 class ExampleClassWithTypos[T] {
 
-    var name: String = null
+  var name: String = null
 
-    /**
-     * It <GRAMMAR_ERROR descr="IT_VBZ">add</GRAMMAR_ERROR> a [member] to this <TYPO descr="Typo: In word 'grooup'">grooup</TYPO>.
-     * <GRAMMAR_ERROR descr="UPPERCASE_SENTENCE_START">second</GRAMMAR_ERROR> sentence.
-     * 
-     * @param member member to add. And another sentence.
-     * @return the new size of <GRAMMAR_ERROR descr="DT_DT">a the</GRAMMAR_ERROR> group. <GRAMMAR_ERROR descr="UPPERCASE_SENTENCE_START">and</GRAMMAR_ERROR> another sentence.
-     */
-    def badFunction(member: T): Int = {
-        1; // It <GRAMMAR_ERROR descr="IT_VBZ">are</GRAMMAR_ERROR> <TYPO descr="Typo: In word 'eror'">eror</TYPO> in the comment
-    }
+  /**
+   * It <GRAMMAR_ERROR descr="Subject-verb agreement seems to be violated">add</GRAMMAR_ERROR> a [member] to this <TYPO descr="Typo: In word 'grooup'">grooup</TYPO>.
+   * <GRAMMAR_ERROR descr="UPPERCASE_SENTENCE_START"><STYLE_SUGGESTION descr="Inconsistent sentence capitalization">se</STYLE_SUGGESTION>cond</GRAMMAR_ERROR> sentence.
+   *
+   * @param member member to add. And another sentence.
+   * @return the new size of <GRAMMAR_ERROR descr="DT_DT">a the</GRAMMAR_ERROR> group. <GRAMMAR_ERROR descr="UPPERCASE_SENTENCE_START">and</GRAMMAR_ERROR> another sentence.
+   */
+  def badFunction(member: T): Int = {
+    1; // It <GRAMMAR_ERROR descr="Subject-verb agreement seems to be violated">are</GRAMMAR_ERROR> <TYPO descr="Typo: In word 'eror'">eror</TYPO> in the comment
+  }
 }
 
 /**
@@ -75,9 +75,9 @@ class ExampleClassWithTypos[T] {
  * <GRAMMAR_ERROR descr="WORD_REPEAT_RULE">Он он</GRAMMAR_ERROR> ошибка.
  */
 class ForMultiLanguageSupport {
-    // er überprüfte die Rechnungen noch <TYPO descr="Typo: In word 'einal'">einal</TYPO>, um ganz <GRAMMAR_ERROR descr="COMPOUND_INFINITIV_RULE">sicher zu gehen</GRAMMAR_ERROR>.
-    // das ist <GRAMMAR_ERROR descr="FUEHR_FUER">führ</GRAMMAR_ERROR> Dich!
-    // das <TYPO descr="Typo: In word 'daert'">daert</TYPO> geschätzt fünf <GRAMMAR_ERROR descr="MANNSTUNDE">Mannstunden</GRAMMAR_ERROR>.
+  // er überprüfte die Rechnungen noch <TYPO descr="Typo: In word 'einal'">einal</TYPO>, um ganz <GRAMMAR_ERROR descr="COMPOUND_INFINITIV_RULE">sicher zu gehen</GRAMMAR_ERROR>.
+  // das ist <GRAMMAR_ERROR descr="FUEHR_FUER">führ</GRAMMAR_ERROR> Dich!
+  // das <TYPO descr="Typo: In word 'daert'">daert</TYPO> geschätzt fünf <STYLE_WARNING descr="MANNSTUNDE">Mannstunden</STYLE_WARNING>.
 
   /**
    * @throws Exception wenn ein Fehler auftritt

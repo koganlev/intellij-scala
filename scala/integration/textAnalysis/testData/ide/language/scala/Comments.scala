@@ -2,25 +2,25 @@
 //> using test
 
 class ForMultiLanguageSupport {
-    // er überprüfte die Rechnungen noch <TYPO descr="Typo: In word 'einal'">einal</TYPO>, um ganz <GRAMMAR_ERROR descr="COMPOUND_INFINITIV_RULE">sicher zu gehen</GRAMMAR_ERROR>.
-    // das ist <GRAMMAR_ERROR descr="FUEHR_FUER">führ</GRAMMAR_ERROR> Dich!
-    // das <TYPO descr="Typo: In word 'daert'">daert</TYPO> geschätzt fünf <GRAMMAR_ERROR descr="MANNSTUNDE">Mannstunden</GRAMMAR_ERROR>.
+  // er überprüfte die Rechnungen noch <TYPO descr="Typo: In word 'einal'">einal</TYPO>, um ganz <GRAMMAR_ERROR descr="COMPOUND_INFINITIV_RULE">sicher zu gehen</GRAMMAR_ERROR>.
+  // das ist <GRAMMAR_ERROR descr="FUEHR_FUER">führ</GRAMMAR_ERROR> Dich!
+  // das <TYPO descr="Typo: In word 'daert'">daert</TYPO> geschätzt fünf <STYLE_WARNING descr="MANNSTUNDE">Mannstunden</STYLE_WARNING>.
 
-  // Cover following cases
+  // Cover <GRAMMAR_ERROR descr="'following' usually goes with an article">following</GRAMMAR_ERROR> cases
   // a) initially missing
   // b) initially missing
 
-    // My
-    // <GRAMMAR_ERROR descr="COMMA_WHICH">name</GRAMMAR_ERROR>
-    //    <GRAMMAR_ERROR descr="COMMA_WHICH">which</GRAMMAR_ERROR> I occurred is
-    // bad
+  // My
+  // <GRAMMAR_ERROR descr="Missing commas around a non-restrictive clause?">name</GRAMMAR_ERROR>
+  //    which I <GRAMMAR_ERROR descr="Missing commas around a non-restrictive clause?">occurred</GRAMMAR_ERROR> is
+  // bad
 
 
-    // My
-    // name
+  // My
+  // name
 
-    //    which I occurred is
-    // bad
+  //    which I occurred is
+  // bad
 
   // todo no mistakes here so far
 
@@ -32,7 +32,7 @@ class ForMultiLanguageSupport {
 
   // The index is in the range [start, end). Tries to find a group of non-conflicting events in range [`startIndex`..`inEvents.size()`).
 
-  // An iterable of bundle instances
+  // <GRAMMAR_ERROR descr="Is a noun (or equivalent) missing after this article?">An </GRAMMAR_ERROR>iterable of bundle instances
 
   // Resolve '../' in paths (like real_path)
 
@@ -40,7 +40,7 @@ class ForMultiLanguageSupport {
 
   // We don't use the PHP php_strip_whitespace() function
 
-  // If Content-Type is set to text/html, or is unset -> html
+  // If Content-Type is set to text/html, or is unset -> <GRAMMAR_ERROR descr="File types are usually capitalized">html</GRAMMAR_ERROR>
 
   /*
   for(;;)
@@ -51,10 +51,10 @@ class ForMultiLanguageSupport {
 
   // // We have an "hours" value of 42, when...
 
-  // Test various properties of <TYPO>igamma</TYPO> & <TYPO>igammac</TYPO>.  These are normalized
+  // Test various properties of <TYPO descr="Typo: In word 'igamma'">igamma</TYPO> & <TYPO descr="Typo: In word 'igammac'">igammac</TYPO>.  These are normalized
   // gamma integrals where
-  //   <TYPO>igammac</TYPO>(a, x) = Gamma(a, x) / Gamma(a)
-  //   <TYPO>igamma</TYPO>(a, x) = gamma(a, x) / Gamma(a)
+  //   <TYPO descr="Typo: In word 'igammac'">igammac</TYPO>(a, x) = Gamma(a, x) / Gamma(a)
+  //   <TYPO descr="Typo: In word 'igamma'">igamma</TYPO>(a, x) = gamma(a, x) / Gamma(a)
 
   // value between hours and minutes (":" is used by default)
 
