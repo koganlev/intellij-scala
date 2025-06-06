@@ -25,7 +25,7 @@ object ProjectStructureTestUtils {
       .getOrElse(coursierCachePathFallback)
 
   private def coursierCachePathFallback: String = {
-    val cacheDir = withoutPathSuffix(CoursierPaths.cacheDirectory.toAbsolutePath.toString)
+    val cacheDir = withoutPathSuffix(CoursierPaths.cacheDirectoryPath().toAbsolutePath.toString)
     //noinspection ApiStatus,UnstableApiUsage
     if (ClientSystemInfo.isWindows) {
       if (cacheDir.contains("community") && cacheDir.contains("null")) {
