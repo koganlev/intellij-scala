@@ -818,7 +818,8 @@ lazy val intelliLangIntegration = newProject(
   intellijPlugins ++= Seq(
     "org.intellij.intelliLang",
     "com.intellij.modules.json"
-  ).map(_.toPlugin)
+  ).map(_.toPlugin),
+  packageMethod := PackagingMethod.PluginModule("scalaCommunity.intelliLang"),
 )
 
 lazy val markdownIntegration =
