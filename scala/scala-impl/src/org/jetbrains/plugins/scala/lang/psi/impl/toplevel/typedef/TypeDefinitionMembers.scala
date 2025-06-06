@@ -11,16 +11,18 @@ import org.jetbrains.annotations.Nullable
 import org.jetbrains.plugins.scala.extensions._
 import org.jetbrains.plugins.scala.lang.psi.ScalaPsiUtil._
 import org.jetbrains.plugins.scala.lang.psi.api.PropertyMethods._
+import org.jetbrains.plugins.scala.lang.psi.api.base.ScNamedTupleComponent
 import org.jetbrains.plugins.scala.lang.psi.api.statements._
 import org.jetbrains.plugins.scala.lang.psi.api.statements.params.ScClassParameter
 import org.jetbrains.plugins.scala.lang.psi.api.toplevel.typedef._
 import org.jetbrains.plugins.scala.lang.psi.api.toplevel.{ScNamedElement, ScTypedDefinition}
 import org.jetbrains.plugins.scala.lang.psi.impl.{ScalaPsiElementFactory, ScalaPsiManager}
 import org.jetbrains.plugins.scala.lang.psi.types._
-import org.jetbrains.plugins.scala.lang.psi.types.api.{NamedTupleType, ParameterizedType, StdType, TupleType}
+import org.jetbrains.plugins.scala.lang.psi.types.api.{ExtractClass, NamedTupleType, ParameterizedType, StdType, TupleType, TypeParameterType, UndefinedType}
 import org.jetbrains.plugins.scala.lang.psi.types.result._
 import org.jetbrains.plugins.scala.lang.refactoring.util.ScalaNamesUtil
 import org.jetbrains.plugins.scala.lang.resolve.ScalaResolveState.ResolveStateExt
+import org.jetbrains.plugins.scala.lang.resolve.{ScalaResolveResult, StdKinds}
 import org.jetbrains.plugins.scala.lang.resolve.processor._
 import org.jetbrains.plugins.scala.project.{ProjectContext, ScalaFeatures}
 import org.jetbrains.plugins.scala.util.UnloadableThreadLocal
@@ -482,7 +484,8 @@ object TypeDefinitionMembers {
     true
   }
 
-  def processNamedTuple(p: ParameterizedType, execute: PsiElement => Boolean): Boolean = {
+  def processNamedTuple(p: ScType, state: ResolveState, execute: (PsiElement, ResolveState) => Boolean)
+                       (implicit projectContext: ProjectContext, context: Context): Boolean = {
     // Components of named tuples can be accessed in reference expressions via their names, even though
     // there are no physical accessor methods. Rather, the compiler rewrites these accesses to the
     // corresponding component index. We just link to the component that is referenced in its name literal
@@ -490,13 +493,25 @@ object TypeDefinitionMembers {
     p match {
       case NamedTupleType(comps) =>
         comps.forall {
-          case (NamedTupleType.NameType.WithLiteral(name, lit), typ) =>
+          case (NamedTupleType.NameType.WithLiteral(name, lit), compType) =>
             lit.psiElement match {
-              case Some(named: ScNamedElement) =>
-                execute(named)
+              case Some(named: ScNamedTupleComponent) =>
+                // We need the correct substitutor for `named`, so calculate that
+                val result = named.`type`().toOption.flatMap {
+                  rawType =>
+                    val prepared = rawType.updateLeaves { case TypeParameterType(p) => UndefinedType(p) }
+                    prepared.conformanceSubstitutor(compType)
+                }
+                val updatedState =
+                  result match {
+                    case Some(substr) => state.withSubstitutor(substr)
+                    case _ => state
+                  }
+
+                execute(named, updatedState)
               case navigationElement =>
                 val property = ScalaPsiElementFactory.createMethodFromText(
-                  text = s"def $name: ${typ.canonicalText}",
+                  text = s"def $name: ${compType.canonicalText}",
                   features = ScalaFeatures.defaultScala3,
                 )(p.projectContext)
 
@@ -505,7 +520,7 @@ object TypeDefinitionMembers {
                   property.syntheticNavigationElement = _
                 }
 
-                execute(property)
+                execute(property, state)
             }
           case _ =>
             true
@@ -519,7 +534,7 @@ object TypeDefinitionMembers {
     if (TupleType.TupleHList.isCons(p)) {
       p match {
         case TupleType(comps) =>
-          comps.zipWithIndex.foreach { case (comp, i) =>
+          comps.zipWithIndex.forall { case (comp, i) =>
             val index = i + 1
             val property = ScalaPsiElementFactory.createMethodFromText(
               text = s"def _$index: ${comp.canonicalText}",
@@ -529,6 +544,44 @@ object TypeDefinitionMembers {
             execute(property)
           }
         case _ =>
+      }
+    }
+    true
+  }
+
+  private def isSelectable(tpe: ScType)(implicit context: Context): Boolean = {
+    val selectableFqn = "scala.Selectable"
+    val baseTpes = BaseTypes.iterator(tpe)
+    baseTpes.exists {
+      case ExtractClass(cls) if cls.qualifiedName == selectableFqn => true
+      case _                                                    => false
+    }
+  }
+
+  def processSelectable(typ: ScType, place: PsiElement, state: ResolveState, execute: (PsiElement, ResolveState) => Boolean)
+                       (implicit projectContext: ProjectContext, context: Context): Boolean = {
+    if (!isSelectable(typ)) {
+      return true
+    }
+
+    // Search a type alias called "Fields"
+    val processor = new CompletionProcessor(StdKinds.stableQualOrClass, place, withImplicitConversions = true) {
+      override protected val forName: Option[String] = Some("Fields")
+    }
+    processor.processType(typ, place)
+    val results = processor.candidatesS
+
+    val it = results.iterator
+
+    while (it.hasNext) {
+      it.next() match {
+        case ScalaResolveResult(alias: ScTypeAlias, subst) =>
+          alias.upperBound match {
+            case Right(fieldsType) =>
+              val updatedState = state.withSubstitutor(subst)
+              return processNamedTuple(subst(fieldsType), updatedState, execute)
+            case _ =>
+          }
       }
     }
     true

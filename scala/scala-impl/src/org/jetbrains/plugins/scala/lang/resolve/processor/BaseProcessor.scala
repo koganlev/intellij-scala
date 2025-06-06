@@ -176,6 +176,12 @@ abstract class BaseProcessor(val kinds: Set[ResolveTargets.Value])
       case _ =>
     }
 
+    if (place.isInScala3File && kinds.contains(ResolveTargets.METHOD)) {
+      if (!processSelectable(t, place, state, execute)) {
+        return false
+      }
+    }
+
     t match {
       case ScThisType(clazz) =>
         clazz.selfType match {
@@ -261,7 +267,7 @@ abstract class BaseProcessor(val kinds: Set[ResolveTargets.Value])
             }
         }
 
-        cont && processNamedTuple(p, execute(_, state)) && processScala3Tuple(p, execute(_, state))
+        cont && processNamedTuple(p, state, execute) && processScala3Tuple(p, execute(_, state))
       case proj: ScProjectionType =>
         val withActual = new ScProjectionType.withActual(updateWithProjectionSubst)
         proj match {

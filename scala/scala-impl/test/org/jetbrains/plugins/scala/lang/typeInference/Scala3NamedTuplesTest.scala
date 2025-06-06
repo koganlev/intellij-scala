@@ -250,4 +250,13 @@ class Scala3NamedTuplesTest extends TypeInferenceTestBase {
        |//(a: Boolean, b: Int)
        |""".stripMargin
   )
+
+  def testAlias(): Unit = doTest(
+    s"""
+       |type Mk[T] = (field: T)
+       |val x: Mk[Int] = (field = 1)
+       |${START}x.field$END
+       |//Int
+       |""".stripMargin
+  )
 }
