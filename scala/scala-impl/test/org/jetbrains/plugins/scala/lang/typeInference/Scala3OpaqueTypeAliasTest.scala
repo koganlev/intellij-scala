@@ -104,6 +104,17 @@ class Scala3OpaqueTypeAliasTest extends ScalaLightCodeInsightFixtureTestCase {
     )
   }
 
+  def testSuperclass(): Unit = {
+    checkHasErrorAroundCaret(
+      s"""
+         |trait Foo:
+         |  opaque type T = Int
+         |trait Bar extends Foo:
+         |  val x: T = ${CARET}1
+         |""".stripMargin
+    )
+  }
+
   def testTransitive1(): Unit = {
     checkTextHasNoErrors(
       s"""
