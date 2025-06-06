@@ -110,7 +110,7 @@ final class ScParameterizedType private (override val designator: ScType, overri
 
     (this, r) match {
       case (ParameterizedType(ScProjectionType.withActual(ta1: ScTypeAliasDefinition, _), _), ParameterizedType(ScProjectionType.withActual(ta2: ScTypeAliasDefinition, _), _))
-        if ta1 == ta2 && !ta1.isEffectivelyOpaque =>
+        if ta1 == ta2 && ta1.isOpaque && !ta1.isEffectivelyOpaque =>
       case (ParameterizedType(ScProjectionType.withActual(ta: ScTypeAliasDefinition, _), _), _) if !ta.isEffectivelyOpaque =>
         return this match {
           case AliasType(_: ScTypeAliasDefinition, lower, _, effectivelyOpaque) if !effectivelyOpaque =>
@@ -121,7 +121,7 @@ final class ScParameterizedType private (override val designator: ScType, overri
           case _ => ConstraintsResult.Left
         }
       case (ParameterizedType(ScDesignatorType(ta1: ScTypeAliasDefinition), _), ParameterizedType(ScDesignatorType(ta2: ScTypeAliasDefinition), _))
-        if ta1 == ta2 && !ta1.isEffectivelyOpaque =>
+        if ta1 == ta2 && ta1.isOpaque && !ta1.isEffectivelyOpaque =>
       case (ParameterizedType(ScDesignatorType(ta: ScTypeAliasDefinition), _), _) if !ta.isEffectivelyOpaque =>
         return this match {
           case AliasType(_: ScTypeAliasDefinition, lower, _, effectivelyOpaque) if !effectivelyOpaque =>

@@ -77,7 +77,7 @@ trait ScalaEquivalence extends api.Equivalence {
 
       (left, right) match {
         case (AliasType(ta1: ScTypeAliasDefinition, _, _, effectivelyOpaque), AliasType(ta2: ScTypeAliasDefinition, _, _, _))
-          if ta1 == ta2 && !effectivelyOpaque =>
+          if ta1 == ta2 && ta1.isOpaque && !effectivelyOpaque =>
         case (_, AliasType(_: ScTypeAliasDefinition, Right(right), _, effectivelyOpaque)) if !effectivelyOpaque =>
           return equivInner(left, right, falseUndef = falseUndef)
         case (AliasType(_: ScTypeAliasDefinition, Right(left), _, effectivelyOpaque), _) if !effectivelyOpaque =>

@@ -17,7 +17,7 @@ object Context {
         throw new IllegalArgumentException("Opaque type alias expected")
 
       containingFileOf(opaqueTypeAlias) == containingFileOf(place) &&
-        place.contexts.takeWhile(!_.is[PsiDirectory]).contains(opaqueTypeAlias.getParent)
+        place.contexts.takeWhile(!_.is[PsiDirectory]).contains(opaqueTypeAlias.getContext)
     }
 
     override def toString: String = place.toString
