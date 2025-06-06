@@ -1,4 +1,8 @@
-<idea-plugin>
+<idea-plugin package="org.jetbrains.plugins.scala.textAnalysis">
+    <dependencies>
+        <plugin id="tanvd.grazi"/>
+    </dependencies>
+
     <extensions defaultExtensionNs="com.intellij.spellchecker">
         <bundledDictionaryProvider implementation="org.jetbrains.plugins.scala.textAnalysis.spellchecker.ScalaBundledDictionaryProvider"/>
         <support language="Scala" implementationClass="org.jetbrains.plugins.scala.textAnalysis.spellchecker.ScalaSpellcheckingStrategy"/>

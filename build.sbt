@@ -911,7 +911,8 @@ lazy val textAnalysis =
         ("org.jetbrains.intellij.deps.languagetool" % "language-ru" % Versions.LanguageToolVersion % Runtime).exclude("org.jetbrains.intellij.deps.languagetool", "languagetool-core"),
         ("org.jetbrains.intellij.deps.languagetool" % "language-de" % Versions.LanguageToolVersion % Runtime).exclude("org.jetbrains.intellij.deps.languagetool", "languagetool-core"),
         ("org.jetbrains.intellij.deps.languagetool" % "language-it" % Versions.LanguageToolVersion % Runtime).exclude("org.jetbrains.intellij.deps.languagetool", "languagetool-core"),
-      )
+      ),
+      packageMethod := PackagingMethod.PluginModule("scalaCommunity.textAnalysis"),
     )
 
 lazy val featuresTrainerIntegration =

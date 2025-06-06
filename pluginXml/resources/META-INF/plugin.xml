@@ -66,6 +66,7 @@
         <module name="scalaCommunity.intellij-bazel" />
         <module name="scalaCommunity.markdown" />
         <module name="scalaCommunity.maven" />
+        <module name="scalaCommunity.textAnalysis" />
     </content>
 
     <xi:include href="/META-INF/sbt-api.xml"/>
