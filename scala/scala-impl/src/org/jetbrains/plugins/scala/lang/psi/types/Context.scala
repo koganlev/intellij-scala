@@ -26,6 +26,7 @@ object Context {
   @tailrec
   private def containingFileOf(e: PsiElement): PsiElement = {
     val file = e.getContainingFile
+    if (file == null) return null
     val fileContext = file.getContext
     if (fileContext == null) file else containingFileOf(fileContext)
   }
