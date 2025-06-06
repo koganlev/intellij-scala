@@ -1,4 +1,4 @@
-package org.jetbrains.plugins.scala.grazie
+package org.jetbrains.plugins.scala.textAnalysis.grazie
 
 import com.intellij.grazie.GrazieConfig
 import com.intellij.grazie.grammar.LanguageToolChecker

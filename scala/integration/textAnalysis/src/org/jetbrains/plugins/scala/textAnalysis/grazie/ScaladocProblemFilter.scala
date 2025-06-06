@@ -1,4 +1,4 @@
-package org.jetbrains.plugins.scala.grazie
+package org.jetbrains.plugins.scala.textAnalysis.grazie
 
 import com.intellij.grazie.text.{ProblemFilter, TextContent, TextProblem}
 import com.intellij.grazie.utils.ProblemFilterUtil

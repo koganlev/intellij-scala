@@ -1,4 +1,4 @@
-package org.jetbrains.plugins.scala.spellchecker
+package org.jetbrains.plugins.scala.textAnalysis.spellchecker
 
 import com.intellij.codeInspection.LocalInspectionTool
 import com.intellij.spellchecker.inspections.SpellCheckingInspection

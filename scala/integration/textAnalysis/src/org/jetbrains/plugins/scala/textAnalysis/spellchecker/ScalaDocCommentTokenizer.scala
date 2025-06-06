@@ -1,4 +1,4 @@
-package org.jetbrains.plugins.scala.spellchecker
+package org.jetbrains.plugins.scala.textAnalysis.spellchecker
 
 import com.intellij.psi.javadoc.{PsiDocComment, PsiDocTag}
 import com.intellij.spellchecker.inspections.CommentSplitter

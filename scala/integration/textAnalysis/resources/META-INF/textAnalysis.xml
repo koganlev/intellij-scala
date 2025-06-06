@@ -1,12 +1,12 @@
 <idea-plugin>
     <extensions defaultExtensionNs="com.intellij.spellchecker">
-        <bundledDictionaryProvider implementation="org.jetbrains.plugins.scala.spellchecker.ScalaBundledDictionaryProvider"/>
-        <support language="Scala" implementationClass="org.jetbrains.plugins.scala.spellchecker.ScalaSpellcheckingStrategy"/>
+        <bundledDictionaryProvider implementation="org.jetbrains.plugins.scala.textAnalysis.spellchecker.ScalaBundledDictionaryProvider"/>
+        <support language="Scala" implementationClass="org.jetbrains.plugins.scala.textAnalysis.spellchecker.ScalaSpellcheckingStrategy"/>
     </extensions>
 
     <extensions defaultExtensionNs="com.intellij.grazie">
-        <textExtractor language="Scala" implementationClass="org.jetbrains.plugins.scala.grazie.ScalaTextExtractor"/>
-        <problemFilter language="Scala" implementationClass="org.jetbrains.plugins.scala.grazie.ScaladocProblemFilter"/>
+        <textExtractor language="Scala" implementationClass="org.jetbrains.plugins.scala.textAnalysis.grazie.ScalaTextExtractor"/>
+        <problemFilter language="Scala" implementationClass="org.jetbrains.plugins.scala.textAnalysis.grazie.ScaladocProblemFilter"/>
         <!--Disable rules that are less actual for string literals. Note: same is done for Java. -->
         <problemFilter language="Scala" implementationClass="com.intellij.grazie.text.LiteralProblemFilter"/>
     </extensions>

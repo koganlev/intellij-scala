@@ -1,4 +1,4 @@
-package org.jetbrains.plugins.scala.spellchecker
+package org.jetbrains.plugins.scala.textAnalysis.spellchecker
 
 import com.intellij.spellchecker.BundledDictionaryProvider
 

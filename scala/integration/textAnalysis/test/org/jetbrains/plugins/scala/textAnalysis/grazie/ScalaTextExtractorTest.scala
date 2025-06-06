@@ -1,4 +1,4 @@
-package org.jetbrains.plugins.scala.grazie
+package org.jetbrains.plugins.scala.textAnalysis.grazie
 
 import com.intellij.grazie.text.{TextContent, TextContentBuilder, TextExtractor}
 import com.intellij.lang.injection.{InjectedLanguageManager, MultiHostInjector, MultiHostRegistrar}
@@ -13,7 +13,7 @@ import com.intellij.testFramework.UsefulTestCase.assertInstanceOf
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
 import org.intellij.lang.regexp.RegExpLanguage
 import org.jetbrains.plugins.scala.ScalaFileType
-import org.jetbrains.plugins.scala.grazie.ScalaTextExtractorTest.{TripleQuote, buildTextWithSpecialMarkers}
+import ScalaTextExtractorTest.{TripleQuote, buildTextWithSpecialMarkers}
 import org.jetbrains.plugins.scala.lang.psi.api.base.literals.ScStringLiteral
 import org.junit.Assert.*
 
