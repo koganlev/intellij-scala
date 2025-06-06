@@ -1,4 +1,4 @@
-package org.jetbrains.plugins.scala;
+package org.jetbrains.plugins.scala.intelliLang;
 
 import com.intellij.DynamicBundle;
 import org.jetbrains.annotations.Nls;

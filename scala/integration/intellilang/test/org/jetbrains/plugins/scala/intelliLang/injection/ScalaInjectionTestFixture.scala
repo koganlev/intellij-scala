@@ -1,4 +1,4 @@
-package org.jetbrains.plugins.scala.injection
+package org.jetbrains.plugins.scala.intelliLang.injection
 
 import com.intellij.lang.injection.InjectedLanguageManager
 import com.intellij.openapi.editor.{Caret, Editor}
@@ -8,7 +8,7 @@ import com.intellij.psi.{PsiElement, PsiFile, PsiLanguageInjectionHost}
 import com.intellij.testFramework.fixtures.{CodeInsightTestFixture, InjectionTestFixture}
 import org.intellij.plugins.intelliLang
 import org.jetbrains.plugins.scala.extensions.{IterableOnceExt, PsiElementExt, StringExt}
-import org.jetbrains.plugins.scala.injection.ScalaInjectionTestFixture.{ExpectedInjection, ShredInfo, ensureCaretIsSet, pairToTuple}
+import org.jetbrains.plugins.scala.intelliLang.injection.ScalaInjectionTestFixture.{ExpectedInjection, ShredInfo, ensureCaretIsSet, pairToTuple}
 import org.jetbrains.plugins.scala.lang.psi.api.ScFile
 import org.jetbrains.plugins.scala.lang.psi.api.base.literals.ScStringLiteral
 import org.jetbrains.plugins.scala.util.assertions.CollectionsAssertions.assertCollectionEquals

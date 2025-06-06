@@ -1,4 +1,4 @@
-package org.jetbrains.plugins.scala.injection
+package org.jetbrains.plugins.scala.intelliLang.injection
 
 import com.intellij.lang.Language
 import com.intellij.lang.injection.{MultiHostInjector, MultiHostRegistrar}
@@ -15,7 +15,7 @@ import org.intellij.plugins.intelliLang.inject.java.JavaLanguageInjectionSupport
 import org.jetbrains.plugins.scala.caches.BlockModificationTracker
 import org.jetbrains.plugins.scala.extensions._
 import org.jetbrains.plugins.scala.incremental.Highlighting.ElementHighlightingExt
-import org.jetbrains.plugins.scala.injection.ScalaInjectionInfosCollector.InjectionSplitResult
+import org.jetbrains.plugins.scala.intelliLang.injection.ScalaInjectionInfosCollector.InjectionSplitResult
 import org.jetbrains.plugins.scala.lang.psi.ScalaPsiUtil.readAttribute
 import org.jetbrains.plugins.scala.lang.psi.api.ScalaPsiElement
 import org.jetbrains.plugins.scala.lang.psi.api.base.literals.ScStringLiteral
@@ -274,7 +274,7 @@ final class ScalaLanguageInjector extends MultiHostInjector {
 
   /**
    * Scala patterns are defined in<br>
-   * `resources/org/jetbrains/plugins/scala/injection/scalaInjections.xml`
+   * `resources/org/jetbrains/plugins/scala/intelliLang/injection/scalaInjections.xml`
    *
    * @example {{{
    *    "Hello [\\d\\w]+!".r

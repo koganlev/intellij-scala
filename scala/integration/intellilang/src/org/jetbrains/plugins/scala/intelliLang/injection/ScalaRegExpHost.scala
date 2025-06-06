@@ -1,4 +1,4 @@
-package org.jetbrains.plugins.scala.injection
+package org.jetbrains.plugins.scala.intelliLang.injection
 
 import org.intellij.lang.regexp.psi.{RegExpChar, RegExpGroup, RegExpNamedGroupRef}
 import org.intellij.lang.regexp.{DefaultRegExpPropertiesProvider, RegExpLanguageHost}

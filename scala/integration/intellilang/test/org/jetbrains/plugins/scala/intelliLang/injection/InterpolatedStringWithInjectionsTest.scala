@@ -1,8 +1,8 @@
-package org.jetbrains.plugins.scala.injection
+package org.jetbrains.plugins.scala.intelliLang.injection
 
 import org.jetbrains.plugins.scala.extensions.StringExt
-import org.jetbrains.plugins.scala.injection.InjectionTestUtils.RegexpLangId
-import org.jetbrains.plugins.scala.injection.ScalaInjectionTestFixture.{ExpectedInjection, ShredInfo}
+import org.jetbrains.plugins.scala.intelliLang.injection.InjectionTestUtils.RegexpLangId
+import org.jetbrains.plugins.scala.intelliLang.injection.ScalaInjectionTestFixture.{ExpectedInjection, ShredInfo}
 import org.jetbrains.plugins.scala.util.TextRangeUtils.ImplicitConversions.tupleToTextRange
 
 class InterpolatedStringWithInjectionsTest extends ScalaLanguageInjectionTestBase {

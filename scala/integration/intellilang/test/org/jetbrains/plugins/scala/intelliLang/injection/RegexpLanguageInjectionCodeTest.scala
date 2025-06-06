@@ -1,4 +1,4 @@
-package org.jetbrains.plugins.scala.injection
+package org.jetbrains.plugins.scala.intelliLang.injection
 
 import org.jetbrains.plugins.scala.ScalaVersion
 

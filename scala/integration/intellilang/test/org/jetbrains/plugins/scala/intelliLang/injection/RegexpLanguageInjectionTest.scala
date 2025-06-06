@@ -1,10 +1,11 @@
-package org.jetbrains.plugins.scala
+package org.jetbrains.plugins.scala.intelliLang
 package injection
 
 import com.intellij.openapi.util.text.StringUtil
 import junitparams.naming.TestCaseName
 import junitparams.{JUnitParamsRunner, Parameters}
 import org.intellij.lang.regexp.RegExpLanguage
+import org.jetbrains.plugins.scala.FileSetTests
 import org.jetbrains.plugins.scala.extensions.PathExt
 import org.junit.Assert._
 import org.junit.Test

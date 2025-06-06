@@ -1,4 +1,4 @@
-package org.jetbrains.plugins.scala.injection
+package org.jetbrains.plugins.scala.intelliLang.injection
 
 abstract class InjectionInBodyTestBase extends ScalaLanguageInjectionTestBase {
 

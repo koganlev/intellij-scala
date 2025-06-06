@@ -1,4 +1,4 @@
-package org.jetbrains.plugins.scala.injection
+package org.jetbrains.plugins.scala.intelliLang.injection
 
 import com.intellij.lang.{ASTNode, Language}
 import com.intellij.openapi.util.TextRange

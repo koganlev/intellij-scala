@@ -1,4 +1,6 @@
-package org.jetbrains.plugins.scala.settings.uiControls;
+package org.jetbrains.plugins.scala.intelliLang.settings;
+
+import org.jetbrains.plugins.scala.settings.uiControls.DependencyAwareInjectionSettings;
 
 import javax.swing.*;
 

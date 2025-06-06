@@ -10,7 +10,7 @@ import com.intellij.psi.tree.TokenSet
 import com.intellij.psi.util.PsiUtilCore
 import com.intellij.util.containers.ContainerUtil
 import org.jetbrains.plugins.scala.extensions.ObjectExt
-import org.jetbrains.plugins.scala.injection.ScalaInjectionInfosCollector
+import org.jetbrains.plugins.scala.intelliLang.injection.ScalaInjectionInfosCollector
 import org.jetbrains.plugins.scala.lang.lexer.ScalaTokenTypes
 import org.jetbrains.plugins.scala.lang.psi.api.base.literals.ScStringLiteral
 import org.jetbrains.plugins.scala.lang.scaladoc.lexer.ScalaDocTokenType

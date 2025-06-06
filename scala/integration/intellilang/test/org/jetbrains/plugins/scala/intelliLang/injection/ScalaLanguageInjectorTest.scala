@@ -1,8 +1,8 @@
-package org.jetbrains.plugins.scala.injection
+package org.jetbrains.plugins.scala.intelliLang.injection
 
 import com.intellij.patterns.compiler.PatternCompilerImpl.LazyPresentablePattern
 import org.intellij.plugins.intelliLang.inject.config.{BaseInjection, InjectionPlace}
-import org.jetbrains.plugins.scala.injection.InjectionTestUtils._
+import org.jetbrains.plugins.scala.intelliLang.injection.InjectionTestUtils._
 import org.junit.Assert._
 
 import scala.jdk.CollectionConverters._

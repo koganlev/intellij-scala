@@ -1,7 +1,7 @@
-package org.jetbrains.plugins.scala.injection
+package org.jetbrains.plugins.scala.intelliLang.injection
 
 import org.jetbrains.plugins.scala.extensions.StringExt
-import org.jetbrains.plugins.scala.injection.ScalaInjectionTestFixture.{ExpectedInjection, ShredInfo}
+import org.jetbrains.plugins.scala.intelliLang.injection.ScalaInjectionTestFixture.{ExpectedInjection, ShredInfo}
 
 abstract class InjectionViaCommentTestBase extends ScalaLanguageInjectionTestBase {
   protected def doInjectedViaCommentTest(

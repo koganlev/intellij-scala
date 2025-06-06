@@ -1,4 +1,4 @@
-package org.jetbrains.plugins.scala.settings.uiControls;
+package org.jetbrains.plugins.scala.intelliLang.settings;
 
 import com.intellij.lang.Language;
 import com.intellij.ui.IdeBorderFactory;
@@ -8,8 +8,9 @@ import com.intellij.util.ListWithSelection;
 import com.intellij.util.ui.table.ComboBoxTableCellEditor;
 import org.intellij.plugins.intelliLang.inject.InjectedLanguage;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.plugins.scala.IntellilangBundle;
+import org.jetbrains.plugins.scala.intelliLang.IntellilangBundle;
 import org.jetbrains.plugins.scala.settings.ScalaProjectSettings;
+import org.jetbrains.plugins.scala.settings.uiControls.DependencyAwareInjectionSettings;
 
 import javax.swing.*;
 import javax.swing.table.AbstractTableModel;

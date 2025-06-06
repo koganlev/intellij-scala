@@ -1,4 +1,4 @@
-package org.jetbrains.plugins.scala.injection
+package org.jetbrains.plugins.scala.intelliLang.injection
 
 import com.intellij.codeInsight.intention.impl.QuickEditAction
 import com.intellij.testFramework.fixtures.InjectionTestFixture
