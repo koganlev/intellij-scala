@@ -113,7 +113,7 @@
 [397,410]: TypeDef
 [400,410]: ContextBounds
 [400,400]: TypeBoundsTree
-[400,403]: ContextBoundTypeTree
+[400,410]: ContextBoundTypeTree
 [400,403]: Ident
 [415,452]: Function
 [416,420]: ValDef
@@ -133,7 +133,7 @@
 [476,489]: TypeDef
 [479,489]: ContextBounds
 [479,479]: TypeBoundsTree
-[479,482]: ContextBoundTypeTree
+[479,489]: ContextBoundTypeTree
 [479,482]: Ident
 [494,511]: Function
 [495,496]: Ident
@@ -143,7 +143,7 @@
 [517,530]: TypeDef
 [520,530]: ContextBounds
 [520,520]: TypeBoundsTree
-[520,523]: ContextBoundTypeTree
+[520,530]: ContextBoundTypeTree
 [520,523]: Ident
 [535,572]: Function
 [536,540]: ValDef
@@ -198,7 +198,7 @@
 [753,766]: TypeDef
 [756,766]: ContextBounds
 [756,756]: TypeBoundsTree
-[756,759]: ContextBoundTypeTree
+[756,766]: ContextBoundTypeTree
 [756,759]: Ident
 [771,808]: Function
 [772,776]: ValDef
@@ -276,7 +276,7 @@
 [1033,1046]: TypeDef
 [1036,1046]: ContextBounds
 [1036,1036]: TypeBoundsTree
-[1036,1039]: ContextBoundTypeTree
+[1036,1046]: ContextBoundTypeTree
 [1036,1039]: Ident
 [1051,1102]: Function
 [1052,1056]: ValDef
@@ -527,7 +527,7 @@
 [2013,2034]: TypeDef
 [2017,2034]: ContextBounds
 [2017,2017]: TypeBoundsTree
-[2017,2020]: ContextBoundTypeTree
+[2017,2027]: ContextBoundTypeTree
 [2017,2020]: Ident
 [2029,2033]: ContextBoundTypeTree
 [2029,2033]: Ident
@@ -549,7 +549,7 @@
 [2100,2121]: TypeDef
 [2104,2121]: ContextBounds
 [2104,2104]: TypeBoundsTree
-[2104,2107]: ContextBoundTypeTree
+[2104,2114]: ContextBoundTypeTree
 [2104,2107]: Ident
 [2116,2120]: ContextBoundTypeTree
 [2116,2120]: Ident
@@ -561,7 +561,7 @@
 [2149,2170]: TypeDef
 [2153,2170]: ContextBounds
 [2153,2153]: TypeBoundsTree
-[2153,2156]: ContextBoundTypeTree
+[2153,2163]: ContextBoundTypeTree
 [2153,2156]: Ident
 [2165,2169]: ContextBoundTypeTree
 [2165,2169]: Ident
@@ -587,7 +587,7 @@
 [2231,2231]: TypeBoundsTree
 [2231,2234]: ContextBoundTypeTree
 [2231,2234]: Ident
-[2236,2240]: ContextBoundTypeTree
+[2236,2248]: ContextBoundTypeTree
 [2236,2240]: Ident
 [2254,2302]: Function
 [2255,2259]: ValDef
@@ -613,7 +613,7 @@
 [2330,2330]: TypeBoundsTree
 [2330,2333]: ContextBoundTypeTree
 [2330,2333]: Ident
-[2335,2339]: ContextBoundTypeTree
+[2335,2347]: ContextBoundTypeTree
 [2335,2339]: Ident
 [2353,2370]: Function
 [2354,2355]: Ident
@@ -625,7 +625,7 @@
 [2380,2380]: TypeBoundsTree
 [2380,2383]: ContextBoundTypeTree
 [2380,2383]: Ident
-[2385,2389]: ContextBoundTypeTree
+[2385,2397]: ContextBoundTypeTree
 [2385,2389]: Ident
 [2403,2451]: Function
 [2404,2408]: ValDef
@@ -651,9 +651,9 @@
 [2466,2495]: TypeDef
 [2470,2495]: ContextBounds
 [2470,2470]: TypeBoundsTree
-[2470,2473]: ContextBoundTypeTree
+[2470,2480]: ContextBoundTypeTree
 [2470,2473]: Ident
-[2482,2486]: ContextBoundTypeTree
+[2482,2494]: ContextBoundTypeTree
 [2482,2486]: Ident
 [2500,2537]: Function
 [2501,2505]: ValDef
@@ -673,9 +673,9 @@
 [2561,2590]: TypeDef
 [2565,2590]: ContextBounds
 [2565,2565]: TypeBoundsTree
-[2565,2568]: ContextBoundTypeTree
+[2565,2575]: ContextBoundTypeTree
 [2565,2568]: Ident
-[2577,2581]: ContextBoundTypeTree
+[2577,2589]: ContextBoundTypeTree
 [2577,2581]: Ident
 [2595,2612]: Function
 [2596,2597]: Ident
@@ -685,9 +685,9 @@
 [2618,2647]: TypeDef
 [2622,2647]: ContextBounds
 [2622,2622]: TypeBoundsTree
-[2622,2625]: ContextBoundTypeTree
+[2622,2632]: ContextBoundTypeTree
 [2622,2625]: Ident
-[2634,2638]: ContextBoundTypeTree
+[2634,2646]: ContextBoundTypeTree
 [2634,2638]: Ident
 [2652,2689]: Function
 [2653,2657]: ValDef
@@ -886,7 +886,7 @@
 [3392,3407]: TypeDef
 [3396,3407]: ContextBounds
 [3396,3396]: TypeBoundsTree
-[3396,3399]: ContextBoundTypeTree
+[3396,3406]: ContextBoundTypeTree
 [3396,3399]: Ident
 [3412,3427]: Function
 [3413,3421]: ValDef
@@ -898,7 +898,7 @@
 [3449,3464]: TypeDef
 [3453,3464]: ContextBounds
 [3453,3453]: TypeBoundsTree
-[3453,3456]: ContextBoundTypeTree
+[3453,3463]: ContextBoundTypeTree
 [3453,3456]: Ident
 [3469,3485]: Function
 [3469,3474]: Select
@@ -909,7 +909,7 @@
 [3508,3523]: TypeDef
 [3512,3523]: ContextBounds
 [3512,3512]: TypeBoundsTree
-[3512,3515]: ContextBoundTypeTree
+[3512,3522]: ContextBoundTypeTree
 [3512,3515]: Ident
 [3528,3560]: Function
 [3529,3534]: Select
@@ -925,7 +925,7 @@
 [3595,3610]: TypeDef
 [3599,3610]: ContextBounds
 [3599,3599]: TypeBoundsTree
-[3599,3602]: ContextBoundTypeTree
+[3599,3609]: ContextBoundTypeTree
 [3599,3602]: Ident
 [3615,3633]: Function
 [3616,3624]: ValDef
@@ -937,7 +937,7 @@
 [3655,3670]: TypeDef
 [3659,3670]: ContextBounds
 [3659,3659]: TypeBoundsTree
-[3659,3662]: ContextBoundTypeTree
+[3659,3669]: ContextBoundTypeTree
 [3659,3662]: Ident
 [3675,3691]: Function
 [3675,3680]: Select
@@ -947,7 +947,7 @@
 [3695,3710]: TypeDef
 [3699,3710]: ContextBounds
 [3699,3699]: TypeBoundsTree
-[3699,3702]: ContextBoundTypeTree
+[3699,3709]: ContextBoundTypeTree
 [3699,3702]: Ident
 [3715,3733]: Function
 [3716,3724]: ValDef
@@ -960,7 +960,7 @@
 [3771,3786]: TypeDef
 [3775,3786]: ContextBounds
 [3775,3775]: TypeBoundsTree
-[3775,3778]: ContextBoundTypeTree
+[3775,3785]: ContextBoundTypeTree
 [3775,3778]: Ident
 [3791,3831]: Function
 [3792,3800]: ValDef
@@ -978,7 +978,7 @@
 [3854,3869]: TypeDef
 [3858,3869]: ContextBounds
 [3858,3858]: TypeBoundsTree
-[3858,3861]: ContextBoundTypeTree
+[3858,3868]: ContextBoundTypeTree
 [3858,3861]: Ident
 [3874,3906]: Function
 [3875,3880]: Select
@@ -992,7 +992,7 @@
 [3912,3927]: TypeDef
 [3916,3927]: ContextBounds
 [3916,3916]: TypeBoundsTree
-[3916,3919]: ContextBoundTypeTree
+[3916,3926]: ContextBoundTypeTree
 [3916,3919]: Ident
 [3932,3972]: Function
 [3933,3941]: ValDef

@@ -88,14 +88,22 @@ class AfterUpdateDottyVersionScript {
 
 object AfterUpdateDottyVersionScript {
   private val scala3_repo_lts_branch = "lts-3.3"
-  private val scala3_repo_newest_branch = "3.6.3"
+  private val scala3_repo_newest_branch = "release-3.7.1"
 
   class ScalaRepository private (branch: String) {
     lazy val path: Path =
       Paths.get(System.getProperty("java.io.tmpdir")) / s"aftertupdate-dotty-version-script-repo-download-$branch"
 
-    lazy val `pos-from-tasty.blacklist`: Path =
-      path.resolve("compiler/test/dotc/pos-from-tasty.blacklist")
+    lazy val `pos-from-tasty.blacklist`: Path = {
+      val blackList = path.resolve("compiler/test/dotc/pos-from-tasty.blacklist")
+      val excludeList = path.resolve("compiler/test/dotc/pos-from-tasty.excludelist")
+      if (Files.isRegularFile(blackList))
+        blackList
+      else if (Files.isRegularFile(excludeList))
+        excludeList
+      else
+        throw new AssertionError(s"The file $blackList or $excludeList does not exist")
+    }
 
     private def prepare(): Path = {
       if (!Files.isDirectory(path)) {

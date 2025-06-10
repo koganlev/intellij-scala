@@ -54,7 +54,7 @@
 [193,205]: TypeDef
 [196,205]: ContextBounds
 [196,196]: TypeBoundsTree
-[196,199]: ContextBoundTypeTree
+[196,205]: ContextBoundTypeTree
 [196,199]: Ident
 [206,206]: TypeTree
 [209,212]: Ident
@@ -70,9 +70,9 @@
 [256,283]: TypeDef
 [260,283]: ContextBounds
 [260,260]: TypeBoundsTree
-[260,263]: ContextBoundTypeTree
+[260,270]: ContextBoundTypeTree
 [260,263]: Ident
-[272,275]: ContextBoundTypeTree
+[272,282]: ContextBoundTypeTree
 [272,275]: Ident
 [285,296]: ValDef
 [288,296]: Select

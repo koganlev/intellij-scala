@@ -28,7 +28,7 @@
 [433,454]: TypeDef
 [439,454]: ContextBounds
 [439,439]: TypeBoundsTree
-[439,449]: ContextBoundTypeTree
+[439,454]: ContextBoundTypeTree
 [439,449]: Ident
 [456,466]: ValDef
 [462,466]: Ident
