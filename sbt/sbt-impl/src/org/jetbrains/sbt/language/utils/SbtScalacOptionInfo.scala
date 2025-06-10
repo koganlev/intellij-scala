@@ -5,6 +5,8 @@ import org.jetbrains.sbt.language.utils.SbtScalacOptionInfo.ArgType
 import spray.json.DefaultJsonProtocol._
 import spray.json._
 
+import scala.collection.immutable.{SortedMap, SortedSet}
+
 final case class SbtScalacOptionInfo(flag: String,
                                      descriptions: Map[ScalaLanguageLevel, String],
                                      choices: Map[ScalaLanguageLevel, Set[String]],
@@ -66,6 +68,33 @@ object SbtScalacOptionInfo {
     }
   }
 
-  implicit val sbtScalacOptionInfoJsonFormat: RootJsonFormat[SbtScalacOptionInfo] =
-    jsonFormat6(SbtScalacOptionInfo.apply)
+  implicit object SbtScalacOptionInfoJsonFormat extends JsonFormat[SbtScalacOptionInfo] {
+    private val inner: RootJsonFormat[SbtScalacOptionInfo] =
+      jsonFormat6(SbtScalacOptionInfo.apply)
+
+    override def read(json: JsValue): SbtScalacOptionInfo = inner.read(json)
+    override def write(obj: SbtScalacOptionInfo): JsValue = {
+      scala.math.Ordering.String
+      // don't use .copy, so that we catch changes to SbtScalacOptionInfo when it's changed
+      val sortedObj = SbtScalacOptionInfo(
+        flag = obj.flag,
+        descriptions = obj.descriptions.to(SortedMap),
+        choices = obj.choices.view.mapValues(_.to(SortedSet)).to(SortedMap),
+        argType = obj.argType,
+        scalaVersions = obj.scalaVersions.to(SortedSet),
+        defaultValue = obj.defaultValue
+      )
+
+      // We need this because for some reason objects are converted from SortedMaps to HashMaps in spray during writing
+      def sorted(value: JsValue): JsValue = {
+        value match {
+          case JsObject(fields) => JsObject(fields.view.mapValues(sorted).to(SortedMap))
+          case JsArray(elements) => JsArray(elements.map(sorted))
+          case _ => value
+        }
+      }
+
+      sorted(inner.write(sortedObj))
+    }
+  }
 }

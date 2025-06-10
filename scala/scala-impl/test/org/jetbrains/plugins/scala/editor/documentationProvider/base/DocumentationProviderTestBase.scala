@@ -8,6 +8,7 @@ import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.pom.java.LanguageLevel
 import com.intellij.psi.{PsiElement, PsiFile}
 import com.intellij.testFramework.EditorTestUtil
+import org.jetbrains.annotations.Nullable
 import org.jetbrains.plugins.scala.EditorTests
 import org.jetbrains.plugins.scala.base.ScalaLightCodeInsightFixtureTestCase
 import org.jetbrains.plugins.scala.base.libraryLoaders.SmartJDKLoader
@@ -36,12 +37,13 @@ abstract class DocumentationProviderTestBase
   /////////////////// section start ////////////////////////
   protected def documentationProvider: DocumentationProvider
 
-  protected final def generateDoc(referredElement: PsiElement, elementAtCaret: PsiElement): String =
+  protected final def generateDoc(referredElement: PsiElement, @Nullable elementAtCaret: PsiElement): String =
     documentationProvider.generateDoc(referredElement, elementAtCaret)
 
   protected final def generateQuickNavigateInfo(referredElement: PsiElement, elementAtCaret: PsiElement): String =
     documentationProvider.getQuickNavigateInfo(referredElement, elementAtCaret)
 
+  //noinspection DfaNullableToNotNullParam
   protected final def generateRenderedDoc(referredElement: PsiElement): String =
     documentationProvider.generateRenderedDoc(referredElement.asInstanceOf[ScDocCommentOwner].getDocComment)
   /////////////////// section end ////////////////////////
