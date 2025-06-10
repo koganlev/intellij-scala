@@ -89,6 +89,9 @@ object ScPatternAnnotator extends ElementAnnotator[ScPattern] {
       case _ => false
     }
 
+    def isTupleAsInfixArgList: Boolean =
+      pattern.asOptionOf[ScTuplePattern].exists(_.infixPatternOfWhichThisIsTheArgPatternList.isDefined)
+
     object StableIdResolvesToVar {
 
       def unapply(stable: ScStableReferencePattern): Boolean = stable match {
@@ -116,7 +119,7 @@ object ScPatternAnnotator extends ElementAnnotator[ScPattern] {
       case _: ScExtractorPattern if neverMatches && patType.isFinalType =>
         val message = ScalaBundle.message("constructor.cannot.be.instantiated.to.expected.type", patType, exprType)
         holder.createErrorAnnotation(pattern, message)
-      case _: ScTuplePattern | _: ScInfixPattern if neverMatches =>
+      case _: ScTuplePattern | _: ScInfixPattern if !isTupleAsInfixArgList && neverMatches =>
         val message = ScalaBundle.message("pattern.type.incompatible.with.expected", patType, exprType)
         holder.createErrorAnnotation(pattern, message)
       case nt: ScNamedTuplePattern =>

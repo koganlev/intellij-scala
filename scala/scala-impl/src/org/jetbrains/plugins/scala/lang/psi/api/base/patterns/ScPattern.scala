@@ -75,7 +75,7 @@ object ScPattern {
           case tuple: ScTuplePattern =>
             // In Scala 2
             tuple.infixPatternOfWhichThisIsTheArgPatternList match {
-              case Some(infix) => expectedTypeForExtractorArgPattern(infix, pattern, infix.expectedType)
+              case Some(infix) => return expectedTypeForExtractorArgPattern(infix, pattern, infix.expectedType)
               case _ =>
             }
 
