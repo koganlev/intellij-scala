@@ -25,6 +25,7 @@ object UpdateScalacOptionsInfo {
   final class ScriptTestCase extends TestCase {
     def test(): Unit = {
       val latestVersions = getLatestCompilerVersionsSorted
+      println(s"Updating scalac-options.json with the latest compiler versions: ${latestVersions.map(_.minor).mkString(", ")}")
       val artifactsWithLanguageLevel = latestVersions.map(getArtifactsWithLangLevels)
 
       val options = artifactsWithLanguageLevel
