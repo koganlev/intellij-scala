@@ -1,0 +1,69 @@
+Document tests/pos/infer-tracked-1.scala
+(1:8..1:13) scala/
+(1:14..1:22) scala/language.
+(1:23..1:35) scala/language.experimental.
+(1:36..1:46) scala/language.experimental.modularity.
+(2:8..2:13) scala/
+(2:14..2:22) scala/language.
+(2:23..2:29) scala/language.future.
+(6:18..6:19) _empty_/Ordering#T# -> 5:8
+(6:25..6:26) _empty_/Ordering#T# -> 5:8
+(6:29..6:32) scala/Int#
+(9:27..9:35) _empty_/Ordering# -> 4:7
+(10:14..10:18) scala/package.List#
+(10:19..10:22) _empty_/SetFunctor#ord. -> 9:22
+(10:23..10:24) _empty_/Ordering#T# -> 5:8
+(11:14..11:17) _empty_/SetFunctor#Set# -> 10:8
+(11:20..11:23) scala/package.Nil.
+(13:28..13:31) _empty_/SetFunctor#Set# -> 10:8
+(14:16..14:19) _empty_/SetFunctor#ord. -> 9:22
+(14:20..14:21) _empty_/Ordering#T# -> 5:8
+(14:24..14:27) _empty_/SetFunctor#Set# -> 10:8
+(14:30..14:31) _empty_/SetFunctor#helper#add().(x) -> 14:13
+(14:35..14:41) _empty_/SetFunctor#helper#remove(). -> 15:9
+(14:42..14:43) _empty_/SetFunctor#helper#add().(x) -> 14:13
+(15:19..15:22) _empty_/SetFunctor#ord. -> 9:22
+(15:23..15:24) _empty_/Ordering#T# -> 5:8
+(15:27..15:30) _empty_/SetFunctor#Set# -> 10:8
+(15:33..15:34) _empty_/SetFunctor#helper#s. -> 13:25
+(15:35..15:41) scala/collection/immutable/List#filter().
+(15:47..15:50) _empty_/SetFunctor#ord. -> 9:22
+(15:51..15:58) _empty_/Ordering#compare(). -> 6:7
+(15:59..15:60) _empty_/SetFunctor#helper#remove().(x) -> 15:16
+(15:62..15:63) local0 -> 15:42
+(15:65..15:67) scala/Int#`!=`(+3).
+(16:19..16:22) _empty_/SetFunctor#ord. -> 9:22
+(16:23..16:24) _empty_/Ordering#T# -> 5:8
+(16:27..16:34) scala/Boolean#
+(16:37..16:38) _empty_/SetFunctor#helper#s. -> 13:25
+(16:39..16:45) scala/collection/immutable/List#exists().
+(16:51..16:54) _empty_/SetFunctor#ord. -> 9:22
+(16:55..16:62) _empty_/Ordering#compare(). -> 6:7
+(16:63..16:64) _empty_/SetFunctor#helper#member().(x) -> 16:16
+(16:66..16:67) local1 -> 16:46
+(16:69..16:71) scala/Int#`==`(+3).
+(21:22..21:30) _empty_/Ordering# -> 4:7
+(22:14..22:17) scala/Int#
+(23:21..23:22) local2 -> 22:10
+(23:28..23:29) local2 -> 22:10
+(23:32..23:35) scala/Int#
+(23:38..23:40) local3 -> 23:17
+(23:41..23:42) scala/Int#`-`(+3).
+(23:43..23:45) local4 -> 23:24
+(26:20..26:30) _empty_/SetFunctor# -> 9:7
+(26:31..26:39) _empty_/Test.orderInt. -> 21:7
+(27:10..27:16) _empty_/Test.IntSet. -> 26:7
+(29:18..29:23) scala/Array#
+(29:24..29:30) scala/Predef.String#
+(30:15..30:21) _empty_/Test.IntSet. -> 26:7
+(30:22..30:27) _empty_/SetFunctor#empty(). -> 11:7
+(30:28..30:31) _empty_/SetFunctor#helper#add(). -> 14:9
+(30:35..30:38) _empty_/SetFunctor#helper#add(). -> 14:9
+(30:42..30:45) _empty_/SetFunctor#helper#add(). -> 14:9
+(31:5..31:11) scala/Predef.assert(+1).
+(31:13..31:16) local10 -> 30:9
+(31:17..31:23) _empty_/SetFunctor#helper#member(). -> 16:9
+(32:5..32:11) scala/Predef.assert(+1).
+(32:12..32:15) local10 -> 30:9
+(32:16..32:22) _empty_/SetFunctor#helper#member(). -> 16:9
+

@@ -1,7 +1,3 @@
 Document tests/pos/i21413.scala
-(1:8..1:13) scala/
-(1:14..1:22) scala/language.
-(1:23..1:35) scala/language.experimental.
-(1:36..1:47) scala/language.experimental.namedTuples.
-(3:9..3:18) scala/NamedTuple.apply(+1).
+(1:9..1:18) scala/NamedTuple.apply(+1).
 

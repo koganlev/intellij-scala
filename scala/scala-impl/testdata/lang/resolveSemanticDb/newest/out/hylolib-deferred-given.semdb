@@ -351,7 +351,7 @@ Document tests/pos/hylolib-deferred-given/BitArray.scala
 (123:17..123:25) hylo/BitArray# -> 6:13
 (123:28..123:36) hylo/BitArray# -> 6:13
 (124:18..124:22) hylo/BitArray#copy(). -> 246:7
-(125:5..125:11) local16 -> 137:9
+(125:5..125:11) local16 -> 119:29
 (125:12..125:24) hylo/BitArray#applyBitwise(). -> 133:15
 (125:25..125:30) hylo/BitArray#`^`().(other) -> 123:10
 (125:34..125:35) scala/Int#`^`(+3).
@@ -375,45 +375,45 @@ Document tests/pos/hylolib-deferred-given/BitArray.scala
 (144:22..144:23) scala/Int#`-`(+3).
 (144:27..144:29) scala/Int#`>>`().
 (146:19..146:24) scala/runtime/RichInt#until().
-(146:25..146:26) local19 -> 156:8
-(147:9..147:15) local17 -> 138:14
+(146:25..146:26) local19 -> 138:14
+(147:9..147:15) local17 -> 119:9
 (147:16..147:21) hylo/BitArray#_bits(). -> 7:17
-(147:24..147:30) local17 -> 138:14
+(147:24..147:30) local17 -> 119:9
 (147:31..147:36) hylo/BitArray#_bits(). -> 7:17
 (147:37..147:45) hylo/HyArray#modifyAt(). -> 114:7
-(148:11..148:12) local20 -> 156:11
+(148:11..148:12) local20 -> 138:9
 (148:21..148:30) hylo/BitArray#applyBitwise().(operation) -> 135:7
-(148:31..148:32) local21 -> 167:8
+(148:31..148:32) local21 -> 156:8
 (148:34..148:39) hylo/BitArray#applyBitwise().(other) -> 134:7
 (148:40..148:45) hylo/BitArray#_bits(). -> 7:17
 (148:46..148:48) hylo/HyArray#at(). -> 104:7
-(148:49..148:50) local21 -> 167:8
+(148:49..148:50) local21 -> 156:8
 (149:11..149:27) hylo/HyArray#modifyAt().(assumeUniqueness) -> 117:7
-(149:30..149:31) local18 -> 138:9
-(151:9..151:10) local18 -> 138:9
+(149:30..149:31) local18 -> 137:9
+(151:9..151:10) local18 -> 137:9
 (153:18..153:20) scala/Int#`<<`().
 (153:22..153:27) hylo/BitArray#count(). -> 16:7
 (153:28..153:29) scala/Int#`&`(+3).
 (153:35..153:36) scala/Int#`-`(+3).
-(154:7..154:13) local17 -> 138:14
+(154:7..154:13) local17 -> 119:9
 (154:14..154:19) hylo/BitArray#_bits(). -> 7:17
-(154:22..154:28) local17 -> 138:14
+(154:22..154:28) local17 -> 119:9
 (154:29..154:34) hylo/BitArray#_bits(). -> 7:17
 (154:35..154:43) hylo/HyArray#modifyAt(). -> 114:7
-(155:9..155:10) local19 -> 156:8
+(155:9..155:10) local19 -> 138:14
 (155:19..155:28) hylo/BitArray#applyBitwise().(operation) -> 135:7
-(155:29..155:30) local23 -> 193:9
+(155:29..155:30) local23 -> 167:8
 (155:31..155:32) scala/Int#`&`(+3).
-(155:33..155:34) local22 -> 167:11
+(155:33..155:34) local22 -> 156:11
 (155:36..155:41) hylo/BitArray#applyBitwise().(other) -> 134:7
 (155:42..155:47) hylo/BitArray#_bits(). -> 7:17
 (155:48..155:50) hylo/HyArray#at(). -> 104:7
-(155:51..155:52) local19 -> 156:8
+(155:51..155:52) local19 -> 138:14
 (155:54..155:55) scala/Int#`&`(+3).
-(155:56..155:57) local22 -> 167:11
+(155:56..155:57) local22 -> 156:11
 (156:9..156:25) hylo/HyArray#modifyAt().(assumeUniqueness) -> 117:7
-(156:28..156:29) local18 -> 138:9
-(159:7..159:13) local17 -> 138:14
+(156:28..156:29) local18 -> 137:9
+(159:7..159:13) local17 -> 119:9
 (167:22..167:30) hylo/BitArray. -> 276:8
 (167:31..167:39) hylo/BitArray.Position# -> 285:15
 (168:5..168:13) hylo/BitArray. -> 276:8
@@ -453,11 +453,11 @@ Document tests/pos/hylolib-deferred-given/BitArray.scala
 (202:24..202:26) hylo/HyArray#at(). -> 104:7
 (202:27..202:28) hylo/BitArray#at().(p) -> 200:10
 (202:29..202:35) hylo/BitArray.Position#bucket. -> 286:29
-(203:6..203:7) local25 -> 194:9
+(203:6..203:7) local25 -> 193:9
 (203:8..203:9) scala/Int#`&`(+3).
-(203:10..203:11) local24 -> 194:14
+(203:10..203:11) local24 -> 167:11
 (203:13..203:15) scala/Int#`==`(+3).
-(203:16..203:17) local24 -> 194:14
+(203:16..203:17) local24 -> 167:11
 (212:18..212:21) scala/Int#
 (212:24..212:31) scala/Boolean#
 (213:5..213:7) hylo/BitArray#at(). -> 200:7
@@ -472,14 +472,14 @@ Document tests/pos/hylolib-deferred-given/BitArray.scala
 (226:6..226:14) hylo/BitArray# -> 6:13
 (227:21..227:37) hylo/BitArray#modifyAt().(assumeUniqueness) -> 225:7
 (227:53..227:57) hylo/BitArray#copy(). -> 246:7
-(228:5..228:11) local26 -> 246:11
+(228:5..228:11) local26 -> 194:14
 (228:12..228:20) hylo/BitArray#setValue(). -> 266:15
 (228:21..228:30) hylo/BitArray#modifyAt().(transform) -> 224:7
-(228:31..228:37) local26 -> 246:11
+(228:31..228:37) local26 -> 194:14
 (228:38..228:40) hylo/BitArray#at(). -> 200:7
 (228:41..228:42) hylo/BitArray#modifyAt().(p) -> 223:7
 (228:46..228:47) hylo/BitArray#modifyAt().(p) -> 223:7
-(229:5..229:11) local26 -> 246:11
+(229:5..229:11) local26 -> 194:14
 (239:10..239:13) scala/Int#
 (240:19..240:26) scala/Boolean#
 (240:31..240:38) scala/Boolean#
@@ -504,9 +504,9 @@ Document tests/pos/hylolib-deferred-given/BitArray.scala
 (252:42..252:44) scala/Int#`>>`().
 (253:21..253:26) hylo/BitArray#_bits(). -> 7:17
 (253:27..253:31) hylo/HyArray#copy(). -> 137:7
-(253:32..253:33) local27 -> 247:18
+(253:32..253:33) local27 -> 194:9
 (254:11..254:19) hylo/BitArray# -> 6:13
-(254:20..254:27) local28 -> 247:33
+(254:20..254:27) local28 -> 246:11
 (254:29..254:35) hylo/BitArray#_count(). -> 8:17
 (258:26..258:32) scala/Predef.String#
 (259:5..259:10) hylo/BitArray#_bits(). -> 7:17
@@ -524,12 +524,12 @@ Document tests/pos/hylolib-deferred-given/BitArray.scala
 (269:7..269:8) hylo/BitArray#setValue().(p) -> 266:36
 (269:9..269:15) hylo/BitArray.Position#bucket. -> 286:29
 (270:17..270:18) hylo/BitArray#setValue().(b) -> 266:24
-(270:24..270:25) local30 -> 252:15
+(270:24..270:25) local30 -> 247:33
 (270:26..270:27) scala/Int#`|`(+3).
-(270:28..270:29) local29 -> 251:15
-(270:35..270:36) local30 -> 252:15
+(270:28..270:29) local29 -> 247:18
+(270:35..270:36) local30 -> 247:33
 (270:37..270:38) scala/Int#`&`(+3).
-(270:40..270:41) local29 -> 251:15
+(270:40..270:41) local29 -> 247:18
 (271:7..271:23) hylo/HyArray#modifyAt().(assumeUniqueness) -> 117:7
 (286:15..286:23) hylo/BitArray. -> 276:8
 (286:37..286:40) scala/Int#
@@ -575,12 +575,12 @@ Document tests/pos/hylolib-deferred-given/BitArray.scala
 (315:31..315:38) hylo/HyArray. -> 155:8
 (315:39..315:42) scala/Int#
 (316:15..316:19) hylo/BitArray.apply().(bits) -> 314:16
-(316:21..316:27) local31 -> 247:11
-(316:30..316:36) local31 -> 247:11
+(316:21..316:27) local31 -> 251:15
+(316:30..316:36) local31 -> 251:15
 (316:37..316:43) hylo/BitArray#append(). -> 38:7
-(316:44..316:45) local32 -> 256:11
+(316:44..316:45) local32 -> 252:15
 (316:47..316:63) hylo/BitArray#append().(assumeUniqueness) -> 38:28
-(317:5..317:11) local31 -> 247:11
+(317:5..317:11) local31 -> 251:15
 (321:32..321:37) hylo/Value# -> 8:7
 (321:38..321:46) hylo/BitArray. -> 276:8
 (321:47..321:55) hylo/BitArray.Position# -> 285:15
@@ -643,10 +643,10 @@ Document tests/pos/hylolib-deferred-given/BitArray.scala
 (371:30..371:43) scala/collection/mutable/StringBuilder#
 (372:7..372:11) hylo/BitArray$package.bitArrayIsStringConvertible.description().(self) -> 369:14
 (372:12..372:19) hylo/Collection$package.forEach(). -> 136:7
-(372:29..372:37) local33 -> 268:54
+(372:29..372:37) local33 -> 247:11
 (372:38..372:40) scala/collection/mutable/Growable#`+=`().
-(372:45..372:46) local34 -> 269:14
-(373:7..373:15) local33 -> 268:54
+(372:45..372:46) local34 -> 256:11
+(373:7..373:15) local33 -> 247:11
 (373:16..373:24) scala/collection/IterableOnceOps#mkString(+2).
 
 Document tests/pos/hylolib-deferred-given/Collection.scala
@@ -779,20 +779,20 @@ Document tests/pos/hylolib-deferred-given/Collection.scala
 (119:19..119:27) hylo/Collection#Position# -> 12:8
 (119:32..119:33) hylo/Collection$package.reduce().[T] -> 117:14
 (119:36..119:37) hylo/Collection$package.reduce().[T] -> 117:14
-(120:11..120:12) local13 -> 160:10
+(120:11..120:12) local15 -> 176:31
 (120:13..120:15) hylo/Value#eq(). -> 16:9
-(120:16..120:17) local12 -> 159:9
-(121:9..121:10) local14 -> 176:28
-(123:9..123:13) local15 -> 176:31
+(120:16..120:17) local14 -> 176:28
+(121:9..121:10) local16 -> 119:29
+(123:9..123:13) local17 -> 119:9
 (123:14..123:18) hylo/Collection$package.reduce().(self) -> 94:18
 (123:19..123:32) hylo/Collection#positionAfter(). -> 54:9
-(123:33..123:34) local13 -> 160:10
+(123:33..123:34) local15 -> 176:31
 (123:37..123:44) hylo/Collection$package.reduce().(combine) -> 117:35
-(123:45..123:46) local14 -> 176:28
+(123:45..123:46) local16 -> 119:29
 (123:48..123:52) hylo/Collection$package.reduce().(self) -> 94:18
 (123:53..123:55) hylo/Collection#at(). -> 63:9
-(123:56..123:57) local13 -> 160:10
-(125:5..125:9) local15 -> 176:31
+(123:56..123:57) local15 -> 176:31
+(125:5..125:9) local17 -> 119:9
 (125:10..125:14) hylo/Collection$package.reduce().(self) -> 94:18
 (125:15..125:28) hylo/Collection#startPosition(). -> 37:9
 (125:30..125:43) hylo/Collection$package.reduce().(partialResult) -> 117:17
@@ -805,18 +805,18 @@ Document tests/pos/hylolib-deferred-given/Collection.scala
 (138:17..138:18) hylo/Collection$package.forEach().(s) -> 94:36
 (138:19..138:27) hylo/Collection#Position# -> 12:8
 (138:30..138:37) scala/Boolean#
-(139:11..139:12) local17 -> 138:14
+(139:11..139:12) local19 -> 138:14
 (139:13..139:15) hylo/Value#eq(). -> 16:9
-(139:16..139:17) local16 -> 137:9
+(139:16..139:17) local18 -> 137:9
 (141:19..141:25) hylo/Collection$package.forEach().(action) -> 136:15
 (141:26..141:30) hylo/Collection$package.forEach().(self) -> 94:18
 (141:31..141:33) hylo/Collection#at(). -> 63:9
-(141:34..141:35) local17 -> 138:14
-(144:9..144:13) local18 -> 138:9
+(141:34..141:35) local19 -> 138:14
+(144:9..144:13) local20 -> 138:9
 (144:14..144:18) hylo/Collection$package.forEach().(self) -> 94:18
 (144:19..144:32) hylo/Collection#positionAfter(). -> 54:9
-(144:33..144:34) local17 -> 138:14
-(146:5..146:9) local18 -> 138:9
+(144:33..144:34) local19 -> 138:14
+(146:5..146:9) local20 -> 138:9
 (146:10..146:14) hylo/Collection$package.forEach().(self) -> 94:18
 (146:15..146:28) hylo/Collection#startPosition(). -> 37:9
 (153:20..153:25) hylo/Value# -> 8:7
@@ -830,10 +830,10 @@ Document tests/pos/hylolib-deferred-given/Collection.scala
 (154:10..154:16) hylo/Collection$package.reduce(). -> 117:7
 (155:7..155:14) hylo/HyArray. -> 155:8
 (155:15..155:16) hylo/Collection$package.map().[T] -> 153:11
-(156:17..156:18) local19 -> 156:8
+(156:17..156:18) local21 -> 156:8
 (156:19..156:25) hylo/HyArray#append(). -> 54:7
 (156:26..156:35) hylo/Collection$package.map().(transform) -> 153:30
-(156:36..156:37) local20 -> 156:11
+(156:36..156:37) local22 -> 156:11
 (156:40..156:56) hylo/HyArray#append().(assumeUniqueness) -> 54:31
 (164:27..164:28) hylo/Collection$package.filter().(s) -> 94:36
 (164:29..164:36) hylo/Collection#Element# -> 8:8
@@ -847,12 +847,12 @@ Document tests/pos/hylolib-deferred-given/Collection.scala
 (166:15..166:16) hylo/Collection$package.filter().(s) -> 94:36
 (166:17..166:24) hylo/Collection#Element# -> 8:8
 (167:21..167:31) hylo/Collection$package.filter().(isIncluded) -> 164:14
-(167:32..167:33) local22 -> 167:11
-(167:41..167:42) local21 -> 167:8
+(167:32..167:33) local24 -> 167:11
+(167:41..167:42) local23 -> 167:8
 (167:43..167:49) hylo/HyArray#append(). -> 54:7
-(167:50..167:51) local22 -> 167:11
+(167:50..167:51) local24 -> 167:11
 (167:53..167:69) hylo/HyArray#append().(assumeUniqueness) -> 54:31
-(167:83..167:84) local21 -> 167:8
+(167:83..167:84) local23 -> 167:8
 (175:33..175:34) hylo/Collection$package.containsWhere().(s) -> 94:36
 (175:35..175:42) hylo/Collection#Element# -> 8:8
 (175:47..175:54) scala/Boolean#
@@ -884,21 +884,21 @@ Document tests/pos/hylolib-deferred-given/Collection.scala
 (194:30..194:36) scala/Option#
 (194:37..194:38) hylo/Collection$package.firstPositionWhere().(s) -> 94:36
 (194:39..194:47) hylo/Collection#Position# -> 12:8
-(195:11..195:12) local24 -> 194:14
+(195:11..195:12) local26 -> 194:14
 (195:13..195:15) hylo/Value#eq(). -> 16:9
-(195:16..195:17) local23 -> 193:9
+(195:16..195:17) local25 -> 193:9
 (196:9..196:13) scala/None.
 (197:18..197:27) hylo/Collection$package.firstPositionWhere().(predicate) -> 192:26
 (197:28..197:32) hylo/Collection$package.firstPositionWhere().(self) -> 94:18
 (197:33..197:35) hylo/Collection#at(). -> 63:9
-(197:36..197:37) local24 -> 194:14
+(197:36..197:37) local26 -> 194:14
 (198:9..198:13) scala/Some.
-(198:14..198:15) local24 -> 194:14
-(200:9..200:13) local25 -> 194:9
+(198:14..198:15) local26 -> 194:14
+(200:9..200:13) local27 -> 194:9
 (200:14..200:18) hylo/Collection$package.firstPositionWhere().(self) -> 94:18
 (200:19..200:32) hylo/Collection#positionAfter(). -> 54:9
-(200:33..200:34) local24 -> 194:14
-(202:5..202:9) local25 -> 194:9
+(200:33..200:34) local26 -> 194:14
+(202:5..202:9) local27 -> 194:9
 (202:10..202:14) hylo/Collection$package.firstPositionWhere().(self) -> 94:18
 (202:15..202:28) hylo/Collection#startPosition(). -> 37:9
 (209:31..209:32) hylo/Collection$package.minElement().(s) -> 94:36
@@ -962,33 +962,33 @@ Document tests/pos/hylolib-deferred-given/Collection.scala
 (247:42..247:49) hylo/Collection#Element# -> 8:8
 (247:52..247:53) hylo/Collection$package.leastElement().(s) -> 94:36
 (247:54..247:61) hylo/Collection#Element# -> 8:8
-(248:13..248:14) local27 -> 247:18
+(248:13..248:14) local29 -> 247:18
 (248:15..248:17) hylo/Value#eq(). -> 16:9
-(248:18..248:19) local26 -> 246:11
-(249:11..249:16) local28 -> 247:33
+(248:18..248:19) local28 -> 246:11
+(249:11..249:16) local30 -> 247:33
 (251:19..251:23) hylo/Collection$package.leastElement().(self) -> 94:18
 (251:24..251:26) hylo/Collection#at(). -> 63:9
-(251:27..251:28) local27 -> 247:18
+(251:27..251:28) local29 -> 247:18
 (252:22..252:37) hylo/Collection$package.leastElement().(isOrderedBefore) -> 242:20
-(252:38..252:39) local29 -> 251:15
-(252:41..252:46) local28 -> 247:33
-(252:53..252:54) local29 -> 251:15
-(252:60..252:65) local28 -> 247:33
-(253:11..253:17) local31 -> 247:11
+(252:38..252:39) local31 -> 251:15
+(252:41..252:46) local30 -> 247:33
+(252:53..252:54) local31 -> 251:15
+(252:60..252:65) local30 -> 247:33
+(253:11..253:17) local33 -> 247:11
 (253:18..253:22) hylo/Collection$package.leastElement().(self) -> 94:18
 (253:23..253:36) hylo/Collection#positionAfter(). -> 54:9
-(253:37..253:38) local27 -> 247:18
-(253:41..253:42) local30 -> 252:15
+(253:37..253:38) local29 -> 247:18
+(253:41..253:42) local32 -> 252:15
 (256:15..256:19) hylo/Collection$package.leastElement().(self) -> 94:18
 (256:20..256:33) hylo/Collection#startPosition(). -> 37:9
 (257:7..257:11) scala/Some.
-(257:12..257:18) local31 -> 247:11
+(257:12..257:18) local33 -> 247:11
 (257:19..257:23) hylo/Collection$package.leastElement().(self) -> 94:18
 (257:24..257:37) hylo/Collection#positionAfter(). -> 54:9
-(257:38..257:39) local32 -> 256:11
+(257:38..257:39) local34 -> 256:11
 (257:42..257:46) hylo/Collection$package.leastElement().(self) -> 94:18
 (257:47..257:49) hylo/Collection#at(). -> 63:9
-(257:50..257:51) local32 -> 256:11
+(257:50..257:51) local34 -> 256:11
 (262:24..262:28) hylo/Collection$package.elementsEqual().[Self] -> 262:12
 (263:8..263:18) hylo/Collection# -> 5:7
 (263:19..263:23) hylo/Collection$package.elementsEqual().[Self] -> 262:12
@@ -1006,33 +1006,33 @@ Document tests/pos/hylolib-deferred-given/Collection.scala
 (269:32..269:33) hylo/Collection$package.elementsEqual().(o) -> 268:30
 (269:34..269:42) hylo/Collection#Position# -> 12:8
 (269:45..269:52) scala/Boolean#
-(270:11..270:12) local34 -> 269:14
+(270:11..270:12) local36 -> 269:14
 (270:13..270:17) hylo/Value#eq(). -> 16:9
 (270:18..270:22) hylo/Collection$package.elementsEqual().(self) -> 262:18
 (270:23..270:34) hylo/Collection#endPosition(). -> 45:9
-(271:9..271:10) local35 -> 269:29
+(271:9..271:10) local37 -> 269:29
 (271:11..271:15) hylo/Value#eq(). -> 16:9
 (271:16..271:21) hylo/Collection$package.elementsEqual().(other) -> 268:77
 (271:22..271:33) hylo/Collection#endPosition(). -> 45:9
-(272:18..272:19) local35 -> 269:29
+(272:18..272:19) local37 -> 269:29
 (272:20..272:24) hylo/Value#eq(). -> 16:9
 (272:25..272:30) hylo/Collection$package.elementsEqual().(other) -> 268:77
 (272:31..272:42) hylo/Collection#endPosition(). -> 45:9
 (274:18..274:22) hylo/Collection$package.elementsEqual().(self) -> 262:18
 (274:23..274:25) hylo/Collection#at(). -> 63:9
-(274:26..274:27) local34 -> 269:14
+(274:26..274:27) local36 -> 269:14
 (274:29..274:34) hylo/CoreTraits$package.neq(). -> 25:41
 (274:35..274:40) hylo/Collection$package.elementsEqual().(other) -> 268:77
 (274:41..274:43) hylo/Collection#at(). -> 63:9
-(274:44..274:45) local35 -> 269:29
-(277:9..277:13) local36 -> 269:9
+(274:44..274:45) local37 -> 269:29
+(277:9..277:13) local38 -> 269:9
 (277:14..277:18) hylo/Collection$package.elementsEqual().(self) -> 262:18
 (277:19..277:32) hylo/Collection#positionAfter(). -> 54:9
-(277:33..277:34) local34 -> 269:14
+(277:33..277:34) local36 -> 269:14
 (277:37..277:42) hylo/Collection$package.elementsEqual().(other) -> 268:77
 (277:43..277:56) hylo/Collection#positionAfter(). -> 54:9
-(277:57..277:58) local35 -> 269:29
-(279:5..279:9) local36 -> 269:9
+(277:57..277:58) local37 -> 269:29
+(279:5..279:9) local38 -> 269:9
 (279:10..279:14) hylo/Collection$package.elementsEqual().(self) -> 262:18
 (279:15..279:28) hylo/Collection#startPosition(). -> 37:9
 (279:30..279:35) hylo/Collection$package.elementsEqual().(other) -> 268:77

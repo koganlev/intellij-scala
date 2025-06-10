@@ -1,0 +1,93 @@
+Document tests/pos/better-fors-given.scala
+(3:2..3:6) scala/main#
+(3:17..3:21) scala/Unit#
+(5:5..5:6) local0 -> 5:5
+(5:10..5:16) scala/Option.
+(5:20..5:22) scala/Predef.ArrowAssoc#`->`().
+(6:16..6:19) scala/Int#
+(6:31..6:37) scala/Predef.String#
+(6:41..6:42) local0 -> 5:5
+(7:10..7:16) scala/Option.
+(9:5..9:11) scala/Predef.assert(+1).
+(9:12..9:18) scala/Predef.summon().
+(9:19..9:22) scala/Int#
+(9:24..9:26) scala/Int#`==`(+3).
+(12:5..12:6) local5 -> 12:5
+(12:10..12:16) scala/Option.
+(12:26..12:28) scala/Predef.ArrowAssoc#`->`().
+(13:20..13:23) scala/Int#
+(13:35..13:41) scala/Predef.String#
+(13:46..13:47) local5 -> 12:5
+(14:10..14:16) scala/Option.
+(16:5..16:11) scala/Predef.assert(+1).
+(16:12..16:18) scala/Predef.summon().
+(16:19..16:22) scala/Int#
+(16:24..16:26) scala/Int#`==`(+3).
+(19:5..19:6) local10 -> 19:5
+(19:10..19:16) scala/Option.
+(19:17..19:21) scala/Some.
+(19:25..19:27) scala/Predef.ArrowAssoc#`->`().
+(20:5..20:9) scala/Some.
+(20:20..20:23) scala/Int#
+(20:35..20:41) scala/Predef.String#
+(20:45..20:46) local10 -> 19:5
+(21:10..21:16) scala/Option.
+(23:5..23:11) scala/Predef.assert(+1).
+(23:12..23:18) scala/Predef.summon().
+(23:19..23:22) scala/Int#
+(23:24..23:26) scala/Int#`==`(+3).
+(26:5..26:6) local15 -> 26:5
+(26:10..26:16) scala/Option.
+(26:17..26:21) scala/Some.
+(27:5..27:9) scala/Some.
+(27:20..27:23) scala/Int#
+(27:27..27:28) local15 -> 26:5
+(28:10..28:16) scala/Option.
+(30:5..30:11) scala/Predef.assert(+1).
+(30:12..30:18) scala/Predef.summon().
+(30:19..30:22) scala/Int#
+(30:24..30:26) scala/Int#`==`(+3).
+(33:10..33:16) scala/Option.
+(34:21..34:22) local19 -> 33:5
+(36:5..36:11) scala/Predef.assert(+1).
+(36:12..36:18) scala/Predef.summon().
+(36:19..36:22) scala/Int#
+(36:24..36:26) scala/Int#`==`(+3).
+(39:10..39:16) scala/Option.
+(40:21..40:22) local21 -> 39:5
+(42:5..42:11) scala/Predef.assert(+1).
+(42:12..42:18) scala/Predef.summon().
+(42:19..42:22) scala/Int#
+(42:24..42:26) scala/Int#`==`(+3).
+(45:10..45:16) scala/Option.
+(46:17..46:18) local23 -> 45:5
+(48:5..48:11) scala/Predef.assert(+1).
+(48:12..48:18) scala/Predef.summon().
+(48:19..48:22) scala/Int#
+(48:24..48:26) scala/Int#`==`(+3).
+(51:10..51:16) scala/Option.
+(52:17..52:18) local25 -> 51:5
+(53:10..53:16) scala/Option.
+(55:5..55:11) scala/Predef.assert(+1).
+(55:12..55:18) scala/Predef.summon().
+(55:19..55:22) scala/Int#
+(55:24..55:26) scala/Int#`==`(+3).
+(58:15..58:18) scala/Int#
+(58:22..58:28) scala/Option.
+(60:5..60:11) scala/Predef.assert(+1).
+(60:12..60:18) scala/Predef.summon().
+(60:19..60:22) scala/Int#
+(60:24..60:26) scala/Int#`==`(+3).
+(63:15..63:18) scala/Int#
+(63:22..63:28) scala/Option.
+(65:5..65:11) scala/Predef.assert(+1).
+(65:12..65:18) scala/Predef.summon().
+(65:19..65:22) scala/Int#
+(65:24..65:26) scala/Int#`==`(+3).
+(68:11..68:14) scala/Int#
+(68:18..68:24) scala/Option.
+(70:5..70:11) scala/Predef.assert(+1).
+(70:12..70:18) scala/Predef.summon().
+(70:19..70:22) scala/Int#
+(70:24..70:26) scala/Int#`==`(+3).
+

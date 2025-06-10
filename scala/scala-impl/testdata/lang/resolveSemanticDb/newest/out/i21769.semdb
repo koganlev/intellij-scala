@@ -22,7 +22,7 @@ Document tests/pos/i21769.scala
 (19:16..19:19) _empty_/i21769$package.doSth2().[X] -> 19:12
 (19:28..19:31) _empty_/TC2# -> 16:7
 (19:28..19:31) _empty_/i21769$package.doSth2().[X] -> 19:12
-(19:44..19:47) _empty_/i21769$package.doSth2().(tc2)
+(19:44..19:47) _empty_/i21769$package.doSth2().(tc2) -> 19:35
 (19:48..19:52) _empty_/TC2#Self# -> 17:8
 (19:56..19:59) scala/Predef.`???`().
 

@@ -6,7 +6,7 @@ Document tests/pos/i18768.scala
 (10:22..10:24) minimized/Module.Exportee.Id# -> 5:19
 (10:27..10:30) scala/Predef.`???`().
 (14:12..14:18) minimized/Module. -> 2:10
-(15:13..15:21) minimized/Client.Exportee.
+(15:13..15:21) minimized/Client.Exportee().
 (15:24..15:31) minimized/Module.Exportee.updated(). -> 10:13
 (22:22..22:24) original/Module.EntityDef#Id# -> 20:12
 (22:26..22:32) original/Module.EntityDef#Record# -> 21:12
@@ -21,7 +21,7 @@ Document tests/pos/i18768.scala
 (32:38..32:40) original/Module.Exportee.apply().(id) -> 32:17
 (32:42..32:50) original/Module.Exportee. -> 28:12
 (35:12..35:18) original/Module. -> 18:10
-(36:13..36:21) original/Client.Exportee.
+(36:13..36:21) original/Client.Exportee().
 (36:26..36:33) original/Module.EntityDef#updated(). -> 25:13
 (40:12..40:18) original/Module. -> 18:10
 (41:21..41:27) original/Module. -> 18:10

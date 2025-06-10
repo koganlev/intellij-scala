@@ -1,7 +1,7 @@
 Document tests/pos/dep-context-bounds.scala
 (6:14..6:15) _empty_/A# -> 2:7
 (6:14..6:15) _empty_/Test1.foo().[X] -> 6:11
-(6:20..6:21) _empty_/Test1.foo().(evidence$1) -> 6:14
+(6:20..6:21) _empty_/Test1.foo().(evidence$1) -> 6:15
 (6:22..6:26) _empty_/A#Self# -> 3:8
 (6:30..6:33) scala/Predef.`???`().
 (8:14..8:15) _empty_/A# -> 2:7
@@ -15,7 +15,7 @@ Document tests/pos/dep-context-bounds.scala
 (10:41..10:44) scala/Predef.`???`().
 (13:14..13:15) _empty_/A# -> 2:7
 (13:14..13:15) _empty_/Test2.foo().[X] -> 13:11
-(13:25..13:26) _empty_/Test2.foo().(x)
+(13:25..13:26) _empty_/Test2.foo().(x) -> 13:19
 (13:27..13:31) _empty_/A#Self# -> 3:8
 (13:35..13:38) scala/Predef.`???`().
 (15:14..15:15) _empty_/A# -> 2:7

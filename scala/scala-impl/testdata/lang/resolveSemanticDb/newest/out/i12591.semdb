@@ -11,5 +11,5 @@ Document tests/pos/i12591/Inner.scala
 
 Document tests/pos/i12591/Outer.scala
 (2:8..2:13) outer/inner/ -> 2:9
-(3:8..3:11) outer/Outer$package.Foo.
+(3:8..3:11) outer/Outer$package.Foo().
 

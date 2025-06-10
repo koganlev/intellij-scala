@@ -762,7 +762,7 @@ Document tests/pos/reference/exports.scala
 (27:21..27:22) _empty_/exports.C# -> 26:9
 (27:25..27:28) scala/Predef.`???`().
 (28:10..28:11) _empty_/exports.O. -> 27:10
-(29:10..29:11) _empty_/exports.c.
+(29:10..29:11) _empty_/exports.c().
 (29:12..29:13) _empty_/exports.C#T# -> 26:18
 (29:16..29:19) scala/Predef.`???`().
 (31:22..31:28) scala/Predef.String#

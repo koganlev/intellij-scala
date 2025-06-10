@@ -551,35 +551,70 @@ object AfterUpdateDottyVersionScript {
       )
 
       // no need to run the run-tests... posTestFromTasty already creates the semanticdb files
-      patchFile(
-        repo.path.resolve("compiler/test/dotty/tools/dotc/FromTastyTests.scala"),
-        """
-          |  @Test def runTestFromTasty: Unit = {
-          |    // Can be reproduced with
-          |    // > sbt
-          |    // > scalac -Ythrough-tasty -Ycheck:all <source>
-          |    // > scala Test
-          |
-          |    implicit val testGroup: TestGroup = TestGroup("runTestFromTasty")
-          |    compileTastyInDir(s"tests${JFile.separator}run", defaultOptions,
-          |      fromTastyFilter = FileFilter.exclude(TestSources.runFromTastyBlacklisted)
-          |    ).checkRuns()
-          |  }
-          |""".stripMargin,
-        """
-          |  @Test def runTestFromTasty: Unit = {
-          |    // Can be reproduced with
-          |    // > sbt
-          |    // > scalac -Ythrough-tasty -Ycheck:all <source>
-          |    // > scala Test
-          |
-          |    //implicit val testGroup: TestGroup = TestGroup("runTestFromTasty")
-          |    //compileTastyInDir(s"tests${JFile.separator}run", defaultOptions,
-          |    //  fromTastyFilter = FileFilter.exclude(TestSources.runFromTastyBlacklisted)
-          |    //).checkRuns()
-          |  }
-          |""".stripMargin
-      )
+      try {
+        patchFile(
+          repo.path.resolve("compiler/test/dotty/tools/dotc/FromTastyTests.scala"),
+          """
+            |  @Test def runTestFromTasty: Unit = {
+            |    // Can be reproduced with
+            |    // > sbt
+            |    // > scalac -Ythrough-tasty -Ycheck:all <source>
+            |    // > scala Test
+            |
+            |    implicit val testGroup: TestGroup = TestGroup("runTestFromTasty")
+            |    compileTastyInDir(s"tests${JFile.separator}run", defaultOptions,
+            |      fromTastyFilter = FileFilter.exclude(TestSources.runFromTastyBlacklisted)
+            |    ).checkRuns()
+            |  }
+            |""".stripMargin,
+          """
+            |  @Test def runTestFromTasty: Unit = {
+            |    // Can be reproduced with
+            |    // > sbt
+            |    // > scalac -Ythrough-tasty -Ycheck:all <source>
+            |    // > scala Test
+            |
+            |    //implicit val testGroup: TestGroup = TestGroup("runTestFromTasty")
+            |    //compileTastyInDir(s"tests${JFile.separator}run", defaultOptions,
+            |    //  fromTastyFilter = FileFilter.exclude(TestSources.runFromTastyBlacklisted)
+            |    //).checkRuns()
+            |  }
+            |""".stripMargin
+        )
+      } catch {
+        case _: Exception =>
+          println(s"Failed to patch file: ${repo.path.resolve("compiler/test/dotty/tools/dotc/FromTastyTests.scala")}")
+          println("Try again with excludelisted instead of blacklisted")
+          patchFile(
+            repo.path.resolve("compiler/test/dotty/tools/dotc/FromTastyTests.scala"),
+            """
+              |  @Test def runTestFromTasty: Unit = {
+              |    // Can be reproduced with
+              |    // > sbt
+              |    // > scalac -Ythrough-tasty -Ycheck:all <source>
+              |    // > scala Test
+              |
+              |    implicit val testGroup: TestGroup = TestGroup("runTestFromTasty")
+              |    compileTastyInDir(s"tests${JFile.separator}run", defaultOptions,
+              |      fromTastyFilter = FileFilter.exclude(TestSources.runFromTastyExcludelisted)
+              |    ).checkRuns()
+              |  }
+              |""".stripMargin,
+            """
+              |  @Test def runTestFromTasty: Unit = {
+              |    // Can be reproduced with
+              |    // > sbt
+              |    // > scalac -Ythrough-tasty -Ycheck:all <source>
+              |    // > scala Test
+              |
+              |    //implicit val testGroup: TestGroup = TestGroup("runTestFromTasty")
+              |    //compileTastyInDir(s"tests${JFile.separator}run", defaultOptions,
+              |    //  fromTastyFilter = FileFilter.exclude(TestSources.runFromTastyExcludelisted)
+              |    //).checkRuns()
+              |  }
+              |""".stripMargin
+          )
+      }
 
       patchTestBlacklist(repo)
 
@@ -889,6 +924,15 @@ object AfterUpdateDottyVersionScript {
         |FromString.scala
         |typeclasses.scala
         |i10848a.scala
+        |i2941.scala
+        |i17222.4.scala
+        |preview-flag.scala
+        |i14477.scala
+        |packageObjectValues.scala
+        |i17222.5.scala
+        |i6199c.scala
+        |i6199b.scala
+        |i21981.orig.scala
         |""".stripMargin.trim
     )
   }

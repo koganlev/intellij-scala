@@ -39,9 +39,9 @@ Document tests/pos/sets-tc.scala
 (18:50..18:51) _empty_/v1.listUnion().[A] -> 18:17
 (19:5..19:7) _empty_/v1.listUnion().(xs) -> 18:31
 (19:8..19:16) scala/collection/LinearSeqOps#foldLeft().
-(19:17..19:18) _empty_/v1.listUnion().(evidence$1) -> 18:26
+(19:17..19:18) _empty_/v1.listUnion().(evidence$1) -> 18:29
 (19:19..19:24) _empty_/v1.Set#empty(). -> 7:9
-(19:26..19:27) _empty_/v1.listUnion().(evidence$1) -> 18:26
+(19:26..19:27) _empty_/v1.listUnion().(evidence$1) -> 18:29
 (19:28..19:33) _empty_/v1.Set#union(). -> 8:9
 (21:12..21:19) _empty_/v1.ListSet.
 (21:20..21:24) scala/package.List.
@@ -86,7 +86,7 @@ Document tests/pos/sets-tc.scala
 (40:45..40:46) _empty_/v2.listUnion().[S] -> 40:20
 (41:5..41:7) _empty_/v2.listUnion().(xs) -> 40:31
 (41:8..41:16) scala/collection/LinearSeqOps#foldLeft().
-(41:17..41:18) _empty_/v2.listUnion().(evidence$1) -> 40:23
+(41:17..41:18) _empty_/v2.listUnion().(evidence$1) -> 40:29
 (41:19..41:24) _empty_/v2.Set#empty(). -> 29:9
 (41:28..41:35) _empty_/v2.Set#union(). -> 30:29
 (43:12..43:19) _empty_/v2.ListSet.
