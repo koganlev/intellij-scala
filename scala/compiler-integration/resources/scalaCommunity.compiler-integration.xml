@@ -53,6 +53,8 @@
         <editorFactoryListener implementation="org.jetbrains.plugins.scala.compiler.highlighting.CompilerHighlightingEditorFocusListenerRegisterer$ByListener"/>
         <postStartupActivity implementation="org.jetbrains.plugins.scala.compiler.highlighting.CompilerHighlightingEditorFocusListenerRegisterer$AtStartup"/>
 
+        <vfs.asyncListener implementation="org.jetbrains.plugins.scala.compiler.highlighting.CompilerHighlightingFileListener"/>
+
         <postStartupActivity implementation="org.jetbrains.plugins.scala.compiler.highlighting.CompilerHighlightingSetupActivity"/>
         <postStartupActivity implementation="org.jetbrains.plugins.scala.compiler.references.ScalaCompilerReferenceService$Startup"/>
         <postStartupActivity implementation="org.jetbrains.plugins.scala.compiler.charts.ui.CompilationChartsBuildToolWindowNodeFactory" />
