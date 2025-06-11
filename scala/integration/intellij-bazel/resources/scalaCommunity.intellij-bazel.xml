@@ -5,8 +5,8 @@
     </dependencies>
 
     <extensions defaultExtensionNs="org.jetbrains.bazel">
-        <scalaSdkExtension implementation="org.jetbrains.plugins.scala.bazel.ScalaSdkExtensionImpl"/>
         <projectPostSyncHook implementation="org.jetbrains.plugins.scala.bazel.ScalaProjectSettingsConfigurePostSyncHook"/>
+        <projectPostSyncHook implementation="org.jetbrains.plugins.scala.bazel.BazelScalaModuleConfiguratorPostSyncHook"/>
     </extensions>
     <extensions defaultExtensionNs="org.intellij.scala">
         <newScalaFileActionExtension implementation="org.jetbrains.plugins.scala.bazel.BazelNewScalaFileActionExtension"/>
