@@ -9,7 +9,6 @@ import org.jetbrains.plugins.scala.util.Markers
 import org.jetbrains.plugins.scala.util.assertions.AssertionMatchers
 
 import scala.jdk.CollectionConverters._
-import scala.util.Try
 
 abstract class ScalaSafeDeleteTestBase extends ScalaLightCodeInsightFixtureTestCase with Markers with AssertionMatchers {
   protected def | : String = CARET
@@ -54,11 +53,7 @@ abstract class ScalaSafeDeleteTestBase extends ScalaLightCodeInsightFixtureTestC
           if (refactoringId == "refactoring.safeDelete") {
             val conflicts = conflictsData.getUserData(RefactoringEventData.CONFLICTS_KEY).asScala.toArray
             unsafeDeletions shouldBe 0
-            conflicts.length shouldBe 1
-            unsafeDeletions = conflicts.head
-              .split(" ")
-              .flatMap(s => Try(s.toInt).toOption)
-              .head
+            unsafeDeletions = conflicts.length
           }
         override def undoRefactoring(refactoringId: String): Unit = ()
       })
