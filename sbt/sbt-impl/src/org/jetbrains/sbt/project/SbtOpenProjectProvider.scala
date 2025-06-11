@@ -21,6 +21,8 @@ import org.jetbrains.sbt.project.SbtOpenProjectProvider.Log
 import org.jetbrains.sbt.project.settings.SbtProjectSettings
 import org.jetbrains.sbt.settings.SbtSettings
 
+import scala.annotation.nowarn
+
 //noinspection UnstableApiUsage,ApiStatus
 class SbtOpenProjectProvider extends AbstractOpenProjectProvider {
 
@@ -54,7 +56,7 @@ class SbtOpenProjectProvider extends AbstractOpenProjectProvider {
         ExternalSystemUtil.refreshProject(
           externalProjectPath,
           new ImportSpecBuilder(project, SbtProjectSystem.Id)
-            .callback(new FinalImportCallback(project, settings))
+            .callback(new FinalImportCallback(project, settings)): @nowarn("cat=deprecation") // TODO: SCL-23991
         )
       }
     }

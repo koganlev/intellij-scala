@@ -6,6 +6,8 @@ import org.jetbrains.plugins.scala.lang.lexer.ScalaTokenTypes._
 import org.jetbrains.plugins.scala.lang.parser.ScalaElementType._
 import org.jetbrains.plugins.scala.util.MemberElementTypesExtension
 
+import scala.annotation.nowarn
+
 object TokenSets {
 
   val TYPE_DEFINITIONS: TokenSet = TokenSet.create(
@@ -60,7 +62,7 @@ object TokenSets {
       MemberElementTypesExtension.getExtraMemberTypes
   }
 
-  MemberElementTypesExtension.EP_NAME.addChangeListener(() => _MEMBERS = computeMemberTypes(), null)
+  MemberElementTypesExtension.EP_NAME.addChangeListener(() => _MEMBERS = computeMemberTypes(), null): @nowarn("cat=deprecation")
 
   val DECLARED_ELEMENTS_HOLDER: TokenSet = TokenSet.orSet(FUNCTIONS, PROPERTIES)
 

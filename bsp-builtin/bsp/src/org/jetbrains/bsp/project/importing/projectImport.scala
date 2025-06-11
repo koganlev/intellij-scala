@@ -146,7 +146,7 @@ class BspOpenProjectProvider() extends AbstractOpenProjectProvider {
         .use(ProgressExecutionMode.MODAL_SYNC))
     ExternalSystemUtil.refreshProject(externalProjectPath,
       new ImportSpecBuilder(project, BSP.ProjectSystemId)
-        .callback(new FinalImportCallback(project, settings)))
+        .callback(new FinalImportCallback(project, settings))): @nowarn("cat=deprecation") // TODO: SCL-23991
   }
 
   // TODO duplicated with org.jetbrains.sbt.project.SbtOpenProjectProvider.FinalImportCallback
