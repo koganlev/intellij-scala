@@ -5,9 +5,22 @@ package hints
 import com.intellij.openapi.util.Setter
 
 class InlayTypeHintsTest extends InlayHintsTestBase {
-
   import Hint.{End => E, Start => S}
   import ScalaCodeInsightSettings.{getInstance => settings}
+
+  private def doTest(text: String, options: Setter[java.lang.Boolean]*): Unit =
+    doTest(text, false, options: _*)
+
+  private def doTest(text: String, withTooltips: Boolean, options: Setter[java.lang.Boolean]*): Unit = {
+    def setOptions(value: Boolean): Unit = options.foreach(_.set(value))
+
+    try {
+      setOptions(true)
+      doInlayTest(text, withTooltips)
+    } finally {
+      setOptions(false)
+    }
+  }
 
   def testFunctionReturnTypeHint(): Unit = doTest(
     s"""  def foo()$S: List[String]$E = List.empty[String]""",
@@ -134,17 +147,11 @@ class InlayTypeHintsTest extends InlayHintsTestBase {
     options = settings.showMemberVariableSetter, settings.showObviousTypeSetter
   )
 
-  private def doTest(text: String, options: Setter[java.lang.Boolean]*): Unit =
-    doTest(text, false, options: _*)
-
-  private def doTest(text: String, withTooltips: Boolean, options: Setter[java.lang.Boolean]*): Unit = {
-    def setOptions(value: Boolean): Unit = options.foreach(_.set(value))
-
-    try {
-      setOptions(true)
-      doInlayTest(text, withTooltips)
-    } finally {
-      setOptions(false)
-    }
-  }
+  def testInfixType(): Unit = doTest(
+    s"""
+       |class +[A, B]
+       |val a$S: Int + (Int + Int)$E = null : Int + (Int + Int)
+       |""".stripMargin,
+    options = settings.showMemberVariableSetter, settings.showObviousTypeSetter
+  )
 }

@@ -8,14 +8,13 @@ import org.jetbrains.plugins.scala.editor.documentationProvider.{HtmlBuilderWrap
 import org.jetbrains.plugins.scala.extensions.{Model, ObjectExt, PsiMemberExt, PsiNamedElementExt, StringExt, StringsExt}
 import org.jetbrains.plugins.scala.highlighter.DefaultHighlighter
 import org.jetbrains.plugins.scala.lang.lexer.ScalaTokenType
-import org.jetbrains.plugins.scala.lang.parser.parsing.Associativity
-import org.jetbrains.plugins.scala.lang.parser.util.ParserUtils.operatorAssociativity
 import org.jetbrains.plugins.scala.lang.psi.ScalaPsiUtil
 import org.jetbrains.plugins.scala.lang.psi.api.base.ScFieldId
 import org.jetbrains.plugins.scala.lang.psi.api.base.patterns.ScBindingPattern
 import org.jetbrains.plugins.scala.lang.psi.api.statements.ScTypeAlias
 import org.jetbrains.plugins.scala.lang.psi.api.statements.params.ScParameter
 import org.jetbrains.plugins.scala.lang.psi.api.toplevel.typedef.{ScObject, ScTypeDefinition}
+import org.jetbrains.plugins.scala.lang.psi.types.ScalaTypePresentation.Infix
 import org.jetbrains.plugins.scala.lang.psi.types.api.designator.{ScDesignatorType, ScProjectionType, ScThisType}
 import org.jetbrains.plugins.scala.lang.psi.types.api.presentation.TypePresentation.ABSTRACT_TYPE_POSTFIX
 import org.jetbrains.plugins.scala.lang.psi.types.api.presentation.{NameRenderer, TypeBoundsRenderer, TypePresentation, TypeRenderer}
@@ -76,9 +75,9 @@ private [documentationProvider] class ScalaDocTypeRenderer(
     case p: ParameterizedType =>
       parameterizedTypeText(p)(render)
     case ScAndType(lhs, rhs) =>
-      s"${render(lhs)} $renderedAnd ${render(rhs)}"
+      infixTypeText(Infix("&"), renderedAnd, lhs, rhs, render)
     case ScOrType(lhs, rhs) =>
-      s"${render(lhs)} $renderedOr ${render(rhs)}"
+      infixTypeText(Infix("|"), renderedOr, lhs, rhs, render)
     case mt@ScMethodType(retType, params, _) =>
       render(FunctionType(retType, params.map(_.paramType))(mt.elementScope, Context.Empty))
     case ScLiteralType(value, _) =>
@@ -165,27 +164,32 @@ private [documentationProvider] class ScalaDocTypeRenderer(
 
   private def parameterizedTypeText(p: ParameterizedType)(renderFunction: ScType => String): String = p match {
     case ParameterizedType(ScalaDocTypeRenderer.InfixDesignator(op), Seq(left, right)) =>
-      infixTypeText(op, left, right, renderFunction(_))
+      infixTypeText(Infix(op.name), nameRenderer.renderName(op), left, right, renderFunction(_))
     case ParameterizedType(des, typeArgs) =>
       val renderedRes = renderFunction(des)
       val renderedArgs = typeArgs.map(renderFunction(_))
       s"$renderedRes${renderedArgs.commaSeparated(model = Model.SquareBrackets)}"
   }
 
-  def infixTypeText(op: PsiNamedElement, left: ScType, right: ScType, printArgsFun: ScType => String): String = {
-    val assoc = operatorAssociativity(op.name)
-
-    def componentText(`type`: ScType, requiredAssoc: Associativity.LeftOrRight) = {
-      val needParenthesis = `type` match {
-        case ParameterizedType(ScalaDocTypeRenderer.InfixDesignator(newOp), _) =>
-          assoc != operatorAssociativity(newOp.name) || assoc == requiredAssoc
-        case _ => false
+  private def infixTypeText(infix: Infix, opRendered: String,
+                            left: ScType, right: ScType,
+                            printArgsFun: ScType => String): String = {
+    def toInfix(ty: ScType): Option[Infix] = {
+      ty match {
+        case ParameterizedType(ScalaDocTypeRenderer.InfixDesignator(newOp), _) => Some(Infix(newOp.name))
+        case _: ScAndType  => Some(Infix("&"))
+        case _: ScOrType   => Some(Infix("|"))
+        case _ => None
       }
-
-      printArgsFun(`type`).parenthesize(needParenthesis)
     }
 
-    s"${componentText(left, Associativity.Right)} ${nameRenderer.renderName(op)} ${componentText(right, Associativity.Left)}"
+    val leftOp =
+      printArgsFun(left).parenthesize(needParenthesis = infix.leftNeedsParenthesis(toInfix(left)))
+
+    val rightOp =
+      printArgsFun(right).parenthesize(needParenthesis = infix.rightNeedsParenthesis(toInfix(right)))
+
+    s"$leftOp $opRendered $rightOp"
   }
 
   protected def renderWithAttrKey(name: String, attrKey: TextAttributesKey): String = {
