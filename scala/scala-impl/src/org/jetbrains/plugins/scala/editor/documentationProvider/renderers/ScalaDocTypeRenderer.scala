@@ -306,7 +306,7 @@ private [documentationProvider] object ScalaDocTypeRenderer {
     }
   }
 
-  private def nameRenderer(implicit projectContext: ProjectContext): NameRenderer = new NameRenderer {
+  private[documentationProvider] def nameRenderer(implicit projectContext: ProjectContext): NameRenderer = new NameRenderer {
     override def escapeName(e: String): String = escapeHtml4(e)
 
     override def renderName(e: PsiNamedElement): String = nameFun(e, withPoint = false)

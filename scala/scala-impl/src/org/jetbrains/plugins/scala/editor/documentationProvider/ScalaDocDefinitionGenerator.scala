@@ -72,6 +72,7 @@ private class ScalaDocDefinitionGenerator private(
   private implicit val projectContext: ProjectContext = elementWithDoc.projectContext
   private implicit val context: Context = Context(elementWithDoc)
   private implicit val typeRenderer: TypeRenderer = ScalaDocTypeRenderer(originalElement)
+  private val boundsRenderer = new TypeBoundsRenderer(ScalaDocTypeRenderer.nameRenderer)
 
   private def generate(): Unit =
     elementWithDoc match {
@@ -236,6 +237,9 @@ private class ScalaDocDefinitionGenerator private(
     appendDefinitionSection {
       appendDeclMainSection(tpe)
       tpe match {
+        case declarations: ScTypeAliasDeclaration =>
+          builder.append(declarations.lowerBound.map(boundsRenderer.lowerBoundText).getOrElse(""))
+          builder.append(declarations.upperBound.map(boundsRenderer.upperBoundText).getOrElse(""))
         case definition: ScTypeAliasDefinition =>
           val tp = definition.aliasedTypeElement.flatMap(_.`type`().toOption).getOrElse(psi.types.api.Any)
           builder.append(s" = ${typeRenderer(tp)}")

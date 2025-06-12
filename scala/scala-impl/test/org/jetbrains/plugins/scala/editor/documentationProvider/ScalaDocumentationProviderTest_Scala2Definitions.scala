@@ -53,12 +53,21 @@ final class ScalaDocumentationProviderTest_Scala2Definitions extends ScalaDocume
          |""".stripMargin
     )
 
+  def testAbstractTypeMember(): Unit =
+    doGenerateDocDefinitionTest(
+      s"""trait Foo {
+         |  type ${|}MyType[A] >: Null <: CharSequence
+         |}""".stripMargin,
+      s"""<span style="color:#000080;font-weight:bold;">type</span> <span style="color:#20999d;">MyType</span>[<span style="color:#20999d;">A</span>] &gt;: <span style=""><a href="psi_element://scala.Null"><code>Null</code></a></span> &lt;: <span style="color:#000000;"><a href="psi_element://java.lang.CharSequence"><code>CharSequence</code></a></span>
+         |""".stripMargin
+    )
+
   def testTypeAlias(): Unit =
     doGenerateDocDefinitionTest(
       s"""object O {
-         |  type ${|}MyType = java.lang.Exception
+         |  type ${|}MyType[A] = java.lang.Exception
          |}""".stripMargin,
-      s"""<span style="color:#000080;font-weight:bold;">type</span> <span style="color:#20999d;">MyType</span> = <span style="color:#000000;"><a href="psi_element://java.lang.Exception"><code>Exception</code></a></span>
+      s"""<span style="color:#000080;font-weight:bold;">type</span> <span style="color:#20999d;">MyType</span>[<span style="color:#20999d;">A</span>] = <span style="color:#000000;"><a href="psi_element://java.lang.Exception"><code>Exception</code></a></span>
          |""".stripMargin
     )
 
