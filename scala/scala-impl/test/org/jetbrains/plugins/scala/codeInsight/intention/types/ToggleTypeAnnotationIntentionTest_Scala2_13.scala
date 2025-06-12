@@ -28,4 +28,27 @@ final class ToggleTypeAnnotationIntentionTest_Scala2_13 extends ToggleTypeAnnota
        |}
        |""".stripMargin
   )
+
+  def testInfixDifferentAssociativity(): Unit = doTest(
+    s"""
+       |trait +[A, B]
+       |
+       |trait ::[A, B]
+       |
+       |trait A
+       |
+       |def foo(): ::[+[A, +[::[A, A], A]], +[A, ::[A, A]]] = ???
+       |val ba${caretTag}r = foo()
+     """.stripMargin,
+    s"""
+       |trait +[A, B]
+       |
+       |trait ::[A, B]
+       |
+       |trait A
+       |
+       |def foo(): ::[+[A, +[::[A, A], A]], +[A, ::[A, A]]] = ???
+       |val ba${caretTag}r: (A + ((A :: A) + A)) :: (A + (A :: A)) = foo()
+     """.stripMargin
+  )
 }

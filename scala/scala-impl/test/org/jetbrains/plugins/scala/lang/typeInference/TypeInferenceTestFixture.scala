@@ -53,7 +53,7 @@ final class TypeInferenceTestFixture(
         val ExpectedResultFromLastComment(_, lastLineCommentText) = TestUtils.extractExpectedResultFromLastComment(scalaFile)
         val expectedTextForCurrentVersion = extractTextForCurrentVersion(lastLineCommentText, scalaVersion)
 
-        implicit val tpc: TypePresentationContext = TypePresentationContext.emptyContext
+        implicit val tpc: TypePresentationContext = TypePresentationContext.emptyContextIn(scalaVersion)
         implicit val context: Context = Context.Empty
 
         val expressionTypeText = expressionType.presentableText

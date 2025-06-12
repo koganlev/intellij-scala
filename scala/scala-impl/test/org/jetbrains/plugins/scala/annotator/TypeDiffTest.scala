@@ -606,10 +606,10 @@ class TypeDiffTest extends ScalaFixtureTestCase {
     // Components
     assertParsedAs(
       "class A; class B",
-      "A with B", "<A & B>")
+      "A with B", "<<A> & <B>>")
     assertParsedAs(
       "class A; class B; class C",
-      "A with B with C", "<A & B & C>")
+      "A with B with C", "<<A> & <B> & <C>>")
 
     // Refinement
     assertParsedAs(
@@ -633,7 +633,7 @@ class TypeDiffTest extends ScalaFixtureTestCase {
     // Components and refinement
     assertParsedAs(
       "class A; class B",
-      "A with B {def a: A}", "<<A & B>{<<def a: A>>}>")
+      "A with B {def a: A}", "<<<A> & <B>>{<<def a: A>>}>")
   }
 
   // TODO def testCompound(): Unit = {
@@ -647,11 +647,11 @@ class TypeDiffTest extends ScalaFixtureTestCase {
       case Node(diffs @_*) => "<" + diffs.map(asString).mkString + ">"
       case _ => ???
     }
-    assertEquals(structure, asString(TypeDiff.parse(typesIn(context, tpe).head)(TypePresentationContext.emptyContext, Context.Empty)))
+    assertEquals(structure, asString(TypeDiff.parse(typesIn(context, tpe).head)(TypePresentationContext.emptyContextIn(version), Context.Empty)))
   }
 
   private def assertDiffsAre(context: String, expectedDiff1: String, expectedDiff2: String, verifyPresentation: Boolean = true): Unit = {
-    implicit val tpc: TypePresentationContext = TypePresentationContext.emptyContext
+    implicit val tpc: TypePresentationContext = TypePresentationContext.emptyContextIn(version)
     // Make sure that the expected diffs are coherent
     assertTrue(s"""The number of mismatches must match:
                   |$expectedDiff1

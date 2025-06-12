@@ -708,9 +708,9 @@ class ScalaClausesCompletionTest extends ScalaClausesCompletionTestBase {
         s"""import Scope.Color
            |
            |(_: Color) match {
-           |  case Scope.Color.Red => $START$CARET???$END
-           |  case Scope.Color.Green => ???
-           |  case Scope.Color.Blue => ???
+           |  case Color.Red => $START$CARET???$END
+           |  case Color.Green => ???
+           |  case Color.Blue => ???
            |}
          """.stripMargin
     )

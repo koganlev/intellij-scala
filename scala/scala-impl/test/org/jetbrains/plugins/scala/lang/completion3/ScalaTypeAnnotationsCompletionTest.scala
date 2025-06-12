@@ -120,6 +120,7 @@ class ScalaTypeAnnotationsCompletionTest extends ScalaTypeAnnotationsCompletionT
       s"""Foo { type X = Int; type Y = String; type Z = Boolean }""".stripMargin
   )
 
+  @RunWithScalaVersions(Array(TestScalaVersion.Scala_3_Latest))
   def testInfixType(): Unit = doCompletionTest(
     fileText =
       s"""trait A
@@ -137,11 +138,12 @@ class ScalaTypeAnnotationsCompletionTest extends ScalaTypeAnnotationsCompletionT
          |object O {
          |  def foo(): =:=[A, <:<[B, =:=[=:=[B, B], A]]] = ???
          |
-         |  val bar: A =:= (B <:< (B =:= B =:= A))$CARET = foo()
+         |  val bar: A =:= B <:< (B =:= B =:= A)$CARET = foo()
          |}""".stripMargin,
-    item = "A =:= (B <:< (B =:= B =:= A))"
+    item = "A =:= B <:< (B =:= B =:= A)"
   )
 
+  @RunWithScalaVersions(Array(TestScalaVersion.Scala_3_Latest))
   def testInfixDifferentAssociativity(): Unit = doCompletionTest(
     fileText =
       s"""trait +[A, B]
@@ -161,9 +163,9 @@ class ScalaTypeAnnotationsCompletionTest extends ScalaTypeAnnotationsCompletionT
          |object O {
          |  def foo(): ::[+[A, +[::[A, A], A]], +[A, ::[A, A]]] = ???
          |
-         |  val bar: (A + ((A :: A) + A)) :: (A + (A :: A))$CARET = foo()
+         |  val bar: A + ((A :: A) + A) :: A + (A :: A)$CARET = foo()
          |}""".stripMargin,
-    item = "(A + ((A :: A) + A)) :: (A + (A :: A))"
+    item = "A + ((A :: A) + A) :: A + (A :: A)"
   )
 
   def testTupledFunction(): Unit = doCompletionTest(

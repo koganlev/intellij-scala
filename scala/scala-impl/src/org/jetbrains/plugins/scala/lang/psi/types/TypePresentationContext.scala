@@ -1,6 +1,7 @@
 package org.jetbrains.plugins.scala.lang.psi.types
 
 import com.intellij.psi.PsiElement
+import org.jetbrains.plugins.scala.ScalaVersion
 import org.jetbrains.plugins.scala.extensions._
 import org.jetbrains.plugins.scala.lang.psi.api.base.types.ScSimpleTypeElement
 import org.jetbrains.plugins.scala.lang.psi.impl.ScalaPsiElementFactory
@@ -70,4 +71,7 @@ object TypePresentationContext {
 
   def emptyContextIn(scala3: Boolean): TypePresentationContext =
     if (scala3) scala3EmptyContext else scala2EmptyContext
+
+  def emptyContextIn(scalaVersion: ScalaVersion): TypePresentationContext =
+    emptyContextIn(scala3 = scalaVersion.isScala3)
 }
