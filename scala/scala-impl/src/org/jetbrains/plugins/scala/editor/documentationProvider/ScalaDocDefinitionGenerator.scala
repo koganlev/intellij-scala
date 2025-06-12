@@ -70,7 +70,7 @@ private class ScalaDocDefinitionGenerator private(
   }
 
   private implicit val projectContext: ProjectContext = elementWithDoc.projectContext
-  private implicit val context: Context = Context(elementWithDoc)
+  private implicit val context: Context = originalElement.map(Context(_)).getOrElse(Context.Empty)
   private implicit val typeRenderer: TypeRenderer = ScalaDocTypeRenderer(originalElement)
   private val boundsRenderer = new TypeBoundsRenderer(ScalaDocTypeRenderer.nameRenderer)
 
@@ -236,11 +236,10 @@ private class ScalaDocDefinitionGenerator private(
     appendContainerInfoSection(tpe)
     appendDefinitionSection {
       appendDeclMainSection(tpe)
+      builder.append(tpe.lowerTypeElement.flatMap(_.`type`().toOption).map(boundsRenderer.lowerBoundText).getOrElse(""))
+      builder.append(tpe.upperTypeElement.flatMap(_.`type`().toOption).map(boundsRenderer.upperBoundText).getOrElse(""))
       tpe match {
-        case declarations: ScTypeAliasDeclaration =>
-          builder.append(declarations.lowerBound.map(boundsRenderer.lowerBoundText).getOrElse(""))
-          builder.append(declarations.upperBound.map(boundsRenderer.upperBoundText).getOrElse(""))
-        case definition: ScTypeAliasDefinition =>
+        case definition: ScTypeAliasDefinition if !definition.isEffectivelyOpaque =>
           val tp = definition.aliasedTypeElement.flatMap(_.`type`().toOption).getOrElse(psi.types.api.Any)
           builder.append(s" = ${typeRenderer(tp)}")
         case _ =>

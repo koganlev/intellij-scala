@@ -20,13 +20,40 @@ final class ScalaDocumentationProviderTest_Scala3Definitions extends ScalaDocume
     doGenerateDocDefinitionTest(fileContent, expectedContent)
   }
 
-  def testOpaque(): Unit = {
+  def testOpaqueTypeAliasDefinition(): Unit = {
     val fileContent =
-      s"""opaque type ${|}Foo = String
+      s"""opaque type ${|}Foo[A] >: Null <: CharSequence = String
          |""".stripMargin
 
     val expectedContent =
-      """<span style="color:#000080;font-weight:bold;">opaque</span> <span style="color:#000080;font-weight:bold;">type</span> <span style="color:#20999d;">Foo</span> = <span style="color:#000000;"><a href="psi_element://java.lang.String"><code>String</code></a></span>""".stripMargin
+      """<span style="color:#000080;font-weight:bold;">opaque</span> <span style="color:#000080;font-weight:bold;">type</span> <span style="color:#20999d;">Foo</span>[<span style="color:#20999d;">A</span>] &gt;: <span style=""><a href="psi_element://scala.Null"><code>Null</code></a></span> &lt;: <span style="color:#000000;"><a href="psi_element://java.lang.CharSequence"><code>CharSequence</code></a></span> = <span style="color:#000000;"><a href="psi_element://java.lang.String"><code>String</code></a></span>""".stripMargin
+
+    doGenerateDocDefinitionTest(fileContent, expectedContent)
+  }
+
+  def testOpaqueTypeAliasInside(): Unit = {
+    val fileContent =
+      s"""object Inside:
+         |  opaque type Foo[A] >: Null <: CharSequence = String
+         |  val x: ${|}Foo[Int] = ???
+         |""".stripMargin
+
+    val expectedContent =
+      """<span style="color:#000080;font-weight:bold;">opaque</span> <span style="color:#000080;font-weight:bold;">type</span> <span style="color:#20999d;">Foo</span>[<span style="color:#20999d;">A</span>] &gt;: <span style=""><a href="psi_element://scala.Null"><code>Null</code></a></span> &lt;: <span style="color:#000000;"><a href="psi_element://java.lang.CharSequence"><code>CharSequence</code></a></span> = <span style="color:#000000;"><a href="psi_element://java.lang.String"><code>String</code></a></span>""".stripMargin
+
+    doGenerateDocDefinitionTest(fileContent, expectedContent)
+  }
+
+  def testOpaqueTypeAliasOutside(): Unit = {
+    val fileContent =
+      s"""object Inside:
+         |  opaque type Foo[A] >: Null <: CharSequence = String
+         |object Outside:
+         |  val x: Inside.${|}Foo[Int] = ???
+         |""".stripMargin
+
+    val expectedContent =
+      """<span style="color:#000080;font-weight:bold;">opaque</span> <span style="color:#000080;font-weight:bold;">type</span> <span style="color:#20999d;">Foo</span>[<span style="color:#20999d;">A</span>] &gt;: <span style=""><a href="psi_element://scala.Null"><code>Null</code></a></span> &lt;: <span style="color:#000000;"><a href="psi_element://java.lang.CharSequence"><code>CharSequence</code></a></span>""".stripMargin
 
     doGenerateDocDefinitionTest(fileContent, expectedContent)
   }
