@@ -656,6 +656,9 @@ object ScalaSmartCompletionContributor {
 
   private def functionArguments(args: ScArgumentExprList,
                                 reference: ScReferenceExpression) = {
+    implicit val project: Project = reference.getProject
+    implicit val tpc: TypePresentationContext = reference
+    implicit val context: Context = Context(reference)
     val isBraceArgs = args.isBraceArgs
 
     reference.expectedTypes().collect {
@@ -664,13 +667,13 @@ object ScalaSmartCompletionContributor {
       case Seq(TupleType(types)) if isBraceArgs => types
       case types => types
     }.map {
-      createLookupElement(_, new AnonymousFunctionTextBuilder(isBraceArgs))(reference.getProject)
+      createLookupElement(_, new AnonymousFunctionTextBuilder(isBraceArgs))
     }.asJava
   }
 
   private[this] def createLookupElement(params: Iterable[ScType],
                                         builder: AnonymousFunctionTextBuilder)
-                                       (implicit project: Project) =
+                                       (implicit project: Project, tpc: TypePresentationContext, context: Context) =
     LookupElementBuilder.create("").withRenderer {
       new AnonymousFunctionElementRenderer(params, builder)
     }.withInsertHandler {
@@ -685,12 +688,12 @@ object ScalaSmartCompletionContributor {
 
   private class AnonymousFunctionElementRenderer(params: Iterable[ScType],
                                                  builder: AnonymousFunctionTextBuilder)
-                                                (implicit project: Project) extends LookupElementRenderer[LookupElement] {
+                                                (implicit project: Project, tpc: TypePresentationContext, context: Context) extends LookupElementRenderer[LookupElement] {
 
     private val presentableParams = for {
       parameterType <- params
       simplifiedType = parameterType.removeAbstracts
-    } yield (simplifiedType, simplifiedType.presentableText(TypePresentationContext.emptyContext, Context.Empty))
+    } yield (simplifiedType, simplifiedType.presentableText)
 
     override def renderElement(element: LookupElement,
                                presentation: LookupElementPresentation): Unit = {

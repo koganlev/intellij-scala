@@ -29,14 +29,10 @@ import org.jetbrains.plugins.scala.project.ProjectContext
 import scala.annotation.tailrec
 
 private [documentationProvider] class ScalaDocTypeRenderer(
-  originalElement: Option[PsiElement],
   nameRenderer: NameRenderer,
   substitutor: Option[ScSubstitutor]
-)(implicit projectContext: ProjectContext, context: Context) extends TypeRenderer {
+)(implicit projectContext: ProjectContext, typePresentationContext: TypePresentationContext, context: Context) extends TypeRenderer {
   private lazy val boundsRenderer = new TypeBoundsRenderer(nameRenderer)
-
-  private implicit val presentableContext: TypePresentationContext =
-    originalElement.fold(TypePresentationContext.emptyContext)(TypePresentationContext.psiElementPresentationContext)
 
   private val renderedAnd      = renderWithAttrKey("&", DefaultHighlighter.TYPE_ALIAS)
   private val renderedOr       = renderWithAttrKey("|", DefaultHighlighter.TYPE_ALIAS)
@@ -129,7 +125,7 @@ private [documentationProvider] class ScalaDocTypeRenderer(
     }.mkString(s" $renderedForSome {", "; ", "}")
 
   private def placeholder(wildcard: ScExistentialArgument) =
-    existentialArgWithBounds(wildcard, if (presentableContext.compoundTypeWithAndToken) "?" else "_")
+    existentialArgWithBounds(wildcard, if (typePresentationContext.compoundTypeWithAndToken) "?" else "_")
 
   private  def existentialArgWithBounds(wildcard: ScExistentialArgument, name: String): String = {
     val argsText = wildcard.typeParameters.map(_.name) match {
@@ -219,7 +215,7 @@ private [documentationProvider] class ScalaDocTypeRenderer(
   private def projectionTypeText(projType: ScProjectionType): String = {
     val e = projType.actualElement
     val renderedName = nameRenderer.renderName(e)
-    if (presentableContext.nameResolvesTo(e.name, e))
+    if (typePresentationContext.nameResolvesTo(e.name, e))
       renderedName // if reference can be resolved from the context we do not render any context info
     else {
       lazy val isStaticJavaClass = e match {
@@ -355,16 +351,17 @@ private [documentationProvider] object ScalaDocTypeRenderer {
     }
   }
 
-  def apply(originalElement: Option[PsiElement])(implicit projectContext: ProjectContext, context: Context): TypeRenderer =
-    new ScalaDocTypeRenderer(originalElement, nameRenderer, None)
+  def apply()(implicit projectContext: ProjectContext, typePresentationContext: TypePresentationContext, context: Context): TypeRenderer =
+    new ScalaDocTypeRenderer(nameRenderer, None)
 
-  def forAnnotations(originalElement: Option[PsiElement])(implicit projectContext: ProjectContext, context: Context): TypeRenderer =
-    new ScalaDocTypeRenderer(originalElement, annotationsRenderer, None)
+  def forAnnotations()(implicit projectContext: ProjectContext, typePresentationContext: TypePresentationContext, context: Context): TypeRenderer =
+    new ScalaDocTypeRenderer(annotationsRenderer, None)
 
   def forQuickInfo(originalElement: PsiElement, substitutor: ScSubstitutor)(implicit projectContext: ProjectContext): TypeRenderer = {
+    implicit val typePresentationContext: TypePresentationContext = originalElement
     implicit val context: Context = Context(originalElement)
 
-    new ScalaDocTypeRenderer(Some(originalElement), quickInfoNameRenderer, Some(substitutor)) {
+    new ScalaDocTypeRenderer(quickInfoNameRenderer, Some(substitutor)) {
       override protected def renderWithAttrKey(name: String, attrKey: TextAttributesKey): String = escapeHtml4(name)
     }
   }

@@ -11,7 +11,7 @@ private[lang] class FakePsiType(val tp: ScType) extends PsiType(PsiAnnotation.EM
 
   override def getPresentableText: String = tp.codeText(TypePresentationContext.emptyContext, Context.Empty)
 
-  override def getCanonicalText: String = tp.canonicalCodeText
+  override def getCanonicalText: String = tp.canonicalCodeText(TypePresentationContext.emptyContext)
 
   override def isValid: Boolean = true
 

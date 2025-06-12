@@ -285,11 +285,7 @@ class ClassPrinter(isScala3: Boolean, extendsSeparator: String = " ", withPrivat
       tpe.canonicalText(context)
   }
 
-  private val context = new TypePresentationContext {
-    override def nameResolvesTo(name: String, target: PsiElement): Boolean = false
-
-    override def compoundTypeWithAndToken: Boolean = isScala3
-  }
+  private val context = TypePresentationContext.emptyContextIn(isScala3)
 
   private def textOf(tr: TypeResult): String = tr match {
     case Left(f) => f.toString

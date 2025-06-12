@@ -361,12 +361,9 @@ object TypeAdjuster {
               .flatMap(infoToMappings)
               .toMap
 
-            val presentationContext: TypePresentationContext = new TypePresentationContext {
+            val presentationContext: TypePresentationContext = new TypePresentationContext.PsiBased(simple.place) {
               override def nameResolvesTo(name: String, target: PsiElement): Boolean =
                 mappings.get(name).exists(smartEquivalence(_, target))
-
-              override lazy val compoundTypeWithAndToken: Boolean =
-                simple.place.containingFile.exists(_.isScala3OrSource3Enabled)
             }
 
             val newTypeText = e.calcType.presentableText(presentationContext, Context(info.place))
