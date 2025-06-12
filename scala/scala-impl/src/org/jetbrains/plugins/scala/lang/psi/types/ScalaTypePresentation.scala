@@ -5,6 +5,7 @@ import org.jetbrains.plugins.scala.extensions._
 import org.jetbrains.plugins.scala.externalLibraries.kindProjector.inspections.KindProjectorSimplifyTypeProjectionInspection
 import org.jetbrains.plugins.scala.lang.lexer.ScalaTokenType
 import org.jetbrains.plugins.scala.lang.parser.parsing.Associativity
+import org.jetbrains.plugins.scala.lang.parser.util.ParserUtils
 import org.jetbrains.plugins.scala.lang.parser.util.ParserUtils.operatorAssociativity
 import org.jetbrains.plugins.scala.lang.psi.api.base.ScFieldId
 import org.jetbrains.plugins.scala.lang.psi.api.base.patterns.{ScBindingPattern, ScReferencePattern}
@@ -257,29 +258,52 @@ trait ScalaTypePresentation extends TypePresentation {
     }
 
     def parameterizedTypeText(p: ParameterizedType)(printArgsFun: ScType => String): String = p match {
-      case ParameterizedType(InfixDesignator(op), Seq(left, right)) if !ScalaApplicationSettings.PRECISE_TEXT => // SCL-21179
+      case ParameterizedType(InfixDesignator(op), Seq(left, right)) if !ScalaApplicationSettings.PRECISE_TEXT && tpc.infixTypesConsiderPrecedence.isDefined => // SCL-21179
         infixTypeText(op, left, right, printArgsFun(_))
       case ParameterizedType(des, typeArgs) =>
         innerTypeText(des) + typeArgs.map(printArgsFun(_)).commaSeparated(model = Model.SquareBrackets)
     }
 
+    def operatorPrecedence(op: String): Int = {
+      if (tpc.infixTypesConsiderPrecedence.contains(true)) {
+        ParserUtils.priority(op)
+      } else 0
+    }
+
+    def needsParenthesis(ty: ScType, parentPrecedence: Int, parentAssoc: Associativity, requiredAssoc: Associativity): Boolean = {
+      val op = ty match {
+        case ParameterizedType(InfixDesignator(newOp), _) => newOp.name
+        case _: ScAndType  => "&"
+        case _: ScOrType   => "|"
+        case _ => return false
+      }
+
+      val precedence = operatorPrecedence(op)
+      val assoc = operatorAssociativity(op)
+
+      if (precedence < parentPrecedence) false
+      else if (precedence == parentPrecedence) parentAssoc != assoc || assoc == requiredAssoc
+      else true
+    }
+
+    def leftOp(ty: ScType, tyText: String, parentPrecedence: Int, parentAssoc: Associativity): String = {
+      tyText.parenthesize(needParenthesis = needsParenthesis(ty, parentPrecedence, parentAssoc, Associativity.Right))
+    }
+
+    def rightOp(ty: ScType, tyText: String, parentPrecedence: Int, parentAssoc: Associativity): String = {
+      tyText.parenthesize(needParenthesis = needsParenthesis(ty, parentPrecedence, parentAssoc, Associativity.Left))
+    }
+
     def infixTypeText(op: PsiNamedElement, left: ScType, right: ScType, printArgsFun: ScType => String): String = {
       val assoc = operatorAssociativity(op.name)
-
-      def componentText(`type`: ScType, requiredAssoc: Associativity.LeftOrRight) = {
-        val needParenthesis = `type` match {
-          case ParameterizedType(InfixDesignator(newOp), _) =>
-            assoc != operatorAssociativity(newOp.name) || assoc == requiredAssoc
-          case _ => false
-        }
-
-        printArgsFun(`type`).parenthesize(needParenthesis)
-      }
+      val precedence = operatorPrecedence(op.name)
 
       val opRendered =
         if (options.renderInfixType) nameRenderer.renderName(op)
         else nameRenderer.escapeName(op.name)
-      s"${componentText(left, Associativity.Right)} $opRendered ${componentText(right, Associativity.Left)}"
+      val l = leftOp(left, printArgsFun(left), precedence, assoc)
+      val r = rightOp(right, printArgsFun(right), precedence, assoc)
+      s"$l $opRendered $r"
     }
 
     def textOf(params: Seq[ScType]) = params match {
@@ -354,11 +378,15 @@ trait ScalaTypePresentation extends TypePresentation {
       case ScAndType(lhs, rhs) =>
         val l = innerTypeText(lhs)
         val r = innerTypeText(rhs)
-        if (ScalaApplicationSettings.PRECISE_TEXT && options.canonicalForm) "_root_.scala.&[" + l + ", " + r + "]" else l + " & " + r // SCL-21559
+        val p = operatorPrecedence("&")
+        if (ScalaApplicationSettings.PRECISE_TEXT && options.canonicalForm) "_root_.scala.&[" + l + ", " + r + "]"
+        else leftOp(lhs, l, p, Associativity.Left) + " & " + rightOp(rhs, r, p, Associativity.Left) // SCL-21559
       case ScOrType(lhs, rhs) =>
         val l = innerTypeText(lhs)
         val r = innerTypeText(rhs)
-        if (ScalaApplicationSettings.PRECISE_TEXT && options.canonicalForm) "_root_.scala.|[" + l + ", " + r + "]" else l + " | " + r // SCL-21559
+        val p = operatorPrecedence("|")
+        if (ScalaApplicationSettings.PRECISE_TEXT && options.canonicalForm) "_root_.scala.|[" + l + ", " + r + "]"
+        else leftOp(lhs, l, p, Associativity.Left) + " | " + rightOp(rhs, r, p, Associativity.Left) // SCL-21559
       case c: ScCompoundType =>
         compoundTypeText(c)
       case ex: ScExistentialType =>
