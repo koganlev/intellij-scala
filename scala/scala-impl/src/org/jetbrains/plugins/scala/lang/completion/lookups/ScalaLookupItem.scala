@@ -32,17 +32,16 @@ import scala.annotation.{nowarn, tailrec}
 @nowarn("msg=LookupItem is deprecated")
 final class ScalaLookupItem private(override val getPsiElement: PsiNamedElement,
                                     override val getLookupString: String,
-                                    private[completion] val containingClass: PsiClass)
+                                    private[completion] val containingClass: PsiClass)(implicit context: Context)
   extends LookupItem[PsiNamedElement](getPsiElement, getLookupString) {
   private implicit def tpc: TypePresentationContext = TypePresentationContext(getPsiElement)
-  private implicit def context: Context = Context(getPsiElement)
 
   import ScalaInsertHandler._
   import ScalaLookupItem._
 
   def this(element: PsiNamedElement,
            name: String,
-           maybeContainingClass: Option[PsiClass] = None) = this(
+           maybeContainingClass: Option[PsiClass] = None)(implicit context: Context) = this(
     element,
     name match {
       case ScalaKeyword.THIS => name
