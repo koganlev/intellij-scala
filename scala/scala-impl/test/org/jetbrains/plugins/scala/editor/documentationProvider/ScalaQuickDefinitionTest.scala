@@ -147,4 +147,30 @@ class ScalaQuickDefinitionTest extends ScalaLightCodeInsightFixtureTestCase {
          |""".stripMargin,
       """  case Bar1 extends Foo(1, 2)"""
     )
+
+  def testOpaqueTypeAliasDefinition(): Unit =
+    doQuickDefinitionTextTest(
+      s"""|opaque type ${CARET}T[A] >: Null <: CharSequence = String
+          |""".stripMargin,
+      """opaque type T[A] >: Null <: CharSequence = String"""
+    )
+
+  def testOpaqueTypeAliasInside(): Unit =
+    doQuickDefinitionTextTest(
+      s"""|object Inside:
+          |  opaque type T[A] >: Null <: CharSequence = String
+          |  val x: ${CARET}T[Int] = ???
+          |""".stripMargin,
+      """  opaque type T[A] >: Null <: CharSequence = String"""
+    )
+
+  def testOpaqueTypeAliasOutside(): Unit =
+    doQuickDefinitionTextTest(
+      s"""|object Inside:
+          |  opaque type T[A] >: Null <: CharSequence = String
+          |object Outside:
+          |  val x: Inside.${CARET}T[Int] = ???
+          |""".stripMargin,
+      """  opaque type T[A] >: Null <: CharSequence = String"""
+    )
 }
