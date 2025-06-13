@@ -458,7 +458,8 @@ lazy val sbtImpl =
       scalaImpl % "test->test;compile->compile",
     )
     .settings(
-      intellijPlugins += "org.jetbrains.idea.maven".toPlugin
+      intellijPlugins += "org.jetbrains.idea.maven".toPlugin,
+      libraryDependencies += Dependencies.sbtStructureCore
     )
 
 lazy val sbtProjectImportingTests =

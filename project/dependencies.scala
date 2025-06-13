@@ -215,7 +215,6 @@ object DependencyGroups {
     scalaXml,
     scalaParserCombinators,
     scalapbRuntime,
-    sbtStructureCore,
     evoInflector,
     coursierDirectoriesJni,
     ivy2,
