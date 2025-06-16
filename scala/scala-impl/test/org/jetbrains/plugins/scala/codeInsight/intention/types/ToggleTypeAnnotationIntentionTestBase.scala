@@ -82,24 +82,32 @@ abstract class ToggleTypeAnnotationIntentionTestBase extends ScalaIntentionTestB
      """.stripMargin
   )
 
-  def testInfixType(): Unit = doTest(
-    s"""
-       |trait A
-       |
-       |trait B
-       |
-       |def foo(): =:=[A, <:<[B, =:=[=:=[B, B], A]]] = ???
-       |val ba${caretTag}r = foo()
+  def testInfixType(): Unit = {
+    val line =
+      if (version.isScala2)
+        s"val ba${caretTag}r: A =:= (B <:< (B =:= B =:= A)) = foo()"
+      else
+        s"val ba${caretTag}r: A =:= B <:< (B =:= B =:= A) = foo()"
+
+    doTest(
+      s"""
+         |trait A
+         |
+         |trait B
+         |
+         |def foo(): =:=[A, <:<[B, =:=[=:=[B, B], A]]] = ???
+         |val ba${caretTag}r = foo()
      """.stripMargin,
-    s"""
-       |trait A
-       |
-       |trait B
-       |
-       |def foo(): =:=[A, <:<[B, =:=[=:=[B, B], A]]] = ???
-       |val ba${caretTag}r: A =:= (B <:< (B =:= B =:= A)) = foo()
+      s"""
+         |trait A
+         |
+         |trait B
+         |
+         |def foo(): =:=[A, <:<[B, =:=[=:=[B, B], A]]] = ???
+         |$line
      """.stripMargin
-  )
+    )
+  }
 
   def testShowAsInfixAnnotation(): Unit = doTest(
     s"""

@@ -609,7 +609,7 @@ class TypeDiffTest extends ScalaFixtureTestCase {
       "A with B", "<<A> & <B>>")
     assertParsedAs(
       "class A; class B; class C",
-      "A with B with C", "<<A> & <B> & <C>>")
+      "A with B with C", "<<A> & (<<B> & <C>>)>")
 
     // Refinement
     assertParsedAs(

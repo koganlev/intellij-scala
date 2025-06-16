@@ -92,7 +92,7 @@ class EnumCaseWideningTest extends TypeInferenceTestBase {
        |object A {
        |  val x = ${START}Foo.Bar(1)$END
        |}
-       |//Foo with X with Y
+       |//Foo & X & Y
        |""".stripMargin
   )
 
