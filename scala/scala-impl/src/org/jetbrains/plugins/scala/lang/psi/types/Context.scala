@@ -1,6 +1,6 @@
 package org.jetbrains.plugins.scala.lang.psi.types
 
-import com.intellij.psi.{PsiDirectory, PsiElement}
+import com.intellij.psi.{PsiDirectory, PsiElement, PsiFile}
 import org.jetbrains.plugins.scala.extensions.{ObjectExt, PsiElementExt}
 import org.jetbrains.plugins.scala.lang.psi.api.statements.ScTypeAliasDefinition
 
@@ -16,7 +16,7 @@ object Context {
       if (!opaqueTypeAlias.isOpaque)
         throw new IllegalArgumentException("Opaque type alias expected")
 
-      containingFileOf(opaqueTypeAlias) == containingFileOf(place) &&
+      containingFileOf(opaqueTypeAlias).getOriginalFile == containingFileOf(place).getOriginalFile &&
         place.contexts.takeWhile(!_.is[PsiDirectory]).contains(opaqueTypeAlias.getContext)
     }
 
@@ -24,7 +24,7 @@ object Context {
   }
 
   @tailrec
-  private def containingFileOf(e: PsiElement): PsiElement = {
+  private def containingFileOf(e: PsiElement): PsiFile = {
     val file = e.getContainingFile
     if (file == null) return null
     val fileContext = file.getContext

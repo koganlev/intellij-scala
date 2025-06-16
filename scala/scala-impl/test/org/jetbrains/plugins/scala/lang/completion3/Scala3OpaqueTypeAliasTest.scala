@@ -8,6 +8,29 @@ import org.jetbrains.plugins.scala.lang.completion3.base.ScalaCompletionTestBase
 class Scala3OpaqueTypeAliasTest extends ScalaCompletionTestBase {
   override protected def supportedIn(version: ScalaVersion): Boolean = version >= ScalaVersion.Latest.Scala_3_0
 
+  def testQualifierInside(): Unit = doCompletionTest(
+    fileText =
+      s"""object Inside:
+         |  opaque type Foo = Int
+         |  val foo: Foo = ???
+         |  foo.ab$CARET""".stripMargin,
+    resultText =
+      s"""object Inside:
+         |  opaque type Foo = Int
+         |  val foo: Foo = ???
+         |  foo.abs$CARET""".stripMargin,
+      item = "abs"
+  )
+
+  def testQualifierOutside(): Unit = checkNoCompletion(
+    fileText =
+      s"""object Inside:
+         |  opaque type Foo = Int
+         |object Outside:
+         |  val foo: Inside.Foo = ???
+         |  foo.ab$CARET""".stripMargin,
+  )()
+
   def testRenderingInside(): Unit = doRawCompletionTest(
     fileText =
       s"""object Inside:
@@ -36,21 +59,20 @@ class Scala3OpaqueTypeAliasTest extends ScalaCompletionTestBase {
     hasItemText(_, "Foo")(typeText = "", itemTextBold = true)
   }
 
-  // TODO Use correct Context, SCL-24006
-//  def testSmartInside(): Unit = doCompletionTest(
-//    completionType = CompletionType.SMART,
-//    fileText =
-//      s"""object Inside:
-//         |  opaque type Foo = Int
-//         |  val foo: Foo = ???
-//         |  val x: Int = fo$CARET""".stripMargin,
-//    resultText =
-//      s"""object Inside:
-//         |  opaque type Foo = Int
-//         |  val foo: Foo = ???
-//         |  val x: Int = foo$CARET""".stripMargin,
-//    item = "foo"
-//  )
+  def testSmartInside(): Unit = doCompletionTest(
+    completionType = CompletionType.SMART,
+    fileText =
+      s"""object Inside:
+         |  opaque type Foo = Int
+         |  val foo: Foo = ???
+         |  val x: Int = fo$CARET""".stripMargin,
+    resultText =
+      s"""object Inside:
+         |  opaque type Foo = Int
+         |  val foo: Foo = ???
+         |  val x: Int = foo$CARET""".stripMargin,
+    item = "foo"
+  )
 
   // TODO checkNoCompletion(SMART) and checkNoSmartCompletion don't actually test the condition
   def testSmartOutside(): Unit = checkNoCompletion(
