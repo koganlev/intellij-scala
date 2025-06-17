@@ -30,8 +30,8 @@ final class CreateScalaDocStubIntentionAction
       return false
 
     findDocOwner(editor, file) match {
-      case Some((owner, _)) =>
-        owner.docComment.isEmpty
+      case Some((location, _)) =>
+        location.docComment.isEmpty
       case None =>
         false
     }
@@ -58,6 +58,6 @@ final class CreateScalaDocStubIntentionAction
 
   override def invoke(project: Project, editor: Editor, file: PsiFile): Unit = {
     val docOwner = findDocOwner(editor, file)
-    docOwner.foreach(locOwner => CreateScalaDocStubAction.createStub(locOwner._1, locOwner._2, editor.getDocument))
+    docOwner.foreach { case (loc, owner) => CreateScalaDocStubAction.createStub(loc, owner, editor.getDocument)}
   }
 }
