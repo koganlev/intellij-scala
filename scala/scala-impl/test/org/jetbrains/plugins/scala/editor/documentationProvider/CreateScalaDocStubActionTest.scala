@@ -197,4 +197,82 @@ final class CreateScalaDocStubActionTest_Scala3 extends CreateScalaDocStubAction
          |  end foo
          |""".stripMargin
     )
+
+  def testEnum_class(): Unit =
+    doTest(
+      s"""object Test:
+         |
+         |  enum Foo {
+         |    case Cl${|}s(i: Int)
+         |    case Singleton
+         |    case Multi1, Multi2
+         |  }""".stripMargin,
+      s"""object Test:
+         |
+         |  enum Foo {
+         |    /**
+         |     * @param i
+         |     */
+         |    case Cl${|}s(i: Int)
+         |    case Singleton
+         |    case Multi1, Multi2
+         |  }""".stripMargin
+    )
+
+  def testEnum_singleton(): Unit =
+    doTest(
+      s"""object Test:
+         |
+         |  enum Foo {
+         |    case Cls(i: Int)
+         |    case Single${|}ton
+         |    case Multi1, Multi2
+         |  }""".stripMargin,
+      s"""object Test:
+         |
+         |  enum Foo {
+         |    case Cls(i: Int)
+         |    /**
+         |     *
+         |     */
+         |    case Single${|}ton
+         |    case Multi1, Multi2
+         |  }""".stripMargin
+    )
+
+  def testEnum_multi1(): Unit =
+    doTest(
+      s"""object Test:
+         |
+         |  enum Foo {
+         |    case Cls(i: Int)
+         |    case Singleton
+         |    case Multi${|}1, Multi2
+         |  }""".stripMargin,
+      s"""object Test:
+         |
+         |  enum Foo {
+         |    case Cls(i: Int)
+         |    case Singleton
+         |    case Multi${|}1, Multi2
+         |  }""".stripMargin
+    )
+
+  def testEnum_multi2(): Unit =
+    doTest(
+      s"""object Test:
+         |
+         |  enum Foo {
+         |    case Cls(i: Int)
+         |    case Singleton
+         |    case Multi1, Multi${|}2
+         |  }""".stripMargin,
+      s"""object Test:
+         |
+         |  enum Foo {
+         |    case Cls(i: Int)
+         |    case Singleton
+         |    case Multi1, Multi${|}2
+         |  }""".stripMargin
+    )
 }
