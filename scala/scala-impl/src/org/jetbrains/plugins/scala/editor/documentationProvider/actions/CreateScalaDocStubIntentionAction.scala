@@ -9,6 +9,7 @@ import org.jetbrains.plugins.scala.ScalaLanguage
 import org.jetbrains.plugins.scala.editor.ScalaEditorBundle
 import org.jetbrains.plugins.scala.extensions.{&, ElementType, Parent}
 import org.jetbrains.plugins.scala.lang.lexer.ScalaTokenTypes
+import org.jetbrains.plugins.scala.lang.psi.api.statements.{ScEnumCase, ScEnumCases}
 import org.jetbrains.plugins.scala.lang.psi.api.toplevel.typedef.ScDocCommentOwner
 
 final class CreateScalaDocStubIntentionAction
@@ -29,20 +30,24 @@ final class CreateScalaDocStubIntentionAction
       return false
 
     findDocOwner(editor, file) match {
-      case Some(value) =>
-        value.docComment.isEmpty
+      case Some((owner, _)) =>
+        owner.docComment.isEmpty
       case None =>
         false
     }
   }
 
-  private def findDocOwner(editor: Editor, file: PsiFile): Option[ScDocCommentOwner] = {
+  private def findDocOwner(editor: Editor, file: PsiFile): Option[(ScDocCommentOwner, ScDocCommentOwner)] = {
     val caretOffset = editor.getCaretModel.getOffset
     val element = file.findElementAt(caretOffset)
 
     element match {
       case ElementType(ScalaTokenTypes.tIDENTIFIER) & Parent(docOwner: ScDocCommentOwner) =>
-        Some(docOwner)
+        docOwner match {
+          case (_: ScEnumCase) & Parent(cses: ScEnumCases) =>
+            if (cses.declaredElements.length > 1) None else Some(cses, docOwner)
+          case _ => Some(docOwner, docOwner)
+        }
       case _ =>
         None
     }
@@ -53,6 +58,6 @@ final class CreateScalaDocStubIntentionAction
 
   override def invoke(project: Project, editor: Editor, file: PsiFile): Unit = {
     val docOwner = findDocOwner(editor, file)
-    docOwner.foreach(CreateScalaDocStubAction.createStub(_, editor.getDocument))
+    docOwner.foreach(locOwner => CreateScalaDocStubAction.createStub(locOwner._1, locOwner._2, editor.getDocument))
   }
 }
