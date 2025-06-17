@@ -16,7 +16,7 @@ import org.jetbrains.plugins.scala.editor.documentationProvider.ScalaDocStubGene
 import org.jetbrains.plugins.scala.editor.documentationProvider.actions.CreateScalaDocStubAction.createStub
 import org.jetbrains.plugins.scala.extensions._
 import org.jetbrains.plugins.scala.lang.lexer.ScalaTokenTypes
-import org.jetbrains.plugins.scala.lang.psi.api.statements.{ScFunctionDefinition, ScTypeAlias}
+import org.jetbrains.plugins.scala.lang.psi.api.statements.{ScEnumCase, ScEnumCases, ScFunctionDefinition, ScTypeAlias}
 import org.jetbrains.plugins.scala.lang.psi.api.toplevel.ScNamedElement
 import org.jetbrains.plugins.scala.lang.psi.api.toplevel.typedef.{ScClass, ScDocCommentOwner, ScTrait}
 import org.jetbrains.plugins.scala.lang.psi.impl.ScalaPsiElementFactory.createScalaDocCommentFromText
@@ -53,17 +53,23 @@ class CreateScalaDocStubAction extends AnAction(
       case id: PsiElement if id.getNode.getElementType == ScalaTokenTypes.tIDENTIFIER =>
         id.getParent match {
           case docOwner: ScDocCommentOwner =>
+            val location = docOwner match {
+              case (_: ScEnumCase) & Parent(cses: ScEnumCases) =>
+                if (cses.declaredElements.length > 1) return else cses
+              case _ => docOwner
+            }
+
             docOwner.docComment match {
-              case Some(_) => recreateStub(docOwner, editor.getDocument)
-              case None => createStub(docOwner, editor.getDocument)
+              case Some(_) => recreateStub(location, docOwner, editor.getDocument)
+              case None => createStub(location, docOwner, editor.getDocument)
             }
           case _ =>
         }
       case _ =>
     }
 
-  private def recreateStub(docOwner: ScDocCommentOwner, psiDocument: Document): Unit = {
-    val oldComment = docOwner.getDocComment.asInstanceOf[ScDocComment]
+  private def recreateStub(docLocation: ScDocCommentOwner, docOwner: ScDocCommentOwner, psiDocument: Document): Unit = {
+    val oldComment = docLocation.getDocComment.asInstanceOf[ScDocComment]
     val oldTags = oldComment findTagsByName (_ => true)
 
     def filterTags[T](groupName: String, newTags: mutable.HashMap[String, T]): Unit = {
@@ -134,14 +140,14 @@ class CreateScalaDocStubAction extends AnAction(
 object CreateScalaDocStubAction {
 
   private[documentationProvider]
-  def createStub(docOwner: ScDocCommentOwner, psiDocument: Document): Unit = {
+  def createStub(docLocation: ScDocCommentOwner, docOwner: ScDocCommentOwner, psiDocument: Document): Unit = {
     val stubText = ScalaDocStubGenerator.createScalaDocStub(docOwner).trim
     val newComment = createScalaDocCommentFromText(stubText)(docOwner.getManager)
     val project = docOwner.getProject
-    val docCommentEnd = docOwner.getTextRange.getStartOffset
+    val docCommentEnd = docLocation.getTextRange.getStartOffset
 
-    val tabSize = CodeStyle.getSettings(project).getTabSize(docOwner.getLanguage.getAssociatedFileType)
-    val indent = IndentUtil.calcIndent(docOwner, tabSize)
+    val tabSize = CodeStyle.getSettings(project).getTabSize(docLocation.getLanguage.getAssociatedFileType)
+    val indent = IndentUtil.calcIndent(docLocation, tabSize)
 
     val newIndentedCommentText =
       if (indent <= 0) newComment.getText + "\n"
@@ -156,11 +162,11 @@ object CreateScalaDocStubAction {
         PsiDocumentManager.getInstance(project).commitDocument(psiDocument)
       }
 
-      docOwner.docComment match {
+      docLocation.docComment match {
         case Some(docComment) =>
           val docRange = docComment.getTextRange
           inWriteAction {
-            CodeStyleManager.getInstance(project).reformatText(docOwner.getContainingFile, docRange.getStartOffset, docRange.getEndOffset + 2)
+            CodeStyleManager.getInstance(project).reformatText(docLocation.getContainingFile, docRange.getStartOffset, docRange.getEndOffset + 2)
           }
         case None => // I don't know when it could be the case, but just in case (see EA-246924)
       }
