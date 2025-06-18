@@ -10,4 +10,7 @@ class PatternParameterInfoCaseClassesTest extends PatternParameterInfoTestBase {
   def testCaseClassB(): Unit = doTest()
 
   def testAliasedPattern(): Unit = doTest()
+
+  // SCL-23849
+  def testPatternInPartialFunction(): Unit = doTest()
 }
