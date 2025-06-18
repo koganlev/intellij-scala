@@ -354,7 +354,7 @@ class TupleIntrinsicsTest extends TypeIntrinsicsTestBase {
   def testConcat_with_rest_in_left(): Unit =
     assertTypeIs(
       "type T = (Int *: Tuple) ++ (1, 2)",
-      "(Int *: Tuple) ++ (1, 2)"
+      "Int *: Tuple ++ (1, 2)"
     )
   //
   //

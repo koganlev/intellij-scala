@@ -6,7 +6,7 @@ import org.jetbrains.plugins.scala.extensions._
 import org.jetbrains.plugins.scala.lang.psi.api.toplevel.typedef.ScClass
 import org.jetbrains.plugins.scala.lang.psi.types.api.presentation.TypePresentation
 import org.jetbrains.plugins.scala.lang.psi.types.api.{FunctionType, NamedTupleType, ParameterizedType, TupleType, Variance}
-import org.jetbrains.plugins.scala.lang.psi.types.{Context, ScCompoundType, ScExistentialArgument, ScExistentialType, ScParameterizedType, ScType, TypePresentationContext}
+import org.jetbrains.plugins.scala.lang.psi.types.{Context, ScAndType, ScCompoundType, ScExistentialArgument, ScExistentialType, ScOrType, ScParameterizedType, ScType, ScalaTypePresentation, TypePresentationContext}
 import org.jetbrains.plugins.scala.lang.refactoring.util.ScalaNamesUtil
 
 /**
@@ -104,15 +104,50 @@ object TypeDiff {
 
         if (comps1.length == comps2.length) Node(aMatch("("), Node((comps1 lazyZip comps2).map(diffComponent).intersperse(aMatch(", ")): _*), aMatch(")"))
         else Node(aMismatch(tpe2.presentableText))
-      case (InfixType(l1, d1, r1), InfixType(l2, d2, r2)) =>
-        val (v1, v2) = d1.extractDesignated(expandAliases = false) match {
-          case Some(aClass: ScClass) => aClass.typeParameters match {
-            case Seq(p1, p2) => (p1.variance, p2.variance)
-            case _ => (Variance.Invariant, Variance.Invariant)
-          }
-          case _ => (Variance.Invariant, Variance.Invariant)
+      case (InfixType(l1, d1, op1, r1), InfixType(l2, d2, op2, r2)) =>
+        val (v1, v2) = d1 match {
+          case Some(d1) =>
+            d1.extractDesignated(expandAliases = false) match {
+              case Some(aClass: ScClass) => aClass.typeParameters match {
+                case Seq(p1, p2) => (p1.variance, p2.variance)
+                case _ => (Variance.Invariant, Variance.Invariant)
+              }
+              case _ => (Variance.Invariant, Variance.Invariant)
+            }
+          case None =>
+            // & and | are covariant on both sides
+            (Variance.Covariant, Variance.Covariant)
         }
-        Node(diff(l1, l2)(conformanceFor(v1), tpc, context), aMatch(" "), diff(d1, d2), aMatch(" "), diff(r1, r2)(conformanceFor(v2), tpc, context))
+        val (leftPBefore, leftPAfter) = l2 match {
+          case InfixType(_, _, lop, _) if ScalaTypePresentation.Infix.leftNeedsParenthesis(op2, lop) =>
+            (aMatch("("), aMatch(")"))
+          case _ =>
+            (aMatch(""), aMatch(""))
+        }
+        val (rightPBefore, rightPAfter) = r2 match {
+          case InfixType(_, _, rop, _) if ScalaTypePresentation.Infix.rightNeedsParenthesis(op2, rop) =>
+            (aMatch("("), aMatch(")"))
+          case _ =>
+            (aMatch(""), aMatch(""))
+        }
+        val opDiff = (d1, d2) match {
+          case (Some(d1), Some(d2)) => diff(d1, d2)
+          case (_, Some(d2)) => aMatch(d2.presentableText)
+          case _ if op1 == op2 => aMatch(op2)
+          case _ => aMismatch(op2)
+        }
+
+        Node(
+          leftPBefore,
+          diff(l1, l2)(conformanceFor(v1), tpc, context),
+          leftPAfter,
+          aMatch(" "),
+          opDiff,
+          aMatch(" "),
+          rightPBefore,
+          diff(r1, r2)(conformanceFor(v2), tpc, context),
+          rightPAfter,
+        )
       case (FunctionType(r1, p1), FunctionType(r2, p2)) =>
         val needsParens = (t: ScType) => FunctionType.isFunctionType(t) || TupleType.TupleN.tupleNArity(t).exists(_ >= 2)
         val left = {
@@ -156,15 +191,20 @@ object TypeDiff {
 
   // TODO Move to ParameterizedType.scala / FunctionType.scala?
   private object InfixType {
-    def unapply(tpe: ScType)(implicit context: Context): Option[(ScType, ScType, ScType)] = Some(tpe) collect {
-      case ParameterizedType(d, Seq(l, r)) if isInfix(d) => (l, d, r)
+    def unapply(tpe: ScType)(implicit context: Context): Option[(ScType, Option[ScType], String, ScType)] = Some(tpe) collect {
+      case ParameterizedType(d@InfixOp(op), Seq(l, r)) => (l, Some(d), op, r)
+      case ScAndType(left, right) => (left, None, "&", right)
+      case ScOrType(left, right) => (left, None, "|", right)
     }
 
-    private def isInfix(designatorType: ScType)(implicit context: Context) = {
-      val designator = designatorType.extractDesignated(expandAliases = false)
-      designator.exists(it => ScalaNamesUtil.isOperatorName(it.name)) || designator.exists {
-        case aClass: PsiClass => aClass.getAnnotations.map(_.getQualifiedName).contains("scala.annotation.showAsInfix")
-        case _ => false
+    private object InfixOp {
+      def unapply(designatorType: ScType)(implicit context: Context): Option[String] = {
+        val designator = designatorType.extractDesignated(expandAliases = false)
+        designator.collect {
+          case elem if ScalaNamesUtil.isOperatorName(elem.name) => elem.name
+          case aClass: PsiClass if aClass.getAnnotations.map(_.getQualifiedName).contains("scala.annotation.showAsInfix") =>
+            aClass.getName
+        }
       }
     }
   }

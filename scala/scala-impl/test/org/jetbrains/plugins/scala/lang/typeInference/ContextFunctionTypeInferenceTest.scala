@@ -63,7 +63,7 @@ class ContextFunctionTypeInferenceTest extends TypeInferenceTestBase {
        |  def foo[A](fn: A ?=> Any): A = ???
        |  ${START}foo(implicitly[String] + implicitly[Int])$END
        |}
-       |//String with Int
+       |//String & Int
        |""".stripMargin
   )
 
@@ -78,7 +78,7 @@ class ContextFunctionTypeInferenceTest extends TypeInferenceTestBase {
        |    123
        |  }$END
        |}
-       |//Int with String
+       |//Int & String
        |""".stripMargin
   )
 
@@ -134,7 +134,7 @@ class ContextFunctionTypeInferenceTest extends TypeInferenceTestBase {
        |    123
        |  }$END
        |}
-       |//A.Foo[Int, Int with String]
+       |//A.Foo[Int, Int & String]
        |""".stripMargin
   )
 

@@ -2,7 +2,7 @@ package org.jetbrains.plugins.scala.actions.implicitConversions
 
 import com.intellij.ide.util.PsiElementListCellRenderer
 import com.intellij.openapi.editor.markup.TextAttributes
-import com.intellij.psi.PsiNamedElement
+import com.intellij.psi.{PsiElement, PsiNamedElement}
 import com.intellij.util.TextWithIcon
 import org.jetbrains.plugins.scala.actions.Parameters
 import org.jetbrains.plugins.scala.extensions._
@@ -17,7 +17,7 @@ import org.jetbrains.plugins.scala.lang.psi.types.result._
 import java.awt.{Component, Font}
 import javax.swing._
 
-private class ScImplicitFunctionListCellRenderer(actual: PsiNamedElement)
+private class ScImplicitFunctionListCellRenderer(actual: PsiNamedElement, place: PsiElement)
   extends PsiElementListCellRenderer[PsiNamedElement] {
 
   override def getItemLocation(value: Any): TextWithIcon =
@@ -61,7 +61,7 @@ private class ScImplicitFunctionListCellRenderer(actual: PsiNamedElement)
   )
 
   private def typeRenderer: TypeRenderer =
-    _.presentableText(TypePresentationContext.emptyContext, Context.Empty)
+    _.presentableText(place, Context(place))
 
   private def paramRenderer = new ParameterRenderer(
     typeRenderer,

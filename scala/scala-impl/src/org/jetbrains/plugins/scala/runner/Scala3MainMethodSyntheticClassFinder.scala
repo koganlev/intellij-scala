@@ -74,7 +74,7 @@ private final class Scala3MainMethodSyntheticClassFinder(project: Project)
   }
 
   private def customParameter(param: ScParameter): CustomParameter = {
-    val typeText = param.`type`().fold(_ => "", _.presentableText(TypePresentationContext.emptyContext, Context.Empty))
+    val typeText = param.`type`().fold(_ => "", _.presentableText(TypePresentationContext.emptyContextIn(scala3 = true), Context.Empty))
     CustomParameter(param.name, typeText, param.isVarArgs)
   }
 

@@ -69,7 +69,7 @@ object PatternGenerationStrategy {
           case _ =>
             new EnumGenerationStrategy(
               enumClass,
-              valueType.presentableText(TypePresentationContext.emptyContext, context),
+              valueType.presentableText,
               enumConstants.map(_.getName)
             )
         }

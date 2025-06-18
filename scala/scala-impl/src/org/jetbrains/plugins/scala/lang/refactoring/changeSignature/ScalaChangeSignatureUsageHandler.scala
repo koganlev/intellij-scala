@@ -433,6 +433,7 @@ private[changeSignature] trait ScalaChangeSignatureUsageHandler {
 
     def paramType(paramInfo: ParameterInfo) = {
       val method = change.getMethod
+      implicit val tpc: TypePresentationContext = method
       paramInfo match {
         case sInfo: ScalaParameterInfo =>
           val text = UsageUtil.substitutor(usage)(sInfo.scType).canonicalCodeText(method)

@@ -8,8 +8,89 @@ import org.jetbrains.plugins.scala.project.ScalaFeatures
 import org.jetbrains.plugins.scala.{LatestScalaVersions, ScalaVersion}
 import org.junit.Assert._
 
-class ScalaTypePresentationTest extends ScalaLightCodeInsightFixtureTestCase {
-  override protected def supportedIn(version: ScalaVersion): Boolean = version >= LatestScalaVersions.Scala_3_0
+abstract class ScalaTypePresentationTestBase extends ScalaLightCodeInsightFixtureTestCase {
+  case class Header(value: String)
+  object Header {
+    implicit val emptyHeader: Header = Header("")
+  }
+
+  def assertPresentationIs(tpe: String)(implicit header: Header): Unit =
+    assertPresentationIs(tpe, tpe, header = header.value)
+
+  def assertPresentationIs(tpe: String, expected: String)(implicit header: Header): Unit = {
+    assertNotEquals(tpe, expected)
+    assertPresentationIs(tpe, expected, header = header.value)
+  }
+
+  def assertPresentationIs(tpe: String, expected: String, header: String): Unit = {
+    val typeElement = makeTypeElement(tpe, header)
+    val actual = typeElement.`type`().get.presentableText(TypePresentationContext(typeElement), Context(typeElement))
+    assertEquals(expected, actual)
+
+    if (tpe != expected) {
+      assertTypeIsSame(tpe, expected, header)
+    }
+  }
+
+  private def makeTypeElement(tpe: String, header: String): ScTypeElement = {
+    val file =
+      ScalaPsiElementFactory.createScalaFileFromText(header + "type T[A] = " + tpe, ScalaFeatures.onlyByVersion(version))(
+        getProject
+      )
+
+    file.elements.collectFirst { case e: ScTypeElement if e.getTextOffset > header.length => e }.get
+  }
+
+  private def assertTypeIsSame(a: String, b: String, header: String): Unit = {
+    val at = makeTypeElement(a, header).`type`().get
+    val bt = makeTypeElement(b, header).`type`().get
+
+    assertEquals(at.canonicalText, bt.canonicalText)
+  }
+}
+
+class ScalaTypePresentationTest_Scala2 extends ScalaTypePresentationTestBase {
+  override protected def supportedIn(version: ScalaVersion): Boolean = version.isScala2
+
+
+  // Note: In Scala, precedence of operators is not taken into account for infix types
+  def testInfixTypes(): Unit = {
+    implicit val header: Header = Header(
+      """
+        |class +[A, B]
+        |class *[A, B]
+        |class *:[A, B]
+        |""".stripMargin
+    )
+    assertPresentationIs("Int + Int")
+    assertPresentationIs("Int + Int + Int")
+    assertPresentationIs("(Int + Int) + Int", "Int + Int + Int")
+    assertPresentationIs("Int + (Int + Int)")
+    assertPresentationIs("Int * Int + Int")
+    assertPresentationIs("Int + Int * Int")
+    assertPresentationIs("Int + (Int * Int)")
+    assertPresentationIs("(Int * Int) + Int", "Int * Int + Int")
+    assertPresentationIs("Int * (Int + Int)")
+    assertPresentationIs("(Int + Int) * Int", "Int + Int * Int")
+
+    assertPresentationIs("Int *: Int *: Int")
+    assertPresentationIs("(Int *: Int) *: Int")
+    assertPresentationIs("Int *: (Int *: Int)", "Int *: Int *: Int")
+
+    assertPresentationIs("(Int *: Int) + Int")
+    assertPresentationIs("Int *: (Int + Int)")
+    assertPresentationIs("(Int + Int) *: Int")
+    assertPresentationIs("Int + (Int *: Int)")
+
+    assertPresentationIs("(Int *: Int) * Int")
+    assertPresentationIs("Int *: (Int * Int)")
+    assertPresentationIs("(Int * Int) *: Int")
+    assertPresentationIs("Int * (Int *: Int)")
+  }
+}
+
+class ScalaTypePresentationTest_Scala3 extends ScalaTypePresentationTestBase {
+  override protected def supportedIn(version: ScalaVersion): Boolean = version.isScala3
 
   override protected def additionalCompilerOptions = Seq("-Ykind-projector")
 
@@ -69,16 +150,50 @@ class ScalaTypePresentationTest extends ScalaLightCodeInsightFixtureTestCase {
       "Inside.T", "Inside.T", "object Inside { opaque type T = (Int, Int) }")
   }
 
-  private def assertPresentationIs(tpe: String): Unit = assertPresentationIs(tpe, tpe)
+  def testInfixTypes(): Unit = {
+    implicit val header: Header = Header(
+      """
+        |class +[A, B]
+        |class *[A, B]
+        |class *:[A, B]
+        |""".stripMargin
+    )
+    assertPresentationIs("Int + Int")
+    assertPresentationIs("Int + Int + Int")
+    assertPresentationIs("(Int + Int) + Int", "Int + Int + Int")
+    assertPresentationIs("Int + (Int + Int)")
+    assertPresentationIs("Int * Int + Int")
+    assertPresentationIs("Int + Int * Int")
 
-  private def assertPresentationIs(tpe: String, expected: String, header: String = ""): Unit = {
-    val file =
-      ScalaPsiElementFactory.createScalaFileFromText(header + "type T[A] = " + tpe, ScalaFeatures.onlyByVersion(version))(
-        getProject
-      )
+    assertPresentationIs("Int + (Int * Int)", "Int + Int * Int")
+    assertPresentationIs("(Int * Int) + Int", "Int * Int + Int")
 
-    val typeElement = file.elements.collectFirst { case e: ScTypeElement if e.getTextOffset > header.length => e }.get
-    val actual = typeElement.`type`().get.presentableText(TypePresentationContext(typeElement), Context(typeElement))
-    assertEquals(expected, actual)
+    assertPresentationIs("Int * (Int + Int)")
+    assertPresentationIs("(Int + Int) * Int")
+
+    assertPresentationIs("Int & Boolean")
+    assertPresentationIs("Boolean & Int")
+
+    assertPresentationIs("Int & Boolean | Float")
+    assertPresentationIs("Int | Boolean & Float")
+
+    assertPresentationIs("(Int & Boolean) | Float", "Int & Boolean | Float")
+    assertPresentationIs("Int | (Boolean & Float)", "Int | Boolean & Float")
+    assertPresentationIs("Int & (Boolean | Float)")
+    assertPresentationIs("(Int | Boolean) & Float")
+
+    assertPresentationIs("Int *: Int *: Int")
+    assertPresentationIs("(Int *: Int) *: Int")
+    assertPresentationIs("Int *: (Int *: Int)", "Int *: Int *: Int")
+
+    assertPresentationIs("(Int *: Int) + Int", "Int *: Int + Int")
+    assertPresentationIs("Int *: (Int + Int)")
+    assertPresentationIs("(Int + Int) *: Int")
+    assertPresentationIs("Int + (Int *: Int)", "Int + Int *: Int")
+
+    assertPresentationIs("(Int *: Int) * Int")
+    assertPresentationIs("Int *: (Int * Int)")
+    assertPresentationIs("(Int * Int) *: Int")
+    assertPresentationIs("Int * (Int *: Int)")
   }
 }

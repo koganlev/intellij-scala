@@ -82,47 +82,32 @@ abstract class ToggleTypeAnnotationIntentionTestBase extends ScalaIntentionTestB
      """.stripMargin
   )
 
-  def testInfixType(): Unit = doTest(
-    s"""
-       |trait A
-       |
-       |trait B
-       |
-       |def foo(): =:=[A, <:<[B, =:=[=:=[B, B], A]]] = ???
-       |val ba${caretTag}r = foo()
-     """.stripMargin,
-    s"""
-       |trait A
-       |
-       |trait B
-       |
-       |def foo(): =:=[A, <:<[B, =:=[=:=[B, B], A]]] = ???
-       |val ba${caretTag}r: A =:= (B <:< (B =:= B =:= A)) = foo()
-     """.stripMargin
-  )
+  def testInfixType(): Unit = {
+    val line =
+      if (version.isScala2)
+        s"val ba${caretTag}r: A =:= (B <:< (B =:= B =:= A)) = foo()"
+      else
+        s"val ba${caretTag}r: A =:= B <:< (B =:= B =:= A) = foo()"
 
-  def testInfixDifferentAssociativity(): Unit = doTest(
-    s"""
-       |trait +[A, B]
-       |
-       |trait ::[A, B]
-       |
-       |trait A
-       |
-       |def foo(): ::[+[A, +[::[A, A], A]], +[A, ::[A, A]]] = ???
-       |val ba${caretTag}r = foo()
+    doTest(
+      s"""
+         |trait A
+         |
+         |trait B
+         |
+         |def foo(): =:=[A, <:<[B, =:=[=:=[B, B], A]]] = ???
+         |val ba${caretTag}r = foo()
      """.stripMargin,
-    s"""
-       |trait +[A, B]
-       |
-       |trait ::[A, B]
-       |
-       |trait A
-       |
-       |def foo(): ::[+[A, +[::[A, A], A]], +[A, ::[A, A]]] = ???
-       |val ba${caretTag}r: (A + ((A :: A) + A)) :: (A + (A :: A)) = foo()
+      s"""
+         |trait A
+         |
+         |trait B
+         |
+         |def foo(): =:=[A, <:<[B, =:=[=:=[B, B], A]]] = ???
+         |$line
      """.stripMargin
-  )
+    )
+  }
 
   def testShowAsInfixAnnotation(): Unit = doTest(
     s"""

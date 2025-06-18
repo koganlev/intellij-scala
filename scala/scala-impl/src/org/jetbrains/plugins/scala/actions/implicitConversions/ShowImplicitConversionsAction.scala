@@ -84,7 +84,7 @@ final class ShowImplicitConversionsAction(cs: CoroutineScope) extends AnAction(
       }
 
       val list = new JBList[Parameters](model)
-      val renderer = new ScImplicitFunctionListCellRenderer(conversionFun)
+      val renderer = new ScImplicitFunctionListCellRenderer(conversionFun, expr)
       val font = editor.getColorsScheme.getFont(EditorFontType.PLAIN)
       renderer.setFont(font)
       list.setFont(font)

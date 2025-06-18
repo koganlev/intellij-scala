@@ -8,14 +8,13 @@ import org.jetbrains.plugins.scala.editor.documentationProvider.{HtmlBuilderWrap
 import org.jetbrains.plugins.scala.extensions.{Model, ObjectExt, PsiMemberExt, PsiNamedElementExt, StringExt, StringsExt}
 import org.jetbrains.plugins.scala.highlighter.DefaultHighlighter
 import org.jetbrains.plugins.scala.lang.lexer.ScalaTokenType
-import org.jetbrains.plugins.scala.lang.parser.parsing.Associativity
-import org.jetbrains.plugins.scala.lang.parser.util.ParserUtils.operatorAssociativity
 import org.jetbrains.plugins.scala.lang.psi.ScalaPsiUtil
 import org.jetbrains.plugins.scala.lang.psi.api.base.ScFieldId
 import org.jetbrains.plugins.scala.lang.psi.api.base.patterns.ScBindingPattern
 import org.jetbrains.plugins.scala.lang.psi.api.statements.ScTypeAlias
 import org.jetbrains.plugins.scala.lang.psi.api.statements.params.ScParameter
 import org.jetbrains.plugins.scala.lang.psi.api.toplevel.typedef.{ScObject, ScTypeDefinition}
+import org.jetbrains.plugins.scala.lang.psi.types.ScalaTypePresentation.Infix
 import org.jetbrains.plugins.scala.lang.psi.types.api.designator.{ScDesignatorType, ScProjectionType, ScThisType}
 import org.jetbrains.plugins.scala.lang.psi.types.api.presentation.TypePresentation.ABSTRACT_TYPE_POSTFIX
 import org.jetbrains.plugins.scala.lang.psi.types.api.presentation.{NameRenderer, TypeBoundsRenderer, TypePresentation, TypeRenderer}
@@ -29,14 +28,10 @@ import org.jetbrains.plugins.scala.project.ProjectContext
 import scala.annotation.tailrec
 
 private [documentationProvider] class ScalaDocTypeRenderer(
-  originalElement: Option[PsiElement],
   nameRenderer: NameRenderer,
   substitutor: Option[ScSubstitutor]
-)(implicit projectContext: ProjectContext, context: Context) extends TypeRenderer {
+)(implicit projectContext: ProjectContext, typePresentationContext: TypePresentationContext, context: Context) extends TypeRenderer {
   private lazy val boundsRenderer = new TypeBoundsRenderer(nameRenderer)
-
-  private implicit val presentableContext: TypePresentationContext =
-    originalElement.fold(TypePresentationContext.emptyContext)(TypePresentationContext.psiElementPresentationContext)
 
   private val renderedAnd      = renderWithAttrKey("&", DefaultHighlighter.TYPE_ALIAS)
   private val renderedOr       = renderWithAttrKey("|", DefaultHighlighter.TYPE_ALIAS)
@@ -80,9 +75,9 @@ private [documentationProvider] class ScalaDocTypeRenderer(
     case p: ParameterizedType =>
       parameterizedTypeText(p)(render)
     case ScAndType(lhs, rhs) =>
-      s"${render(lhs)} $renderedAnd ${render(rhs)}"
+      infixTypeText(Infix("&"), renderedAnd, lhs, rhs, render)
     case ScOrType(lhs, rhs) =>
-      s"${render(lhs)} $renderedOr ${render(rhs)}"
+      infixTypeText(Infix("|"), renderedOr, lhs, rhs, render)
     case mt@ScMethodType(retType, params, _) =>
       render(FunctionType(retType, params.map(_.paramType))(mt.elementScope, Context.Empty))
     case ScLiteralType(value, _) =>
@@ -129,7 +124,7 @@ private [documentationProvider] class ScalaDocTypeRenderer(
     }.mkString(s" $renderedForSome {", "; ", "}")
 
   private def placeholder(wildcard: ScExistentialArgument) =
-    existentialArgWithBounds(wildcard, if (presentableContext.compoundTypeWithAndToken) "?" else "_")
+    existentialArgWithBounds(wildcard, if (typePresentationContext.compoundTypeWithAndToken) "?" else "_")
 
   private  def existentialArgWithBounds(wildcard: ScExistentialArgument, name: String): String = {
     val argsText = wildcard.typeParameters.map(_.name) match {
@@ -169,27 +164,32 @@ private [documentationProvider] class ScalaDocTypeRenderer(
 
   private def parameterizedTypeText(p: ParameterizedType)(renderFunction: ScType => String): String = p match {
     case ParameterizedType(ScalaDocTypeRenderer.InfixDesignator(op), Seq(left, right)) =>
-      infixTypeText(op, left, right, renderFunction(_))
+      infixTypeText(Infix(op.name), nameRenderer.renderName(op), left, right, renderFunction(_))
     case ParameterizedType(des, typeArgs) =>
       val renderedRes = renderFunction(des)
       val renderedArgs = typeArgs.map(renderFunction(_))
       s"$renderedRes${renderedArgs.commaSeparated(model = Model.SquareBrackets)}"
   }
 
-  def infixTypeText(op: PsiNamedElement, left: ScType, right: ScType, printArgsFun: ScType => String): String = {
-    val assoc = operatorAssociativity(op.name)
-
-    def componentText(`type`: ScType, requiredAssoc: Associativity.LeftOrRight) = {
-      val needParenthesis = `type` match {
-        case ParameterizedType(ScalaDocTypeRenderer.InfixDesignator(newOp), _) =>
-          assoc != operatorAssociativity(newOp.name) || assoc == requiredAssoc
-        case _ => false
+  private def infixTypeText(infix: Infix, opRendered: String,
+                            left: ScType, right: ScType,
+                            printArgsFun: ScType => String): String = {
+    def toInfix(ty: ScType): Option[Infix] = {
+      ty match {
+        case ParameterizedType(ScalaDocTypeRenderer.InfixDesignator(newOp), _) => Some(Infix(newOp.name))
+        case _: ScAndType  => Some(Infix("&"))
+        case _: ScOrType   => Some(Infix("|"))
+        case _ => None
       }
-
-      printArgsFun(`type`).parenthesize(needParenthesis)
     }
 
-    s"${componentText(left, Associativity.Right)} ${nameRenderer.renderName(op)} ${componentText(right, Associativity.Left)}"
+    val leftOp =
+      printArgsFun(left).parenthesize(needParenthesis = infix.leftNeedsParenthesis(toInfix(left)))
+
+    val rightOp =
+      printArgsFun(right).parenthesize(needParenthesis = infix.rightNeedsParenthesis(toInfix(right)))
+
+    s"$leftOp $opRendered $rightOp"
   }
 
   protected def renderWithAttrKey(name: String, attrKey: TextAttributesKey): String = {
@@ -219,7 +219,7 @@ private [documentationProvider] class ScalaDocTypeRenderer(
   private def projectionTypeText(projType: ScProjectionType): String = {
     val e = projType.actualElement
     val renderedName = nameRenderer.renderName(e)
-    if (presentableContext.nameResolvesTo(e.name, e))
+    if (typePresentationContext.nameResolvesTo(e.name, e))
       renderedName // if reference can be resolved from the context we do not render any context info
     else {
       lazy val isStaticJavaClass = e match {
@@ -355,16 +355,17 @@ private [documentationProvider] object ScalaDocTypeRenderer {
     }
   }
 
-  def apply(originalElement: Option[PsiElement])(implicit projectContext: ProjectContext, context: Context): TypeRenderer =
-    new ScalaDocTypeRenderer(originalElement, nameRenderer, None)
+  def apply()(implicit projectContext: ProjectContext, typePresentationContext: TypePresentationContext, context: Context): TypeRenderer =
+    new ScalaDocTypeRenderer(nameRenderer, None)
 
-  def forAnnotations(originalElement: Option[PsiElement])(implicit projectContext: ProjectContext, context: Context): TypeRenderer =
-    new ScalaDocTypeRenderer(originalElement, annotationsRenderer, None)
+  def forAnnotations()(implicit projectContext: ProjectContext, typePresentationContext: TypePresentationContext, context: Context): TypeRenderer =
+    new ScalaDocTypeRenderer(annotationsRenderer, None)
 
   def forQuickInfo(originalElement: PsiElement, substitutor: ScSubstitutor)(implicit projectContext: ProjectContext): TypeRenderer = {
+    implicit val typePresentationContext: TypePresentationContext = originalElement
     implicit val context: Context = Context(originalElement)
 
-    new ScalaDocTypeRenderer(Some(originalElement), quickInfoNameRenderer, Some(substitutor)) {
+    new ScalaDocTypeRenderer(quickInfoNameRenderer, Some(substitutor)) {
       override protected def renderWithAttrKey(name: String, attrKey: TextAttributesKey): String = escapeHtml4(name)
     }
   }

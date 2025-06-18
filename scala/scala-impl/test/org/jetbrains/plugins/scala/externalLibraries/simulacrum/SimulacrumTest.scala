@@ -172,7 +172,7 @@ class SimulacrumTest extends ScalaLightCodeInsightFixtureTestCase {
         applyMethod("Traverse", "F"),
         `trait`("Ops[F[_], LP0]")(
           `def`("self", "F[LP0]"),
-          `def`("sequence", "[G, A] (Applicative[G], LP0 <:< G[A]) => G[F[A]]")
+          `def`("sequence", "[G, A] (Applicative[G], <:<[LP0, G[A]]) => G[F[A]]")
         ),
         `trait`("ToTraverseOps") `with` `implicit`("toTraverseOps", "[F, LP0] F[LP0] => Traverse[F] => Traverse.Ops[F, LP0]"),
         `trait`("AllOps[F[_], LP0] extends Traverse.Ops[F, LP0]"),

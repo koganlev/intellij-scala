@@ -5,6 +5,7 @@ import org.jetbrains.plugins.scala.extensions._
 import org.jetbrains.plugins.scala.externalLibraries.kindProjector.inspections.KindProjectorSimplifyTypeProjectionInspection
 import org.jetbrains.plugins.scala.lang.lexer.ScalaTokenType
 import org.jetbrains.plugins.scala.lang.parser.parsing.Associativity
+import org.jetbrains.plugins.scala.lang.parser.util.ParserUtils
 import org.jetbrains.plugins.scala.lang.parser.util.ParserUtils.operatorAssociativity
 import org.jetbrains.plugins.scala.lang.psi.api.base.ScFieldId
 import org.jetbrains.plugins.scala.lang.psi.api.base.patterns.{ScBindingPattern, ScReferencePattern}
@@ -257,29 +258,32 @@ trait ScalaTypePresentation extends TypePresentation {
     }
 
     def parameterizedTypeText(p: ParameterizedType)(printArgsFun: ScType => String): String = p match {
-      case ParameterizedType(InfixDesignator(op), Seq(left, right)) if !ScalaApplicationSettings.PRECISE_TEXT => // SCL-21179
-        infixTypeText(op, left, right, printArgsFun(_))
+      case ParameterizedType(InfixDesignator(op), Seq(left, right)) if !ScalaApplicationSettings.PRECISE_TEXT && tpc.infixTypesConsiderPrecedence.isDefined => // SCL-21179
+        val opRendered =
+          if (options.renderInfixType) nameRenderer.renderName(op)
+          else nameRenderer.escapeName(op.name)
+        infixTypeText(Infix(op.name), opRendered, left, right, printArgsFun(_))
       case ParameterizedType(des, typeArgs) =>
         innerTypeText(des) + typeArgs.map(printArgsFun(_)).commaSeparated(model = Model.SquareBrackets)
     }
 
-    def infixTypeText(op: PsiNamedElement, left: ScType, right: ScType, printArgsFun: ScType => String): String = {
-      val assoc = operatorAssociativity(op.name)
-
-      def componentText(`type`: ScType, requiredAssoc: Associativity.LeftOrRight) = {
-        val needParenthesis = `type` match {
-          case ParameterizedType(InfixDesignator(newOp), _) =>
-            assoc != operatorAssociativity(newOp.name) || assoc == requiredAssoc
-          case _ => false
+    def infixTypeText(infix: Infix, opRendered: String, left: ScType, right: ScType, printArgsFun: ScType => String): String = {
+      def toInfix(ty: ScType): Option[Infix] = {
+        ty match {
+          case ParameterizedType(InfixDesignator(newOp), _) => Some(Infix(newOp.name))
+          case _: ScAndType  => Some(Infix("&"))
+          case _: ScOrType   => Some(Infix("|"))
+          case _ => None
         }
-
-        printArgsFun(`type`).parenthesize(needParenthesis)
       }
 
-      val opRendered =
-        if (options.renderInfixType) nameRenderer.renderName(op)
-        else nameRenderer.escapeName(op.name)
-      s"${componentText(left, Associativity.Right)} $opRendered ${componentText(right, Associativity.Left)}"
+      val leftOp =
+        printArgsFun(left).parenthesize(needParenthesis = infix.leftNeedsParenthesis(toInfix(left)))
+
+      val rightOp =
+        printArgsFun(right).parenthesize(needParenthesis = infix.rightNeedsParenthesis(toInfix(right)))
+
+      s"$leftOp $opRendered $rightOp"
     }
 
     def textOf(params: Seq[ScType]) = params match {
@@ -352,13 +356,21 @@ trait ScalaTypePresentation extends TypePresentation {
       case JavaArrayType(argument) => (if (ScalaApplicationSettings.PRECISE_TEXT && options.canonicalForm) "_root_.scala." else "") + s"Array[${innerTypeText(argument)}]" // SCL-21183
       case UndefinedType(tpt, _) => "NotInferred" + tpt.name
       case ScAndType(lhs, rhs) =>
-        val l = innerTypeText(lhs)
-        val r = innerTypeText(rhs)
-        if (ScalaApplicationSettings.PRECISE_TEXT && options.canonicalForm) "_root_.scala.&[" + l + ", " + r + "]" else l + " & " + r // SCL-21559
+        if (ScalaApplicationSettings.PRECISE_TEXT && options.canonicalForm) {
+          val l = innerTypeText(lhs)
+          val r = innerTypeText(rhs)
+          "_root_.scala.&[" + l + ", " + r + "]"
+        } else {
+          infixTypeText(Infix("&"), "&", lhs, rhs, innerTypeText(_))
+        }
       case ScOrType(lhs, rhs) =>
-        val l = innerTypeText(lhs)
-        val r = innerTypeText(rhs)
-        if (ScalaApplicationSettings.PRECISE_TEXT && options.canonicalForm) "_root_.scala.|[" + l + ", " + r + "]" else l + " | " + r // SCL-21559
+        if (ScalaApplicationSettings.PRECISE_TEXT && options.canonicalForm) {
+          val l = innerTypeText(lhs)
+          val r = innerTypeText(rhs)
+          "_root_.scala.|[" + l + ", " + r + "]"
+        } else {
+          infixTypeText(Infix("|"), "|", lhs, rhs, innerTypeText(_))
+        }
       case c: ScCompoundType =>
         compoundTypeText(c)
       case ex: ScExistentialType =>
@@ -394,4 +406,39 @@ object ScalaTypePresentation {
   val ObjectTypeSuffix = ".type"
 
   private val TypeLambdaArrowWithSpaces = s" ${ScalaTokenType.TypeLambdaArrow} "
+
+  final case class Infix(op: String)(implicit tpc: TypePresentationContext) {
+    lazy val precedence: Int =
+      if (tpc.infixTypesConsiderPrecedence.contains(true)) {
+        ParserUtils.priority(op)
+      } else 0
+
+    lazy val associativity: Associativity.LeftOrRight =
+      operatorAssociativity(op)
+
+    def leftNeedsParenthesis(operand: Option[Infix]): Boolean = {
+      needsParenthesis(operand, Associativity.Right)
+    }
+
+    def rightNeedsParenthesis(operand: Option[Infix]): Boolean = {
+      needsParenthesis(operand, Associativity.Left)
+    }
+
+    def needsParenthesis(operand: Option[Infix], requiredAssoc: Associativity): Boolean =
+      operand.exists { operand =>
+        if (precedence > operand.precedence) false
+        else if (precedence == operand.precedence) associativity != operand.associativity || operand.associativity == requiredAssoc
+        else true
+      }
+  }
+
+  object Infix {
+    def leftNeedsParenthesis(parent: String, left: String)(implicit tpc: TypePresentationContext): Boolean = {
+      Infix(parent).leftNeedsParenthesis(Some(Infix(left)))
+    }
+
+    def rightNeedsParenthesis(parent: String, right: String)(implicit tpc: TypePresentationContext): Boolean = {
+      Infix(parent).rightNeedsParenthesis(Some(Infix(right)))
+    }
+  }
 }
