@@ -4,7 +4,7 @@ import com.intellij.openapi.compiler.CompilerMessageCategory
 import com.intellij.openapi.module.{Module, ModuleManager}
 import com.intellij.openapi.roots.{LibraryOrderEntry, ModuleRootManager}
 import com.intellij.testFramework.CompilerTester
-import org.jetbrains.plugins.scala.CompilationTests
+import org.jetbrains.plugins.scala.{CompilationTests_IDEA, CompilationTests_Zinc}
 import org.jetbrains.plugins.scala.compiler.data.IncrementalityType
 import org.jetbrains.plugins.scala.extensions.inWriteAction
 import org.jetbrains.plugins.scala.project.LibraryExt
@@ -90,8 +90,8 @@ abstract class MissingScalaSdkCompilationTestBase(incrementalityType: Incrementa
        |If these sources do need to be compiled, this message might indicate that the project is misconfigured. Please Sync the project again.""".stripMargin
 }
 
-@Category(Array(classOf[CompilationTests]))
+@Category(Array(classOf[CompilationTests_Zinc]))
 class MissingScalaSdkCompilationTest_Zinc extends MissingScalaSdkCompilationTestBase(IncrementalityType.SBT)
 
-@Category(Array(classOf[CompilationTests]))
+@Category(Array(classOf[CompilationTests_IDEA]))
 class MissingScalaSdkCompilationTest_IDEA extends MissingScalaSdkCompilationTestBase(IncrementalityType.IDEA)
