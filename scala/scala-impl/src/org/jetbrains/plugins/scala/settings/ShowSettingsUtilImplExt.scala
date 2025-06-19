@@ -32,7 +32,7 @@ object ShowSettingsUtilImplExt {
 
   private def showSettingsDialogImpl(@Nullable project: Project, visitor: ConfigurableVisitor, filter: String): Unit = {
     val group = ConfigurableExtensionPointUtil.getConfigurableGroup(project, true)
-    val config = visitor.find(group)
+    val config = ConfigurableVisitor.find(visitor, java.util.List.of(group))
     val dialog = SettingsDialogFactory.getInstance.create(getProject(project), Collections.singletonList(group), config, filter)
     dialog.show()
   }
