@@ -230,6 +230,13 @@ ScalaFile
               TypeParameter: elT
                 PsiElement(identifier)('elT')
               PsiElement(])(']')
+            PrimaryConstructor
+              AnnotationsList
+                <empty list>
+              Modifiers
+                <empty list>
+              Parameters
+                <empty list>
             PsiWhiteSpace(' ')
             ExtendsBlock
               ScTemplateBody
@@ -324,6 +331,13 @@ ScalaFile
                 PsiElement(identifier)('+')
                 PsiElement(identifier)('t')
               PsiElement(])(']')
+            PrimaryConstructor
+              AnnotationsList
+                <empty list>
+              Modifiers
+                <empty list>
+              Parameters
+                <empty list>
             PsiWhiteSpace(' ')
             ExtendsBlock
               ScTemplateBody
@@ -1635,6 +1649,13 @@ ScalaFile
                 PsiElement(identifier)('+')
                 PsiElement(identifier)('t')
               PsiElement(])(']')
+            PrimaryConstructor
+              AnnotationsList
+                <empty list>
+              Modifiers
+                <empty list>
+              Parameters
+                <empty list>
             PsiWhiteSpace(' ')
             ExtendsBlock
               PsiElement(extends)('extends')

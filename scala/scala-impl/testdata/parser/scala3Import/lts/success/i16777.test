@@ -1217,6 +1217,13 @@ ScalaFile
             PsiElement(_)('_')
           PsiElement(])(']')
       PsiElement(])(']')
+    PrimaryConstructor
+      AnnotationsList
+        <empty list>
+      Modifiers
+        <empty list>
+      Parameters
+        <empty list>
     PsiWhiteSpace(' ')
     ExtendsBlock
       ScTemplateBody
@@ -2013,6 +2020,13 @@ ScalaFile
             PsiElement(_)('_')
           PsiElement(])(']')
       PsiElement(])(']')
+    PrimaryConstructor
+      AnnotationsList
+        <empty list>
+      Modifiers
+        <empty list>
+      Parameters
+        <empty list>
     PsiWhiteSpace(' ')
     ExtendsBlock
       ScTemplateBody

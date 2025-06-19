@@ -285,6 +285,13 @@ ScalaFile
             TypeParameter: B
               PsiElement(identifier)('B')
             PsiElement(])(']')
+          PrimaryConstructor
+            AnnotationsList
+              <empty list>
+            Modifiers
+              <empty list>
+            Parameters
+              <empty list>
           ExtendsBlock
             <empty list>
         PsiWhiteSpace('\n\n  ')
@@ -343,6 +350,13 @@ ScalaFile
                 CodeReferenceElement: AnyKind
                   PsiElement(identifier)('AnyKind')
             PsiElement(])(']')
+          PrimaryConstructor
+            AnnotationsList
+              <empty list>
+            Modifiers
+              <empty list>
+            Parameters
+              <empty list>
           PsiWhiteSpace(' ')
           ExtendsBlock
             ScTemplateBody
@@ -935,6 +949,13 @@ ScalaFile
                 CodeReferenceElement: AnyKind
                   PsiElement(identifier)('AnyKind')
             PsiElement(])(']')
+          PrimaryConstructor
+            AnnotationsList
+              <empty list>
+            Modifiers
+              <empty list>
+            Parameters
+              <empty list>
           PsiWhiteSpace(' ')
           ExtendsBlock
             ScTemplateBody
@@ -1394,6 +1415,13 @@ ScalaFile
             TypeParameter: MA
               PsiElement(identifier)('MA')
             PsiElement(])(']')
+          PrimaryConstructor
+            AnnotationsList
+              <empty list>
+            Modifiers
+              <empty list>
+            Parameters
+              <empty list>
           PsiWhiteSpace(' ')
           ExtendsBlock
             ScTemplateBody
@@ -2023,6 +2051,13 @@ ScalaFile
                 CodeReferenceElement: AnyKind
                   PsiElement(identifier)('AnyKind')
             PsiElement(])(']')
+          PrimaryConstructor
+            AnnotationsList
+              <empty list>
+            Modifiers
+              <empty list>
+            Parameters
+              <empty list>
           ExtendsBlock
             <empty list>
         PsiWhiteSpace('\n  ')
@@ -3339,6 +3374,13 @@ ScalaFile
                       CodeReferenceElement: KPList
                         PsiElement(identifier)('KPList')
                   PsiElement(])(']')
+                PrimaryConstructor
+                  AnnotationsList
+                    <empty list>
+                  Modifiers
+                    <empty list>
+                  Parameters
+                    <empty list>
                 PsiWhiteSpace(' ')
                 ExtendsBlock
                   PsiElement(extends)('extends')
@@ -3378,6 +3420,13 @@ ScalaFile
                       CodeReferenceElement: KPList
                         PsiElement(identifier)('KPList')
                   PsiElement(])(']')
+                PrimaryConstructor
+                  AnnotationsList
+                    <empty list>
+                  Modifiers
+                    <empty list>
+                  Parameters
+                    <empty list>
                 PsiWhiteSpace(' ')
                 ExtendsBlock
                   PsiElement(extends)('extends')
@@ -3604,6 +3653,13 @@ ScalaFile
                             CodeReferenceElement: HList
                               PsiElement(identifier)('HList')
                         PsiElement(])(']')
+                      PrimaryConstructor
+                        AnnotationsList
+                          <empty list>
+                        Modifiers
+                          <empty list>
+                        Parameters
+                          <empty list>
                       PsiWhiteSpace(' ')
                       ExtendsBlock
                         ScTemplateBody
@@ -4092,6 +4148,13 @@ ScalaFile
                         TypeParameter: O
                           PsiElement(identifier)('O')
                         PsiElement(])(']')
+                      PrimaryConstructor
+                        AnnotationsList
+                          <empty list>
+                        Modifiers
+                          <empty list>
+                        Parameters
+                          <empty list>
                       PsiWhiteSpace(' ')
                       ExtendsBlock
                         ScTemplateBody
@@ -4587,6 +4650,13 @@ ScalaFile
                             CodeReferenceElement: AnyKind
                               PsiElement(identifier)('AnyKind')
                         PsiElement(])(']')
+                      PrimaryConstructor
+                        AnnotationsList
+                          <empty list>
+                        Modifiers
+                          <empty list>
+                        Parameters
+                          <empty list>
                       PsiWhiteSpace(' ')
                       ExtendsBlock
                         ScTemplateBody

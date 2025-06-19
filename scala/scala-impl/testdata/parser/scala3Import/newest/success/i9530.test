@@ -107,6 +107,13 @@ ScalaFile
           CodeReferenceElement: Animal
             PsiElement(identifier)('Animal')
       PsiElement(])(']')
+    PrimaryConstructor
+      AnnotationsList
+        <empty list>
+      Modifiers
+        <empty list>
+      Parameters
+        <empty list>
     ExtendsBlock
       ScTemplateBody
         PsiElement(:)(':')

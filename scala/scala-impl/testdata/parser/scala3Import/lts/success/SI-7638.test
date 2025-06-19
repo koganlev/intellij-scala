@@ -90,6 +90,13 @@ ScalaFile
           PsiWhiteSpace(' ')
           PsiElement(identifier)('A')
         PsiElement(])(']')
+      PrimaryConstructor
+        AnnotationsList
+          <empty list>
+        Modifiers
+          <empty list>
+        Parameters
+          <empty list>
       PsiWhiteSpace(' ')
       ExtendsBlock
         ScTemplateBody
@@ -187,6 +194,13 @@ ScalaFile
           PsiWhiteSpace(' ')
           PsiElement(identifier)('A')
         PsiElement(])(']')
+      PrimaryConstructor
+        AnnotationsList
+          <empty list>
+        Modifiers
+          <empty list>
+        Parameters
+          <empty list>
       PsiWhiteSpace(' ')
       ExtendsBlock
         PsiElement(extends)('extends')

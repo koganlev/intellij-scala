@@ -199,6 +199,13 @@ ScalaFile
             CodeReferenceElement: Singleton
               PsiElement(identifier)('Singleton')
       PsiElement(])(']')
+    PrimaryConstructor
+      AnnotationsList
+        <empty list>
+      Modifiers
+        <empty list>
+      Parameters
+        <empty list>
     ExtendsBlock
       ScTemplateBody
         PsiElement(:)(':')
@@ -833,6 +840,13 @@ ScalaFile
             CodeReferenceElement: Singleton
               PsiElement(identifier)('Singleton')
       PsiElement(])(']')
+    PrimaryConstructor
+      AnnotationsList
+        <empty list>
+      Modifiers
+        <empty list>
+      Parameters
+        <empty list>
     ExtendsBlock
       ScTemplateBody
         PsiElement(:)(':')

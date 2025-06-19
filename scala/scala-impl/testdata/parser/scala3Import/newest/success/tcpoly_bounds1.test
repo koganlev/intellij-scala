@@ -50,6 +50,13 @@ ScalaFile
       TypeParameter: a
         PsiElement(identifier)('a')
       PsiElement(])(']')
+    PrimaryConstructor
+      AnnotationsList
+        <empty list>
+      Modifiers
+        <empty list>
+      Parameters
+        <empty list>
     ExtendsBlock
       <empty list>
   PsiWhiteSpace(' ')
@@ -68,6 +75,13 @@ ScalaFile
       TypeParameter: a
         PsiElement(identifier)('a')
       PsiElement(])(']')
+    PrimaryConstructor
+      AnnotationsList
+        <empty list>
+      Modifiers
+        <empty list>
+      Parameters
+        <empty list>
     PsiWhiteSpace(' ')
     ExtendsBlock
       PsiElement(extends)('extends')
@@ -119,6 +133,13 @@ ScalaFile
       TypeParameter: a
         PsiElement(identifier)('a')
       PsiElement(])(']')
+    PrimaryConstructor
+      AnnotationsList
+        <empty list>
+      Modifiers
+        <empty list>
+      Parameters
+        <empty list>
     ExtendsBlock
       <empty list>
   PsiWhiteSpace('\n')
@@ -148,6 +169,13 @@ ScalaFile
                 PsiElement(identifier)('x')
             PsiElement(])(']')
       PsiElement(])(']')
+    PrimaryConstructor
+      AnnotationsList
+        <empty list>
+      Modifiers
+        <empty list>
+      Parameters
+        <empty list>
     ExtendsBlock
       <empty list>
   PsiWhiteSpace('\n')
@@ -177,6 +205,13 @@ ScalaFile
                 PsiElement(identifier)('a')
             PsiElement(])(']')
       PsiElement(])(']')
+    PrimaryConstructor
+      AnnotationsList
+        <empty list>
+      Modifiers
+        <empty list>
+      Parameters
+        <empty list>
     PsiWhiteSpace(' ')
     ExtendsBlock
       PsiElement(extends)('extends')

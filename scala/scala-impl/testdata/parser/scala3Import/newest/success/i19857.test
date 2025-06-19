@@ -55,6 +55,13 @@ ScalaFile
           CodeReferenceElement: NonEmptyTuple
             PsiElement(identifier)('NonEmptyTuple')
       PsiElement(])(']')
+    PrimaryConstructor
+      AnnotationsList
+        <empty list>
+      Modifiers
+        <empty list>
+      Parameters
+        <empty list>
     PsiWhiteSpace(' ')
     ExtendsBlock
       PsiElement(extends)('extends')
@@ -98,6 +105,13 @@ ScalaFile
       TypeParameter: T
         PsiElement(identifier)('T')
       PsiElement(])(']')
+    PrimaryConstructor
+      AnnotationsList
+        <empty list>
+      Modifiers
+        <empty list>
+      Parameters
+        <empty list>
     ExtendsBlock
       <empty list>
   PsiWhiteSpace('\n\n')
@@ -293,6 +307,13 @@ ScalaFile
       TypeParameter: T
         PsiElement(identifier)('T')
       PsiElement(])(']')
+    PrimaryConstructor
+      AnnotationsList
+        <empty list>
+      Modifiers
+        <empty list>
+      Parameters
+        <empty list>
     ExtendsBlock
       <empty list>
   PsiWhiteSpace('\n\n')

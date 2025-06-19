@@ -27,6 +27,13 @@ ScalaFile
       TypeParameter: T
         PsiElement(identifier)('T')
       PsiElement(])(']')
+    PrimaryConstructor
+      AnnotationsList
+        <empty list>
+      Modifiers
+        <empty list>
+      Parameters
+        <empty list>
     ExtendsBlock
       <empty list>
   PsiWhiteSpace('\n')
@@ -166,6 +173,13 @@ ScalaFile
             TypeParameter: T
               PsiElement(identifier)('T')
             PsiElement(])(']')
+          PrimaryConstructor
+            AnnotationsList
+              <empty list>
+            Modifiers
+              <empty list>
+            Parameters
+              <empty list>
           ExtendsBlock
             <empty list>
         PsiWhiteSpace('\n  ')
