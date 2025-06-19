@@ -12,37 +12,37 @@ import com.intellij.platform.workspace.storage.annotations.Child
  * Abstract entity that other entities that need to have extension property to ModuleEntity can inherit from.
  */
 @Abstract
-interface ModuleExtensionWorkspaceEntity: WorkspaceEntity {
-    val module: ModuleEntity
+interface ModuleExtensionWorkspaceEntity : WorkspaceEntity {
+  val module: ModuleEntity
 
-    //region generated code
-    @GeneratedCodeApiVersion(3)
-    interface Builder<T : ModuleExtensionWorkspaceEntity> : WorkspaceEntity.Builder<T> {
-        override var entitySource: EntitySource
-        var module: ModuleEntity.Builder
-    }
+  //region generated code
+  @GeneratedCodeApiVersion(3)
+  interface Builder<T : ModuleExtensionWorkspaceEntity> : WorkspaceEntity.Builder<T> {
+    override var entitySource: EntitySource
+    var module: ModuleEntity.Builder
+  }
 
-    companion object : EntityType<ModuleExtensionWorkspaceEntity, Builder<ModuleExtensionWorkspaceEntity>>() {
-        @JvmOverloads
-        @JvmStatic
-        @JvmName("create")
-        operator fun invoke(
-            entitySource: EntitySource,
-            init: (Builder<ModuleExtensionWorkspaceEntity>.() -> Unit)? = null,
-        ): Builder<ModuleExtensionWorkspaceEntity> {
-            val builder = builder()
-            builder.entitySource = entitySource
-            init?.invoke(builder)
-            return builder
-        }
+  companion object : EntityType<ModuleExtensionWorkspaceEntity, Builder<ModuleExtensionWorkspaceEntity>>() {
+    @JvmOverloads
+    @JvmStatic
+    @JvmName("create")
+    operator fun invoke(
+      entitySource: EntitySource,
+      init: (Builder<ModuleExtensionWorkspaceEntity>.() -> Unit)? = null,
+    ): Builder<ModuleExtensionWorkspaceEntity> {
+      val builder = builder()
+      builder.entitySource = entitySource
+      init?.invoke(builder)
+      return builder
     }
+  }
 //endregion
 }
 
 //region generated code
-var ModuleEntity.Builder.moduleExtensionWorkspaceEntity: @Child ModuleExtensionWorkspaceEntity.Builder<out ModuleExtensionWorkspaceEntity>
-        by WorkspaceEntity.extensionBuilder(ModuleExtensionWorkspaceEntity::class.java)
+var ModuleEntity.Builder.moduleExtensionWorkspaceEntity: ModuleExtensionWorkspaceEntity.Builder<out ModuleExtensionWorkspaceEntity>
+  by WorkspaceEntity.extensionBuilder(ModuleExtensionWorkspaceEntity::class.java)
 //endregion
 
 val ModuleEntity.moduleExtensionWorkspaceEntity: @Child ModuleExtensionWorkspaceEntity
-        by WorkspaceEntity.extension()
+  by WorkspaceEntity.extension()
