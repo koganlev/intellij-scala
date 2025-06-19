@@ -1384,7 +1384,9 @@ object ScalaPsiUtil {
    * boundIndex  ~ 0 OR 1 <br>
    * naem        ~ None or r
    */
-  case class ContextBoundInfo(typeParam: ScTypeParam, contextType: ScTypeElement, boundIndex: Int, name: Option[String])
+  case class ContextBoundInfo(typeParam: ScTypeParam, contextType: ScTypeElement, boundIndex: Int, name: Option[String]) {
+    def bound: ScContextBound = typeParam.contextBounds(boundIndex)
+  }
 
   /**
    * @param parameter physical parameter OR
@@ -1398,8 +1400,8 @@ object ScalaPsiUtil {
 
   private def extractSyntheticContextBoundInfo(contextParameter: ScParameter): Option[ContextBoundInfo] = {
     val maybeOwner: Option[ScTypeParametersOwner] = contextParameter.owner match {
-      case ScPrimaryConstructor.ofClass(cls) => Option(cls)
-      case other: ScTypeParametersOwner => Option(other)
+      case ScPrimaryConstructor.ofTypeDefinition(cls) => Some(cls)
+      case other: ScTypeParametersOwner => Some(other)
       case _ => None
     }
 

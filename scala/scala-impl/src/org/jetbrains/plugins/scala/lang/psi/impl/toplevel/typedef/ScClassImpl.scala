@@ -77,20 +77,6 @@ class ScClassImpl(stub: ScTemplateDefinitionStub[ScClass],
     if (!super.processDeclarationsForTemplateBody(processor, state, lastParent, place))
       return false
 
-    constructor match {
-      case Some(constr) if place != null && PsiTreeUtil.isContextAncestor(constr, place, false) =>
-      //ignore, should be processed in ScParameters
-      case _ =>
-        for (p <- parameters) {
-          ProgressManager.checkCanceled()
-          if (processor.is[BaseProcessor]) {
-            // don't expose class parameters to Java.
-            if (!processor.execute(p, state))
-              return false
-          }
-        }
-    }
-
     //process context-applied synthetic elements
     if (!super[SyntheticElementsOwner].processDeclarations(processor, state, lastParent, place))
       return false

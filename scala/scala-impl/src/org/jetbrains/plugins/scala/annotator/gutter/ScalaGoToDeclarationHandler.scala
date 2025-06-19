@@ -255,10 +255,8 @@ object ScalaGoToDeclarationHandler {
       case scObject: ScObject if scObject.isSyntheticObject       => getCompanionModule(scObject).toSeq
       case definition: ScTypeDefinition if definition.isSynthetic => Option(definition.syntheticContainingClass).toSeq
       case parameter: ScParameter                                 =>
-        val contextBound = findSyntheticContextBoundInfo(parameter).flatMap {
-          case ContextBoundInfo(typeParam, _, idx, _) =>
-            typeParam.contextBounds(idx).nameIdOpt
-        }
+        val contextBound =
+          findSyntheticContextBoundInfo(parameter).flatMap(_.bound.nameIdOpt)
 
         parameterForSyntheticParameter(parameter).toSeq ++ contextBound
       case _ => Seq.empty
