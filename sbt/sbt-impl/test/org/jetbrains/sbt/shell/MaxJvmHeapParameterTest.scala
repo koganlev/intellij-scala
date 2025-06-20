@@ -47,6 +47,7 @@ class MaxJvmHeapParameterTest {
         passParentEnvironment = false,
         useSeparateCompilerOutputPaths = false,
         separateProdTestSources = false,
+        generateManagedSourcesDuringProjectSync = true,
         sbtVersion = SbtVersion.Latest.Sbt_1
       )
 

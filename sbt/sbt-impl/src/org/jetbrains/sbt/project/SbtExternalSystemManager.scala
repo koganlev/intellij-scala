@@ -118,6 +118,7 @@ object SbtExternalSystemManager {
       passParentEnvironment = settingsState.sbtPassParentEnvironment,
       useSeparateCompilerOutputPaths = projectSettings.useSeparateCompilerOutputPaths,
       separateProdTestSources = projectSettings.separateProdAndTestSources,
+      generateManagedSourcesDuringProjectSync = projectSettings.generateManagedSourcesDuringProjectSync,
       sbtVersion = sbtVersion
     )
   }

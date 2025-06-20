@@ -67,6 +67,9 @@ class SbtProjectSettings extends ExternalProjectSettings {
   @BeanProperty
   var useSeparateCompilerOutputPaths: Boolean = false
 
+  @BeanProperty
+  var generateManagedSourcesDuringProjectSync: Boolean = true
+
   /**
    * Represents whether [[SbtProjectSettings.separateProdAndTestSources]] setting was explicitly configured either through
    * user interaction or system configuration (e.g., during New Project Wizard initialization)

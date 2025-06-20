@@ -82,7 +82,8 @@ class SbtProjectSettingsControl(context: Context, initialSettings: SbtProjectSet
       extraControls.remoteDebugSbtShellCheckBox.isSelected != settings.enableDebugSbtShell ||
       extraControls.scalaVersionPreferenceCheckBox.isSelected != settings.preferScala2 ||
       extraControls.useSeparateCompilerOutputPaths.isSelected != settings.useSeparateCompilerOutputPaths ||
-      extraControls.separateProdTestModules.isSelected != settings.separateProdAndTestSources
+      extraControls.separateProdTestModules.isSelected != settings.separateProdAndTestSources ||
+      extraControls.generateManagedSourcesDuringProjectSync.isSelected != settings.generateManagedSourcesDuringProjectSync
   }
 
   override protected def resetExtraSettings(isDefaultModuleCreation: Boolean): Unit = {
@@ -104,6 +105,7 @@ class SbtProjectSettingsControl(context: Context, initialSettings: SbtProjectSet
     extraControls.scalaVersionPreferenceCheckBox.setSelected(settings.preferScala2)
     extraControls.useSeparateCompilerOutputPaths.setSelected(settings.useSeparateCompilerOutputPaths)
     extraControls.separateProdTestModules.setSelected(settings.separateProdAndTestSources)
+    extraControls.generateManagedSourcesDuringProjectSync.setSelected(settings.generateManagedSourcesDuringProjectSync)
     extraControls.refreshCheckboxesConstraints()
     extraControls.refreshOutputPathsWarning()
   }
@@ -148,10 +150,9 @@ class SbtProjectSettingsControl(context: Context, initialSettings: SbtProjectSet
 
     settings.separateProdAndTestSources = extraControls.separateProdTestModules.isSelected
     settings.useSeparateCompilerOutputPaths = extraControls.useSeparateCompilerOutputPaths.isSelected
+    settings.generateManagedSourcesDuringProjectSync = extraControls.generateManagedSourcesDuringProjectSync.isSelected
 
     val shouldReload = shouldReloadProject(settings)
-
-    settings.useSeparateCompilerOutputPaths = extraControls.useSeparateCompilerOutputPaths.isSelected
 
     val useSbtShellForBuildSettingChanged =
       settings.useSbtShellForBuild != extraControls.useSbtShellForBuildCheckBox.isSelected

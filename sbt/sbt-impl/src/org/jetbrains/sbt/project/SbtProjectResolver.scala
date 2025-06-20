@@ -168,7 +168,8 @@ class SbtProjectResolver extends ExternalSystemProjectResolver[SbtExecutionSetti
             structureFilePath,
             options,
             reporter,
-            settings.preferScala2
+            settings.preferScala2,
+            settings.generateManagedSourcesDuringProjectSync
           )
           Try(Await.result(messagesF, Duration.Inf)) // TODO some kind of timeout / cancel mechanism
         }
@@ -191,7 +192,8 @@ class SbtProjectResolver extends ExternalSystemProjectResolver[SbtExecutionSetti
             sbtLauncher,
             sbtStructureJar,
             settings.preferScala2,
-            settings.passParentEnvironment
+            settings.passParentEnvironment,
+            settings.generateManagedSourcesDuringProjectSync
           )
         }
       }

@@ -55,11 +55,16 @@ class SbtStructureDump {
     options: Seq[String],
     reporter: BuildReporter,
     preferScala2: Boolean,
+    generateManagedSources: Boolean
   ): Future[BuildMessages] = {
     reporter.start()
 
     val optionsString = makeOptionsStringLiteral(options)
-    val setStructureOptionsCmd = s"""set ${scopedSbtSetting("_root_.org.jetbrains.sbt.StructureKeys.sbtStructureOptions", "Global", sbtVersion)} := $optionsString"""
+    val SeqFqn = SbtVersionCapabilities.collectionsSeqClassFqn(sbtVersion)
+    val setCommands = Seq(
+      s"""${scopedSbtSetting("_root_.org.jetbrains.sbt.StructureKeys.sbtStructureOptions", "_root_.sbt.Global", sbtVersion)} := $optionsString""",
+      s"""${scopedSbtSetting("_root_.org.jetbrains.sbt.StructureKeys.generateManagedSourcesDuringStructureDump", "_root_.sbt.Global", sbtVersion)} := $generateManagedSources"""
+    ).mkString(s"set $SeqFqn(", ",", ")")
     val dumpStructureToCommand = s"${SbtUtil.sbtStructureGlobalCommand("dumpStructureTo", sbtVersion)} $structureFilePath"
 
     // SCL-22858 compiler bytecode indices are disabled in sbt shell
@@ -68,7 +73,7 @@ class SbtStructureDump {
     val maybePreferScala2Command = if (preferScala2) "preferScala2" else ""
     val sbtCommand = buildSbtCompositeCommand(Seq(
       "reload",
-      setStructureOptionsCmd,
+      setCommands,
       maybePreferScala2Command,
       dumpStructureToCommand,
       s"session clear-all $ideaPortSetting"
@@ -91,6 +96,7 @@ class SbtStructureDump {
     sbtStructureJar: File,
     preferScala2: Boolean,
     passParentEnvironment: Boolean,
+    generateManagedSources: Boolean
   )(implicit reporter: BuildReporter): Try[BuildMessages] = {
     val optString = makeOptionsStringLiteral(options)
 
@@ -102,6 +108,7 @@ class SbtStructureDump {
       s"""shellPrompt := { _ => "" }""",
       s"""${scopedSbtSetting("""SettingKey[_root_.scala.Option[_root_.sbt.File]]("sbtStructureOutputFile")""", "_root_.sbt.Global", sbtVersion)} := _root_.scala.Some(_root_.sbt.file("$structureFilePath"))""",
       s"""${scopedSbtSetting("""SettingKey[_root_.java.lang.String]("sbtStructureOptions")""", "_root_.sbt.Global", sbtVersion)} := $optString""",
+      s"""${scopedSbtSetting("""SettingKey[_root_.scala.Boolean]("generateManagedSourcesDuringStructureDump")""", "_root_.sbt.Global", sbtVersion)} := $generateManagedSources"""
     ).mkString(s"set $SeqFqn(", ",", ")")
 
     val maybePreferScala2Command = if (preferScala2) "preferScala2" else ""

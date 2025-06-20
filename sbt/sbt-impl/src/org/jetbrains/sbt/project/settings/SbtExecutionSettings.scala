@@ -32,6 +32,7 @@ class SbtExecutionSettings(val realProjectPath: String,
                            val passParentEnvironment: Boolean,
                            val useSeparateCompilerOutputPaths: Boolean,
                            val separateProdTestSources: Boolean,
+                           val generateManagedSourcesDuringProjectSync: Boolean,
                            val sbtVersion: SbtVersion
                           ) extends ExternalSystemExecutionSettings {
 
