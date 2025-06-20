@@ -54,9 +54,22 @@ private class UpdateCompilerGeneratedStateListener(project: Project) extends Com
           val highlightingType = kindToHighlightInfoType(msg.kind, text, virtualFile)
           val rangeInfo = (highlightingType match {
             case HighlightInfoType.WRONG_REF =>
-              // Wrong reference errors are always highlighted starting from the pointer provided by the compiler.
-              // Empirically, this only highlights the name of the symbol which cannot be resolved.
-              calculateRangeInfo(pointerOrProblemStart(msg), msg.problemEnd, s"wrong_ref case, msg=$msg")
+              if (msg.pointer.isEmpty) {
+                // Special handling of WRONG_REF in BSP projects.
+                val pointer = msg.problemEnd.flatMap {
+                  case PosInfo(line, column) if column > 0 => Some(PosInfo(line, column - 1))
+                  case _ => None
+                }
+                pointer.map(RangeInfo.Pointer)
+                  .orElse {
+                    // fall back to the regular highlighting behaviour for WRONG_REF
+                    calculateRangeInfo(pointerOrProblemStart(msg), msg.problemEnd, s"bsp wrong_ref fallback case, msg=$msg")
+                  }
+              } else {
+                // Wrong reference errors are usually highlighted starting from the pointer provided by the compiler.
+                // Empirically, this only highlights the name of the symbol which cannot be resolved.
+                calculateRangeInfo(pointerOrProblemStart(msg), msg.problemEnd, s"wrong_ref case, msg=$msg")
+              }
             case _ if ScalaProjectSettings.in(project).isUseCompilerRanges =>
               // If the setting is checked, the full text range provided by the compiler is used.
               calculateRangeInfo(msg.problemStart, msg.problemEnd, s"use compiler ranges true case, msg=$msg")
