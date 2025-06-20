@@ -28,6 +28,8 @@
     </extensions>
     
     <extensions defaultExtensionNs="com.intellij">
+        <externalSystemUnlinkedProjectAware implementation="org.jetbrains.bsp.project.BspUnlinkedProjectAware"/>
+
         <externalSystemCrcCalculator implementation="org.jetbrains.bsp.project.BspScalaFilesCrcCalculator"/>
 
         <bspEnvironmentRunnerExtension implementation="org.jetbrains.bsp.project.test.environment.BspEnvironmentApplicationRunnerExtension"/>
@@ -60,7 +62,7 @@
 
         <projectConfigurable groupId="build.tools" displayName="BSP" instance="org.jetbrains.bsp.project.BspExternalSystemConfigurable" />
 
-        <toolWindow id="bsp" anchor="right"
+        <toolWindow id="BSP" anchor="right"
                     icon="/org/jetbrains/plugins/scala/bsp/images/toolWindowBuildServerProtocol.svg"
                     factoryClass="org.jetbrains.bsp.BspToolWindowFactory" />
 

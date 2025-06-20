@@ -7,6 +7,7 @@ import com.intellij.openapi.externalSystem.util.{ExternalSystemActivityKey, Exte
 import com.intellij.openapi.project.Project
 import kotlinx.coroutines.CoroutineScope
 import org.jetbrains.sbt.SbtUtil
+import org.jetbrains.sbt.project.autolink.SbtUnlinkedProjectAware
 
 private object SbtExternalSystemUtil {
 

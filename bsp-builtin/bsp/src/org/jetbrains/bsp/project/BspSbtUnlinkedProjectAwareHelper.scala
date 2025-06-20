@@ -2,7 +2,7 @@ package org.jetbrains.bsp.project
 
 import com.intellij.openapi.project.Project
 import org.jetbrains.bsp.settings.BspSettings
-import org.jetbrains.sbt.project.SbtUnlinkedProjectAwareHelper
+import org.jetbrains.sbt.project.autolink.SbtUnlinkedProjectAwareHelper
 
 class BspSbtUnlinkedProjectAwareHelper extends SbtUnlinkedProjectAwareHelper {
 

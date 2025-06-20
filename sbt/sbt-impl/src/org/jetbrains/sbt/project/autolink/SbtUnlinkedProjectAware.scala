@@ -1,20 +1,17 @@
-package org.jetbrains.sbt.project
+package org.jetbrains.sbt.project.autolink
 
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.externalSystem.autolink.{ExternalSystemProjectLinkListener, ExternalSystemUnlinkedProjectAware}
 import com.intellij.openapi.externalSystem.model.ProjectSystemId
-import com.intellij.openapi.externalSystem.settings.ExternalSystemSettingsListener
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
-import kotlin.coroutines.Continuation
 import org.jetbrains.sbt.Sbt
-import org.jetbrains.sbt.project.SbtUnlinkedProjectAware.Delegate
 import org.jetbrains.sbt.project.settings.SbtProjectSettings
+import org.jetbrains.sbt.project.{SbtOpenProjectProvider, SbtProjectSystem}
 import org.jetbrains.sbt.settings.SbtSettings
 
-import java.util
-import scala.jdk.CollectionConverters.IterableHasAsScala
+import kotlin.coroutines.Continuation
 
 //noinspection UnstableApiUsage,ApiStatus
 class SbtUnlinkedProjectAware extends ExternalSystemUnlinkedProjectAware {
@@ -36,25 +33,7 @@ class SbtUnlinkedProjectAware extends ExternalSystemUnlinkedProjectAware {
                          listener: ExternalSystemProjectLinkListener,
                          parentDisposable: Disposable): Unit = {
     val settings = SbtSettings.getInstance(project)
-    settings.subscribe(new Delegate(listener), parentDisposable)
-  }
-}
-
-object SbtUnlinkedProjectAware {
-
-  //noinspection ApiStatus,UnstableApiUsage
-  private class Delegate(listener: ExternalSystemProjectLinkListener)
-    extends ExternalSystemSettingsListener[SbtProjectSettings] {
-
-    override def onProjectsLinked(settings: util.Collection[SbtProjectSettings]): Unit =
-      settings.asScala.foreach(s => listener.onProjectLinked(s.getExternalProjectPath))
-
-    override def onProjectsUnlinked(linkedProjectPaths: util.Set[String]): Unit =
-      linkedProjectPaths.asScala.foreach(listener.onProjectUnlinked)
-
-    override def onProjectRenamed(oldName: String, newName: String): Unit = {}
-    override def onBulkChangeStart(): Unit = {}
-    override def onBulkChangeEnd(): Unit = {}
+    settings.subscribe(new UnlinkedProjectAwareSettingsListener[SbtProjectSettings](listener), parentDisposable)
   }
 }
 
