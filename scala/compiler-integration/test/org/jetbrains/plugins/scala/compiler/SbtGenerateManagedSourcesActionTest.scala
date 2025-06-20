@@ -5,7 +5,7 @@ import com.intellij.openapi.actionSystem.{ActionManager, ActionUiKind, AnActionE
 import com.intellij.openapi.compiler.CompilerMessageCategory
 import com.intellij.openapi.module.{Module, ModuleManager}
 import com.intellij.testFramework.CompilerTester
-import junit.framework.TestCase.{assertEquals, assertFalse, assertNotNull}
+import junit.framework.TestCase.{assertEquals, assertNotNull, assertTrue}
 import org.jetbrains.plugins.scala.SlowTests
 import org.jetbrains.plugins.scala.compiler.CompilerMessagesUtil.assertNoErrorsOrWarnings
 import org.junit.experimental.categories.Category
@@ -93,8 +93,8 @@ class SbtGenerateManagedSourcesActionTest extends SbtProjectCompilationTestBase 
     ).map(basePath.resolve)
 
     buildInfoGeneratedSourcePaths.foreach { path =>
-      val exists = Files.exists(path)
-      assertFalse(s"Generated source file $path should not exist", exists)
+      val deleted = Files.deleteIfExists(path)
+      assertTrue(s"Could not delete generated source file $path (generated during project import)", deleted)
     }
 
     val messages1 = compiler.make().asScala.toSeq
