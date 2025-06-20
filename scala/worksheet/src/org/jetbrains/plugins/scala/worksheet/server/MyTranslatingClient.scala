@@ -39,7 +39,7 @@ private class MyTranslatingClient(
   }
 
   override def message(msg: Client.ClientMsg): Unit = {
-    val Client.ClientMsg(kind, text, _, pointer, _, _, _) = msg
+    val Client.ClientMsg(kind, text, _, _, _, _, _) = msg
     val lines = (if (text == null) "" else text).split("\n")
     val linesLength = lines.length
 
@@ -73,6 +73,7 @@ private class MyTranslatingClient(
 
     val lineOffset = WorksheetDefaultSourcePreprocessor.LinesOffsetToFixErrorPositionInFile
 
+    val pointer = msg.pointer.orElse(msg.problemStart)
     val line1 = pointer.map(_.line - lineOffset).getOrElse(-1)
     val column1 = pointer.map(_.column - columnOffset).getOrElse(-1)
 
