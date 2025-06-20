@@ -30,7 +30,15 @@ class CompilerEventReporter(project: Project,
       // com.intellij.build.FilePosition contains 0-based line and column information, PosInfo expects 1-based indices.
       val problemStart = PosInfo(pos.getStartLine + 1, pos.getStartColumn + 1)
       val problemEnd = PosInfo(pos.getEndLine + 1, pos.getEndColumn + 1)
-      val msg = Client.ClientMsg(kind, stripAnsiCodes(text), Some(SerializablePath(pos.getFile.toPath)), Some(problemStart), Some(problemStart), Some(problemEnd), Nil)
+      val msg = Client.ClientMsg(
+        kind = kind,
+        text = stripAnsiCodes(text),
+        source = Some(SerializablePath(pos.getFile.toPath)),
+        pointer = None,
+        problemStart = Some(problemStart),
+        problemEnd = Some(problemEnd),
+        diagnostics = Nil
+      )
       val event = CompilerEvent.MessageEmitted(compilationId, None, None, msg)
       files.add(pos.getFile.toPath)
       publisher.eventReceived(event)
