@@ -9,6 +9,7 @@ import com.intellij.openapi.externalSystem.model.internal.InternalExternalProjec
 import com.intellij.openapi.externalSystem.model.project.ProjectData
 import com.intellij.openapi.externalSystem.model.{DataNode, ProjectSystemId}
 import com.intellij.openapi.externalSystem.service.execution.ProgressExecutionMode
+import com.intellij.openapi.externalSystem.service.project.manage.ExternalProjectsManagerImpl
 import com.intellij.openapi.externalSystem.service.project.wizard.{AbstractExternalProjectImportBuilder, AbstractExternalProjectImportProvider}
 import com.intellij.openapi.externalSystem.service.project.{ExternalProjectRefreshCallback, ProjectDataManager}
 import com.intellij.openapi.externalSystem.service.settings.AbstractImportFromExternalSystemControl
@@ -144,9 +145,11 @@ class BspOpenProjectProvider() extends AbstractOpenProjectProvider {
       new ImportSpecBuilder(project, BSP.ProjectSystemId)
         .usePreviewMode()
         .use(ProgressExecutionMode.MODAL_SYNC))
-    ExternalSystemUtil.refreshProject(externalProjectPath,
-      new ImportSpecBuilder(project, BSP.ProjectSystemId)
-        .callback(new FinalImportCallback(project, settings))): @nowarn("cat=deprecation") // TODO: SCL-23991
+    ExternalProjectsManagerImpl.getInstance(project).runWhenInitialized { () =>
+      ExternalSystemUtil.refreshProject(externalProjectPath,
+        new ImportSpecBuilder(project, BSP.ProjectSystemId)
+          .callback(new FinalImportCallback(project, settings))): @nowarn("cat=deprecation") // TODO: SCL-23991
+    }
   }
 
   // TODO duplicated with org.jetbrains.sbt.project.SbtOpenProjectProvider.FinalImportCallback
