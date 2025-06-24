@@ -17,12 +17,12 @@ package object prop {
 
   type Prop[A] = nyaya.prop.Logic[nyaya.prop.PropA, A]
 
-  implicit final class Prop_AnyExt[A](a: A) extends scala.AnyVal {
+  implicit class Prop_AnyExt[A](a: A) extends scala.AnyVal {
     @scala.annotation.elidable(2000)
     def assertSatisfies(p: nyaya.prop.Prop[A]): scala.Unit = ???
   }
 
-  implicit final class LogicPropExt[A](prop: nyaya.prop.Prop[A]) extends scala.AnyVal {
+  implicit class LogicPropExt[A](prop: nyaya.prop.Prop[A]) extends scala.AnyVal {
     @scala.inline
     def apply(a: A): nyaya.prop.Eval = ???
 

@@ -38,7 +38,10 @@ class ClassPrinter(isScala3: Boolean, extendsSeparator: String = " ", withPrivat
   private def printTo(sb: StringBuilder, cls: ScTypeDefinition, indent: String): Unit = {
     val annotations = cls.annotations.map(a => "\n" + indent + textOf(a)).mkString
 
-    val modifiers = textOf(cls.getModifierList)
+    val modifiers = {
+      val s = textOf(cls.getModifierList)
+      if (normalize && cls.isInstanceOf[ScClass] && cls.hasModifierProperty("implicit")) s.replace("final ", "") else s
+    }
 
     val keyword = cls match {
       case _: ScEnum => "enum"

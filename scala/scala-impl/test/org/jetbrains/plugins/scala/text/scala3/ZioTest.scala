@@ -24,17 +24,11 @@ class ZioTest extends TextToTextTestBase(
     "zio.RuntimeFlag", // reference constants
     "zio.Scope", // private type alias
     "zio.ZEnvironment", // izumi.reflect.macrortti
-    "zio.ZIO", // implicit conversion for implicit class
-    "zio.ZLayer", // implicit conversion for implicit class
+    "zio.ZLayer", // private[Derive]
     "zio.ZLogger", // izumi.reflect.macrortti
-    "zio.internal.FastList", // implicit conversion for implicit class
     "zio.internal.FiberRuntime", // x * y constant
     "zio.internal.LinkedQueue", // Int.MaxValue constant
-    "zio.internal.TerminalRendering", // implicit conversion for implicit class
-    "zio.internal.ansi", // no final, implicit conversion for implicit class
     "zio.internal.macros.LayerBuilder", // scala.List
-    "zio.internal.macros.LayerTree", // implicit conversion for implicit class
-    "zio.internal.macros.StringUtils", // no final, implicit conversion for implicit class
     "zio.internal.macros.ZLayerDerivationMacros", // Expr[...]
     "zio.metrics.MetricPair", // private type alias
     "zio.stm.STM", // zio.BuildFrom vs BuildFromCompat.this.BuildFrom
