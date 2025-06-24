@@ -221,7 +221,7 @@ class ScalaSigPrinter(builder: StringBuilder) {
 
     if (symbol.isSealed) print("sealed ")
     if (symbol.isImplicit) print("implicit ")
-    if (symbol.isFinal && !symbol.isInstanceOf[ObjectSymbol]) print("final ")
+    if (symbol.isFinal && !(symbol.isInstanceOf[ObjectSymbol] || symbol.isInstanceOf[ClassSymbol] && symbol.isImplicit)) print("final ")
     if (symbol.isAbstract) symbol match {
       case c@(_: ClassSymbol | _: ObjectSymbol) if !c.isTrait => print("abstract ")
       case _ => ()

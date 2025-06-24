@@ -17,6 +17,9 @@ object ScInterpolatedStringLiteralAnnotator extends ElementAnnotator[ScInterpola
 
   override def annotate(literal: ScInterpolatedStringLiteral, typeAware: Boolean)
                        (implicit holder: ScalaAnnotationHolder): Unit = {
+
+    if (!typeAware) return
+
     val partReference = literal.reference
     partReference.bind() match {
       case Some(_) =>

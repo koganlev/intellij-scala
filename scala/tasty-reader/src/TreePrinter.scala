@@ -46,13 +46,13 @@ class TreePrinter(privateMembers: Boolean = false, infixTypes: Boolean = false, 
   }
 
   private def isImplicitClass0(typeDef: Node): Boolean = {
-    def isImplicitConversion(node: Node) = node.is(DEFDEF) && node.contains(SYNTHETIC) && node.contains(IMPLICIT) && node.name == typeDef.name
-    typeDef.nextSibling.exists(isImplicitConversion)
+    def isImplicitConversion(node: Node) = node.is(DEFDEF) && node.contains(IMPLICIT) && node.name == typeDef.name // Sometimes there's no SYNTHETIC
+    typeDef.nextSibling.exists(isImplicitConversion) || typeDef.nextSiblings.slice(2, 3).exists(isImplicitConversion) // Sometimes there's no IMPLICIT
   }
 
   private def isImplicitConversion(defDef: Node): Boolean = {
     def isImplicitClass(node: Node) = node.is(TYPEDEF) && node.contains(IMPLICIT) && node.name == defDef.name
-    defDef.contains(IMPLICIT) && defDef.prevSibling.exists(isImplicitClass)
+    defDef.contains(IMPLICIT) && (defDef.prevSibling.exists(isImplicitClass) || defDef.prevSiblings.slice(2, 3).exists(isImplicitClass)) // Sometimes there's no SYNTHETIC
   }
 
   private def isPseudoPrivateTypeAlias(typeDef: Node): Boolean = !typeDef.firstChild.is(TEMPLATE) && {
@@ -195,7 +195,7 @@ class TreePrinter(privateMembers: Boolean = false, infixTypes: Boolean = false, 
     textOfAnnotationIn(sb, indent, node, "\n")
     sb ++= indent
     modifiersIn(sb, if (isObject) node.prevSibling.getOrElse(node) else node,
-      if (isGivenClass) Set(GIVEN) else (if (isEnum) Set(ABSTRACT, SEALED, CASE, FINAL) else Set.empty), isParameter = false, definition)
+      if (isGivenClass) Set(GIVEN) else (if (isEnum) Set(ABSTRACT, SEALED, CASE, FINAL) else (if (isImplicitClass) Set(IMPLICIT, FINAL) else Set.empty)), isParameter = false, definition)
     val modifiersEnd = sb.length
     if (isImplicitClass) {
       sb ++= "implicit "

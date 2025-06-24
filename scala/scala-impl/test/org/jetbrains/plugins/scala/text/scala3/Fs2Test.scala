@@ -17,9 +17,6 @@ class Fs2Test extends TextToTextTestBase(
   withSources = true,
   Set(
     "fs2.PullMonadErrorInstance", // Cannot resolve F[_]
-    "fs2.Stream", // private type ZipWithLeft, implicit conversion for implicit class
-    "fs2.concurrent.Signal", // implicit conversion for implicit class
-    "fs2.interop.flow.syntax", // implicit conversion for implicit class
-    "fs2.timeseries.TimeStamped", // implicit conversion for implicit class
+    "fs2.Stream", // private type ZipWithLeft
   )
 )

@@ -30,12 +30,12 @@ class Node(val addr: Addr, val tag: Int, val names: Seq[String], children0: () =
   // TODO private setter
   var prevSibling: Option[Node] = None
 
-  val nextSiblings: Iterator[Node] = Iterator.unfold(this)(_.nextSibling.map(x => (x, x)))
+  def nextSiblings: Iterator[Node] = Iterator.unfold(this)(_.nextSibling.map(x => (x, x)))
 
   // TODO can we use only previousSibling?
   var nextSibling: Option[Node] = None
 
-  val prevSiblings: Iterator[Node] = Iterator.unfold(this)(_.prevSibling.map(x => (x, x)))
+  def prevSiblings: Iterator[Node] = Iterator.unfold(this)(_.prevSibling.map(x => (x, x)))
 
   var refTag: Option[Int] = None
 
