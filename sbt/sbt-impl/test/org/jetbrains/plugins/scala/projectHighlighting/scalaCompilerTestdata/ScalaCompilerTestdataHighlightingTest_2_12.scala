@@ -45,5 +45,7 @@ class ScalaCompilerTestdataHighlightingTest_2_12 extends ScalaCompilerTestdataHi
 
   //SOE at pos/t0674.scala
   def testScalacTests(): Unit = doTest()
+
+  def test_t267(): Unit = doTest()
 }
 

@@ -304,24 +304,6 @@ abstract class ScTemplateDefinitionImpl[T <: ScTemplateDefinition] private[impl]
       case _ =>
     }
 
-    this match {
-      case constructorOwner: ScConstructorOwner  =>
-        constructorOwner.constructor match {
-          case Some(constr) if place != null && PsiTreeUtil.isContextAncestor(constr, place, false) =>
-          //ignore, should be processed in ScParameters
-          case _ =>
-            for (p <- constructorOwner.parameters) {
-              ProgressManager.checkCanceled()
-              if (processor.is[BaseProcessor]) {
-                // don't expose class parameters to Java.
-                if (!processor.execute(p, oldState))
-                  return false
-              }
-            }
-        }
-      case _ =>
-    }
-
     // Process selftype reference
     selfTypeElement match {
       case Some(se) if se.name != "_" => if (!processor.execute(se, oldState))
@@ -334,6 +316,24 @@ abstract class ScTemplateDefinitionImpl[T <: ScTemplateDefinition] private[impl]
       else                                             ScalaType.designator(this)
 
     val state = oldState.withFromType(fromType)
+
+    this match {
+      case constructorOwner: ScConstructorOwner  =>
+        constructorOwner.constructor match {
+          case Some(constr) if place != null && PsiTreeUtil.isContextAncestor(constr, place, false) =>
+          //ignore, should be processed in ScParameters
+          case _ =>
+            for (p <- constructorOwner.parameters) {
+              ProgressManager.checkCanceled()
+              if (processor.is[BaseProcessor]) {
+                // don't expose class parameters to Java.
+                if (!processor.execute(p, state))
+                  return false
+              }
+            }
+        }
+      case _ =>
+    }
 
     val eb = extendsBlock
     eb.templateParents match {

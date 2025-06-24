@@ -32,6 +32,8 @@ trait ScalaPsiBuilder extends PsiBuilder {
 
   def skipExternalToken(): Boolean
 
+  def isScala2: Boolean = !isScala3
+
   def isScala3: Boolean
 
   def isStrictMode: Boolean

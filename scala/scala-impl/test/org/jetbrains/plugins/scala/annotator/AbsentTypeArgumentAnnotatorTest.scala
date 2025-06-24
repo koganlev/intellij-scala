@@ -1,7 +1,8 @@
 package org.jetbrains.plugins.scala.annotator
 
 import org.intellij.lang.annotations.Language
-import org.jetbrains.plugins.scala.extensions.PsiElementExt
+import org.jetbrains.plugins.scala.annotator.Message.Error
+import org.jetbrains.plugins.scala.extensions.{ObjectExt, PsiElementExt}
 import org.jetbrains.plugins.scala.lang.psi.api.ScalaFile
 import org.jetbrains.plugins.scala.{ScalaBundle, ScalaVersion}
 
@@ -30,14 +31,9 @@ abstract class AbsentTypeArgumentAnnotatorTestBase extends AnnotatorSimpleTestCa
     implicit val mock: AnnotatorHolderMock = new AnnotatorHolderMock(file)
 
     file.depthFirst().foreach(annotator.annotate)
-    mock.annotations.filter(_.isInstanceOf[Error])
+    mock.annotations.filter(_.is[Error])
   }
-}
 
-class AbsentTypeArgumentAnnotatorTest_Scala2 extends AbsentTypeArgumentAnnotatorTestBase {
-  import Message._
-
-  override protected def scalaVersion: ScalaVersion = ScalaVersion.default
 
   def testSimple(): Unit = {
     assertMatches(messagesInContext("val x: A1 = null")){
@@ -60,11 +56,6 @@ class AbsentTypeArgumentAnnotatorTest_Scala2 extends AbsentTypeArgumentAnnotator
   def testConstructor(): Unit = {
     assertMatches(messagesInContext("val x = new A1()")){
       case Nil =>
-    }
-
-    //trait
-    assertMatches(messagesInContext("val x = new A2() {}")){
-      case List(Error(_, "Type A2 takes type parameters")) =>
     }
 
     assertMatches(messagesInContext("val x = new A1[A0]()")){
@@ -162,8 +153,18 @@ class AbsentTypeArgumentAnnotatorTest_Scala2 extends AbsentTypeArgumentAnnotator
   }
 }
 
-class AbsentTypeArgumentAnnotatorTest_Scala3 extends AbsentTypeArgumentAnnotatorTest_Scala2 {
+final class AbsentTypeArgumentAnnotatorTest_Scala2 extends AbsentTypeArgumentAnnotatorTestBase {
+  override protected def scalaVersion: ScalaVersion = ScalaVersion.Latest.Scala_2
 
+  def test_TraitConstructor(): Unit = {
+    //trait
+    assertMatches(messagesInContext("val x = new A2() {}")){
+      case List(Error(_, "Type A2 takes type parameters")) =>
+    }
+  }
+}
+
+final class AbsentTypeArgumentAnnotatorTest_Scala3 extends AbsentTypeArgumentAnnotatorTestBase {
   override protected def scalaVersion: ScalaVersion = ScalaVersion.Latest.Scala_3
 
   def testParameterlessFunctionWithStableReturnType(): Unit =
@@ -175,4 +176,10 @@ class AbsentTypeArgumentAnnotatorTest_Scala3 extends AbsentTypeArgumentAnnotator
         |}
         |""".stripMargin
     ))
+
+
+  def test_TraitConstructor(): Unit = {
+    //trait
+    assertNothing(messagesInContext("val x = new A2() {}"))
+  }
 }

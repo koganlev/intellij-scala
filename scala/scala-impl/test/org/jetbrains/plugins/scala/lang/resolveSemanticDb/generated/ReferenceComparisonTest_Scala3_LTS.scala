@@ -1711,7 +1711,7 @@ class ReferenceComparisonTest_Scala3_LTS extends ReferenceComparisonTestBase(org
   def test_i21742_2(): Unit = doTest("i21742.2", true)
   def test_i21755(): Unit = doTest("i21755", true)
   def test_i21757(): Unit = doTest("i21757", true)
-  def test_i21768(): Unit = doTest("i21768", false)
+  def test_i21768(): Unit = doTest("i21768", true)
   def test_i21769(): Unit = doTest("i21769", true)
   def test_i21779(): Unit = doTest("i21779", false) // #transparentInline, #spliced/quoted
   def test_i21790(): Unit = doTest("i21790", true)
@@ -2225,7 +2225,7 @@ class ReferenceComparisonTest_Scala3_LTS extends ReferenceComparisonTestBase(org
   def test_t247(): Unit = doTest("t247", true)
   def test_t252(): Unit = doTest("t252", true)
   def test_t262(): Unit = doTest("t262", true)
-  def test_t267(): Unit = doTest("t267", false)
+  def test_t267(): Unit = doTest("t267", true)
   def test_t0273(): Unit = doTest("t0273", true)
   def test_t284_pos(): Unit = doTest("t284-pos", true)
   def test_t287(): Unit = doTest("t287", true)

@@ -36,8 +36,6 @@ class ScalaCompilerTestdataHighlightingFailingTests_2_12 extends ScalaCompilerTe
 
   def `test_scala-singleton`(): Unit = doTest()
 
-  def test_t267(): Unit = doTest()
-
   def test_t389(): Unit = doTest()
 
   def test_t762(): Unit = doTest()
