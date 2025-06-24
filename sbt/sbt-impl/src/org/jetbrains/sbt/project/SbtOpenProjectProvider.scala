@@ -56,7 +56,8 @@ class SbtOpenProjectProvider extends AbstractOpenProjectProvider {
         ExternalSystemUtil.refreshProject(
           externalProjectPath,
           new ImportSpecBuilder(project, SbtProjectSystem.Id)
-            .callback(new FinalImportCallback(project, settings)): @nowarn("cat=deprecation") // TODO: SCL-23991
+            .withCallback(new FinalImportCallback(project, settings))
+            .withImportProjectData(false)
         )
       }
     }
