@@ -146,9 +146,12 @@ class BspOpenProjectProvider() extends AbstractOpenProjectProvider {
         .usePreviewMode()
         .use(ProgressExecutionMode.MODAL_SYNC))
     ExternalProjectsManagerImpl.getInstance(project).runWhenInitialized { () =>
-      ExternalSystemUtil.refreshProject(externalProjectPath,
+      ExternalSystemUtil.refreshProject(
+        externalProjectPath,
         new ImportSpecBuilder(project, BSP.ProjectSystemId)
-          .callback(new FinalImportCallback(project, settings))): @nowarn("cat=deprecation") // TODO: SCL-23991
+          .withCallback(new FinalImportCallback(project, settings))
+          .withImportProjectData(false)
+      )
     }
   }
 
