@@ -75,6 +75,147 @@ class MembersTypeAnnotationInspectionTest extends TypeAnnotationInspectionTest {
     expected = s"implicit def foo(): Foo"
   )
 
+  // SCL-22774
+  def testCaseClassApply(): Unit = checkTextHasNoErrors(
+    """
+      |case class Foo(x: Int)
+      |
+      |object Test {
+      |  val v1 = new Foo(1)
+      |  val v2 = Foo(1)
+      |}
+      |""".stripMargin
+  )
+
+  def testCustomApplyWithSameType(): Unit = checkTextHasNoErrors(
+    """
+      |class Foo(x: Int)
+      |object Foo {
+      |  def apply(x: Int): Foo = new Foo(x)
+      |}
+      |
+      |object Test {
+      |  val v1 = new Foo(1)
+      |  val v2 = Foo(1)
+      |}
+      |""".stripMargin
+  )
+
+  def testCustomApplyWithSameTypeTrait(): Unit = checkTextHasNoErrors(
+    """
+      |trait Foo
+      |object Foo {
+      |  def apply(x: Int): Foo = ???
+      |}
+      |
+      |object Test {
+      |  val v1 = Foo(1)
+      |}
+      |""".stripMargin
+  )
+
+  def testInheritedApply(): Unit = {
+    val preamble =
+      """
+        |trait Factory[T] {
+        |  def apply(x: Int): T = ???
+        |}
+        |trait Foo
+        |object Foo extends Factory[Foo]
+        |trait Bar
+        |object Bar extends Factory[Bar]
+        |trait Wrong
+        |object Wrong extends Factory[Foo]
+        |
+        |""".stripMargin
+
+
+    checkTextHasNoErrors(
+      s"""$preamble
+         |
+         |object Test {
+         |  val v1 = Foo(1)
+         |  val v2 = Bar(1)
+         |}
+         """.stripMargin
+    )
+
+    testQuickFix(
+      s"""$preamble
+         |object Test {
+         |  val ${START}v3$END = Wrong(1)
+         |}
+         |""".stripMargin,
+      s"""$preamble
+         |object Test {
+         |  val v3: Foo = Wrong(1)
+         |}
+         |""".stripMargin
+    )
+  }
+
+  def testCommonCollections(): Unit = checkTextHasNoErrors(
+    """
+      |object Imm {
+      |  import scala.collection.immutable._
+      |  val seq         = Seq(1, 2)
+      |  val list        = List(1, 2)
+      |  val indexedSeq  = IndexedSeq(1, 2)
+      |  val set         = Set(1, 2)
+      |  val sortedSet   = SortedSet(1, 2)
+      |  val hashSet     = HashSet(1, 2)
+      |  val map         = Map(1 -> 2, 3 -> 4)
+      |  val listMap     = ListMap(1 -> 2, 3 -> 4)
+      |  val longMap     = LongMap(1L -> 2L, 3L -> 4L)
+      |  val treeMap     = TreeMap(1 -> 2, 3 -> 4)
+      |  val lazyList    = LazyList(1, 2)
+      |  val vector      = Vector(1, 2)
+      |  val queue       = Queue(1, 2)
+      |  val bitSet      = BitSet()
+      |}
+      |
+      |object Mut {
+      |  import scala.collection.mutable._
+      |  val buffer       = Buffer(1, 2)
+      |  val array1       = Array(1, 2)
+      |  val array2       = Array[Int](1, 2)
+      |  val array3       = Array[Array[Int]](Array(1, 2), Array(3, 4))
+      |  val arrayBuffer  = ArrayBuffer(1, 2)
+      |  val arrayDequeue = ArrayDeque(1, 2)
+      |  val hashSet      = HashSet(1, 2)
+      |  val hashMap      = HashMap(1 -> 1, 2 -> 2)
+      |  val stack        = Stack(1, 2)
+      |}
+      |""".stripMargin
+  )
+
+  def testCustomApplyWithDifferentType(): Unit = testQuickFix(
+    text =
+      s"""
+         |class Foo(x: Int)
+         |object Foo {
+         |  def apply(x: Int): Int = x
+         |}
+         |
+         |object Test {
+         |  val v1 = new Foo(1)
+         |  val ${START}v2$END = Foo(1)
+         |}
+         |""".stripMargin,
+    expected =
+      """
+        |class Foo(x: Int)
+        |object Foo {
+        |  def apply(x: Int): Int = x
+        |}
+        |
+        |object Test {
+        |  val v1 = new Foo(1)
+        |  val v2: Int = Foo(1)
+        |}
+        |""".stripMargin
+  )
+
   override protected def createTestText(text: String): String =
     s"""
        |class Foo
@@ -90,7 +231,7 @@ class MembersTypeAnnotationInspectionTest extends TypeAnnotationInspectionTest {
 class MembersTypeAnnotationInspectionTest_Scala3 extends TypeAnnotationInspectionTest {
   override protected def supportedIn(version: ScalaVersion): Boolean = version.isScala3
 
-  //Using "test1" + 42 in test data in order it's not just a primitive type in RHS
+  //Using "test1" + 42 in test data in order, it's not just a primitive type in RHS
   def testExtensionMethods(): Unit = testQuickFix(
     text =
       s"""extension (s: String)

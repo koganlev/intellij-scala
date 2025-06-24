@@ -4,12 +4,10 @@ import com.intellij.psi.{PsiElement, PsiEnumConstant, PsiMethod}
 import org.jetbrains.plugins.scala.extensions._
 import org.jetbrains.plugins.scala.lang.lexer.ScalaTokenTypes
 import org.jetbrains.plugins.scala.lang.psi.api.ScalaPsiElement
-import org.jetbrains.plugins.scala.lang.psi.api.base.{ScLiteral, ScPrimaryConstructor}
+import org.jetbrains.plugins.scala.lang.psi.api.base.ScLiteral
 import org.jetbrains.plugins.scala.lang.psi.api.expr._
 import org.jetbrains.plugins.scala.lang.psi.api.statements._
-import org.jetbrains.plugins.scala.lang.psi.api.toplevel.typedef.ScObject
-import org.jetbrains.plugins.scala.lang.psi.types.api.designator.DesignatorOwner
-import org.jetbrains.plugins.scala.lang.psi.types.result.Typeable
+import org.jetbrains.plugins.scala.lang.psi.api.toplevel.typedef.{ScClass, ScObject, ScTypeDefinition}
 import org.jetbrains.plugins.scala.lang.resolve.ScalaResolveResult
 
 import scala.annotation.tailrec
@@ -33,7 +31,7 @@ sealed abstract class Implementation {
            _: ScThrow |
            ScReferenceExpression(_: PsiEnumConstant) |
            StableApplyCall() |
-           ScMethodCall(StableApplyCall() | UniversalApply(), _) |
+           MethodInvocation(StableApplyCall() | UniversalApply(), _) |
            EmptyCollectionFactoryCall(_) => true
       case _ => false
     }
@@ -132,19 +130,38 @@ case class Expression(expression: ScExpression) extends Implementation {
 object Implementation {
 
   private object StableApplyCall {
-    def unapply(reference: ScReferenceExpression): Boolean =
-      reference.bind()
-        .filter(referencesObject)
-        .flatMap(_.innerResolveResult)
-        .map(_.element)
-        .flatMap(_.asOptionOf[ScFunction])
-        .exists(_.isApplyMethod)
+    @tailrec
+    def unapply(expr: ScExpression): Boolean = {
+      expr match {
+        case ref: ScReferenceExpression => ref.bind().exists(isApplyMethodOfSameType)
+        case call: ScGenericCall => unapply(call.referencedExpr)
+        case _ => false
+      }
+    }
 
-    private def referencesObject(rr: ScalaResolveResult): Boolean =
-      rr.element.asOptionOfUnsafe[Typeable]
-        .flatMap(_.`type`().toOption)
-        .flatMap(_.asOptionOf[DesignatorOwner])
-        .exists(_.element.is[ScObject])
+
+    private def isApplyMethodOfSameType(rr: ScalaResolveResult): Boolean = {
+      val obj = rr.parentElement match {
+        case Some(obj: ScObject) => obj
+        case _ => return false
+      }
+
+      val call = rr.element match {
+        case fun: ScFunction if fun.isApplyMethod => fun
+        case _ => return false
+      }
+
+      // Check that the returned type is the companion of the object the apply method is in
+      call.returnType
+        .toOption
+        .map(rr.substitutor)
+        .flatMap(_.extractClass)
+        .exists {
+          case c: ScTypeDefinition =>
+            obj.baseCompanion.contains(c)
+          case _ => false
+        }
+    }
   }
 
   private object UniversalApply {
