@@ -30,8 +30,7 @@ class TypeAnnotationInspection extends LocalInspectionTool {
     case (parameter: ScParameter) & Parent(Parent(Parent(_: ScFunctionExpr))) if parameter.typeElement.isEmpty =>
       inspect(parameter, parameter.nameId, implementation = None, holder)
     case (underscore: ScUnderscoreSection) & Parent(parent) if underscore.getTextRange.getLength == 1 &&
-      !parent.isInstanceOf[ScTypedExpression] && !parent.isInstanceOf[ScFunctionDefinition] &&
-      !parent.isInstanceOf[ScPatternDefinition] && !parent.isInstanceOf[ScVariableDefinition] =>
+      !parent.is[ScTypedExpression, ScFunctionDefinition, ScPatternDefinition, ScVariableDefinition] =>
       inspect(underscore, underscore, implementation = None, holder)
     case _ =>
   }
@@ -68,8 +67,9 @@ object TypeAnnotationInspection {
     }
   }
 
-  @nowarn("cat=deprecation")
-  private class ModifyCodeStyleQuickFix extends LocalQuickFixBase(ScalaInspectionBundle.message("quickfix.modify.code.style")) {
+  private class ModifyCodeStyleQuickFix extends LocalQuickFix {
+    override def getFamilyName: String = ScalaInspectionBundle.message("quickfix.modify.code.style")
+
     override def applyFix(project: Project, problemDescriptor: ProblemDescriptor): Unit =
       TypeAnnotationUtil.showTypeAnnotationsSettings(project)
 
