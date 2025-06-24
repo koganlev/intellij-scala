@@ -37,7 +37,7 @@ abstract class ScExtractorPatternImpl(node: ASTNode) extends ScalaPsiElementImpl
       }
     }
 
-    target.forall(_.isIrrefutable) &&
+    target.exists(_.isIrrefutable) &&
       (!deep || subpatternsMatch)
   }
 }
