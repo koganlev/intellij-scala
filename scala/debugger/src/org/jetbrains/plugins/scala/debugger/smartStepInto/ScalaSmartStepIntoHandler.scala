@@ -182,7 +182,7 @@ class ScalaSmartStepIntoHandler extends JvmSmartStepIntoHandler {
           return //stop at function expression
         case ref: ScReferenceExpression =>
           ref.resolve() match {
-            case fun: ScFunctionDefinition if fun.name == "apply" && ref.refName != "apply" =>
+            case fun: ScFunctionDefinition if fun.isApplyMethod && ref.refName != "apply" =>
               val prefix = s"${ref.refName}."
               result += new MethodSmartStepTarget(fun, prefix, ref.nameId, false, noStopAtLines)
             case (f: ScFunctionDefinition) & ContainingClass(cl: ScClass) if cl.getModifierList.hasModifierProperty("implicit") =>
@@ -202,8 +202,7 @@ class ScalaSmartStepIntoHandler extends JvmSmartStepIntoHandler {
       if (!elementFilter(pat)) return
 
       val ref = pat match {
-        case cp: ScConstructorPattern =>  Some(cp.ref)
-        case ip: ScInfixPattern => Some(ip.operation)
+        case cp: ScExtractorPattern =>  Some(cp.ref)
         case _ => None
       }
       ref match {

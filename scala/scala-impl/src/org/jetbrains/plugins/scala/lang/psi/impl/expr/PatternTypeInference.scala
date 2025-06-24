@@ -57,7 +57,7 @@ object PatternTypeInference {
       case ScParenthesisedPattern(inner)    => getPatternType(inner, scrutineeType)
       case stable: ScStableReferencePattern => emptySubst(stable.`type`().getOrNothing)
       case extractor: ScExtractorPattern =>
-        val unapplySrr = ExpandedExtractorResolveProcessor.resolveActualUnapply(extractor.ref)
+        val unapplySrr = ExpandedExtractorResolveProcessor.resolveActualUnapply(extractor.ref, Some(scrutineeType))
 
         unapplySrr match {
           case Some(ScalaResolveResult(fun: ScFunctionDefinition, subst)) =>

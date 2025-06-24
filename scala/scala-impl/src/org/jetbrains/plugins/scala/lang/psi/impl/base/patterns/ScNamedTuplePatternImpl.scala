@@ -9,7 +9,7 @@ import org.jetbrains.plugins.scala.lang.psi.types.result.TypeResult
 
 class ScNamedTuplePatternImpl(node: ASTNode) extends ScalaPsiElementImpl(node) with ScPatternImpl with ScNamedTuplePattern {
 
-  override def isIrrefutableForImpl(t: Option[ScType]): Boolean = t.exists {
+  override def isIrrefutableForImpl(scrutineeType: ScType, deep: Boolean): Boolean = scrutineeType match {
     case NamedTupleType(incomingComps) =>
       val incoming = NamedTupleType.makeComponentMap(incomingComps)
       components.forall {
@@ -18,7 +18,7 @@ class ScNamedTuplePatternImpl(node: ASTNode) extends ScalaPsiElementImpl(node) w
           incoming
             .get(expectedName)
             .exists(
-              incomingTy => expectedPattern.isIrrefutableFor(Some(incomingTy))
+              incomingTy => !deep || expectedPattern.isIrrefutableFor(incomingTy, deep)
             )
         case _ =>
           false

@@ -6,6 +6,7 @@ import org.jetbrains.plugins.scala.extensions._
 import org.jetbrains.plugins.scala.lang.psi.api.statements.params.TypeParamIdOwner
 import org.jetbrains.plugins.scala.lang.psi.api.statements.{ScTypeAlias, ScTypeAliasDefinition}
 import org.jetbrains.plugins.scala.lang.psi.impl.ScalaPsiManager
+import org.jetbrains.plugins.scala.lang.psi.impl.base.literals.ScBooleanLiteralImpl
 import org.jetbrains.plugins.scala.lang.psi.types.api.StdType.Name
 import org.jetbrains.plugins.scala.lang.psi.types.api.designator.{DesignatorOwner, ScDesignatorType, ScProjectionType, ScThisType}
 import org.jetbrains.plugins.scala.lang.psi.types.api.presentation.TypePresentation.shouldExpand
@@ -109,6 +110,9 @@ package object types {
       case _: ValType => !isUnit
       case _          => false
     }
+
+    def equivalentToLiteral(b: Boolean)(implicit context: Context): Boolean =
+      scType.equiv(ScLiteralType(ScBooleanLiteralImpl.Value(b), allowWiden = false)(projectContext.project))
 
     def isNumericType: Boolean = scType match {
       case valType: ValType => stdTypes.allNumericTypes.contains(valType)
@@ -456,7 +460,7 @@ package object types {
   def extractTypeParameters(ty: ScType, visited: Set[ScTypeAlias] = Set.empty)(implicit context: Context): Seq[TypeParameter] = ty match {
     case _: ScThisType                    => Seq.empty
     case designatorOwner: DesignatorOwner =>
-      designatorOwner.extractDesignated(false) match {
+      designatorOwner.extractDesignated(expandAliases = false) match {
         case Some(ta: ScTypeAlias) =>
           if (ta.typeParameters.isEmpty) ta.lowerBound.toSeq.flatMap(extractTypeParameters(_, visited))
           else ta.typeParameters.map(TypeParameter(_))

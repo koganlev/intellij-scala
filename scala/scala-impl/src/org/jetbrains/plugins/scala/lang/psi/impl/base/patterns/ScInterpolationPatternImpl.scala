@@ -2,12 +2,16 @@ package org.jetbrains.plugins.scala.lang.psi.impl.base
 package patterns
 
 import com.intellij.lang.ASTNode
-import org.jetbrains.plugins.scala.lang.psi.api.base.patterns.ScInterpolationPattern
+import org.jetbrains.plugins.scala.lang.psi.api.base.ScStableCodeReference
+import org.jetbrains.plugins.scala.lang.psi.api.base.patterns.{ScInterpolationPattern, ScPattern}
 import org.jetbrains.plugins.scala.lang.psi.impl.base.literals.QuotedLiteralImplBase
 
-final class ScInterpolationPatternImpl(node: ASTNode) extends ScConstructorPatternImpl(node) with ScInterpolationPattern {
-
+final class ScInterpolationPatternImpl(node: ASTNode) extends ScExtractorPatternImpl(node) with ScInterpolationPattern {
   override def toString: String = "InterpolationPattern"
+
+  override def ref: ScStableCodeReference = findChild[ScStableCodeReference].get
+
+  override def subpatterns: Seq[ScPattern] = if (args != null) args.patterns else Seq.empty
 
   override def isMultiLineString: Boolean = getText.endsWith(QuotedLiteralImplBase.MultiLineQuote)
 }

@@ -5,7 +5,7 @@ import com.intellij.refactoring.changeSignature.{ChangeInfo, JavaChangeInfo}
 import com.intellij.usageView.UsageInfo
 import org.jetbrains.plugins.scala.extensions._
 import org.jetbrains.plugins.scala.lang.psi.ScalaPsiUtil
-import org.jetbrains.plugins.scala.lang.psi.api.base.patterns.{ScBindingPattern, ScConstructorPattern, ScInfixPattern, ScPattern}
+import org.jetbrains.plugins.scala.lang.psi.api.base.patterns.{ScBindingPattern, ScConstructorPattern, ScInfixPattern, ScInterpolationPattern, ScPattern}
 import org.jetbrains.plugins.scala.lang.psi.api.base.{ScConstructorInvocation, ScPrimaryConstructor, ScReference}
 import org.jetbrains.plugins.scala.lang.psi.api.expr._
 import org.jetbrains.plugins.scala.lang.psi.api.statements.ScFunction
@@ -147,6 +147,8 @@ private[changeSignature] trait PatternUsageInfo {
 }
 
 private[changeSignature] case class ConstructorPatternUsageInfo(override val pattern: ScConstructorPattern) extends UsageInfo(pattern) with PatternUsageInfo
+
+private[changeSignature] case class InterpolationPatternUsageInfo(override val pattern: ScInterpolationPattern) extends UsageInfo(pattern) with PatternUsageInfo
 
 private[changeSignature] case class InfixPatternUsageInfo(override val pattern: ScInfixPattern) extends UsageInfo(pattern) with PatternUsageInfo
 

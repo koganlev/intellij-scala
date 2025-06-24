@@ -15,7 +15,7 @@ import org.jetbrains.plugins.scala.autoImport.quickFix.ScalaImportTypeFix
 import org.jetbrains.plugins.scala.codeInspection.varCouldBeValInspection.ValToVarQuickFix
 import org.jetbrains.plugins.scala.extensions._
 import org.jetbrains.plugins.scala.lang.psi.ScalaPsiUtil
-import org.jetbrains.plugins.scala.lang.psi.api.base.patterns.{ScConstructorPattern, ScInfixPattern, ScPattern}
+import org.jetbrains.plugins.scala.lang.psi.api.base.patterns.{ScConstructorPattern, ScExtractorPattern, ScInfixPattern, ScPattern}
 import org.jetbrains.plugins.scala.lang.psi.api.base.types.ScSimpleTypeElement
 import org.jetbrains.plugins.scala.lang.psi.api.base.{ScMethodLike, ScReference, ScStableCodeReference}
 import org.jetbrains.plugins.scala.lang.psi.api.expr._
@@ -309,7 +309,7 @@ object ScReferenceAnnotator extends ElementAnnotator[ScReference] {
           td => new CreateApplyQuickFix(td, mc)
         ) =>
           return
-        case (p: ScPattern) & (_: ScConstructorPattern | _: ScInfixPattern) =>
+        case (p: ScPattern) & (_: ScExtractorPattern) =>
           val errorWithRefName: String => String = ScalaBundle.message("cannot.resolve.unapply.method", _)
           if (addCreateApplyOrUnapplyFix(errorWithRefName, td => new CreateUnapplyQuickFix(td, p))) return
         case scalaDocTag: ScDocTag if scalaDocTag.name == MyScaladocParsing.TagNames.Throws =>
@@ -508,7 +508,7 @@ object ScReferenceAnnotator extends ElementAnnotator[ScReference] {
       case st: ScSimpleTypeElement if st.annotation =>
         new CreateAnnotationClassQuickFix(reference) ::
           Nil
-      case pattern@(_: ScConstructorPattern | _: ScInfixPattern) =>
+      case pattern@(_: ScExtractorPattern) =>
         new CreateCaseClassQuickFix(reference) ::
           new CreateExtractorObjectQuickFix(reference, pattern.asInstanceOf[ScPattern]) ::
           Nil

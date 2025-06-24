@@ -3,7 +3,6 @@ package patterns
 
 trait ScConstructorPattern extends ScExtractorPattern {
   def args: ScPatternArgumentList = findChild[ScPatternArgumentList].get
-  override def ref: ScStableCodeReference = findChild[ScStableCodeReference].get
 }
 
 object ScConstructorPattern {

@@ -8,7 +8,8 @@ import org.jetbrains.plugins.scala.lang.psi.types.ScType
 import org.jetbrains.plugins.scala.lang.psi.types.result.TypeResult
 
 class ScParenthesisedPatternImpl(node: ASTNode) extends ScalaPsiElementImpl (node) with ScPatternImpl with ScParenthesisedPattern {
-  override def isIrrefutableForImpl(t: Option[ScType]): Boolean = innerElement.exists(_.isIrrefutableFor(t))
+  override def isIrrefutableForImpl(scrutineeType: ScType, deep: Boolean): Boolean =
+    !deep || innerElement.forall(_.isIrrefutableFor(scrutineeType, deep))
 
   override def toString: String = "PatternInParenthesis"
 

@@ -59,10 +59,7 @@ trait ScPatternImpl extends ScPattern {
     visitor.visitPattern(this)
   }
 
-  override def subpatterns: Seq[ScPattern] = this match {
-    case _: ScReferencePattern => Seq.empty
-    case _ => findChildren[ScPattern]
-  }
+  override def subpatterns: Seq[ScPattern] = findChildren[ScPattern]
 
   override def analogInDesugaredForExpr: Option[ScPattern] = {
     Some(getContext)

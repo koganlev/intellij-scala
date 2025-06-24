@@ -17,7 +17,7 @@ import org.jetbrains.plugins.scala.extensions._
 import org.jetbrains.plugins.scala.lang.psi.ScalaPsiUtil
 import org.jetbrains.plugins.scala.lang.psi.api.ImplicitArgumentsOwner
 import org.jetbrains.plugins.scala.lang.psi.api.base._
-import org.jetbrains.plugins.scala.lang.psi.api.base.patterns.ScConstructorPattern
+import org.jetbrains.plugins.scala.lang.psi.api.base.patterns.ScExtractorPattern
 import org.jetbrains.plugins.scala.lang.psi.api.base.types.{ScParameterizedTypeElement, ScTypeArgs, ScTypeElement}
 import org.jetbrains.plugins.scala.lang.psi.api.expr._
 import org.jetbrains.plugins.scala.lang.psi.api.statements.ScFunction
@@ -363,8 +363,8 @@ object SafeDeleteProcessorUtil {
           }
 
           element.getParent match {
-            case ScConstructorPattern(_, args) =>
-              args.patterns.lift(parameter.index).foreach { arg =>
+            case extractorPattern: ScExtractorPattern =>
+              extractorPattern.argPatterns.lift(parameter.index).foreach { arg =>
                 usages.add(new SafeDeleteScalaArgumentDeleteUsageInfo(arg, parameter, false))
               }
             case _ =>

@@ -1,7 +1,7 @@
 package org.jetbrains.plugins.scala.lang.resolve
 
 import org.jetbrains.plugins.scala.lang.psi.api.base.ScStableCodeReference
-import org.jetbrains.plugins.scala.lang.psi.api.base.patterns.{ScConstructorPattern, ScInfixPattern, ScInterpolationPattern}
+import org.jetbrains.plugins.scala.lang.psi.api.base.patterns.ScExtractorPattern
 import org.jetbrains.plugins.scala.lang.psi.api.toplevel.imports.{ScImportExpr, ScImportSelector}
 import org.jetbrains.plugins.scala.lang.resolve.processor._
 
@@ -34,12 +34,8 @@ class StableCodeReferenceResolver(
 
       case sel: ScImportSelector if !sel.isWildcardSelector =>
         new CollectAllForImportProcessor(kinds, ref, refName)
-      case constr: ScInterpolationPattern =>
+      case constr: ScExtractorPattern =>
         new ExtractorResolveProcessor(ref, refName, kinds, constr.expectedType)
-      case constr: ScConstructorPattern =>
-        new ExtractorResolveProcessor(ref, refName, kinds, constr.expectedType)
-      case infix: ScInfixPattern =>
-        new ExtractorResolveProcessor(ref, refName, kinds, infix.expectedType)
       case _ =>
         new ResolveProcessor(kinds, ref, refName)
     }

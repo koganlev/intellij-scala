@@ -421,4 +421,69 @@ class FindUsagesTest_Scala2 extends FindUsagesTestBase {
          |}
          |""".stripMargin
     )
+
+  def testFindUnapply(): Unit =
+    doTest(
+      s"""
+         |object Test {
+         |  def unapply(s: String): Option[Int] = Some(x)
+         |  def ${CARET}unapply(x: Int): Option[Int] = Some(x)
+         |}
+         |
+         |val Test(unrelated) = "hehe"
+         |val ${start}Test$end(x) = 42
+         |""".stripMargin
+    )
+
+  def testFindUnapplySeq(): Unit =
+    doTest(
+      s"""
+         |object Test {
+         |  def ${CARET}unapplySeq(x: Int): Option[Seq[Int]] = Some(Seq.empty)
+         |}
+         |
+         |val ${start}Test$end(x, y, z) = 42
+         |""".stripMargin
+    )
+
+  def testFindUnapplyInfix(): Unit =
+    doTest(
+      s"""
+         |object Test {
+         |  def ${CARET}unapply(x: Int): Option[(Int, Int)] = Some(x)
+         |}
+         |
+         |val x ${start}Test$end y = 42
+         |""".stripMargin
+    )
+
+  def testFindUnapplyInterpolated(): Unit =
+    doTest(
+      s"""
+         |implicit class StringContextExt(val sc: StringContext) extends AnyVal {
+         |  object x {
+         |    def unapply(x: String): Option[(String, String)] = Some(x -> x)
+         |    def ${CARET}unapply(x: Int): Option[(Int, Int)] = Some(x -> x)
+         |  }
+         |}
+         |
+         |val x"$$unr $$unr2" = "test"
+         |val ${start}x$end"$${_} $$a" = 42
+         |""".stripMargin
+    )
+
+  def testFindUnapplySeqInterpolated(): Unit =
+    doTest(
+      s"""
+         |implicit class StringContextExt(val sc: StringContext) extends AnyVal {
+         |  object x {
+         |    def unapplySeq(x: String): Option[Seq[Int]] = Some(Seq.empty)
+         |    def ${CARET}unapplySeq(x: Int): Option[Seq[Int]] = Some(Seq.empty)
+         |  }
+         |}
+         |
+         |val x"$$unr $$unr2" = "test"
+         |val ${start}x$end"$${_} $$a" = 42
+         |""".stripMargin
+    )
 }

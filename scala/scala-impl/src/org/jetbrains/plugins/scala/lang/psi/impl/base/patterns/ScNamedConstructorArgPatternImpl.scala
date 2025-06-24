@@ -14,5 +14,6 @@ class ScNamedConstructorArgPatternImpl(node: ASTNode) extends ScalaPsiElementImp
 
   override def `type`(): TypeResult = this.flatMap(subPattern)(_.`type`())
 
-  override protected def isIrrefutableForImpl(t: Option[ScType]): Boolean = subPattern.forall(_.isIrrefutableFor(t))
+  override protected def isIrrefutableForImpl(scrutineeType: ScType, deep: Boolean): Boolean =
+    !deep || subPattern.forall(_.isIrrefutableFor(scrutineeType, deep))
 }

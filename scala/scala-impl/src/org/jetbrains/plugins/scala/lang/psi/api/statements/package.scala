@@ -2,7 +2,7 @@ package org.jetbrains.plugins.scala.lang.psi.api
 
 import com.intellij.psi.PsiElement
 import org.jetbrains.plugins.scala.extensions.{ElementText, _}
-import org.jetbrains.plugins.scala.lang.psi.api.base.patterns.{ScConstructorPattern, ScInfixPattern}
+import org.jetbrains.plugins.scala.lang.psi.api.base.patterns.ScExtractorPattern
 import org.jetbrains.plugins.scala.lang.psi.api.base.{ScConstructorInvocation, ScReference, ScStableCodeReference}
 import org.jetbrains.plugins.scala.lang.psi.api.expr._
 import org.jetbrains.plugins.scala.lang.psi.api.statements.params.{ScParameterClause, ScTypeParam}
@@ -82,8 +82,7 @@ package object statements {
           reference.getParent match {
             case ChildOf(_: ScConstructorInvocation) =>
               function.isConstructor && function.containingClass.nullSafe.exists(_.name == refName)
-            case ScConstructorPattern(`reference`, _) |
-                 ScInfixPattern(_, `reference`, _) =>
+            case pattern: ScExtractorPattern if pattern.ref == reference =>
               function.isUnapplyMethod
             case _ => false
           }

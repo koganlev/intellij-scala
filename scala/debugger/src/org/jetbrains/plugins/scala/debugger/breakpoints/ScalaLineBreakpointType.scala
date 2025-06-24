@@ -24,7 +24,7 @@ import org.jetbrains.plugins.scala.debugger.{DebuggerBundle, ScalaLambdaSourcePo
 import org.jetbrains.plugins.scala.extensions._
 import org.jetbrains.plugins.scala.lang.lexer.ScalaTokenTypes
 import org.jetbrains.plugins.scala.lang.psi.api.ScalaFile
-import org.jetbrains.plugins.scala.lang.psi.api.base.patterns.{ScConstructorPattern, ScInfixPattern}
+import org.jetbrains.plugins.scala.lang.psi.api.base.patterns.ScExtractorPattern
 import org.jetbrains.plugins.scala.lang.psi.api.expr.{ScExpression, ScFunctionExpr}
 import org.jetbrains.plugins.scala.lang.psi.api.statements.ScFunction
 import org.jetbrains.plugins.scala.lang.psi.api.toplevel.templates.ScTemplateBody
@@ -55,7 +55,7 @@ class ScalaLineBreakpointType extends JavaLineBreakpointType("scala-line", Debug
       case ElementType(ScalaTokenTypes.kPACKAGE | ScalaTokenTypes.kIMPORT)  => false
       case _: PsiWhiteSpace                                                 => true
       case e if PsiTreeUtil.getParentOfType(e, classOf[PsiComment]) != null => true
-      case e if PsiTreeUtil.getParentOfType(e, classOf[ScExpression], classOf[ScConstructorPattern], classOf[ScInfixPattern], classOf[ScClass]) != null =>
+      case e if PsiTreeUtil.getParentOfType(e, classOf[ScExpression], classOf[ScExtractorPattern], classOf[ScClass]) != null =>
         result = true
         false
       case _ => true

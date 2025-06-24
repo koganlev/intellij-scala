@@ -25,7 +25,7 @@ class CaseClassParametersCompletionContributor extends ScalaCompletionContributo
       override def addCompletions(parameters: CompletionParameters, context: ProcessingContext, result: CompletionResultSet): Unit = {
         val position = positionFromParameters(parameters)
 
-        val maybeParametersOwner = position.findContextOfType(classOf[ScConstructorPattern]).collect {
+        val maybeParametersOwner = position.findContextOfType(classOf[ScExtractorPattern]).collect {
           case ScConstructorPattern(ScReference(function: ScFunctionDefinition), _) => function
         }.flatMap { function =>
           function.syntheticCaseClass.orElse {

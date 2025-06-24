@@ -7,7 +7,7 @@ import com.intellij.psi.scope._
 import com.intellij.psi.tree.IElementType
 import org.jetbrains.plugins.scala.ScalaBundle
 import org.jetbrains.plugins.scala.caches.{BlockModificationTracker, cached}
-import org.jetbrains.plugins.scala.extensions.{IterableOnceExt, Model, ObjectExt, PsiElementExt, StringsExt}
+import org.jetbrains.plugins.scala.extensions.{BooleanExt, IterableOnceExt, Model, ObjectExt, PsiElementExt, StringsExt}
 import org.jetbrains.plugins.scala.lang.lexer.{ScalaModifier, ScalaTokenTypes}
 import org.jetbrains.plugins.scala.lang.psi.ScalaPsiUtil
 import org.jetbrains.plugins.scala.lang.psi.api.base.patterns._
@@ -17,6 +17,7 @@ import org.jetbrains.plugins.scala.lang.psi.impl.ScalaCode._
 import org.jetbrains.plugins.scala.lang.psi.impl.ScalaPsiElementFactory
 import org.jetbrains.plugins.scala.lang.psi.impl.expr.ScForImpl._
 import org.jetbrains.plugins.scala.lang.psi.types.ScType
+import org.jetbrains.plugins.scala.lang.psi.types.api.StdTypes
 import org.jetbrains.plugins.scala.lang.psi.types.result._
 import org.jetbrains.plugins.scala.lang.resolve.StdKinds
 import org.jetbrains.plugins.scala.lang.resolve.processor.CompletionProcessor
@@ -199,7 +200,9 @@ class ScForImpl(node: ASTNode) extends ScExpressionImplBase(node) with ScFor wit
     def canSkipPatternMatchFilter(pattern: ScPattern): Boolean = {
       val features = pattern.features
 
-      lazy val isIrrefutablePattern = pattern.isIrrefutableFor(if (forDisplay) pattern.expectedType else None)
+      lazy val isIrrefutablePattern = pattern.isIrrefutableFor(
+        forDisplay.option(pattern.expectedType).flatten.getOrElse(StdTypes.instance.Any)
+      )
 
       if (features.isScala3) {
         val hasCase = pattern.prevSiblingNotWhitespace.exists(_.getNode.getElementType == ScalaTokenTypes.kCASE)
@@ -620,6 +623,7 @@ object ScForImpl {
       case _: ScReferencePattern => false
       case _: ScTuplePattern => false
       case _: ScConstructorPattern => false
+      case _: ScInterpolationPattern => false
       case _: ScParenthesisedPattern => false
       case _: ScStableReferencePattern => false
       case _ => true

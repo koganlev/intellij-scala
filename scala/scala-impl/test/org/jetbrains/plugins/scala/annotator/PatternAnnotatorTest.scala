@@ -401,7 +401,7 @@ class PatternAnnotatorTest extends PatternAnnotatorTestBase {
       """.stripMargin
     assertErrors(code, List(
       Error("foo appliedTo2 (\"1\")", ScalaBundle.message("wrong.number.arguments.extractor", "2", "3")),
-      Error("foo appliedTo2 ()", ScalaBundle.message("wrong.number.arguments.extractor", "2", "3"))
+      Error("foo appliedTo2 ()", ScalaBundle.message("wrong.number.arguments.extractor", "1", "3"))
     ))
     assertNoWarnings(code)
   }
@@ -891,8 +891,9 @@ class PatternAnnotatorTest_Scala3_4 extends PatternAnnotatorTestBase {
       |}
       |""".stripMargin,
     List(
-      Error("(a, b)", "Pattern's type (Any, Any) is more specialized than the right hand side expression's type Any"),
-      Error("(e, f)", "Pattern's type (Any, Any) is more specialized than the right hand side expression's type Any"),
+      // According to specs this should be an error, but the compiler doesn't do that
+      Warning("(a, b)", "Pattern (a, b) is not irrefutable for Any"),
+      Warning("(e, f)", "Pattern (e, f) is not irrefutable for Any"),
     )
   )
 }
@@ -911,8 +912,44 @@ class PatternAnnotatorTest_Scala3_2 extends PatternAnnotatorTestBase {
       |}
       |""".stripMargin,
     List(
-      Warning("(a, b)", "Pattern's type (Any, Any) is more specialized than the right hand side expression's type Any"),
-      Warning("(e, f)", "Pattern's type (Any, Any) is more specialized than the right hand side expression's type Any"),
+      Warning("(a, b)", "Pattern (a, b) is not irrefutable for Any"),
+      Warning("(e, f)", "Pattern (e, f) is not irrefutable for Any"),
+    )
+  )
+
+  def testSCL23913_Some(): Unit = assertNoMessages(
+    """
+      |object Main {
+      |
+      |  object RangeLimits {
+      |    def unapply(r: Range): Some[(Int, Int)] = Some((r.min, r.max))
+      |  }
+      |
+      |
+      |  def main(args: Array[String]): Unit = {
+      |    val (RangeLimits(xxMin, xxMax), RangeLimits(yyMin, yyMax)) = (0 until 1, 0 until 2)
+      |  }
+      |}
+      |""".stripMargin
+  )
+
+  def testSCL23913_Option(): Unit = assertMessages(
+    """
+      |object Main {
+      |
+      |  object RangeLimits {
+      |    def unapply(r: Range): Option[(Int, Int)] = Some((r.min, r.max))
+      |  }
+      |
+      |
+      |  def main(args: Array[String]): Unit = {
+      |    val (RangeLimits(xxMin, xxMax), RangeLimits(yyMin, yyMax)) = (0 until 1, 0 until 2)
+      |  }
+      |}
+      |""".stripMargin,
+    List(
+      Warning("RangeLimits(xxMin, xxMax)", "Pattern RangeLimits(xxMin, xxMax) is not irrefutable for Range"),
+      Warning("RangeLimits(yyMin, yyMax)", "Pattern RangeLimits(yyMin, yyMax) is not irrefutable for Range")
     )
   )
 }

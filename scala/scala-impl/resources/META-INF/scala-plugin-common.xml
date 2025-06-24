@@ -487,7 +487,7 @@
 
         <methodReferencesSearch implementation="org.jetbrains.plugins.scala.findUsages.NonMemberMethodUsagesSearcher"/>
         <findUsagesHandlerFactory implementation="org.jetbrains.plugins.scala.findUsages.factory.ScalaFindUsagesHandlerFactory" order="first"/>
-        <customUsageSearcher implementation="org.jetbrains.plugins.scala.findUsages.parameters.ConstructorParamsInConstructorPatternSearcher"/>
+        <customUsageSearcher implementation="org.jetbrains.plugins.scala.findUsages.parameters.ExtractorParamsInExtractorPatternSearcher"/>
         <qualifiedNameProvider implementation="org.jetbrains.plugins.scala.actions.ScalaQualifiedNameProvider" order="first"/>
         <targetElementEvaluator language="Scala" implementationClass="org.jetbrains.plugins.scala.codeInsight.ScalaTargetElementEvaluator"/>
         <targetElementEvaluator language="JAVA" implementationClass="org.jetbrains.plugins.scala.codeInsight.ScalaTargetElementEvaluator"/>

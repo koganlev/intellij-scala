@@ -11,6 +11,14 @@ trait ScTuplePattern extends ScPattern {
     val types = list.patterns.map(_.`type`().getOrAny)
     Right(TupleType(types, context = this))
   }
+
+  /**
+   * In Scala 2, TuplePatterns on the right side of infix patterns become arg-pattern lists of that pattern.
+   * Example: case a + (b, c) =>
+   * Here +.unapply must return 3 elements to match.
+   * (T, (T, T)) is not matched.
+   */
+  def infixPatternOfWhichThisIsTheArgPatternList: Option[ScInfixPattern]
 }
 
 object ScTuplePattern {

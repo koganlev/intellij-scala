@@ -1,16 +1,16 @@
 package org.jetbrains.plugins.scala.lang.resolve.processor
 
 import com.intellij.psi._
+import org.jetbrains.plugins.scala.lang.psi.api.base.patterns.ScBindingPattern
 import org.jetbrains.plugins.scala.lang.psi.api.base.{ScReference, ScStableCodeReference}
-import org.jetbrains.plugins.scala.lang.psi.api.base.patterns.{ScBindingPattern, ScConstructorPattern, ScInfixPattern, ScPattern}
 import org.jetbrains.plugins.scala.lang.psi.api.statements._
 import org.jetbrains.plugins.scala.lang.psi.api.statements.params.ScParameter
 import org.jetbrains.plugins.scala.lang.psi.api.toplevel.ScTypedDefinition
 import org.jetbrains.plugins.scala.lang.psi.types._
 import org.jetbrains.plugins.scala.lang.psi.types.api.designator.ScProjectionType
 import org.jetbrains.plugins.scala.lang.psi.types.result._
-import org.jetbrains.plugins.scala.lang.resolve.{ResolveTargets, ScalaResolveResult, ScalaResolveState, StdKinds}
 import org.jetbrains.plugins.scala.lang.resolve.ScalaResolveState.ResolveStateExt
+import org.jetbrains.plugins.scala.lang.resolve.{ResolveTargets, ScalaResolveResult, ScalaResolveState, StdKinds}
 
 import scala.collection.mutable.ArrayBuffer
 
@@ -82,7 +82,7 @@ class ExpandedExtractorResolveProcessor(
 }
 
 object ExpandedExtractorResolveProcessor {
-  def resolveActualUnapply(patRef: ScStableCodeReference): Option[ScalaResolveResult] =
+  def resolveActualUnapply(patRef: ScStableCodeReference, expectedType: Option[ScType]): Option[ScalaResolveResult] =
     patRef.bind() match {
       case Some(ScalaResolveResult(_: ScBindingPattern | _: ScParameter, _)) =>
         val resolve =
@@ -91,11 +91,7 @@ object ExpandedExtractorResolveProcessor {
               patRef,
               patRef.refName,
               patRef.getKinds(incomplete = false),
-              patRef.getContext match {
-                case inf: ScInfixPattern          => inf.expectedType
-                case constr: ScConstructorPattern => constr.expectedType
-                case _                            => None
-              }
+              expectedType,
             )
           )
 

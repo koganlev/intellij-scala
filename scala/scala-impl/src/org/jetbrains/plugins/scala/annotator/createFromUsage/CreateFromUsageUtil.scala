@@ -82,8 +82,7 @@ object CreateFromUsageUtil {
 
   def patternArgs(pattern: ScPattern): Seq[ScPattern] = {
     pattern match {
-      case cp: ScConstructorPattern => cp.args.patterns
-      case inf: ScInfixPattern => inf.left +: inf.rightOption.toSeq
+      case extractorPattern: ScExtractorPattern => extractorPattern.argPatterns
       case _ => Seq.empty
     }
   }
