@@ -66,6 +66,13 @@ ScalaFile
             TypeParameter: A
               PsiElement(identifier)('A')
             PsiElement(])(']')
+          PrimaryConstructor
+            AnnotationsList
+              <empty list>
+            Modifiers
+              <empty list>
+            Parameters
+              <empty list>
           ExtendsBlock
             <empty list>
         PsiWhiteSpace('\n\n  ')
@@ -82,6 +89,13 @@ ScalaFile
             TypeParameter: A
               PsiElement(identifier)('A')
             PsiElement(])(']')
+          PrimaryConstructor
+            AnnotationsList
+              <empty list>
+            Modifiers
+              <empty list>
+            Parameters
+              <empty list>
           PsiWhiteSpace('  ')
           ExtendsBlock
             ScTemplateBody
@@ -346,6 +360,13 @@ ScalaFile
                   TypeParameter: PL
                     PsiElement(identifier)('PL')
                   PsiElement(])(']')
+                PrimaryConstructor
+                  AnnotationsList
+                    <empty list>
+                  Modifiers
+                    <empty list>
+                  Parameters
+                    <empty list>
                 ExtendsBlock
                   <empty list>
               PsiWhiteSpace('\n    ')
@@ -363,6 +384,13 @@ ScalaFile
                   TypeParameter: PL
                     PsiElement(identifier)('PL')
                   PsiElement(])(']')
+                PrimaryConstructor
+                  AnnotationsList
+                    <empty list>
+                  Modifiers
+                    <empty list>
+                  Parameters
+                    <empty list>
                 ExtendsBlock
                   <empty list>
               PsiWhiteSpace('\n  ')
@@ -381,6 +409,13 @@ ScalaFile
             TypeParameter: PL
               PsiElement(identifier)('PL')
             PsiElement(])(']')
+          PrimaryConstructor
+            AnnotationsList
+              <empty list>
+            Modifiers
+              <empty list>
+            Parameters
+              <empty list>
           ExtendsBlock
             <empty list>
         PsiWhiteSpace('\n\n  ')

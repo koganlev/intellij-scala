@@ -131,6 +131,13 @@ ScalaFile
       TypeParameter: X
         PsiElement(identifier)('X')
       PsiElement(])(']')
+    PrimaryConstructor
+      AnnotationsList
+        <empty list>
+      Modifiers
+        <empty list>
+      Parameters
+        <empty list>
     PsiWhiteSpace(' ')
     ExtendsBlock
       ScTemplateBody
@@ -236,6 +243,13 @@ ScalaFile
             TypeParameter: O
               PsiElement(identifier)('O')
             PsiElement(])(']')
+          PrimaryConstructor
+            AnnotationsList
+              <empty list>
+            Modifiers
+              <empty list>
+            Parameters
+              <empty list>
           PsiWhiteSpace(' ')
           ExtendsBlock
             PsiElement(extends)('extends')
@@ -2134,6 +2148,13 @@ ScalaFile
             TypeParameter: P
               PsiElement(identifier)('P')
             PsiElement(])(']')
+          PrimaryConstructor
+            AnnotationsList
+              <empty list>
+            Modifiers
+              <empty list>
+            Parameters
+              <empty list>
           PsiWhiteSpace(' ')
           ExtendsBlock
             PsiElement(extends)('extends')
@@ -4139,6 +4160,13 @@ ScalaFile
             TypeParameter: Q
               PsiElement(identifier)('Q')
             PsiElement(])(']')
+          PrimaryConstructor
+            AnnotationsList
+              <empty list>
+            Modifiers
+              <empty list>
+            Parameters
+              <empty list>
           PsiWhiteSpace(' ')
           ExtendsBlock
             PsiElement(extends)('extends')
@@ -6251,6 +6279,13 @@ ScalaFile
             TypeParameter: R
               PsiElement(identifier)('R')
             PsiElement(])(']')
+          PrimaryConstructor
+            AnnotationsList
+              <empty list>
+            Modifiers
+              <empty list>
+            Parameters
+              <empty list>
           PsiWhiteSpace(' ')
           ExtendsBlock
             PsiElement(extends)('extends')
@@ -8470,6 +8505,13 @@ ScalaFile
             TypeParameter: S
               PsiElement(identifier)('S')
             PsiElement(])(']')
+          PrimaryConstructor
+            AnnotationsList
+              <empty list>
+            Modifiers
+              <empty list>
+            Parameters
+              <empty list>
           PsiWhiteSpace(' ')
           ExtendsBlock
             PsiElement(extends)('extends')
@@ -10796,6 +10838,13 @@ ScalaFile
             TypeParameter: T
               PsiElement(identifier)('T')
             PsiElement(])(']')
+          PrimaryConstructor
+            AnnotationsList
+              <empty list>
+            Modifiers
+              <empty list>
+            Parameters
+              <empty list>
           PsiWhiteSpace(' ')
           ExtendsBlock
             PsiElement(extends)('extends')
@@ -13229,6 +13278,13 @@ ScalaFile
             TypeParameter: U
               PsiElement(identifier)('U')
             PsiElement(])(']')
+          PrimaryConstructor
+            AnnotationsList
+              <empty list>
+            Modifiers
+              <empty list>
+            Parameters
+              <empty list>
           PsiWhiteSpace(' ')
           ExtendsBlock
             PsiElement(extends)('extends')
@@ -15769,6 +15825,13 @@ ScalaFile
             TypeParameter: V
               PsiElement(identifier)('V')
             PsiElement(])(']')
+          PrimaryConstructor
+            AnnotationsList
+              <empty list>
+            Modifiers
+              <empty list>
+            Parameters
+              <empty list>
           PsiWhiteSpace(' ')
           ExtendsBlock
             PsiElement(extends)('extends')

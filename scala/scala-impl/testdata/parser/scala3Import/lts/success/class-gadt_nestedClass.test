@@ -698,6 +698,13 @@ ScalaFile
             TypeParameter: C
               PsiElement(identifier)('C')
             PsiElement(])(']')
+          PrimaryConstructor
+            AnnotationsList
+              <empty list>
+            Modifiers
+              <empty list>
+            Parameters
+              <empty list>
           PsiWhiteSpace(' ')
           ExtendsBlock
             ScTemplateBody

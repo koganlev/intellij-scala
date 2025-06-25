@@ -205,6 +205,13 @@ ScalaFile
         TypeParameter: U0
           PsiElement(identifier)('U0')
         PsiElement(])(']')
+      PrimaryConstructor
+        AnnotationsList
+          <empty list>
+        Modifiers
+          <empty list>
+        Parameters
+          <empty list>
       PsiWhiteSpace(' ')
       ExtendsBlock
         PsiElement(extends)('extends')

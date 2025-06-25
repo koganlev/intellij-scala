@@ -76,6 +76,10 @@ trait ScPrimaryConstructor extends ScMember with ScMethodLike {
 }
 
 object ScPrimaryConstructor {
+  object ofTypeDefinition {
+    def unapply(pc: ScPrimaryConstructor): Some[ScTypeDefinition] =
+      Some(pc.containingClass)
+  }
   object ofClass {
     def unapply(pc: ScPrimaryConstructor): Option[ScClass] = {
       pc.containingClass match {

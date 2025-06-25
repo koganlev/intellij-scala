@@ -232,7 +232,7 @@ trait ScMember extends ScalaPsiElement with ScModifierListOwner with PsiMember {
     case c: ScTypeDefinition if this.is[ScPrimaryConstructor] => //primary constructor
       val navigationElement = c.getNavigationElement
       navigationElement match {
-        case td: ScClass =>
+        case td: ScConstructorOwner =>
           td.constructor match {
             case Some(constr) => constr
             case _ => this

@@ -2495,7 +2495,7 @@ class ReferenceComparisonTest_Scala3_Newest extends ReferenceComparisonTestBase(
   def test_t247(): Unit = doTest("t247", true)
   def test_t252(): Unit = doTest("t252", true)
   def test_t262(): Unit = doTest("t262", true)
-  def test_t267(): Unit = doTest("t267", false)
+  def test_t267(): Unit = doTest("t267", true)
   def test_t0273(): Unit = doTest("t0273", true)
   def test_t284_pos(): Unit = doTest("t284-pos", true)
   def test_t287(): Unit = doTest("t287", true)

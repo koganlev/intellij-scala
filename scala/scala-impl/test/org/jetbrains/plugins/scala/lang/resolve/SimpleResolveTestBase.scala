@@ -5,6 +5,7 @@ import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.{PsiDocumentManager, PsiElement, PsiFile, PsiReference}
 import org.jetbrains.plugins.scala.base.ScalaLightCodeInsightFixtureTestCase
 import org.jetbrains.plugins.scala.extensions.{Parent, PathExt, PsiElementExt, PsiNamedElementExt, StringExt}
+import org.jetbrains.plugins.scala.lang.psi.ScalaPsiUtil
 import org.jetbrains.plugins.scala.lang.psi.api.base.ScReference
 import org.jetbrains.plugins.scala.lang.psi.api.statements.params.ScParameter
 import org.jetbrains.plugins.scala.lang.psi.api.toplevel.typedef.ScMember
@@ -23,19 +24,27 @@ abstract class SimpleResolveTestBase extends ScalaLightCodeInsightFixtureTestCas
 
   protected def folderPath: String = TestUtils.getTestDataPath + "/resolve/"
 
-  protected def getSrc(source: String, file: PsiFile): PsiReference = {
+  protected case class SrcTgtOptions(targetIsLeaf: Boolean)
+  protected object SrcTgtOptions {
+    implicit val defaultSrcTgtOptions: SrcTgtOptions = SrcTgtOptions(targetIsLeaf = false)
+  }
+
+  protected def getSrc(source: String, file: PsiFile)(implicit opts: SrcTgtOptions): PsiReference = {
     val srcOffset = source.replaceAll(REFTGT, "").indexOf(REFSRC)
     if (srcOffset != -1)
       file.findElementAt(srcOffset).withParents.map(_.getReference).find(_ != null).orNull
     else null
   }
 
-  protected def getTgt(source: String, file: PsiFile): PsiElement = {
+  protected def getTgt(source: String, file: PsiFile)(implicit opts: SrcTgtOptions): PsiElement = {
     val tgtOffset = source.replaceAll(REFSRC, "").indexOf(REFTGT)
-    val res = if (tgtOffset != -1)
-      PsiTreeUtil.getParentOfType(file.findElementAt(tgtOffset), classOf[PsiElement])
-    else
+    val res = if (tgtOffset != -1) {
+      val leaf = file.findElementAt(tgtOffset)
+      if (opts.targetIsLeaf) leaf else PsiTreeUtil.getParentOfType(leaf, classOf[PsiElement])
+    } else {
       null
+    }
+
     res match {
       //In example `(using MyContext)`
       //there are 3 elements with same range, we want to select the most-outer element representing the whole parameter
@@ -44,13 +53,13 @@ abstract class SimpleResolveTestBase extends ScalaLightCodeInsightFixtureTestCas
     }
   }
 
-  protected def doResolveTest(sources: (String, String)*): Unit =
+  protected def doResolveTest(sources: (String, String)*)(implicit opts: SrcTgtOptions): Unit =
     doResolveTest(target = None, shouldResolve = true, sources: _*)
 
-  protected def doResolveTest(target: PsiElement, sources: (String, String)*): Unit =
+  protected def doResolveTest(target: PsiElement, sources: (String, String)*)(implicit opts: SrcTgtOptions): Unit =
     doResolveTest(target = Some(target), shouldResolve = true, sources: _*)
 
-  protected def setupResolveTest(target: Option[PsiElement], sources: (String, String)*): (PsiReference, PsiElement) = {
+  protected def setupResolveTest(target: Option[PsiElement], sources: (String, String)*)(implicit opts: SrcTgtOptions): (PsiReference, PsiElement) = {
     var src: PsiReference = null
     var tgt: PsiElement = target.orNull
 
@@ -78,13 +87,14 @@ abstract class SimpleResolveTestBase extends ScalaLightCodeInsightFixtureTestCas
     (src, tgt)
   }
 
-  private def doResolveTest(target: Option[PsiElement], shouldResolve: Boolean, sources: (String, String)*): Unit = {
+  private def doResolveTest(target: Option[PsiElement], shouldResolve: Boolean, sources: (String, String)*)(implicit opts: SrcTgtOptions): Unit = {
     val (src, expectedResolvedElement) = setupResolveTest(target, sources: _*)
 
     val resolveResultMightBeSynthetic = src.resolve()
     //handle synthetic elements, for example reference to scala3 `enum` is resolved to synthetic element
     val resolveResult = resolveResultMightBeSynthetic match {
-      case m: ScMember => Option(m.syntheticNavigationElement).getOrElse(resolveResultMightBeSynthetic)
+      case p: ScParameter => ScalaPsiUtil.findSyntheticContextBoundInfo(p).flatMap(_.bound.nameIdOpt).getOrElse(p)
+      case m: ScMember => Option(m.syntheticNavigationElement).getOrElse(m)
       case _ => resolveResultMightBeSynthetic
     }
 
@@ -156,16 +166,16 @@ abstract class SimpleResolveTestBase extends ScalaLightCodeInsightFixtureTestCas
     s"location: ${vFile.getPath}:${document.getLineNumber(element.startOffset)}"
   }
 
-  protected def testNoResolve(sources: (String, String)*): Unit =
+  protected def testNoResolve(sources: (String, String)*)(implicit opts: SrcTgtOptions): Unit =
     doResolveTest(None, shouldResolve = false, sources: _*)
 
-  protected def testNoResolve(source: String, fileName: String = "dummy.scala"): Unit =
+  protected def testNoResolve(source: String, fileName: String = "dummy.scala")(implicit opts: SrcTgtOptions): Unit =
     testNoResolve(source -> fileName)
 
-  protected def doResolveTest(source: String, fileName: String = "dummy.scala"): Unit =
+  protected def doResolveTest(source: String, fileName: String = "dummy.scala")(implicit opts: SrcTgtOptions): Unit =
     doResolveTest(source -> fileName)
 
-  protected def doResolveTest(): Unit = {
+  protected def doResolveTest()(implicit opts: SrcTgtOptions): Unit = {
     val fileName = getTestName(false)
     val nioFile = Path.of(folderPath, s"$fileName.scala")
     val fileText = nioFile.readAllBytesToString(StandardCharsets.UTF_8).withNormalizedSeparator

@@ -108,6 +108,13 @@ ScalaFile
             TypeParameter: D
               PsiElement(identifier)('D')
             PsiElement(])(']')
+          PrimaryConstructor
+            AnnotationsList
+              <empty list>
+            Modifiers
+              <empty list>
+            Parameters
+              <empty list>
           PsiWhiteSpace(' ')
           ExtendsBlock
             ScTemplateBody
@@ -175,6 +182,13 @@ ScalaFile
                   TypeParameter: E
                     PsiElement(identifier)('E')
                   PsiElement(])(']')
+                PrimaryConstructor
+                  AnnotationsList
+                    <empty list>
+                  Modifiers
+                    <empty list>
+                  Parameters
+                    <empty list>
                 PsiWhiteSpace(' ')
                 ExtendsBlock
                   ScTemplateBody

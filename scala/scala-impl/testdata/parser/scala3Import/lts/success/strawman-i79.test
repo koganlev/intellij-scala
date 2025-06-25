@@ -57,6 +57,13 @@ ScalaFile
               PsiElement(identifier)('+')
               PsiElement(identifier)('A')
             PsiElement(])(']')
+          PrimaryConstructor
+            AnnotationsList
+              <empty list>
+            Modifiers
+              <empty list>
+            Parameters
+              <empty list>
           PsiWhiteSpace('\n      ')
           ExtendsBlock
             PsiElement(extends)('extends')
@@ -103,6 +110,13 @@ ScalaFile
               PsiElement(identifier)('+')
               PsiElement(identifier)('C')
             PsiElement(])(']')
+          PrimaryConstructor
+            AnnotationsList
+              <empty list>
+            Modifiers
+              <empty list>
+            Parameters
+              <empty list>
           PsiWhiteSpace(' ')
           ExtendsBlock
             ScTemplateBody
@@ -184,6 +198,13 @@ ScalaFile
               PsiElement(identifier)('+')
               PsiElement(identifier)('A')
             PsiElement(])(']')
+          PrimaryConstructor
+            AnnotationsList
+              <empty list>
+            Modifiers
+              <empty list>
+            Parameters
+              <empty list>
           ExtendsBlock
             <empty list>
         PsiWhiteSpace('\n\n  ')
