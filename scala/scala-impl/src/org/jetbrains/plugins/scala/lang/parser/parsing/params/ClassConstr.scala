@@ -12,14 +12,20 @@ import org.jetbrains.plugins.scala.lang.parser.parsing.top.params.ClassParamClau
 abstract class ClassConstr(val dropConstructorIfEmpty: Boolean) extends ParsingRule {
 
   override def parse(implicit builder: ScalaPsiBuilder): Boolean = {
-    val idx = builder.getCurrentOffset
+    val beforeTypeParams = builder.getCurrentOffset
     TypeParamClause()
+    val hasTypeParams = beforeTypeParams != builder.getCurrentOffset
 
+    val beforeConstructorMarker = builder.getCurrentOffset
     val constructorMarker = builder.mark()
     ConstrMods()
     ClassParamClauses()
-    val canDropConstructor = builder.getCurrentOffset == idx || !builder.isScala3
-    if (dropConstructorIfEmpty && canDropConstructor) {
+    val hasConstructor = beforeConstructorMarker != builder.getCurrentOffset
+
+    val needsConstructor =
+      if (builder.isScala3) hasTypeParams || hasConstructor
+      else hasConstructor
+    if (dropConstructorIfEmpty && !needsConstructor) {
       constructorMarker.rollbackTo()
     } else {
       constructorMarker.done(ScalaElementType.PRIMARY_CONSTRUCTOR)

@@ -6,7 +6,7 @@ abstract class TraitConstructorHighlightingTestBase extends ScalaHighlightingTes
 class TraitConstructorHighlightingTest_Scala2 extends TraitConstructorHighlightingTestBase {
   import Message._
 
-  override protected def supportedIn(version: ScalaVersion): Boolean = version < LatestScalaVersions.Scala_3_0
+  override protected def supportedIn(version: ScalaVersion): Boolean = version.isScala2
 
   def test_trait_params(): Unit = {
     val code =
@@ -21,7 +21,7 @@ class TraitConstructorHighlightingTest_Scala2 extends TraitConstructorHighlighti
 }
 
 class TraitConstructorHighlightingTest_Scala3 extends TraitConstructorHighlightingTestBase {
-  override protected def supportedIn(version: ScalaVersion): Boolean = version >= LatestScalaVersions.Scala_3_0
+  override protected def supportedIn(version: ScalaVersion): Boolean = version.isScala3
 
   def test_trait_params(): Unit = {
     val code =
