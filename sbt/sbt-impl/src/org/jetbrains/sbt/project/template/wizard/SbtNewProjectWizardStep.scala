@@ -2,7 +2,6 @@ package org.jetbrains.sbt.project.template.wizard
 
 import com.intellij.ide.JavaUiBundle
 import com.intellij.ide.projectWizard.ProjectWizardJdkIntent.DetectedJdk
-import com.intellij.ide.projectWizard.generators.JdkDownloadService
 import com.intellij.ide.projectWizard.{ProjectWizardJdkComboBox, ProjectWizardJdkComboBoxKt}
 import com.intellij.ide.wizard.NewProjectWizardBaseData.getBaseData
 import com.intellij.ide.wizard.{AbstractNewProjectWizardStep, NewProjectWizardStep}
@@ -10,7 +9,6 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.observable.properties.{GraphProperty, PropertyGraph}
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.projectRoots.impl.jdkDownloader.JdkDownloadTask
 import com.intellij.openapi.projectRoots.{JavaSdkVersion, Sdk}
 import com.intellij.openapi.roots.ui.configuration.projectRoot.SdkDownloadTask
 import com.intellij.openapi.ui.ValidationInfo
@@ -21,6 +19,7 @@ import com.intellij.ui.dsl.gridLayout.HorizontalAlign
 import com.intellij.util.lang.JavaVersion
 import org.jetbrains.annotations.Nullable
 import org.jetbrains.plugins.scala.extensions._
+import org.jetbrains.sbt.project.template.wizard.buildSystem.{startJdkDownloadIfNeeded => startJdkDownload}
 import org.jetbrains.plugins.scala.project.Versions
 import org.jetbrains.plugins.scala.util.AsynchronousVersionsDownloading
 import org.jetbrains.sbt.project.template.SComboBox
@@ -90,10 +89,7 @@ abstract class SbtNewProjectWizardStep(parent: NewProjectWizardStep) extends Abs
     })
 
   protected def startJdkDownloadIfNeeded(project: Project): Unit =
-    sdkDownloadTask.collect { case task: JdkDownloadTask =>
-      val service = project.getService(classOf[JdkDownloadService])
-      service.scheduleDownloadJdkForNewProject(task)
-    }
+    startJdkDownload(sdkDownloadTask, project)
 
   protected def setupJavaSdkUI(builder: Panel): Unit = {
     builder.row(JavaUiBundle.message("label.project.wizard.new.project.jdk"), (row: Row) => {
