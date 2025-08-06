@@ -39,7 +39,7 @@ final class ScalaUnusedDeclarationInspection extends HighlightingPassInspection 
   var reportLocalDeclarations: Int = 0
 
   @BooleanBeanProperty
-  var enableInScala3: Boolean = false //TODO
+  var enableInScala3: Boolean = true
 
   @BooleanBeanProperty
   var disableIfCBHIsUsed: Boolean = true
