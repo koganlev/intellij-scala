@@ -6,6 +6,7 @@ import java.nio.file.Path
 import java.util.Properties
 import scala.collection.immutable.ListSet
 import scala.util.Using
+import org.jetbrains.plugins.scala.project.SafeJarLoader
 
 sealed abstract class Artifact(
   val prefix: String,
@@ -58,12 +59,13 @@ object Artifact {
 
   private def readProperty(jarFileUri: String, resource: String, property: String) =
     try {
-      val url = new URL(s"jar:$jarFileUri!/$resource")
-      Option(url.openStream).flatMap { in =>
-        Using.resource(new BufferedInputStream(in)) { inStream =>
-          val properties = new Properties()
-          properties.load(inStream)
-          Option(properties.getProperty(property))
+      SafeJarLoader.createJarResourceUrlFromUri(jarFileUri, resource).flatMap { url =>
+        Option(url.openStream).flatMap { in =>
+          Using.resource(new BufferedInputStream(in)) { inStream =>
+            val properties = new Properties()
+            properties.load(inStream)
+            Option(properties.getProperty(property))
+          }
         }
       }
     } catch {

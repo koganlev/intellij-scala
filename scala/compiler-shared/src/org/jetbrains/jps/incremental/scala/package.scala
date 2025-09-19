@@ -35,7 +35,9 @@ package object scala {
 
   def readProperty(file: Path, resource: String, name: String): Option[String] = {
     try {
-      val url = new URL("jar:%s!/%s".format(file.toUri.toString, resource))
+      // Use proper URI encoding to handle special characters in JAR filenames  
+      val jarUri = file.toUri.toString
+      val url = new URL(s"jar:$jarUri!/$resource")
       Option(url.openStream).flatMap(it => Using.resource(new BufferedInputStream(it))(readProperty(_, name)))
     } catch {
       case _: IOException => None

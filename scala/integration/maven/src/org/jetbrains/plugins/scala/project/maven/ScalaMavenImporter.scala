@@ -23,7 +23,7 @@ import org.jetbrains.plugins.scala.project._
 import org.jetbrains.plugins.scala.project.external.ScalaSdkUtils
 import org.jetbrains.plugins.scala.project.maven.ScalaMavenImporter._
 
-import java.nio.file.Path
+import java.nio.file.{Path, Paths}
 import java.util
 import java.util.stream.Stream
 import scala.annotation.nowarn
@@ -111,7 +111,9 @@ final class ScalaMavenImporter extends MavenApplicableConfigurator(PluginGroupId
     val implicitScalaLibraryInfo = Option(mavenProject.getCachedValue(MavenImplicitScalaLibraryInfo))
     implicitScalaLibraryInfo.map { info =>
       val vfUrlManager = WorkspaceModel.getInstance(project).getVirtualFileUrlManager
-      val jarUrl = vfUrlManager.getOrCreateFromUrl(s"jar://${info.path}!/")
+      // Use proper URI encoding to handle special characters in JAR paths
+      val jarUri = Paths.get(info.path).toUri.toString
+      val jarUrl = vfUrlManager.getOrCreateFromUrl(s"jar://$jarUri!/")
 
       val libraryRoot = new LibraryRoot(jarUrl, LibraryRootTypeIdCompanion.getCOMPILED, InclusionOptions.ROOT_ITSELF)
       storage.addLibraryEntity(info.libraryName, project, SerializationConstants.MAVEN_EXTERNAL_SOURCE_ID, Seq(libraryRoot))

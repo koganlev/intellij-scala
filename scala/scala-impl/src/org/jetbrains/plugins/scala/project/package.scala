@@ -84,7 +84,7 @@ package object project {
       library
         .getFiles(OrderRootType.CLASSES)
         .map(_.getPath)
-        .map(path => new URL(s"jar:file://$path"))
+        .flatMap(SafeJarLoader.createJarUrl)
         .toSet
   }
 
