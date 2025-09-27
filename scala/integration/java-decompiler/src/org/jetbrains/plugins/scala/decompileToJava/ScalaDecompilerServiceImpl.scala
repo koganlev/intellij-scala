@@ -4,6 +4,7 @@ import com.intellij.application.options.CodeStyle
 import com.intellij.ide.highlighter.{JavaClassFileType, JavaFileType}
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.util.io.URLUtil
 import org.jetbrains.java.decompiler.IdeaLogger
 import org.jetbrains.java.decompiler.main.decompiler.BaseDecompiler
 import org.jetbrains.java.decompiler.main.extern.{IBytecodeProvider, IFernflowerPreferences, IResultSaver}
@@ -58,8 +59,13 @@ private class ScalaDecompilerServiceImpl extends ScalaDecompilerService {
   private[this] def mappingsForClassfile(file: VirtualFile): Map[String, FileContents] =
     file.getParent.getChildren.iterator.collect {
       case child if isClassGeneratedFrom(file.getNameWithoutExtension, child) =>
-        child.getPath -> getFileContents(child)
+        extractJarPath(child.getUrl) -> getFileContents(child)
     }.toMap
+
+  private[this] def extractJarPath(url: String): String = {
+    val paths = URLUtil.splitJarUrl(url)
+    if (paths != null) paths.first else url
+  }
 }
 
 object ScalaDecompilerServiceImpl {
