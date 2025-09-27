@@ -59,13 +59,8 @@ private class ScalaDecompilerServiceImpl extends ScalaDecompilerService {
   private[this] def mappingsForClassfile(file: VirtualFile): Map[String, FileContents] =
     file.getParent.getChildren.iterator.collect {
       case child if isClassGeneratedFrom(file.getNameWithoutExtension, child) =>
-        extractJarPath(child.getUrl) -> getFileContents(child)
+        ScalaDecompilerServiceImpl.extractJarPath(child.getUrl) -> getFileContents(child)
     }.toMap
-
-  private[this] def extractJarPath(url: String): String = {
-    val paths = URLUtil.splitJarUrl(url)
-    if (paths != null) paths.first else url
-  }
 }
 
 object ScalaDecompilerServiceImpl {
@@ -82,6 +77,11 @@ object ScalaDecompilerServiceImpl {
       |// (powered by FernFlower decompiler)
       |//
       |""".stripMargin.replace("\r", "")
+
+  def extractJarPath(url: String): String = {
+    val paths = URLUtil.splitJarUrl(url)
+    if (paths != null) paths.first else url
+  }
 
   /**
    * @note for options used for Java .class files decompiler see:<br>
